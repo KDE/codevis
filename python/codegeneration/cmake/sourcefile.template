@@ -1,0 +1,7 @@
+#include <{{ component_name }}.h>
+
+{% if should_generate_namespace %}
+namespace {{ package_name }} {
+
+}
+{% endif %}

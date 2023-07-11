@@ -1,0 +1,14 @@
+build
+.vscode
+Dockerfile
+.gitlab-ci.yml
+.gitignore
+conan.lock
+conanbuildinfo.cmake
+conanbuildinfo.txt
+graph_info.json
+README.md
+README_CI.md
+cmake-build-*
+.idea
+packaging/

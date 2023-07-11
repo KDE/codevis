@@ -1,0 +1,16 @@
+AddTargetLibrary(
+    LIBRARY_NAME
+        lvtqtd
+    SOURCES
+        ct_lvtqtd_removedelegate.cpp
+        ct_lvtqtd_packageviewdelegate.cpp
+    QT_HEADERS
+        ct_lvtqtd_removedelegate.h
+        ct_lvtqtd_packageviewdelegate.h
+    LIBRARIES
+        Codethink::lvtmdl
+        Codethink::lvtqtc
+        Qt5::Core
+        Qt5::Gui
+        Qt5::Widgets
+)

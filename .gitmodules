@@ -1,0 +1,9 @@
+[submodule "submodules/configuration-parser"]
+	path = submodules/configuration-parser
+	url = https://github.com/tcanabrava/configuration-parser.git
+[submodule "submodules/backward-cpp"]
+	path = submodules/backward-cpp
+	url = https://github.com/tcanabrava/backward-cpp.git
+[submodule "thirdparty/soci"]
+	path = thirdparty/soci
+	url = https://github.com/tcanabrava/soci.git

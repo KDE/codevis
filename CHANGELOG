@@ -1,0 +1,48 @@
+V0.6:
+
+- Improve Deployment scripts for ubuntu, centos, mac, windows and source.
+- Remember project path on the Code Extractor dialog
+- Forbid acessing wsl:// schemas on windows
+- Improve error checking on the Code Extractor Dialog
+- Navigate to the Package location on the File Manager
+    (Right click on the package list, open with file manager)
+- Update semantic rules for package and package groups recognition on physical
+    parser
+- New actions menu on the Packages TreeView
+- Improve Application Performance
+- Improved CLI tools for genreating databases from code, and project files.
+- Improved Standalone Packages algorithm
+- Removed Dependency on Graphviz
+- Add title on Input Dialogs
+- Removed PNG Export
+    (Some pngs were so big that it could exaust the memory when open,
+    use the svg export if you need exporting)
+- Allow to change the current entity on the visualization panel
+    (This changes some visualization information that are visible only for the
+    current entity)
+- Show Level number on the visualization tree
+- Fix *many* subtle bugs on the interface pointed out at the last in person
+    demonstration
+- Allowed Dependencies: If the project has a .dep file, it takes that in
+    consideration during parse.
+- Text on the graphical view only has ellipsis if in collapsed mode
+- New Menu "View" that allows you to show / hide Docked Widgets
+- Allow to Unload Graphical Elements from the View
+- Add information panel for Relationships (acessed via right click)
+- Allow to chose vertical or horizontal direction for the Levelization Algorithm
+- Remove "Manual Groups" - This was never specified on the "Large Scale C++" and
+    as an experiment, it failed.
+- Add the date of the build on About Page
+- Fixed *manu* subtle visualization bugs
+- Fixed *many* levelization bugs
+- Add Subtle animation for the Message Widget when something changes.
+- Add checkboxes for code geneation, so you can choose what to generate
+- Change the way we load the data from database, with a 10x speedup by *not*
+    loading everything at once, and instead, loading when we need.
+- Package tree is now Sorted alphabetically
+
+And Much, Much more.
+(around 512 commits since last release.)
+
+V0.5:
+- See Git log

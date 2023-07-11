@@ -1,0 +1,57 @@
+#!/bin/bash
+
+FIRST_ARG="$1"
+BDE_BUILD_DIR="$1"
+DATABASE_PATH="$2"
+
+print_usage()
+{
+    echo "$0 <BDE_BUILD_DIR> <DATABASE_PATH>"
+    echo \
+"Looking in BDE_BUILD_DIR for compile_commands.json to specify input files, create a new database at DATABASE_PATH"
+    echo \
+"To generate compile_commands.json, run clang with -DCMAKE_COMPILE_COMMANDS=ON"
+}
+
+assert_directory()
+{
+    declare -r DIR="$1"
+
+    if [ -z "$DIR" ] || ! [ -d "$DIR" ]; then
+        echo "'$DIR' is not a directory" 1>&2
+        echo
+        print_usage 1>&2
+        exit 22 # EINVAL
+    fi
+}
+
+check_args()
+{
+    if [ "$FIRST_ARG" == "--help" ] || [ "$FIRST_ARG" == "-h" ]; then
+        print_usage
+        exit 0
+    fi
+
+    assert_directory "$BDE_BUILD_DIR"
+
+    # dirname doesn't handle empty arguments
+    if [ -z "$DATABASE_PATH" ]; then
+        echo "Please specify DATABASE_PATH" 1>&2
+        echo 1>&2
+        print_usage 1>&2
+        exit 22 # EINVAL
+    fi
+
+    assert_directory "$(dirname "$DATABASE_PATH")"
+}
+
+check_args
+
+PARSER_EXECUTABLE="@INSTALL_DIR@/create_codebase_db"
+
+"$PARSER_EXECUTABLE" --overwrite \
+    --ignore "*.t.cpp" \
+    --ignore "*thirdparty*" \
+    -j"$(nproc)" \
+    "$DATABASE_PATH" \
+    "$BDE_BUILD_DIR/compile_commands.json"

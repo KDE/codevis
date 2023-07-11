@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=codevis
+GenericName=CodeVis
+Comment=codevis
+Icon=codevis
+Exec=codevis
+Terminal=false
+Categories=Utility;
+Keywords=computer;
+X-AppImage-Name=codevis
+X-AppImage-Version=1.0.0
+X-AppImage-Arch=x_86_64

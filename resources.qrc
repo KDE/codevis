@@ -1,0 +1,63 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="add_is_a">imgs/add_is_a.png</file>
+        <file alias="add_uses_in_the_implementation">imgs/add_uses_in_the_implementation.png</file>
+        <file alias="add_uses_in_the_interface">imgs/add_uses_in_the_interface.png</file>
+        <file alias="zoom_selection">imgs/zoom_selection.png</file>
+        <file alias="help">imgs/help.png</file>
+        <file alias="fatal">imgs/fatal.png</file>
+        <file alias="critical">imgs/critical.png</file>
+        <file alias="warning">imgs/warning.png</file>
+        <file alias="yellow-warning">imgs/yellow-warning.png</file>
+        <file alias="debug">imgs/debug.png</file>
+        <file alias="info">imgs/info.png</file>
+        <file alias="is_a">imgs/is_a.png</file>
+        <file alias="uses_in_the_interface">imgs/uses_in_the_interface.png</file>
+        <file alias="uses_in_the_implementation">imgs/uses_in_the_implementation.png</file>
+        <file alias="remove_zoom">imgs/remove_zoom.png</file>
+        <file alias="map">imgs/map.png</file>
+        <file alias="codevis">imgs/codevis.png</file>
+        <file alias="backwards_dependencies">imgs/backwards_dependencies.png</file>
+        <file alias="forward_dependencies">imgs/forward_dependencies.png</file>
+        <file alias="external_edges">imgs/external_edges.png</file>
+        <file alias="trash">imgs/trash.png</file>
+        <file alias="expand">imgs/expand-icon.png</file>
+        <file alias="shrink">imgs/shrink-icon.png</file>
+        <file alias="circular_dependency">imgs/ES6-icon.png</file>
+        <file alias="spinner">imgs/loading-buffering.gif</file>
+        <file alias="refresh">imgs/refresh.png</file>
+        <file alias="identify_cycle">imgs/identify_cycle.png</file>
+        <file alias="class">imgs/class.png</file>
+        <file alias="component">imgs/component.png</file>
+        <file alias="package">imgs/package.png</file>
+        <file alias="group">imgs/group.png</file>
+        <file alias="new_dependency">imgs/new_dependency.png</file>
+        <file alias="eyes">imgs/eye.png</file>
+        <file alias="edit">imgs/edit.png</file>
+        <file alias="reparent_entity">imgs/reparent_entity.png</file>
+        <file alias="notes">imgs/notes.png</file>
+        <file alias="file">imgs/file.svg</file>
+        <file alias="folder">imgs/folder.svg</file>
+        <file alias="toggle-vis-edit-state-edit">imgs/toggle-vis-edit-state-edit.png</file>
+        <file alias="toggle-vis-edit-state-vis">imgs/toggle-vis-edit-state-vis.png</file>
+        <file alias="cancel">imgs/cancel.png</file>
+        <file alias="build">imgs/build.png</file>
+        <file alias="down">imgs/down.png</file>
+        <file alias="up">imgs/up.png</file>
+        <file alias="find">imgs/find.png</file>
+        <file alias="open-generated-code">imgs/open-generated-code.png</file>
+        <file alias="invalid_design">imgs/invalid_design.png</file>
+        <file alias="repository">imgs/repository.png</file>
+        <file>imgs/go-up.png</file>
+        <file>imgs/go-down.png</file>
+        <file>imgs/system-run.png</file>
+    </qresource>
+    <qresource prefix="/html">
+        <file>news.html</file>
+    </qresource>
+    <qresource prefix="/md">
+        <file alias="codebase_gen_doc">doc/dialog_codebase_generation.md</file>
+        <file alias="about">doc/about.md</file>
+        <file alias="libraries">doc/externallibraries.md</file>
+    </qresource>
+</RCC>

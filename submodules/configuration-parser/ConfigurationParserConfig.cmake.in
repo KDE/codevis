@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Alexander Lohnau <alexander.lohnau@gmx.de>
+# SPDX-License-Identifier: MIT
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Qt5Core "@REQUIRED_QT_VERSION@")
+
+@PACKAGE_SETUP_AUTOMOC_VARIABLES@
+
+include("${CMAKE_CURRENT_LIST_DIR}/ConfigurationParserTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/ConfigurationCompiler.cmake")

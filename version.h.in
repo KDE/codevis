@@ -1,0 +1,14 @@
+#ifndef LAKOSIAN_VERSION_H
+#define LAKOSIAN_VERSION_H
+
+/* Auto generated header, do not edit. */
+
+#include <string>
+
+namespace VersionInformation {
+    std::string version = "@GIT_VERSION@";
+    std::string authors = R"(@GIT_AUTHORS@)";
+    std::string build_date = R"(@CURRENT_DATE@)";
+}
+
+#endif

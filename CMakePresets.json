@@ -1,0 +1,25 @@
+{
+"version": 3,
+
+"configurePresets": [
+  {
+    "name": "multi",
+    "generator": "Ninja Multi-Config",
+    "binaryDir": "${sourceDir}/../build/LakosDiagram/"
+  }
+],
+
+"buildPresets": [
+  {
+    "name": "release",
+    "configurePreset": "multi",
+    "configuration": "Release"
+  },
+  {
+    "name": "debug",
+    "configurePreset": "multi",
+    "configuration": "Debug"
+  }
+]
+
+}

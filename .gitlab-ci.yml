@@ -1,0 +1,171 @@
+stages:
+    - build
+
+variables:
+    DEPENDENCIES_TAG_BRANCH: $CI_REGISTRY_IMAGE/dependencies:$CI_COMMIT_REF_SLUG
+    DEPENDENCIES_TAG_MASTER: $CI_REGISTRY_IMAGE/dependencies:master
+    APPIMAGE_TAG_BRANCH: $CI_REGISTRY_IMAGE/appimage:$CI_COMMIT_REF_SLUG
+    APPIMAGE_TAG_MASTER: $CI_REGISTRY_IMAGE/appimage:master
+    CENTOS_TAG_MASTER: $CI_REGISTRY_IMAGE/centos:master
+
+build-osx job:
+    stage: build
+    tags:
+        - macos
+    script:
+        - packaging/macos/llvm-build.sh "$HOME/Projects/" "$HOME/Projects/Build" "$HOME/Projects/Install" "5"
+        # gitlab doesn't allow copying artifacts from outside $CI_PROJECT_DIR
+        - cp -rp $HOME/Projects/Build/diagram-server/desktopapp/codevis.app $CI_PROJECT_DIR
+        - cp -rp $CI_PROJECT_DIR/python/ $CI_PROJECT_DIR
+    artifacts:
+      paths:
+          - "$CI_PROJECT_DIR/codevis.app"
+          - "$CI_PROJECT_DIR/python/"
+    # TODO:
+    # Make sure that we can have parallel builds. For that, the LLVM build script must always
+    # target a specific folder, for instance, ~/Projects/LLVM, and the diagram-server
+    # script should use the $CI_BUILD_DIR.
+
+build-win job:
+    stage: build
+    tags:
+        - windows
+    script:
+        - git submodule deinit -f --all
+        - git submodule init
+        - git submodule update --recursive
+        - packaging/windows/llvm-build.bat "C:\Project\" "C:\Project\Build" "C:\Project\Install" "4"
+        - packaging/windows/run-tests.bat "$CI_PROJECT_DIR" "C:\Project\Build\diagram-server"
+        # gitlab doesn't allow copying artifacts from outside $CI_PROJECT_DIR
+        - Xcopy /E /I 'C:\Project\Build\diagram-server\desktopapp\Release' "$CI_PROJECT_DIR\Release"
+    artifacts:
+      paths:
+        - $CI_PROJECT_DIR\Release
+
+build-linux job:
+    image: "docker:20.10.22"
+    services: ["docker:20.10.22-dind"]
+    stage: build
+    tags:
+        - bigjob
+    variables:
+        OUTDIR: $CI_PROJECT_DIR/generated-diagrams
+    before_script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    script:
+        - export DOCKER_BUILDKIT=1
+        - docker build -f packaging/appimage/Dockerfile .
+            --target dependencies
+            --build-arg BUILDKIT_INLINE_CACHE=1
+            --cache-from $DEPENDENCIES_TAG_BRANCH
+            --cache-from $DEPENDENCIES_TAG_MASTER
+            -t $DEPENDENCIES_TAG_BRANCH
+        - docker push $DEPENDENCIES_TAG_BRANCH
+        - docker build -f packaging/appimage/Dockerfile . --target pre-analysis
+        - docker build -f packaging/appimage/Dockerfile . --target build-qt
+        - docker build -f packaging/appimage/Dockerfile . --target post-analysis
+        - docker build -f packaging/appimage/Dockerfile . --target tests
+        - docker build -f packaging/appimage/Dockerfile . --target generate-diagrams -t run-generate-diagrams
+        - mkdir -p "$OUTDIR"
+        - docker run -v $OUTDIR:/tmp/results run-generate-diagrams
+    artifacts:
+        paths:
+            - $OUTDIR
+
+linux-deploy:
+    image: "docker:20.10.22"
+    services: ["docker:20.10.22-dind"]
+    stage: build
+    tags:
+      - bigjob
+    variables:
+      OUTDIR: $CI_PROJECT_DIR
+    before_script:
+      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    script:
+      - export DOCKER_BUILDKIT=1
+      - docker build -f packaging/appimage/Dockerfile .
+          --target appimage
+          --build-arg BUILDKIT_INLINE_CACHE=1
+          --cache-from $APPIMAGE_TAG_BRANCH
+          --cache-from $APPIMAGE_TAG_MASTER
+          -t $APPIMAGE_TAG_BRANCH
+      - docker push $APPIMAGE_TAG_BRANCH
+      - mkdir -p "$OUTDIR"
+      - docker run -v $OUTDIR:/tmp/lvt-appimage $APPIMAGE_TAG_BRANCH
+      - docker build -f packaging/appimage/Dockerfile .
+          --target deploy-cli-tools
+          -t linux-deploy
+      - docker run -v $OUTDIR:/tmp/package linux-deploy
+    artifacts:
+      paths:
+        - $CI_PROJECT_DIR/codevis-x86_64.AppImage
+        - $CI_PROJECT_DIR/codevis-cli.tar.gz
+
+centos:
+    stage: build
+    image: "docker:20.10.22"
+    services: ["docker:20.10.22-dind"]
+    tags:
+        - bigjob
+    variables:
+        OUTDIR: $CI_PROJECT_DIR/centos
+    before_script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    script:
+        - export DOCKER_BUILDKIT=1
+        - docker build -f packaging/centos7/Dockerfile .
+            --target dependencies
+            --build-arg BUILDKIT_INLINE_CACHE=1
+            --cache-from $CENTOS_TAG_MASTER
+            -t $CENTOS_TAG_MASTER
+        - docker push $CENTOS_TAG_MASTER
+        - docker build -f packaging/centos7/Dockerfile .
+            --target compile_diagram_server
+        - docker build -f packaging/centos7/Dockerfile .
+            --target create_centos_package
+            -t centos-deploy
+        - mkdir -p "$OUTDIR"
+        - docker run -v $OUTDIR:/tmp/package centos-deploy
+    artifacts:
+        paths:
+            - $OUTDIR/codevis-cli.tar.gz
+
+source-deploy:
+    image: "docker:20.10.22"
+    services: ["docker:20.10.22-dind"]
+    stage: build
+    tags:
+      - bigjob
+    variables:
+      OUTDIR: $CI_PROJECT_DIR
+    before_script:
+      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    script:
+        - export DOCKER_BUILDKIT=1
+        - docker build -f packaging/bundle-src/Dockerfile . -t source-deploy
+        - mkdir -p "$OUTDIR"
+        - docker run -v $OUTDIR:/tmp/deploy source-deploy
+    artifacts:
+      paths:
+        - "$CI_PROJECT_DIR/*"
+
+code-coverage:
+    image: "docker:20.10.22"
+    services: ["docker:20.10.22-dind"]
+    stage: build
+    tags:
+        - bigjob
+    variables:
+        OUTDIR: $CI_PROJECT_DIR/coverage
+    before_script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    script:
+        - export DOCKER_BUILDKIT=1
+        - docker build -f packaging/appimage/Dockerfile .
+            --target code-coverage
+            -t code-coverage
+        - docker run -v $OUTDIR:/root/diagram-server/build/coverage code-coverage
+    artifacts:
+        paths:
+            - $OUTDIR

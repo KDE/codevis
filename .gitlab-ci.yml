@@ -131,25 +131,6 @@ centos:
         paths:
             - $OUTDIR/codevis-cli.tar.gz
 
-source-deploy:
-    image: "docker:20.10.22"
-    services: ["docker:20.10.22-dind"]
-    stage: build
-    tags:
-      - bigjob
-    variables:
-      OUTDIR: $CI_PROJECT_DIR
-    before_script:
-      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    script:
-        - export DOCKER_BUILDKIT=1
-        - docker build -f packaging/bundle-src/Dockerfile . -t source-deploy
-        - mkdir -p "$OUTDIR"
-        - docker run -v $OUTDIR:/tmp/deploy source-deploy
-    artifacts:
-      paths:
-        - "$CI_PROJECT_DIR/*"
-
 code-coverage:
     image: "docker:20.10.22"
     services: ["docker:20.10.22-dind"]

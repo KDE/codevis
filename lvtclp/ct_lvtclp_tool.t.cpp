@@ -35,7 +35,7 @@
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 static void createTop(const std::filesystem::path& topLevel)
 {

@@ -41,7 +41,7 @@ using namespace Codethink;
 
 using UDTKind = Codethink::lvtshr::UDTKind;
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 TEST_CASE("User defined type")
 {

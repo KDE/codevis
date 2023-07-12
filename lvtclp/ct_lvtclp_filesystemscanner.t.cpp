@@ -47,7 +47,7 @@ using Codethink::lvtclp::StaticCompilationDatabase;
 using Codethink::lvtclp::Test_Util;
 using Codethink::lvtclp::Tool;
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 const auto messageCallback = [](const std::string&, long) {};
 

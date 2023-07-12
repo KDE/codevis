@@ -28,7 +28,7 @@
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 TEST_CASE("Private field")
 {

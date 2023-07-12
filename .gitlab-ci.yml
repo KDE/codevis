@@ -10,8 +10,6 @@ variables:
 
 build-osx job:
     stage: build
-    tags:
-        - macos
     script:
         - packaging/macos/llvm-build.sh "$HOME/Projects/" "$HOME/Projects/Build" "$HOME/Projects/Install" "5"
         # gitlab doesn't allow copying artifacts from outside $CI_PROJECT_DIR
@@ -28,8 +26,6 @@ build-osx job:
 
 build-win job:
     stage: build
-    tags:
-        - windows
     script:
         - git submodule deinit -f --all
         - git submodule init
@@ -46,8 +42,6 @@ build-linux job:
     image: "docker:20.10.22"
     services: ["docker:20.10.22-dind"]
     stage: build
-    tags:
-        - bigjob
     variables:
         OUTDIR: $CI_PROJECT_DIR/generated-diagrams
     before_script:
@@ -76,8 +70,6 @@ linux-deploy:
     image: "docker:20.10.22"
     services: ["docker:20.10.22-dind"]
     stage: build
-    tags:
-      - bigjob
     variables:
       OUTDIR: $CI_PROJECT_DIR
     before_script:
@@ -106,8 +98,6 @@ centos:
     stage: build
     image: "docker:20.10.22"
     services: ["docker:20.10.22-dind"]
-    tags:
-        - bigjob
     variables:
         OUTDIR: $CI_PROJECT_DIR/centos
     before_script:
@@ -135,8 +125,6 @@ code-coverage:
     image: "docker:20.10.22"
     services: ["docker:20.10.22-dind"]
     stage: build
-    tags:
-        - bigjob
     variables:
         OUTDIR: $CI_PROJECT_DIR/coverage
     before_script:

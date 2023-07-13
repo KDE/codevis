@@ -28,7 +28,10 @@
 #include <soci/sqlite3/soci-sqlite3.h>
 
 #include <iostream>
+#include <regex>
 #include <variant>
+
+#include <boost/algorithm/string/replace.hpp>
 
 namespace {
 template<typename T>
@@ -358,17 +361,19 @@ class SociDatabaseHandler : public DatabaseHandler {
 
     void addNotes(lvtshr::UniqueId uid, std::string const& notes) override
     {
+        std::string our_notes = boost::algorithm::replace_all_copy(notes, "'", "''");
         soci::transaction tr(d_db);
         d_db << "insert into cad_notes (version, entity_id, entity_type, notes) values (" << 0 << ", "
              << uid.recordNumber() << ", " << static_cast<int>(uid.diagramType()) << ", "
-             << "'" << notes << "')";
+             << "'" << our_notes << "')";
         tr.commit();
     }
 
     void setNotes(lvtshr::UniqueId uid, std::string const& notes) override
     {
+        std::string our_notes = boost::algorithm::replace_all_copy(notes, "'", "''");
         soci::transaction tr(d_db);
-        d_db << "update cad_notes set notes = '" << notes << "' where "
+        d_db << "update cad_notes set notes = '" << our_notes << "' where "
              << "entity_id = " << uid.recordNumber() << " and "
              << "entity_type = " << static_cast<int>(uid.diagramType());
         tr.commit();

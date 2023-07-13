@@ -66,9 +66,15 @@ namespace {
 bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std::string& db_schema_id)
 {
     std::filesystem::path resulting_file = db_schema_path / db_schema_id;
+
+#if 0
+// Temporarely disable this check, as it causes problems such as not updating the
+// database spec when we need.
+// We need a new way so that users can say that they want to override the file.
     if (std::filesystem::exists(resulting_file)) {
         return true;
     }
+#endif
 
     QFile thisFile = QString::fromStdString(":/db/" + db_schema_id);
     if (!thisFile.exists()) {
@@ -82,6 +88,10 @@ bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std
             qDebug() << "error, could not create data folder" << QString::fromStdString(db_schema_path.string());
             return false;
         }
+    }
+
+    if (std::filesystem::exists(resulting_file)) {
+        std::filesystem::remove(resulting_file);
     }
 
     bool res = thisFile.copy(QString::fromStdString(resulting_file.string())); // to the filesystem.
@@ -671,6 +681,7 @@ bool SociWriter::updateDbSchema(const std::string& path, const std::string& sche
 {
     std::cout << "Updating the db schema for cad database.\n";
     if (!std::filesystem::exists(path)) {
+        std::cout << "File doesn't exist, creating correct.\n";
         return createOrOpen(path, schemaPath);
     }
 

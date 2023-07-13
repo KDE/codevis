@@ -1168,7 +1168,6 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
     // just dump the data from one db to another.
     // So, for the time being, let's just nuke the CadDb and recreate it.
     sharedNodeStorage.closeDatabase();
-    std::cout << "Reseting cad database from codebase db\n";
     const auto res = d_projectFile.resetCadDatabaseFromCodeDatabase();
     if (res.has_error()) {
         showErrorMessage(QString::fromStdString(res.error().errorMessage));

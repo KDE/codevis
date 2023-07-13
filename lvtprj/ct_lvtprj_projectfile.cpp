@@ -531,6 +531,7 @@ cpp::result<void, ProjectFileError> ProjectFile::resetCadDatabaseFromCodeDatabas
         const auto errorMsg = std::string{"Error removing adding cad tables to the database."};
         return cpp::fail(ProjectFileError{errorMsg});
     }
+
     return {};
 }
 

@@ -28,7 +28,6 @@
 #include <soci/sqlite3/soci-sqlite3.h>
 
 #include <iostream>
-#include <regex>
 #include <variant>
 
 #include <boost/algorithm/string/replace.hpp>

@@ -510,6 +510,25 @@ std::vector<QJsonDocument> ProjectFile::rightPanelTab()
     return jsonDocInFolder(folder);
 }
 
+cpp::result<void, ProjectFileError> ProjectFile::resetCadDatabaseFromCodeDatabase()
+{
+    auto cadDbPath = cadDatabasePath();
+    try {
+        std::filesystem::remove(cadDbPath);
+    } catch (std::filesystem::filesystem_error& err) {
+        const auto errorMsg = std::string{"Error removing cad database: "} + err.what();
+        return cpp::fail(ProjectFileError{errorMsg});
+    }
+    try {
+        std::filesystem::copy(codeDatabasePath(), cadDbPath);
+    } catch (std::filesystem::filesystem_error& err) {
+        const auto errorMsg = std::string{"Error removing cad database: "} + err.what();
+        return cpp::fail(ProjectFileError{errorMsg});
+    }
+
+    return {};
+}
+
 void ProjectFile::prepareSave()
 {
     for (const auto folder : {LEFT_PANEL_HISTORY, RIGHT_PANEL_HISTORY}) {

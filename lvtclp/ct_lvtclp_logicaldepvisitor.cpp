@@ -43,6 +43,7 @@
 
 #include <clang/AST/ASTContext.h>
 #include <clang/Basic/Diagnostic.h>
+#include <clang/Basic/Version.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Lex/PPCallbacks.h>
@@ -1830,6 +1831,21 @@ LogicalDepVisitor::getTemplateArguments(const clang::QualType type, const clang:
     }
 
     std::vector<lvtmdb::TypeObject *> templateArgs;
+#if CLANG_VERSION_MAJOR >= 16
+    const clang::ArrayRef<clang::TemplateArgument> args = tmplSpec->template_arguments();
+
+    for (unsigned i = 0; i < args.size(); ++i) {
+        if (args[i].getKind() != clang::TemplateArgument::ArgKind::Type) {
+            continue;
+        }
+        clang::QualType argQType = args[i].getAsType();
+
+        lvtmdb::TypeObject *argType = lookupType(decl, argQType, desc, false);
+        if (argType) {
+            templateArgs.push_back(argType);
+        }
+    }
+#else
     const clang::TemplateArgument *args = tmplSpec->getArgs();
 
     for (unsigned i = 0; i < tmplSpec->getNumArgs(); ++i) {
@@ -1843,7 +1859,7 @@ LogicalDepVisitor::getTemplateArguments(const clang::QualType type, const clang:
             templateArgs.push_back(argType);
         }
     }
-
+#endif
     return templateArgs;
 }
 

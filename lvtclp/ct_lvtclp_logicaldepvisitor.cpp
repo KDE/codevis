@@ -1835,20 +1835,11 @@ LogicalDepVisitor::getTemplateArguments(const clang::QualType type, const clang:
     const clang::ArrayRef<clang::TemplateArgument> args = tmplSpec->template_arguments();
 
     for (unsigned i = 0; i < args.size(); ++i) {
-        if (args[i].getKind() != clang::TemplateArgument::ArgKind::Type) {
-            continue;
-        }
-        clang::QualType argQType = args[i].getAsType();
-
-        lvtmdb::TypeObject *argType = lookupType(decl, argQType, desc, false);
-        if (argType) {
-            templateArgs.push_back(argType);
-        }
-    }
 #else
     const clang::TemplateArgument *args = tmplSpec->getArgs();
 
     for (unsigned i = 0; i < tmplSpec->getNumArgs(); ++i) {
+#endif
         if (args[i].getKind() != clang::TemplateArgument::ArgKind::Type) {
             continue;
         }
@@ -1859,7 +1850,7 @@ LogicalDepVisitor::getTemplateArguments(const clang::QualType type, const clang:
             templateArgs.push_back(argType);
         }
     }
-#endif
+
     return templateArgs;
 }
 

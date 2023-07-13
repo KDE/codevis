@@ -526,6 +526,11 @@ cpp::result<void, ProjectFileError> ProjectFile::resetCadDatabaseFromCodeDatabas
         return cpp::fail(ProjectFileError{errorMsg});
     }
 
+    lvtmdb::SociWriter writer;
+    if (!writer.updateDbSchema(cadDbPath, "cad_db.sql")) {
+        const auto errorMsg = std::string{"Error removing adding cad tables to the database."};
+        return cpp::fail(ProjectFileError{errorMsg});
+    }
     return {};
 }
 

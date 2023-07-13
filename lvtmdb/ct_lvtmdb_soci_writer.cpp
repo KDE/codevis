@@ -92,7 +92,7 @@ bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std
     return true;
 }
 
-bool create_new_db(soci::session& db, const std::string& db_schema_id)
+bool run_migration(soci::session& db, const std::string& db_schema_id)
 {
     initialize_resources();
     QStringList dataLocations;
@@ -667,13 +667,28 @@ namespace Codethink::lvtmdb {
 
 SociWriter::SociWriter() = default;
 
+bool SociWriter::updateDbSchema(const std::string& path, const std::string& schemaPath)
+{
+    std::cout << "Updating the db schema for cad database.\n";
+    if (!std::filesystem::exists(path)) {
+        return createOrOpen(path, schemaPath);
+    }
+
+    // not a problem if called multiple times.
+    initialize_resources();
+    d_db.open(*soci::factory_sqlite3(), path);
+    bool res = run_migration(d_db, schemaPath);
+    std::cout << "Shema updated run: " << res << "\n";
+    return res;
+}
+
 bool SociWriter::createOrOpen(const std::string& path, const std::string& schemaPath)
 {
     const bool create_db = path == ":memory:" || !std::filesystem::exists(path);
 
     d_db.open(*soci::factory_sqlite3(), path);
     if (create_db) {
-        const bool res = create_new_db(d_db, schemaPath);
+        const bool res = run_migration(d_db, schemaPath);
         if (!res) {
             return false;
         }

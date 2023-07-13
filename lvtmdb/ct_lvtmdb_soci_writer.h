@@ -40,6 +40,7 @@ class LVTMDB_EXPORT SociWriter {
 
     SociWriter();
 
+    bool updateDbSchema(const std::string& db, const std::string& schemaPath);
     bool createOrOpen(const std::string& path, const std::string& schemaPath = "codebase_db.sql");
     /* this needs to be std::string because the
      * path can also be ":memory:" - we transform

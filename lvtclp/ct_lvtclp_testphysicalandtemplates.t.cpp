@@ -33,7 +33,7 @@
 using namespace Codethink::lvtmdb;
 using namespace Codethink::lvtclp;
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 void createTestEnv(const std::filesystem::path& topLevel)
 {

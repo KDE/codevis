@@ -36,7 +36,7 @@ using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;
 using namespace Codethink;
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 TEST_CASE("Field declaration")
 {

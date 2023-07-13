@@ -47,7 +47,7 @@ using Codethink::lvtclp::StaticCompilationDatabase;
 using Codethink::lvtclp::Test_Util;
 using Codethink::lvtclp::Tool;
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 const auto messageCallback = [](const std::string&, long) {};
 
@@ -595,7 +595,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Non Lakosian")
     REQUIRE(thirdparty->parent() == nonLakosian);
 
     // lakosian files
-    for (const auto& [_, comp] : memDb.components()) {
+    for (const auto& [_1, comp] : memDb.components()) {
         comp->withROLock([&comp = comp] {
             std::cout << "Component name: " << comp->qualifiedName() << "\n";
         });
@@ -729,7 +729,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Semantic packing")
     });
 
     // lakosian files
-    for (const auto& [_, pkg] : memDb.packages()) {
+    for (const auto& [_1, pkg] : memDb.packages()) {
         pkg->withROLock([&pkg = pkg] {
             std::cout << "Component name: " << pkg->qualifiedName() << "\n";
         });

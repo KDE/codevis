@@ -36,7 +36,7 @@
 
 #include <catch2/catch.hpp>
 
-PyDefaultGilReleasedContext _;
+const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 namespace {
 

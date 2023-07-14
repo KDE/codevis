@@ -88,6 +88,7 @@ if (COMPILE_TESTS)
         Codethink::lvttst
         Codethink::lvttst_tmpdir
         Codethink::lvtmdb
+        Codethink::lvtprj
         ${SYSTEM_EXTRA_LIBRARIES}
     )
     add_test(NAME test_ct_lvtldr_nodestorage COMMAND test_ct_lvtldr_nodestorage)

@@ -51,7 +51,6 @@ class SociDatabaseHandler : public DatabaseHandler {
   public:
     explicit SociDatabaseHandler(std::string const& path)
     {
-        std::cout << "opening database with path" << path << "\n";
         d_db.open(*soci::factory_sqlite3(), path);
     }
 

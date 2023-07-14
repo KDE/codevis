@@ -679,9 +679,7 @@ SociWriter::SociWriter() = default;
 
 bool SociWriter::updateDbSchema(const std::string& path, const std::string& schemaPath)
 {
-    std::cout << "Updating the db schema for cad database.\n";
     if (!std::filesystem::exists(path)) {
-        std::cout << "File doesn't exist, creating correct.\n";
         return createOrOpen(path, schemaPath);
     }
 
@@ -689,7 +687,6 @@ bool SociWriter::updateDbSchema(const std::string& path, const std::string& sche
     initialize_resources();
     d_db.open(*soci::factory_sqlite3(), path);
     bool res = run_migration(d_db, schemaPath);
-    std::cout << "Shema updated run: " << res << "\n";
     return res;
 }
 

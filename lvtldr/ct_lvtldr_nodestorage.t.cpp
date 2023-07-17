@@ -34,6 +34,11 @@ using Codethink::lvtshr::UniqueId;
 
 using namespace Codethink::lvtldr;
 
+#include <ct_lvtmdb_objectstore.h>
+#include <ct_lvtmdb_packageobject.h>
+#include <ct_lvtmdb_soci_writer.h>
+#include <ct_lvtprj_projectfile.h>
+
 TEST_CASE("Add entities to nodeStorage")
 {
     auto tmpDir = TmpDir{"add_entities_to_ns_test"};
@@ -729,4 +734,37 @@ TEST_CASE("Check Lakosian nodes")
         REQUIRE(aaaxxx_bla->qualifiedName() == "aaaxxx/aaaxxx_bla");
         REQUIRE(aaaxxx_bla->name() == "aaaxxx_bla");
     }
+}
+
+TEST_CASE("Test Project Database Loads Successfully")
+{
+    Codethink::lvtprj::ProjectFile project;
+
+    auto err = project.createEmpty();
+    REQUIRE_FALSE(err.has_error());
+
+    Codethink::lvtmdb::ObjectStore store;
+    store.withRWLock([&] {
+        auto *pkg = store.getOrAddPackage("ble", "ble", "ble", nullptr, nullptr);
+        REQUIRE(pkg);
+    });
+
+    const auto code_file = project.codeDatabasePath();
+    Codethink::lvtmdb::SociWriter writer;
+    writer.createOrOpen(code_file.string(), "codebase_db.sql");
+    store.writeToDatabase(writer);
+
+    auto res = project.resetCadDatabaseFromCodeDatabase();
+    REQUIRE_FALSE(res.has_error());
+
+    auto dbPath = project.cadDatabasePath();
+
+    NodeStorage storage;
+    storage.setDatabaseSourcePath(project.cadDatabasePath());
+    REQUIRE_FALSE(storage.getTopLevelPackages().empty());
+
+    // Test - setNotes used to crash when a database for cad
+    // is created based on a code database.
+    auto node = storage.getTopLevelPackages()[0];
+    node->setNotes("ABC");
 }

@@ -1168,17 +1168,9 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
     // just dump the data from one db to another.
     // So, for the time being, let's just nuke the CadDb and recreate it.
     sharedNodeStorage.closeDatabase();
-    auto cadDbPath = d_projectFile.cadDatabasePath();
-    try {
-        std::filesystem::remove(cadDbPath);
-    } catch (std::filesystem::filesystem_error& err) {
-        showErrorMessage(QString::fromStdString("File remove error: ") + QString(err.what()));
-        return;
-    }
-    try {
-        std::filesystem::copy(d_projectFile.codeDatabasePath(), cadDbPath);
-    } catch (std::filesystem::filesystem_error& err) {
-        showErrorMessage(QString::fromStdString("File copy error: ") + QString(err.what()));
+    const auto res = d_projectFile.resetCadDatabaseFromCodeDatabase();
+    if (res.has_error()) {
+        showErrorMessage(QString::fromStdString(res.error().errorMessage));
         return;
     }
 

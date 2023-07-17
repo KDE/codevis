@@ -66,9 +66,15 @@ namespace {
 bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std::string& db_schema_id)
 {
     std::filesystem::path resulting_file = db_schema_path / db_schema_id;
+
+#if 0
+// Temporarely disable this check, as it causes problems such as not updating the
+// database spec when we need.
+// We need a new way so that users can say that they want to override the file.
     if (std::filesystem::exists(resulting_file)) {
         return true;
     }
+#endif
 
     QFile thisFile = QString::fromStdString(":/db/" + db_schema_id);
     if (!thisFile.exists()) {
@@ -84,6 +90,10 @@ bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std
         }
     }
 
+    if (std::filesystem::exists(resulting_file)) {
+        std::filesystem::remove(resulting_file);
+    }
+
     bool res = thisFile.copy(QString::fromStdString(resulting_file.string())); // to the filesystem.
     if (!res) {
         qDebug() << "error, could not copy file to our internal filesystem" << thisFile.errorString();
@@ -92,7 +102,7 @@ bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std
     return true;
 }
 
-bool create_new_db(soci::session& db, const std::string& db_schema_id)
+bool run_migration(soci::session& db, const std::string& db_schema_id)
 {
     initialize_resources();
     QStringList dataLocations;
@@ -667,13 +677,26 @@ namespace Codethink::lvtmdb {
 
 SociWriter::SociWriter() = default;
 
+bool SociWriter::updateDbSchema(const std::string& path, const std::string& schemaPath)
+{
+    if (!std::filesystem::exists(path)) {
+        return createOrOpen(path, schemaPath);
+    }
+
+    // not a problem if called multiple times.
+    initialize_resources();
+    d_db.open(*soci::factory_sqlite3(), path);
+    bool res = run_migration(d_db, schemaPath);
+    return res;
+}
+
 bool SociWriter::createOrOpen(const std::string& path, const std::string& schemaPath)
 {
     const bool create_db = path == ":memory:" || !std::filesystem::exists(path);
 
     d_db.open(*soci::factory_sqlite3(), path);
     if (create_db) {
-        const bool res = create_new_db(d_db, schemaPath);
+        const bool res = run_migration(d_db, schemaPath);
         if (!res) {
             return false;
         }

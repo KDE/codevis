@@ -23,6 +23,7 @@ apt-get update && apt-get install \
     libclang-13-dev \
     libqt5core5a \
     qtbase5-dev \
+    qtwebengine5-dev \
     libsqlite3-dev \
     sqlite3 \
     catch2 \

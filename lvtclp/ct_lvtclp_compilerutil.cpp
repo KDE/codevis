@@ -31,10 +31,6 @@
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/Tooling.h>
 
-#ifndef CT_SCANBUILD
-#include <boost/process.hpp>
-#endif // !CT_SCANBUILD
-
 namespace {
 
 #ifdef __linux__
@@ -45,75 +41,41 @@ std::string trimLeadingSpaces(const std::string& str)
     return str.substr(loc);
 }
 
-#ifndef CT_SCANBUILD
-std::string readIStreamToString(std::istream& istream)
-// read from an input stream until EOF, saving the result in a std::string
-{
-    // must be <= 65536 because the pipe will only buffer 65536 bytes
-    constexpr std::streamsize READ_SIZE = 4096;
-    std::streamsize totalRead = 0;
-
-    std::string out;
-    out.reserve(READ_SIZE);
-
-    // copy in READ_SIZE chunks from the istream
-    while (!istream.eof()) {
-        out.resize(totalRead + READ_SIZE);
-
-        istream.read(out.data() + totalRead, READ_SIZE);
-        totalRead += istream.gcount();
-    }
-    out.resize(totalRead);
-    out.shrink_to_fit();
-
-    return out;
-}
-#endif // !CT_SCANBUILD
-
 std::optional<std::string> runCompiler(const std::string& compiler)
 // attempt to run something like
 //      compiler -E -v - </dev/null 1>/dev/null 2>out
 // if compiler isn't in path, return {}
 // if compiler doesn't return EXIT_SUCCESS, return {}
 // otherwise return the contents of stderr
-
 {
 #ifndef CT_SCANBUILD
-    const boost::filesystem::path path = boost::process::search_path(compiler);
-    if (path.empty()) {
-        // compiler not found in path
+    // The popen() function shall execute the command specified by the string command. It shall create a pipe between
+    // the calling program and the executed command, and shall return a pointer to a stream that can be used to either
+    // read from or write to the pipe.
+    // https://pubs.opengroup.org/onlinepubs/009696699/functions/popen.html
+    auto fp = popen("g++ -E -v -x c++ - </dev/null", "r");
+    if (fp == nullptr) {
         return {};
     }
 
-    boost::process::ipstream output;
-    // don't skip whitespace when recording output
-    output >> std::noskipws;
+    auto constexpr READ_SIZE = 4096;
+    char output[READ_SIZE];
+    std::string result = "";
+    while (fgets(output, READ_SIZE, fp) != nullptr) {
+        result += output;
+    }
 
-    // magic arguments to get the compiler to output its default include paths
-    // (amongst other things)
-    boost::process::child child(path,
-                                "-E",
-                                "-v",
-                                "-x",
-                                "c++",
-                                "-",
-                                boost::process::std_out > boost::process::null,
-                                boost::process::std_err > output,
-                                boost::process::std_in < boost::process::null);
-
-    std::string outStr;
-    try {
-        outStr = readIStreamToString(output);
-    } catch (...) {
+    // The pclose() function shall close a stream that was opened by popen(), wait for the command to terminate, and
+    // return the termination status of the process that was running the command language interpreter. However, if a
+    // call caused the termination status to be unavailable to pclose(), then pclose() shall return -1 with errno set
+    // to [ECHILD] to report this situation.
+    // https://pubs.opengroup.org/onlinepubs/009696699/functions/pclose.html
+    auto status = pclose(fp);
+    if (status != 0) {
         return {};
     }
 
-    child.wait();
-    if (child.exit_code() != EXIT_SUCCESS) {
-        return {};
-    }
-
-    return outStr;
+    return result;
 #else
     return {};
 #endif // !CT_SCANBUILD
@@ -237,41 +199,38 @@ std::optional<std::string> CompilerUtil::findBundledHeaders(bool silent)
     return {};
 #endif
 
-#ifndef CT_SCANBUILD // scanbuild doesn't like boost
 #ifdef CT_CLANG_HEADERS_RELATIVE_DIR
     // CT_LVT_BINDIR should contain the directory in which argv[0] is located.
     // CT_CLANG_HEADERS_RELATIVE_DIR should contain a relative path from that
     // directory to the installed copy of the clang tooling headers
-    auto envIt = boost::this_process::environment().find("CT_LVT_BINDIR");
-    if (envIt != boost::this_process::environment().end()) {
-        for (const auto& env : envIt->to_vector()) {
-            const std::filesystem::path binDir(env);
-            std::filesystem::path headersDir = binDir / CT_CLANG_HEADERS_RELATIVE_DIR;
-            if (std::filesystem::is_regular_file(headersDir / "stddef.h")) {
-                if (!silent) {
-                    qDebug() << "Found clang header dir: " << headersDir.string();
-                }
-                return std::filesystem::canonical(headersDir).string();
-            }
-
-            // try appimage path
-            headersDir = binDir / "lib" / "clang" / "include";
-            if (std::filesystem::is_regular_file(headersDir / "stddef.h")) {
-                if (!silent) {
-                    qDebug() << "Found clang header dir: " << headersDir.string();
-                }
-                return std::filesystem::canonical(headersDir).string();
-            }
+    const char *env_p = std::getenv("CT_LVT_BINDIR");
+    if (env_p) {
+        auto env = std::string{env_p};
+        const std::filesystem::path binDir(env);
+        std::filesystem::path headersDir = binDir / CT_CLANG_HEADERS_RELATIVE_DIR;
+        if (std::filesystem::is_regular_file(headersDir / "stddef.h")) {
             if (!silent) {
-                qDebug() << "WARNING: broken installation: cannot find clang headers at " << headersDir.string();
+                qDebug() << "Found clang header dir: " << headersDir.string();
             }
+            return std::filesystem::canonical(headersDir).string();
+        }
+
+        // try appimage path
+        headersDir = binDir / "lib" / "clang" / "include";
+        if (std::filesystem::is_regular_file(headersDir / "stddef.h")) {
+            if (!silent) {
+                qDebug() << "Found clang header dir: " << headersDir.string();
+            }
+            return std::filesystem::canonical(headersDir).string();
+        }
+        if (!silent) {
+            qDebug() << "WARNING: broken installation: cannot find clang headers at " << headersDir.string();
         }
     }
     if (!silent) {
         qDebug() << "Finding headers with heuristics - expect compilation failures";
     }
 #endif // CT_CLANG_HEADERS_RELATIVE_DIR
-#endif // !CT_SCANBUILD
 
     return {};
 }

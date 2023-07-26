@@ -25,7 +25,6 @@ class DiagramServerConan(ConanFile):
 
     requires = (
         "freetype/2.11.1",
-        "boost/1.78.0",
         "sqlite3/3.37.2",
         "qt/5.15.2",
         "openssl/1.1.1q",

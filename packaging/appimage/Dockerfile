@@ -24,13 +24,13 @@ RUN apt-get update && apt-get -qq install \
     flex \
     git \
     lcov \
-    libboost1.74-all-dev \
     libclang-14-dev \
     libqt5core5a \
     libquazip5-dev \
     libsqlite3-dev \
     llvm-14-dev \
     moreutils \
+    python3-dev \
     qtbase5-dev \
     qtwebengine5-dev \
     libqt5svg5-dev \
@@ -119,7 +119,6 @@ RUN apt-get update && apt-get -qq install \
     cppcheck \
     flex \
     git \
-    libboost1.67-all-dev \
     libclang-14-dev \
     libqt5core5a \
     libquazip5-dev \
@@ -162,8 +161,6 @@ RUN scripts/packaging/build-package.sh --no-deploy
 RUN mkdir -p "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/root/diagram-server/build/lvt/thirdparty/libquazip.so" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/x86_64-linux-gnu/libQt5Core.so.5" "${EXTERNAL_SO_DEPENDENCIES}" \
-    && cp "/usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.67.0" "${EXTERNAL_SO_DEPENDENCIES}" \
-    && cp "/usr/lib/x86_64-linux-gnu/libboost_system.so.1.67.0" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/llvm-14/lib/libclang-cpp.so.14" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/llvm-14/lib/libLLVM-14.so.1" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/x86_64-linux-gnu/libsqlite3.so.0" "${EXTERNAL_SO_DEPENDENCIES}" \

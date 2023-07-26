@@ -1,6 +1,6 @@
 #!/bin/sh
 
-POS_CHECKS="boost-*,cert-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*"
+POS_CHECKS="cert-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*"
 NEG_CHECKS="-modernize-use-trailing-return-type,-cppcoreguidelines-special-member-functions,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-readability-implicit-bool-conversion,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-owning-memory,-modernize-use-override,-readability-function-cognitive-complexity,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-readability-identifier-length,-readability-suspicious-call-argument,-cppcoreguidelines-init-variables,-cert-err58-cpp,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-type-const-cast,-cppcoreguidelines-avoid-goto,-cppcoreguidelines-pro-type-vararg,-clang-analyzer-*"
 
 EXEC=clang-tidy-14

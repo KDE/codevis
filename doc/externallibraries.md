@@ -1,8 +1,6 @@
 ## External Libraries
 
 
-* Boost 1.78
-    * www.boost.org
 * cpp::result master
     * https://github.com/bitwizeshift/result
 * ECM - Extra CMake Modules

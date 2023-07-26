@@ -57,7 +57,6 @@ class LVTLDR_EXPORT ComponentNode : public LakosianNode {
 
     ~ComponentNode() noexcept override;
 
-    ComponentNode(ComponentNode&& other) noexcept;
     static inline ComponentNode *from(LakosianNode *other)
     {
         return dynamic_cast<ComponentNode *>(other);

@@ -31,8 +31,6 @@
 
 #include <ct_lvtldr_nodestorage.h>
 
-#include <boost/algorithm/string/predicate.hpp>
-
 #include <QApplication>
 #include <QDebug>
 #include <QInputDialog>
@@ -169,7 +167,7 @@ LakosianNameRules::checkName(bool hasParent, const std::string& name, const std:
             return cpp::fail(InvalidNameError{
                 header + QObject::tr("Name too long, must be at most eight letters (parent package(3) + name(1-5))")});
         }
-        if (!boost::algorithm::starts_with(name, parentName)) {
+        if (!QString::fromStdString(name).startsWith(QString::fromStdString(parentName))) {
             return cpp::fail(InvalidNameError{header
                                               + QObject::tr("the package name must start with the parent's name (%1)")
                                                     .arg(QString::fromStdString(parentName))});

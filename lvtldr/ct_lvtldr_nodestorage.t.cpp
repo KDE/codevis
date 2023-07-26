@@ -47,7 +47,7 @@ TEST_CASE("Add entities to nodeStorage")
     auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
 
     int callcount = 0;
-    nodeStorage.registerNodeAddedCallback(&callcount, [&callcount](LakosianNode *_, std::any) { // NOLINT
+    QObject::connect(&nodeStorage, &NodeStorage::nodeAdded, [&callcount](LakosianNode *_, std::any) { // NOLINT
         (void) _;
         callcount += 1;
     });

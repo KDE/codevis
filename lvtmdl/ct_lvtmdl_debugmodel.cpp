@@ -21,9 +21,6 @@
 #include <QDir>
 #include <QLoggingCategory>
 #include <QMutex>
-#include <QMutexLocker>
-
-#include <boost/circular_buffer.hpp>
 
 #include <preferences.h>
 
@@ -56,7 +53,7 @@ static DebugModel *self = nullptr; // NOLINT
 struct DebugModel::Private {
     constexpr static int BUFFER_ELEMENTS = 5000;
 
-    boost::circular_buffer<DebugData> data;
+    std::vector<DebugData> data;
     QMutex mtx;
 
     Private(): data(BUFFER_ELEMENTS){};

@@ -39,7 +39,7 @@
 #include <ct_lvtshr_graphenums.h>
 #include <ct_lvtshr_uniqueid.h>
 
-#include <boost/signals2.hpp>
+#include <QObject>
 
 #include <functional>
 #include <memory>
@@ -71,7 +71,8 @@ struct LVTLDR_EXPORT NamingUtils {
 // class LakosianNode
 // ==========================
 
-class LVTLDR_EXPORT LakosianNode {
+class LVTLDR_EXPORT LakosianNode : public QObject {
+    Q_OBJECT
     // A node in a physical graph. This could be a package group, package,
     // component or type.
     // Should not be used outside of lvtldr.
@@ -94,12 +95,6 @@ class LVTLDR_EXPORT LakosianNode {
         std::vector<LakosianNode *> innerPackages;
         std::vector<LakosianEdge> providers;
         std::vector<LakosianEdge> clients;
-
-        boost::signals2::signal<void(LakosianNode *)> onNameChanged;
-        boost::signals2::signal<void(size_t)> onChildCountChanged;
-        boost::signals2::signal<void(std::string)> onNotesChanged;
-
-        std::map<void *, std::vector<boost::signals2::connection>> connections;
 
         explicit Private(NodeStorage& store, std::optional<std::reference_wrapper<DatabaseHandler>> dbHandler):
             store(store), dbHandler(dbHandler)
@@ -140,8 +135,6 @@ class LVTLDR_EXPORT LakosianNode {
     // must outlive this LakosianNode
 
     virtual ~LakosianNode() noexcept;
-
-    LakosianNode(LakosianNode&& other) noexcept;
 
     // ACCESSORS
     [[nodiscard]] virtual lvtshr::DiagramType type() const = 0;
@@ -194,11 +187,9 @@ class LVTLDR_EXPORT LakosianNode {
     bool hasProvider(LakosianNode *other);
 
     // signals
-    void registerOnNameChanged(void *receiver, const std::function<void(LakosianNode *)>& callback);
-    void registerChildCountChanged(void *receiver, const std::function<void(size_t)>& callback);
-    void registerOnNotesChanged(void *receiver, const std::function<void(std::string)>& callback);
-
-    void unregisterAllCallbacksTo(void *receiver);
+    Q_SIGNAL void onNameChanged(LakosianNode *);
+    Q_SIGNAL void onChildCountChanged(size_t);
+    Q_SIGNAL void onNotesChanged(std::string);
 };
 
 LVTLDR_EXPORT bool operator==(const LakosianNode& lhs, const LakosianNode& rhs);

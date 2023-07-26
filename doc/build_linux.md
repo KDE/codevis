@@ -19,7 +19,6 @@ apt-get update && apt-get install \
     cmake \
     git \
     lcov \
-    libboost1.74-all-dev \
     libclang-13-dev \
     libqt5core5a \
     qtbase5-dev \

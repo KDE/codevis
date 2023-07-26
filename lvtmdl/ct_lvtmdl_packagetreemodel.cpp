@@ -48,26 +48,21 @@ struct PackageTreeModel::PackageTreeModelPrivate {
 PackageTreeModel::PackageTreeModel(NodeStorage& nodeStorage):
     d(std::make_unique<PackageTreeModel::PackageTreeModelPrivate>(nodeStorage))
 {
-    nodeStorage.registerNodeAddedCallback(this, [this](LakosianNode *node, std::any) { // NOLINT
+    QObject::connect(&nodeStorage, &NodeStorage::nodeAdded, [this](LakosianNode *node, std::any) { // NOLINT
         reload();
         (void) node;
     });
 
-    nodeStorage.registerNodeRemovedCallback(this, [this](LakosianNode *node) {
+    QObject::connect(&nodeStorage, &NodeStorage::nodeRemoved, [this](LakosianNode *node) {
         reload();
         (void) node;
     });
 
-    nodeStorage.registerNodeNameChangedCallback(this, [this](LakosianNode *node) {
+    QObject::connect(&nodeStorage, &NodeStorage::nodeNameChanged, [this](LakosianNode *node) {
         if (QStandardItem *item = itemForLakosianNode(node)) {
             item->setText(QString::fromStdString(node->name()));
         }
     });
-}
-
-PackageTreeModel::~PackageTreeModel()
-{
-    d->nodeStorage.unregisterAllCallbacksTo(this);
 }
 
 QStandardItem *PackageTreeModel::itemForLakosianNode(LakosianNode *node)

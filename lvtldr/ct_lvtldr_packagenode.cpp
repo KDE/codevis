@@ -52,8 +52,6 @@ PackageNode::PackageNode(NodeStorage& store,
 
 PackageNode::~PackageNode() noexcept = default;
 
-PackageNode::PackageNode(PackageNode&&) noexcept = default;
-
 lvtshr::DiagramType PackageNode::type() const
 {
     return lvtshr::DiagramType::PackageType;
@@ -197,7 +195,7 @@ cpp::result<void, AddChildError> PackageNode::addChild(LakosianNode *child)
     }
     auto& dbHandler = d_dbHandler->get();
     dbHandler.updateFields(d_fields);
-    d->onChildCountChanged(d->children.size());
+    Q_EMIT onChildCountChanged(d->children.size());
     return {};
 }
 
@@ -232,7 +230,7 @@ void PackageNode::removeChild(LakosianNode *child)
         v.erase(std::remove(v.begin(), v.end(), child->id()), v.end());
     }
     d_dbHandler->get().updateFields(d_fields);
-    d->onChildCountChanged(d->children.size());
+    Q_EMIT onChildCountChanged(d->children.size());
 }
 
 void PackageNode::setName(std::string const& newName)

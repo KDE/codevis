@@ -165,8 +165,11 @@ struct ModelUtil {
 
 } // namespace Codethink::lvtclp
 
+#pragma push_macro("slots")
+#undef slots
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
+#pragma pop_macro("slots")
 
 namespace py = pybind11;
 struct PyDefaultGilReleasedContext {

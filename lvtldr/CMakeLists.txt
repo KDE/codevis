@@ -1,4 +1,3 @@
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
 AddTargetLibrary(
@@ -21,11 +20,9 @@ AddTargetLibrary(
         ct_lvtldr_componentnodefields.h
         ct_lvtldr_databasehandler.h
         ct_lvtldr_graphloader.h
-        ct_lvtldr_nodestorage.h
         ct_lvtldr_packagenode.h
         ct_lvtldr_packagenodefields.h
         ct_lvtldr_physicalloader.h
-        ct_lvtldr_lakosiannode.h
         ct_lvtldr_lakosianedge.h
         ct_lvtldr_repositorynode.h
         ct_lvtldr_repositorynodefields.h
@@ -33,11 +30,15 @@ AddTargetLibrary(
         ct_lvtldr_typenode.h
         ct_lvtldr_igraphloader.h
         ct_lvtldr_alloweddependencyloader.h
+    QT_HEADERS
+        ct_lvtldr_nodestorage.h
+        ct_lvtldr_lakosiannode.h
     LIBRARIES
         Codethink::lvtshr
         Codethink::lvtmdb # Used only for testing, but clazy will complain if not added as a dependency explicitly
         Soci::Core
         Soci::soci_sqlite3
+        Qt5::Core
         ${SQLite3_LIBRARIES}
 )
 

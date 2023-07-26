@@ -39,27 +39,7 @@ using RecordNumberType = Codethink::lvtshr::UniqueId::RecordNumberType;
 
 struct NodeStorage::Private {
     std::unique_ptr<DatabaseHandler> dbHandler = nullptr;
-
     std::unordered_map<lvtshr::UniqueId, std::unique_ptr<LakosianNode>, lvtshr::UniqueId::Hash> nodes;
-
-// NOLINTBEGIN
-#define BUILD_CALLBACK_PRIVATE(callback_type, name) boost::signals2::signal<callback_type> name
-
-    BUILD_CALLBACK_PRIVATE(StorageClearedCallback, storageClearedSignal);
-    BUILD_CALLBACK_PRIVATE(StorageChangedCallback, storageChangedSignal);
-    BUILD_CALLBACK_PRIVATE(NodeAddedCallback, nodeAddedSignal);
-    BUILD_CALLBACK_PRIVATE(NodeRemovedCallback, nodeRemovedSignal);
-    BUILD_CALLBACK_PRIVATE(NodeNameChangedCallback, nodeNameChangedSignal);
-    BUILD_CALLBACK_PRIVATE(PhysicalDependencyAddedCallback, physicalDependencyAddedSignal);
-    BUILD_CALLBACK_PRIVATE(PhysicalDependencyRemovedCallback, physicalDependencyRemovedSignal);
-    BUILD_CALLBACK_PRIVATE(LogicalRelationAddedCallback, logicalRelationAddedSignal);
-    BUILD_CALLBACK_PRIVATE(LogicalRelationRemovedCallback, logicalRelationRemovedSignal);
-    BUILD_CALLBACK_PRIVATE(EntityReparentCallback, entityReparentSignal);
-
-#undef BUILD_CALLBACK_PRIVATE
-    // NOLINTEND
-
-    std::unordered_map<void *, std::vector<boost::signals2::connection>> connections;
 };
 
 NodeStorage::NodeStorage(): d(std::make_unique<Private>())
@@ -85,43 +65,6 @@ void NodeStorage::closeDatabase()
         d->dbHandler->close();
         clear();
     }
-}
-
-// NOLINTBEGIN
-#define BUILD_CALLBACK_IMPL(callback_type, name)                                                                       \
-    void NodeStorage::register##callback_type(void *receiver, const std::function<callback_type>& callback)            \
-    {                                                                                                                  \
-        auto connection = d->name.connect(callback);                                                                   \
-        d->connections[receiver].push_back(connection);                                                                \
-    }
-
-BUILD_CALLBACK_IMPL(StorageClearedCallback, storageClearedSignal)
-BUILD_CALLBACK_IMPL(StorageChangedCallback, storageChangedSignal)
-BUILD_CALLBACK_IMPL(NodeAddedCallback, nodeAddedSignal)
-BUILD_CALLBACK_IMPL(NodeRemovedCallback, nodeRemovedSignal)
-BUILD_CALLBACK_IMPL(NodeNameChangedCallback, nodeNameChangedSignal)
-BUILD_CALLBACK_IMPL(PhysicalDependencyAddedCallback, physicalDependencyAddedSignal)
-BUILD_CALLBACK_IMPL(PhysicalDependencyRemovedCallback, physicalDependencyRemovedSignal)
-BUILD_CALLBACK_IMPL(LogicalRelationAddedCallback, logicalRelationAddedSignal)
-BUILD_CALLBACK_IMPL(LogicalRelationRemovedCallback, logicalRelationRemovedSignal)
-BUILD_CALLBACK_IMPL(EntityReparentCallback, entityReparentSignal)
-
-#undef BUILD_CALLBACK_IMPL
-// NOLINTEND
-
-void NodeStorage::unregisterAllCallbacksTo(void *receiver)
-{
-    if (d->connections.count(receiver) == 0) {
-        return;
-    }
-
-    for (const auto& c : d->connections.at(receiver)) {
-        c.disconnect();
-    }
-    auto it = std::find_if(d->connections.begin(), d->connections.end(), [&receiver](const auto& e) {
-        return e.first == receiver;
-    });
-    d->connections.erase(it);
 }
 
 void NodeStorage::preloadHighLevelComponents()
@@ -188,11 +131,11 @@ cpp::result<LakosianNode *, ErrorAddPackage> NodeStorage::addPackage(const std::
         }
     }
 
-    d->nodeAddedSignal(lakosianNode, std::move(userdata));
-    lakosianNode->registerOnNameChanged(this, [this](LakosianNode *node) {
+    Q_EMIT nodeAdded(lakosianNode, std::move(userdata));
+    connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
         updateAndNotifyNodeRenameV2<lvtldr::PackageNode>(node);
     });
-    d->storageChangedSignal();
+    Q_EMIT storageChanged();
     return lakosianNode;
 }
 
@@ -219,9 +162,9 @@ cpp::result<void, ErrorRemovePackage> NodeStorage::removePackage(LakosianNode *n
     // we may need to provide a better algorithm in the future.
     d->dbHandler->removePackageFieldsById(node->id());
 
-    d->nodeRemovedSignal(node);
+    Q_EMIT nodeRemoved(node);
     d->nodes.erase(node->uid());
-    d->storageChangedSignal();
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -259,11 +202,11 @@ NodeStorage::addComponent(const std::string& name, const std::string& qualifiedN
         std::exit(EXIT_FAILURE);
     }
 
-    d->nodeAddedSignal(lakosianNode, std::any());
-    lakosianNode->registerOnNameChanged(this, [this](LakosianNode *node) {
+    Q_EMIT nodeAdded(lakosianNode, std::any());
+    connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
         updateAndNotifyNodeRenameV2<lvtldr::ComponentNode>(node);
     });
-    d->storageChangedSignal();
+    Q_EMIT storageChanged();
     return lakosianNode;
 }
 
@@ -283,7 +226,7 @@ cpp::result<void, ErrorRemoveComponent> NodeStorage::removeComponent(LakosianNod
     }
 
     // Must be done before actual removal
-    d->nodeRemovedSignal(node);
+    Q_EMIT nodeRemoved(node);
 
     // Update cache
     d->nodes.at(node->uid());
@@ -296,7 +239,7 @@ cpp::result<void, ErrorRemoveComponent> NodeStorage::removeComponent(LakosianNod
     // Update database
     d->dbHandler->removeComponentFieldsById(removedNode->id());
 
-    d->storageChangedSignal();
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -350,8 +293,8 @@ cpp::result<LakosianNode *, ErrorAddUDT> NodeStorage::addLogicalEntity(const std
     assert(addedNode);
     parent->addChild(addedNode).expect("Unexpected failure adding a logical entity to the NodeStorage.");
 
-    d->nodeAddedSignal(addedNode, std::any());
-    d->storageChangedSignal();
+    Q_EMIT nodeAdded(addedNode, std::any());
+    Q_EMIT storageChanged();
     return addedNode;
 }
 
@@ -384,8 +327,8 @@ cpp::result<void, ErrorRemoveLogicalEntity> NodeStorage::removeLogicalEntity(Lak
     d->dbHandler->removeUdtFieldsById(removedNode->id());
 
     // Notify
-    d->nodeRemovedSignal(removedNode);
-    d->storageChangedSignal();
+    Q_EMIT nodeRemoved(removedNode);
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -512,8 +455,8 @@ NodeStorage::addPhysicalDependency(LakosianNode *source, LakosianNode *target, P
     source->invalidateProviders();
     target->invalidateClients();
 
-    d->physicalDependencyAddedSignal(source, target, type);
-    d->storageChangedSignal();
+    Q_EMIT physicalDependencyAdded(source, target, type);
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -563,8 +506,8 @@ NodeStorage::removePhysicalDependency(LakosianNode *source, LakosianNode *target
     source->invalidateProviders();
     target->invalidateClients();
 
-    d->physicalDependencyRemovedSignal(source, target);
-    d->storageChangedSignal();
+    Q_EMIT physicalDependencyRemoved(source, target);
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -616,8 +559,8 @@ NodeStorage::addLogicalRelation(TypeNode *source, TypeNode *target, LakosRelatio
     source->invalidateProviders();
     target->invalidateClients();
 
-    d->logicalRelationAddedSignal(source, target, type);
-    d->storageChangedSignal();
+    Q_EMIT logicalRelationAdded(source, target, type);
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -660,8 +603,8 @@ NodeStorage::removeLogicalRelation(TypeNode *source, TypeNode *target, LakosRela
     source->invalidateProviders();
     target->invalidateClients();
 
-    d->logicalRelationRemovedSignal(source, target, type);
-    d->storageChangedSignal();
+    Q_EMIT logicalRelationRemoved(source, target, type);
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -689,8 +632,8 @@ cpp::result<void, ErrorReparentEntity> NodeStorage::reparentEntity(LakosianNode 
     newParent->invalidateChildren();
     entity->invalidateParent();
 
-    d->entityReparentSignal(entity, oldParent, newParent);
-    d->storageChangedSignal();
+    Q_EMIT entityReparent(entity, oldParent, newParent);
+    Q_EMIT storageChanged();
     return {};
 }
 
@@ -781,7 +724,7 @@ std::vector<LakosianNode *> NodeStorage::getTopLevelPackages()
 
 void NodeStorage::clear()
 {
-    d->storageClearedSignal();
+    Q_EMIT storageCleared();
     d->nodes.clear();
 }
 
@@ -821,7 +764,7 @@ LakosianNode *NodeStorage::fetchFromDBByQualifiedNameV2(const std::string& quali
     auto uid = lvtshr::UniqueId{LakosianNodeType<LDR_TYPE>::diagramType, dao.id};
     auto [it, _] = d->nodes.emplace(uid, std::make_unique<LDR_TYPE>(*this, *d->dbHandler, dao));
     auto *lakosianNode = it->second.get();
-    lakosianNode->registerOnNameChanged(this, [this](LakosianNode *node) {
+    connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
         updateAndNotifyNodeRenameV2<LDR_TYPE>(node);
     });
     return lakosianNode;
@@ -862,7 +805,7 @@ LakosianNode *NodeStorage::fetchFromDBByIdV2(const lvtshr::UniqueId& uid)
 
     auto [it, _] = d->nodes.emplace(uid, std::make_unique<LDR_TYPE>(*this, *d->dbHandler, dao));
     auto *lakosianNode = it->second.get();
-    lakosianNode->registerOnNameChanged(this, [this](LakosianNode *node) {
+    connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
         updateAndNotifyNodeRenameV2<LDR_TYPE>(node);
     });
     return lakosianNode;
@@ -872,6 +815,6 @@ template<typename LDR_TYPE>
 void NodeStorage::updateAndNotifyNodeRenameV2(LakosianNode *node)
 {
     d->dbHandler->updateFields(LDR_TYPE::from(node)->getFields());
-    d->nodeNameChangedSignal(node);
-    d->storageChangedSignal();
+    Q_EMIT nodeNameChanged(node);
+    Q_EMIT storageChanged();
 }

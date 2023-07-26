@@ -1,5 +1,4 @@
 include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 include_directories(SYSTEM ${QUAZIP_INCLUDE_DIRS})
 
 AddTargetLibrary(

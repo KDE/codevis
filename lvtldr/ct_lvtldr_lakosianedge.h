@@ -25,8 +25,6 @@
 #include <ct_lvtshr_graphenums.h>
 #include <ct_lvtshr_uniqueid.h>
 
-#include <boost/signals2.hpp>
-
 #include <functional>
 #include <memory>
 #include <string>

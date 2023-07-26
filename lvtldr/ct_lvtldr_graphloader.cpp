@@ -28,8 +28,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <boost/container_hash/hash.hpp>
-
 // TODO: Have a way to enable debugs from application
 //       While removing the dependency from ldr to QtGui and QtWidgets, we needed to avoid touching the Preferences
 //       module directly, since they depend on those things. We need a way to enable/disable debug messages from this
@@ -102,11 +100,12 @@ struct GraphLoader::LoaderEdge {
 struct GraphLoader::EdgeHash {
     std::size_t operator()(const LoaderEdge& edge) const
     {
-        std::size_t hash = 0;
-        boost::hash_combine(hash, edge.source);
-        boost::hash_combine(hash, edge.target);
-        boost::hash_combine(hash, edge.type);
-        return hash;
+        auto h = std::hash<decltype(edge.source)>{}(edge.source);
+        auto h2 = std::hash<decltype(edge.target)>{}(edge.target);
+        h = h ^ (h2 << 1);
+        auto h3 = std::hash<decltype(edge.type)>{}(edge.type);
+        h = h ^ (h3 << 1);
+        return h;
     }
 };
 

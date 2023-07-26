@@ -36,7 +36,6 @@
 #include <QDebug>
 #include <QDir>
 
-#include <boost/container_hash/hash.hpp>
 #include <llvm/Support/FileSystem.h>
 
 #include <cassert>
@@ -64,10 +63,7 @@ struct FoundThing {
 struct FoundThingHash {
     std::size_t operator()(FoundThing const& thing) const
     {
-        std::size_t hash = 0;
-        boost::hash_combine(hash, thing.parent);
-        boost::hash_combine(hash, thing.qualifiedName);
-        return hash;
+        return std::hash<std::string>{}(thing.parent + thing.qualifiedName);
     }
 };
 

@@ -13,7 +13,7 @@ SHELL ["/bin/bash", "--login", "-c"]
 
 RUN yum -y install epel-release \
     && yum -y makecache \
-    && yum -y update && yum -y install wget gnupg git wheel python3-pip bash ninja zlib-devel boost169-devel
+    && yum -y update && yum -y install wget gnupg git wheel python3-pip bash ninja zlib-devel
 
 FROM base AS compile_openssl
 
@@ -163,8 +163,6 @@ RUN mkdir /codevis/build/diagram-server \
     && git submodule update --recursive \
     && cd /codevis \
     && cmake -DCMAKE_BUILD_TYPE=Release \
-        -DBOOST_INCLUDEDIR=/usr/include/boost169 \
-        -DBOOST_LIBRARYDIR=/usr/lib64/boost169 \
         -DCOMPILE_TESTS=OFF \
         -DBUILD_DESKTOP_APP=OFF \
         -B /codevis/build/diagram-server \
@@ -181,8 +179,6 @@ RUN yum -y install python-jinja2 \
     && cp "/codevis/build/diagram-server/thirdparty/libquazip.so" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/libQt5Core.so.5" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/lib/libLLVM-15.so" "${EXTERNAL_SO_DEPENDENCIES}" \
-    && cp "/lib64/libboost_filesystem.so.1.69.0" "${EXTERNAL_SO_DEPENDENCIES}" \
-    && cp "/lib64/libboost_system.so.1.69.0" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/lib/libclang-cpp.so.15" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/lib64/libsqlite3.so.0" "${EXTERNAL_SO_DEPENDENCIES}" \
     && mkdir -p "${OUTDIR}"

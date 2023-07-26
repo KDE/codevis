@@ -237,11 +237,9 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
     d->physicalLoader.setGraph(this);
     d->physicalLoader.setExtDeps(d->graphData.showExternalDepEdges);
 
-    d->nodeStorage.registerStorageClearedCallback(this, [this]() {
-        clearGraph();
-    });
+    QObject::connect(&d->nodeStorage, &NodeStorage::storageCleared, this, &GraphicsScene::clearGraph);
 
-    d->nodeStorage.registerNodeNameChangedCallback(this, [this](LakosianNode *node) {
+    QObject::connect(&d->nodeStorage, &NodeStorage::nodeNameChanged, this, [this](LakosianNode *node) {
         auto *entity = findLakosEntityFromUid(node->uid());
         if (!entity) {
             // This Graphics Scene doesn't have such entity to update
@@ -266,7 +264,7 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
         }
     });
 
-    d->nodeStorage.registerNodeAddedCallback(this, [this](LakosianNode *node, std::any userdata) {
+    QObject::connect(&d->nodeStorage, &NodeStorage::nodeAdded, this, [this](LakosianNode *node, std::any userdata) {
         auto *parentPackage = node->parent();
         auto *parent = parentPackage ? findLakosEntityFromUid(parentPackage->uid()) : nullptr;
 
@@ -322,7 +320,7 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
         }
     });
 
-    d->nodeStorage.registerNodeRemovedCallback(this, [this](LakosianNode *node) {
+    QObject::connect(&d->nodeStorage, &NodeStorage::nodeRemoved, this, [this](LakosianNode *node) {
         auto *entity = findLakosEntityFromUid(node->uid());
         if (!entity) {
             // This Graphics Scene doesn't have such entity to update
@@ -332,81 +330,89 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
         unloadEntity(entity);
     });
 
-    d->nodeStorage.registerPhysicalDependencyAddedCallback(
-        this,
-        [this](LakosianNode *source, LakosianNode *target, PhysicalDependencyType type) {
-            auto *fromEntity = findLakosEntityFromUid(source->uid());
-            auto *toEntity = findLakosEntityFromUid(target->uid());
-            if (!fromEntity || !toEntity) {
-                // This Graphics Scene doesn't have such entities to update
-                return;
-            }
-            switch (type) {
-            case PhysicalDependencyType::ConcreteDependency: {
-                addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::PackageDependency);
-                break;
-            }
-            case PhysicalDependencyType::AllowedDependency: {
-                addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::AllowedDependency);
-                break;
-            }
-            }
+    QObject::connect(&d->nodeStorage,
+                     &NodeStorage::physicalDependencyAdded,
+                     this,
+                     [this](LakosianNode *source, LakosianNode *target, PhysicalDependencyType type) {
+                         auto *fromEntity = findLakosEntityFromUid(source->uid());
+                         auto *toEntity = findLakosEntityFromUid(target->uid());
+                         if (!fromEntity || !toEntity) {
+                             // This Graphics Scene doesn't have such entities to update
+                             return;
+                         }
+                         switch (type) {
+                         case PhysicalDependencyType::ConcreteDependency: {
+                             addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::PackageDependency);
+                             break;
+                         }
+                         case PhysicalDependencyType::AllowedDependency: {
+                             addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::AllowedDependency);
+                             break;
+                         }
+                         }
 
-            fromEntity->getTopLevelParent()->calculateEdgeVisibility();
-            fromEntity->recursiveEdgeRelayout();
-        });
+                         fromEntity->getTopLevelParent()->calculateEdgeVisibility();
+                         fromEntity->recursiveEdgeRelayout();
+                     });
 
-    d->nodeStorage.registerPhysicalDependencyRemovedCallback(this, [this](LakosianNode *source, LakosianNode *target) {
-        auto *fromEntity = findLakosEntityFromUid(source->uid());
-        auto *toEntity = findLakosEntityFromUid(target->uid());
-        if (!fromEntity || !toEntity) {
-            // This Graphics Scene doesn't have such entities to update
-            return;
-        }
+    QObject::connect(&d->nodeStorage,
+                     &NodeStorage::physicalDependencyRemoved,
+                     this,
+                     [this](LakosianNode *source, LakosianNode *target) {
+                         auto *fromEntity = findLakosEntityFromUid(source->uid());
+                         auto *toEntity = findLakosEntityFromUid(target->uid());
+                         if (!fromEntity || !toEntity) {
+                             // This Graphics Scene doesn't have such entities to update
+                             return;
+                         }
 
-        // explicit copy, so we don't mess with internal iterators.
-        auto allCollections = fromEntity->edgesCollection();
+                         // explicit copy, so we don't mess with internal iterators.
+                         auto allCollections = fromEntity->edgesCollection();
 
-        std::vector<LakosRelation *> toDelete;
-        for (const auto& collection : allCollections) {
-            if (collection->to() == toEntity) {
-                for (auto *relation : collection->relations()) {
-                    fromEntity->removeEdge(relation);
-                    toEntity->removeEdge(relation);
-                    toDelete.push_back(relation);
-                }
-            }
-        }
+                         std::vector<LakosRelation *> toDelete;
+                         for (const auto& collection : allCollections) {
+                             if (collection->to() == toEntity) {
+                                 for (auto *relation : collection->relations()) {
+                                     fromEntity->removeEdge(relation);
+                                     toEntity->removeEdge(relation);
+                                     toDelete.push_back(relation);
+                                 }
+                             }
+                         }
 
-        for (LakosRelation *rel : toDelete) {
-            rel->setParent(nullptr);
-            removeItem(rel);
-            d->relationVec.erase(std::remove(std::begin(d->relationVec), std::end(d->relationVec), rel),
+                         for (LakosRelation *rel : toDelete) {
+                             rel->setParent(nullptr);
+                             removeItem(rel);
+                             d->relationVec.erase(
+                                 std::remove(std::begin(d->relationVec), std::end(d->relationVec), rel),
                                  std::end(d->relationVec));
 
-            delete rel;
-        }
+                             delete rel;
+                         }
 
-        fromEntity->getTopLevelParent()->calculateEdgeVisibility();
-        fromEntity->recursiveEdgeRelayout();
-    });
+                         fromEntity->getTopLevelParent()->calculateEdgeVisibility();
+                         fromEntity->recursiveEdgeRelayout();
+                     });
 
-    d->nodeStorage.registerLogicalRelationAddedCallback(
-        this,
-        [this](LakosianNode *source, LakosianNode *target, lvtshr::LakosRelationType type) {
-            auto *fromEntity = findLakosEntityFromUid(source->uid());
-            auto *toEntity = findLakosEntityFromUid(target->uid());
-            if (!fromEntity || !toEntity) {
-                // This Graphics Scene doesn't have such entities to update
-                return;
-            }
-            addEdgeBetween(fromEntity, toEntity, type);
+    QObject::connect(&d->nodeStorage,
+                     &NodeStorage::logicalRelationAdded,
+                     this,
+                     [this](LakosianNode *source, LakosianNode *target, lvtshr::LakosRelationType type) {
+                         auto *fromEntity = findLakosEntityFromUid(source->uid());
+                         auto *toEntity = findLakosEntityFromUid(target->uid());
+                         if (!fromEntity || !toEntity) {
+                             // This Graphics Scene doesn't have such entities to update
+                             return;
+                         }
+                         addEdgeBetween(fromEntity, toEntity, type);
 
-            fromEntity->getTopLevelParent()->calculateEdgeVisibility();
-            fromEntity->recursiveEdgeRelayout();
-        });
+                         fromEntity->getTopLevelParent()->calculateEdgeVisibility();
+                         fromEntity->recursiveEdgeRelayout();
+                     });
 
-    d->nodeStorage.registerLogicalRelationRemovedCallback(
+    QObject::connect(
+        &d->nodeStorage,
+        &NodeStorage::logicalRelationRemoved,
         this,
         [this](LakosianNode *source, LakosianNode *target, lvtshr::LakosRelationType type) {
             auto *fromEntity = findLakosEntityFromUid(source->uid());
@@ -439,31 +445,29 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
             fromEntity->recursiveEdgeRelayout();
         });
 
-    d->nodeStorage.registerEntityReparentCallback(
-        this,
-        [this](LakosianNode *lakosianNode, LakosianNode *oldParent, LakosianNode *newParent) {
-            auto *entity = findLakosEntityFromUid(lakosianNode->uid());
-            if (!entity) {
-                // This Graphics Scene doesn't have such entity to update
-                return;
-            }
+    QObject::connect(&d->nodeStorage,
+                     &NodeStorage::entityReparent,
+                     this,
+                     [this](LakosianNode *lakosianNode, LakosianNode *oldParent, LakosianNode *newParent) {
+                         auto *entity = findLakosEntityFromUid(lakosianNode->uid());
+                         if (!entity) {
+                             // This Graphics Scene doesn't have such entity to update
+                             return;
+                         }
 
-            auto *oldParentEntity = findLakosEntityFromUid(oldParent->uid());
-            auto *newParentEntity = findLakosEntityFromUid(newParent->uid());
-            if (oldParentEntity && !newParentEntity) {
-                // Entity must vanish from this scene, as it doesn't have the other parent to go to.
-                removeItem(entity);
-            } else if (newParentEntity) {
-                // Setting the new parent will automatically update the old parent if it is in this scene.
-                entity->setParentItem(newParentEntity);
-            }
-        });
+                         auto *oldParentEntity = findLakosEntityFromUid(oldParent->uid());
+                         auto *newParentEntity = findLakosEntityFromUid(newParent->uid());
+                         if (oldParentEntity && !newParentEntity) {
+                             // Entity must vanish from this scene, as it doesn't have the other parent to go to.
+                             removeItem(entity);
+                         } else if (newParentEntity) {
+                             // Setting the new parent will automatically update the old parent if it is in this scene.
+                             entity->setParentItem(newParentEntity);
+                         }
+                     });
 }
 
-GraphicsScene::~GraphicsScene() noexcept
-{
-    d->nodeStorage.unregisterAllCallbacksTo(this);
-}
+GraphicsScene::~GraphicsScene() noexcept = default;
 
 lvtshr::DiagramType GraphicsScene::diagramType() const
 {

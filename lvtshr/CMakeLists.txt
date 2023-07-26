@@ -24,7 +24,6 @@ AddTargetLibrary(
     ct_lvtshr_stringhelpers.h
     ct_lvtshr_uniqueid.h
   LIBRARIES
-    Boost::boost
     Qt5::Core
 )
 

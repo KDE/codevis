@@ -30,9 +30,6 @@
 #include <ct_lvtqtc_util.h>
 #include <ct_lvtshr_functional.h>
 
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/split.hpp>
-
 #include <QApplication>
 #include <QDebug>
 #include <QInputDialog>
@@ -168,7 +165,7 @@ LakosianComponentNameRules::checkName(bool hasParent, const std::string& name, c
 
     // here we know that the start of the string *needs* to be the parent package.
     if (numUnderscore == 1) {
-        if (!boost::algorithm::starts_with(name, parentName)) {
+        if (!QString::fromStdString(name).startsWith(QString::fromStdString(parentName))) {
             return cpp::fail(InvalidComponentError{header
                                                    + QObject::tr("Invalid name. name must be in the form %1_component")
                                                          .arg(QString::fromStdString(parentName))});
@@ -178,12 +175,14 @@ LakosianComponentNameRules::checkName(bool hasParent, const std::string& name, c
     // the first, or the second values must be the name of the parent package.
     if (numUnderscore >= 2) {
         std::vector<std::string> split_tmp;
-        boost::algorithm::split(split_tmp, name, [](char sep) {
-            return sep == '_';
+        auto qtVector = QString::fromStdString(name).split(QString::fromStdString("_"));
+        auto stdVector = std::vector<std::string>{};
+        std::transform(qtVector.begin(), qtVector.end(), std::back_inserter(split_tmp), [](auto&& qtString) {
+            return qtString.toStdString();
         });
 
-        if ((!boost::algorithm::starts_with(split_tmp[0], parentName))
-            && !boost::algorithm::starts_with(split_tmp[1], parentName)) {
+        if (!QString::fromStdString(split_tmp[0]).startsWith(QString::fromStdString(parentName))
+            && !QString::fromStdString(split_tmp[1]).startsWith(QString::fromStdString(parentName))) {
             return cpp::fail(InvalidComponentError{header
                                                    + QObject::tr("Invalid name. name must be in the form %1_component")
                                                          .arg(QString::fromStdString(parentName))});

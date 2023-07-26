@@ -21,12 +21,15 @@
 
 #include <ct_lvtldr_nodestorage.h>
 
-#include <boost/algorithm/string.hpp>
+#include <QObject>
+#include <QString>
+#include <QStringList>
 
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
 #include <unordered_map>
+#include <vector>
 
 using namespace Codethink::lvtshr;
 
@@ -35,10 +38,13 @@ namespace Codethink::lvtldr {
 std::vector<std::string> NamingUtils::buildQualifiedNamePrefixParts(const std::string& qname,
                                                                     const std::string& separator)
 {
-    std::vector<std::string> qnameParts;
-    boost::iter_split(qnameParts, qname, boost::first_finder(separator));
-    qnameParts.pop_back();
-    return qnameParts;
+    auto qtVector = QString::fromStdString(qname).split(QString::fromStdString(separator));
+    auto stdVector = std::vector<std::string>{};
+    std::transform(qtVector.begin(), qtVector.end(), std::back_inserter(stdVector), [](auto&& qtString) {
+        return qtString.toStdString();
+    });
+    stdVector.pop_back();
+    return stdVector;
 }
 
 std::string NamingUtils::buildQualifiedName(const std::vector<std::string>& parts,
@@ -63,47 +69,6 @@ LakosianNode::LakosianNode(NodeStorage& store, std::optional<std::reference_wrap
 }
 
 LakosianNode::~LakosianNode() noexcept = default;
-
-LakosianNode::LakosianNode(LakosianNode&&) noexcept = default;
-
-void LakosianNode::registerOnNameChanged(void *receiver, const std::function<void(LakosianNode *)>& callback)
-{
-#ifndef CT_SCANBUILD // scanbuild doesn't like boost
-    auto connection = d->onNameChanged.connect(callback);
-    d->connections[receiver].push_back(connection);
-#endif
-}
-
-void LakosianNode::registerOnNotesChanged(void *receiver, const std::function<void(std::string)>& callback)
-{
-#ifndef CT_SCANBUILD // scanbuild doesn't like boost
-    auto connection = d->onNotesChanged.connect(callback);
-    d->connections[receiver].push_back(connection);
-#endif
-}
-
-void LakosianNode::registerChildCountChanged(void *receiver, const std::function<void(size_t)>& callback)
-{
-#ifndef CT_SCANBUILD // scanbuild doesn't like boost
-    auto connection = d->onChildCountChanged.connect(callback);
-    d->connections[receiver].push_back(connection);
-#endif
-}
-
-void LakosianNode::unregisterAllCallbacksTo(void *receiver)
-{
-    if (d->connections.count(receiver) == 0) {
-        return;
-    }
-
-    for (const auto& c : d->connections.at(receiver)) {
-        c.disconnect();
-    }
-    auto it = std::find_if(d->connections.begin(), d->connections.end(), [&receiver](const auto& e) {
-        return e.first == receiver;
-    });
-    d->connections.erase(it);
-}
 
 bool LakosianNode::isPackageGroup()
 {
@@ -139,13 +104,13 @@ void LakosianNode::setNotes(const std::string& notes)
         d->dbHandler->get().setNotes(uid(), notes);
     }
 
-    d->onNotesChanged(notes);
+    Q_EMIT onNotesChanged(notes);
 }
 
 void LakosianNode::setName(const std::string& newName)
 {
     d->name = newName;
-    d->onNameChanged(this);
+    Q_EMIT onNameChanged(this);
 }
 
 const std::vector<LakosianNode *>& LakosianNode::children()
@@ -156,7 +121,7 @@ const std::vector<LakosianNode *>& LakosianNode::children()
 
     assert(d->childrenLoaded);
     if (currChildren != d->children.size() || !childrenWasLoaded) {
-        d->onChildCountChanged(d->children.size());
+        Q_EMIT onChildCountChanged(d->children.size());
     }
 
     return d->children;

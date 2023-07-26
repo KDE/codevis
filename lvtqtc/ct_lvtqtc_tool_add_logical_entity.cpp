@@ -34,8 +34,6 @@
 #include <ct_lvtqtc_iconhelpers.h>
 #include <ct_lvtshr_functional.h>
 
-#include <boost/algorithm/string/predicate.hpp>
-
 #include <QApplication>
 #include <QDebug>
 #include <QInputDialog>

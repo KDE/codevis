@@ -1,5 +1,4 @@
 include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
 find_package(Python COMPONENTS Development REQUIRED)
@@ -71,7 +70,6 @@ AddTargetLibrary(
         Codethink::lvtmdb
         Codethink::lvtprj
         Codethink::lvtshr
-        Boost::filesystem
         ${CLANG_EXTRA_LIBRARIES}
         ${SYSTEM_EXTRA_LIBRARIES}
         Qt5::Core

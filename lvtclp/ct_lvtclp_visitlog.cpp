@@ -19,8 +19,6 @@
 
 #include <ct_lvtclp_visitlog.h>
 
-#include <boost/container_hash/hash.hpp>
-
 #include <clang/Basic/SourceLocation.h>
 
 #include <unordered_set>
@@ -57,10 +55,12 @@ struct hash<CallbackId>
         const unsigned loc = id.location.getRawEncoding();
         const unsigned kind = id.declKind;
 
+        // Hash will be composed of:
+        // [32bit loc] [16bit kind] [16bit templateKind]
         size_t hash = 0;
-        boost::hash_combine(hash, loc);
-        boost::hash_combine(hash, kind);
-        boost::hash_combine(hash, id.templateKind);
+        hash |= static_cast<size_t>(loc) << 32;
+        hash |= (static_cast<size_t>(kind) & 0x000000ff) << 16;
+        hash |= static_cast<size_t>(id.templateKind) & 0x000000ff;
 
         return hash;
     }

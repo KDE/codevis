@@ -557,7 +557,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "changing node storage")
     ns.setDatabaseSourcePath(dbPath.string());
 
     int n_changes = 0;
-    ns.registerNodeNameChangedCallback(&n_changes, [&n_changes](const LakosianNode *node) {
+    QObject::connect(&ns, &NodeStorage::nodeNameChanged, [&n_changes](const LakosianNode *node) {
         REQUIRE(node != nullptr);
         n_changes += 1;
     });
@@ -600,11 +600,6 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "changing node storage")
     changeNode(childPackages[0]);
     REQUIRE(n_changes == 2);
     changeNode(components[0]);
-    REQUIRE(n_changes == 3);
-
-    ns.unregisterAllCallbacksTo(&n_changes);
-    // Changing things after this point won't affect the receiver
-    components[0]->setName("someothername");
     REQUIRE(n_changes == 3);
 }
 

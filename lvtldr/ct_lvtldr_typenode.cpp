@@ -44,8 +44,6 @@ TypeNode::TypeNode(NodeStorage& store,
 
 TypeNode::~TypeNode() noexcept = default;
 
-TypeNode::TypeNode(TypeNode&&) noexcept = default;
-
 lvtshr::DiagramType TypeNode::type() const
 {
     return lvtshr::DiagramType::ClassType;
@@ -145,7 +143,7 @@ cpp::result<void, AddChildError> TypeNode::addChild(LakosianNode *child)
         d_fields.nestedTypeIds.emplace_back(child->id());
     }
 
-    d->onChildCountChanged(d->children.size());
+    Q_EMIT onChildCountChanged(d->children.size());
     d->children.push_back(child);
     return {};
 }

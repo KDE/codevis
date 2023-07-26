@@ -27,10 +27,10 @@
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
+#include <QString>
+
 #include <iostream>
 #include <variant>
-
-#include <boost/algorithm/string/replace.hpp>
 
 namespace {
 template<typename T>
@@ -359,7 +359,7 @@ class SociDatabaseHandler : public DatabaseHandler {
 
     void addNotes(lvtshr::UniqueId uid, std::string const& notes) override
     {
-        std::string our_notes = boost::algorithm::replace_all_copy(notes, "'", "''");
+        std::string our_notes = QString::fromStdString(notes).replace("'", "''").toStdString();
         soci::transaction tr(d_db);
         d_db << "insert into cad_notes (version, entity_id, entity_type, notes) values (" << 0 << ", "
              << uid.recordNumber() << ", " << static_cast<int>(uid.diagramType()) << ", "
@@ -369,7 +369,7 @@ class SociDatabaseHandler : public DatabaseHandler {
 
     void setNotes(lvtshr::UniqueId uid, std::string const& notes) override
     {
-        std::string our_notes = boost::algorithm::replace_all_copy(notes, "'", "''");
+        std::string our_notes = QString::fromStdString(notes).replace("'", "''").toStdString();
         soci::transaction tr(d_db);
         d_db << "update cad_notes set notes = '" << our_notes << "' where "
              << "entity_id = " << uid.recordNumber() << " and "

@@ -46,7 +46,6 @@ set(SOCI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/soci)
 
 find_package(Doxygen)
 find_package(SQLite3)
-find_package(Boost REQUIRED COMPONENTS filesystem)
 
 # This is horrible, but Sqlite3 exists on every package,
 # so we can force it to be found.

@@ -243,7 +243,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     changeCurrentGraphWidget(0);
 
-    sharedNodeStorage.registerStorageChangedCallback(this, [this] {
+    QObject::connect(&sharedNodeStorage, &NodeStorage::storageChanged, this, [this] {
         d_projectFile.requestAutosave(Preferences::self()->document()->autoSaveBackupIntervalMsecs());
         Preferences::self()->document()->setLastDocument(QString::fromStdString(d_projectFile.backupPath().string()));
         Preferences::self()->sync();

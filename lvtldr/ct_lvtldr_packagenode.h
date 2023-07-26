@@ -63,7 +63,6 @@ class LVTLDR_EXPORT PackageNode : public LakosianNode {
 
     ~PackageNode() noexcept override;
 
-    PackageNode(PackageNode&& other) noexcept;
     cpp::result<void, AddChildError> addChild(LakosianNode *child) override;
     void removeChild(LakosianNode *child);
     void setName(std::string const& newName) override;

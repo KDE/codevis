@@ -28,11 +28,12 @@
 #include <ct_lvtshr_uniqueid.h>
 #include <lvtldr_export.h>
 
+#include <QObject>
+
 #include <any>
 #include <memory>
 #include <vector>
 
-#include <boost/signals2.hpp>
 #include <result/result.hpp>
 
 namespace Codethink::lvtldr {
@@ -123,7 +124,8 @@ struct ErrorReparentEntity {
 
 enum class PhysicalDependencyType { ConcreteDependency, AllowedDependency };
 
-class LVTLDR_EXPORT NodeStorage {
+class LVTLDR_EXPORT NodeStorage : public QObject {
+    Q_OBJECT
     // Append-only store of LakosianNodes with fast lookup
 
   private:
@@ -193,26 +195,16 @@ class LVTLDR_EXPORT NodeStorage {
     void clear();
 
     // Signals
-#define BUILD_CALLBACK_DECL(name, type)                                                                                \
-    using name = type;                                                                                                 \
-    void register##name(void *receiver, const std::function<name>& callback)
-
-    BUILD_CALLBACK_DECL(StorageClearedCallback, void());
-    BUILD_CALLBACK_DECL(StorageChangedCallback, void());
-    BUILD_CALLBACK_DECL(NodeAddedCallback, void(LakosianNode *, std::any));
-    BUILD_CALLBACK_DECL(NodeRemovedCallback, void(LakosianNode *));
-    BUILD_CALLBACK_DECL(NodeNameChangedCallback, void(LakosianNode *));
-    BUILD_CALLBACK_DECL(PhysicalDependencyAddedCallback, void(LakosianNode *, LakosianNode *, PhysicalDependencyType));
-    BUILD_CALLBACK_DECL(PhysicalDependencyRemovedCallback, void(LakosianNode *, LakosianNode *));
-    BUILD_CALLBACK_DECL(LogicalRelationAddedCallback,
-                        void(LakosianNode *, LakosianNode *, lvtshr::LakosRelationType type));
-    BUILD_CALLBACK_DECL(LogicalRelationRemovedCallback,
-                        void(LakosianNode *, LakosianNode *, lvtshr::LakosRelationType type));
-    BUILD_CALLBACK_DECL(EntityReparentCallback, void(LakosianNode *, LakosianNode *, LakosianNode *));
-
-#undef BUILD_CALLBACK_DECL
-
-    void unregisterAllCallbacksTo(void *receiver);
+    Q_SIGNAL void storageCleared();
+    Q_SIGNAL void storageChanged();
+    Q_SIGNAL void nodeAdded(LakosianNode *, std::any);
+    Q_SIGNAL void nodeRemoved(LakosianNode *);
+    Q_SIGNAL void nodeNameChanged(LakosianNode *);
+    Q_SIGNAL void physicalDependencyAdded(LakosianNode *, LakosianNode *, PhysicalDependencyType);
+    Q_SIGNAL void physicalDependencyRemoved(LakosianNode *, LakosianNode *);
+    Q_SIGNAL void logicalRelationAdded(LakosianNode *, LakosianNode *, lvtshr::LakosRelationType type);
+    Q_SIGNAL void logicalRelationRemoved(LakosianNode *, LakosianNode *, lvtshr::LakosRelationType type);
+    Q_SIGNAL void entityReparent(LakosianNode *, LakosianNode *, LakosianNode *);
 
   private:
     // TODO: Replace old version with V2 when refactoring is done

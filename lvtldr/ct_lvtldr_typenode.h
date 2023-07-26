@@ -56,7 +56,6 @@ class LVTLDR_EXPORT TypeNode : public LakosianNode {
 
     ~TypeNode() noexcept override;
 
-    TypeNode(TypeNode&& other) noexcept;
     static inline TypeNode *from(LakosianNode *other)
     {
         return dynamic_cast<TypeNode *>(other);

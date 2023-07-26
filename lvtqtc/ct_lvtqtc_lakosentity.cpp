@@ -264,12 +264,12 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     d->isExpanded = true;
     toggleExpansion(QtcUtil::CreateUndoAction::e_No);
 
-    d->node->registerChildCountChanged(this, [this](size_t) {
+    QObject::connect(d->node, &lvtldr::LakosianNode::onChildCountChanged, this, [this](size_t) {
         updateChildrenLoadedInfo();
         layoutIgnoredItems();
     });
 
-    d->node->registerOnNotesChanged(this, [this](const std::string& notes) {
+    QObject::connect(d->node, &lvtldr::LakosianNode::onNotesChanged, this, [this](const std::string& notes) {
         setNotes(notes);
     });
 
@@ -310,9 +310,6 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
 
 LakosEntity::~LakosEntity()
 {
-    if (d->node) {
-        d->node->unregisterAllCallbacksTo(this);
-    }
     setParentItem(nullptr);
 }
 

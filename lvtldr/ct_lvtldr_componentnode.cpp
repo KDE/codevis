@@ -59,8 +59,6 @@ ComponentNode::ComponentNode(NodeStorage& store,
 
 ComponentNode::~ComponentNode() noexcept = default;
 
-ComponentNode::ComponentNode(ComponentNode&&) noexcept = default;
-
 void ComponentNode::setParentPackageId(Codethink::lvtshr::UniqueId::RecordNumberType id)
 {
     d_fields.packageId = id;
@@ -195,14 +193,14 @@ cpp::result<void, AddChildError> ComponentNode::addChild(LakosianNode *child)
     if (std::find(std::begin(d->children), std::end(d->children), child) != std::end(d->children)) {
         return cpp::fail(AddChildError{"The entity is already a child of this node"});
     }
-    d->onChildCountChanged(d->children.size());
+    Q_EMIT onChildCountChanged(d->children.size());
     d->children.push_back(child);
     return {};
 }
 
 void ComponentNode::removeChild(LakosianNode *child)
 {
-    d->onChildCountChanged(d->children.size());
+    Q_EMIT onChildCountChanged(d->children.size());
     {
         auto& v = d_fields.childUdtIds;
         v.erase(std::remove(v.begin(), v.end(), child->id()), v.end());

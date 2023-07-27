@@ -25,8 +25,6 @@
 #include <filesystem>
 #include <iostream>
 
-#include <QString> // for .endsWith
-
 #include <catch2/catch.hpp>
 
 namespace fs = std::filesystem;
@@ -53,6 +51,8 @@ TEST_CASE("Merge Two Different Databases")
         store1_parent = store1.getOrAddNamespace("parent", "parent", nullptr);
         store1_b = store1.getOrAddNamespace("b", "b", store1_parent);
         store1_c = store1.getOrAddNamespace("c", "c", store1_parent);
+
+        CHECK(store1.namespaces().size() == 3);
     });
 
     // parent is the second one to be added, so it will probably have id 2
@@ -65,6 +65,7 @@ TEST_CASE("Merge Two Different Databases")
         store2_parent = store2.getOrAddNamespace("parent", "parent", nullptr);
         store2_b = store2.getOrAddNamespace("b", "b", store1_parent);
         store2_c = store2.getOrAddNamespace("c", "c", store1_parent);
+        CHECK(store2.namespaces().size() == 4);
     });
 
     fs::path project_path = fs::temp_directory_path();
@@ -75,21 +76,24 @@ TEST_CASE("Merge Two Different Databases")
     // We don't care about the error code.
 
     SociWriter writer;
-    if (!writer.createOrOpen(project_path / "database_1.db")) {
-        std::cout << "Could not open the first test db" << std::endl;
-    }
+    CHECK(writer.createOrOpen(project_path / "database_1.db"));
     store1.writeToDatabase(writer);
 
     SociWriter writer2;
-    if (!writer2.createOrOpen("database_2.db")) {
-        std::cout << "Could not open the first test db" << std::endl;
-    }
+    CHECK(writer2.createOrOpen(project_path / "database_2.db"));
+    store2.writeToDatabase(writer2);
 
     SociReader reader;
     ObjectStore mergedStore;
     auto res = mergedStore.readFromDatabase(reader, project_path / "database_1.db");
     CHECK(!res.has_error());
 
-    res = mergedStore.readFromDatabase(reader, project_path / "database_1.db");
+    res = mergedStore.readFromDatabase(reader, project_path / "database_2.db");
     CHECK(!res.has_error());
+
+    // We have 3 namespaces on db1, 4 on db2. but they overlap.
+    // we should only have 4 namespaces on the merged store.
+    mergedStore.withROLock([&] {
+        CHECK(mergedStore.namespaces().size() == 4);
+    });
 }

@@ -49,7 +49,7 @@ struct Maps {
     std::map<std::string, PackageObject *> packageMap;
     std::map<int, ComponentObject *> componentMap;
     std::map<int, FileObject *> filesMap;
-    std::map<int, NamespaceObject *> namespaceMap;
+    std::map<std::string, NamespaceObject *> namespaceMap;
     std::map<int, VariableObject *> variableMap;
     std::map<int, FunctionObject *> functionMap;
     std::map<int, TypeObject *> userDefinedTypeMap;
@@ -262,36 +262,43 @@ void loadErrors(ObjectStore& store, soci::session& db, Maps& maps)
 
 struct NamespaceQueryParams {
     int id = 0;
-    soci::indicator parent_ind = soci::indicator::i_null;
-    int parent_id = 0;
+    soci::indicator parent_qualified_name_ind = soci::indicator::i_null;
+    std::string parent_qualified_name;
     std::string name;
     std::string qualified_name;
 };
 
 void loadNamespaces(ObjectStore& store, soci::session& db, Maps& maps, std::optional<int> parent_id)
 {
-    // soci prepared statements didn't work for null vs value, neither with std::optional.'
-    std::string query = "select id, parent_id, name, qualified_name from namespace_declaration where parent_id is "
+    std::string query =
+        R"(select
+        ns.id,
+        ns.name,
+        ns.qualified_name,
+        pns.qualified_name
+    from namespace_declaration ns
+    left join namespace_declaration pns on ns.parent_id = pns.id
+    where ns.parent_id is )"
         + (parent_id.has_value() ? std::to_string(parent_id.value()) : "NULL");
 
     NamespaceQueryParams params;
     soci::statement st = (db.prepare << query,
                           soci::into(params.id),
-                          soci::into(params.parent_id, params.parent_ind),
                           soci::into(params.name),
-                          soci::into(params.qualified_name));
+                          soci::into(params.qualified_name),
+                          soci::into(params.parent_qualified_name, params.parent_qualified_name_ind));
 
     st.execute();
     std::vector<int> current_parents;
     while (st.fetch()) {
         NamespaceObject *parent = nullptr;
-        if (params.parent_ind == soci::indicator::i_ok) {
-            parent = maps.namespaceMap[params.parent_id];
+        if (params.parent_qualified_name_ind == soci::indicator::i_ok) {
+            parent = maps.namespaceMap[params.parent_qualified_name];
         }
 
         auto *ns = store.getOrAddNamespace(params.qualified_name, params.name, parent);
         current_parents.push_back(params.id);
-        maps.namespaceMap[params.id] = ns;
+        maps.namespaceMap[params.qualified_name] = ns;
     }
 
     for (const auto current_parent : current_parents) {
@@ -301,8 +308,8 @@ void loadNamespaces(ObjectStore& store, soci::session& db, Maps& maps, std::opti
 
 struct VariableQueryParams {
     int id = 0;
-    soci::indicator namespace_ind = soci::indicator::i_null;
-    int namespace_id = 0;
+    soci::indicator ns_qual_name_ind = soci::indicator::i_null;
+    std::string ns_qual_name;
     std::string name;
     std::string qualified_name;
     std::string signature;
@@ -311,22 +318,35 @@ struct VariableQueryParams {
 
 void loadVariables(ObjectStore& store, soci::session& db, Maps& maps)
 {
-    std::string query = "select id, namespace_id, name, qualified_name, signature, is_global from variable_declaration";
+    std::string query =
+        R"(select
+        va.id,
+        va.name,
+        va.qualified_name,
+        va.signature,
+        va.is_global,
+        ns.qualified_name
+    from
+        variable_declaration va
+    left join
+        namespace_declaration ns on ns.id = va.namespace_id
+    )";
+
     VariableQueryParams params;
     soci::statement st = (db.prepare << query,
                           soci::into(params.id),
-                          soci::into(params.namespace_id, params.namespace_ind),
                           soci::into(params.name),
                           soci::into(params.qualified_name),
                           soci::into(params.signature),
-                          soci::into(params.is_global));
+                          soci::into(params.is_global),
+                          soci::into(params.ns_qual_name, params.ns_qual_name_ind));
 
     st.execute();
 
     while (st.fetch()) {
         NamespaceObject *ns = nullptr;
-        if (params.namespace_ind != soci::indicator::i_null) {
-            ns = maps.namespaceMap[params.namespace_id];
+        if (params.ns_qual_name_ind != soci::indicator::i_null) {
+            ns = maps.namespaceMap[params.ns_qual_name];
         }
 
         auto *variableObj =
@@ -337,8 +357,8 @@ void loadVariables(ObjectStore& store, soci::session& db, Maps& maps)
 
 struct FunctionQueryParams {
     int id = 0;
-    soci::indicator namespace_ind = soci::indicator::i_null;
-    int namespace_id = 0;
+    soci::indicator ns_qual_name_ind = soci::indicator::i_null;
+    std::string ns_qual_name;
     std::string name;
     std::string qualified_name;
     std::string signature;
@@ -349,24 +369,36 @@ struct FunctionQueryParams {
 void loadFunctions(ObjectStore& store, soci::session& db, Maps& maps)
 {
     std::string query =
-        "select id, namespace_id, name, qualified_name, signature, return_type, template_parameters from "
-        "function_declaration";
+        R"(select
+            fn.id,
+            fn.name,
+            fn.qualified_name,
+            fn.signature,
+            fn.return_type,
+            fn.template_parameters,
+            ns.qualified_name
+        from
+            function_declaration fn
+        left join
+            namespace_declaration ns on ns.id = fn.namespace_id
+)";
+
     FunctionQueryParams params;
     soci::statement st = (db.prepare << query,
                           soci::into(params.id),
-                          soci::into(params.namespace_id, params.namespace_ind),
                           soci::into(params.name),
                           soci::into(params.qualified_name),
                           soci::into(params.signature),
                           soci::into(params.rtype),
-                          soci::into(params.template_params));
+                          soci::into(params.template_params),
+                          soci::into(params.ns_qual_name, params.ns_qual_name_ind));
 
     st.execute();
 
     while (st.fetch()) {
         NamespaceObject *ns = nullptr;
-        if (params.namespace_ind != soci::indicator::i_null) {
-            ns = maps.namespaceMap[params.namespace_id];
+        if (params.ns_qual_name_ind != soci::indicator::i_null) {
+            ns = maps.namespaceMap[params.ns_qual_name];
         }
 
         auto *functionObj = store.getOrAddFunction(params.qualified_name,
@@ -381,8 +413,8 @@ void loadFunctions(ObjectStore& store, soci::session& db, Maps& maps)
 
 struct UserDefinedTypeQueryParams {
     int id = 0;
-    soci::indicator parent_namespace_ind = soci::indicator::i_null;
-    int parent_namespace_id = 0;
+    soci::indicator parent_ns_qual_name_ind = soci::indicator::i_null;
+    std::string parent_ns_qual_name;
 
     soci::indicator class_namespace_ind = soci::indicator::i_null;
     int class_namespace_id = 0;
@@ -401,37 +433,39 @@ void loadUserDefinedTypes(ObjectStore& store, soci::session& db, Maps& maps, std
     std::string query =
         R"(select
 	cd.id,
-	cd.parent_namespace_id,
 	cd.class_namespace_id,
 	sp.qualified_name as package_name,
 	cd.name,
 	cd.qualified_name,
 	cd.kind,
-	cd.access
+    cd.access,
+    ns.qualified_name
 from
 	class_declaration cd
 left join
 	source_package sp on sp.id = cd.parent_package_id
+left join
+    namespace_declaration ns on ns.id = cd.parent_namespace_id
 where class_namespace_id is )"
         + (parent_id.has_value() ? std::to_string(parent_id.value()) : "NULL");
 
     UserDefinedTypeQueryParams params;
     soci::statement st = (db.prepare << query,
                           soci::into(params.id),
-                          soci::into(params.parent_namespace_id, params.parent_namespace_ind),
                           soci::into(params.class_namespace_id, params.class_namespace_ind),
                           soci::into(params.package_qualified_name, params.parent_package_ind),
                           soci::into(params.name),
                           soci::into(params.qualified_name),
                           soci::into(params.kind),
-                          soci::into(params.access));
+                          soci::into(params.access),
+                          soci::into(params.parent_ns_qual_name, params.parent_ns_qual_name_ind));
 
     st.execute();
     std::vector<int> current_parents;
     while (st.fetch()) {
         NamespaceObject *parent_ns = nullptr;
-        if (params.parent_namespace_ind == soci::indicator::i_ok) {
-            parent_ns = maps.namespaceMap[params.parent_namespace_id];
+        if (params.parent_ns_qual_name_ind == soci::indicator::i_ok) {
+            parent_ns = maps.namespaceMap[params.parent_ns_qual_name];
         }
 
         TypeObject *parent_class = nullptr;
@@ -605,7 +639,7 @@ where dep.source_id = (
 	select id
 	from source_package
 	where qualified_name = :s
-))";
+) )";
 
     // Those are all the *database* connections but I guess there's more.
     for (const auto& [qualified_name, _] : maps.packageMap) {
@@ -639,24 +673,29 @@ void loadComponentRelations(ObjectStore& store, soci::session& db, const Maps& m
 
 void loadFileRelations(ObjectStore& store, soci::session& db, const Maps& maps)
 {
+    const std::string query_1 = R"(select target_id from includes where source_id = :s)";
+    const std::string query_2 =
+        R"(select
+            ns.qualified_name
+        from namespace_source_file nsf
+        left join
+            namespace_declaration ns on ns.id = nsf.namespace_id
+        where nsf.source_file_id = :s)";
+
     for (const auto& [source_id, source] : maps.filesMap) {
         int target_id = 0;
-        soci::statement st = (db.prepare << "select target_id from includes where source_id = :s",
-                              soci::into(target_id),
-                              soci::use(source_id));
+        soci::statement st = (db.prepare << query_1, soci::into(target_id), soci::use(source_id));
         st.execute();
         while (st.fetch()) {
             FileObject *target = maps.filesMap.at(target_id);
             FileObject::addIncludeRelation(source, target);
         }
 
-        int namespace_id = 0;
-        soci::statement st2 = (db.prepare << "select namespace_id from namespace_source_file where source_file_id = :s",
-                               soci::into(namespace_id),
-                               soci::use(source_id));
+        std::string ns_qual_name;
+        soci::statement st2 = (db.prepare << query_2, soci::into(ns_qual_name), soci::use(source_id));
         st2.execute();
         while (st2.fetch()) {
-            NamespaceObject *target = maps.namespaceMap.at(namespace_id);
+            NamespaceObject *target = maps.namespaceMap.at(ns_qual_name);
             {
                 auto lock = source->rwLock();
                 source->addNamespace(target);

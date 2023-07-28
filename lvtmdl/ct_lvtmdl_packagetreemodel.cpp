@@ -65,6 +65,8 @@ PackageTreeModel::PackageTreeModel(NodeStorage& nodeStorage):
     });
 }
 
+PackageTreeModel::~PackageTreeModel() = default;
+
 QStandardItem *PackageTreeModel::itemForLakosianNode(LakosianNode *node)
 {
     std::function<QStandardItem *(QStandardItem *)> recurseFnc = [&](QStandardItem *item) -> QStandardItem * {

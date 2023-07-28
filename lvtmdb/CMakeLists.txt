@@ -57,7 +57,7 @@ target_include_directories(lvtmdb
 )
 
 if (COMPILE_TESTS)
-    add_executable(test_lvtmdb test_lvtmdb.t.cpp)
+    add_executable(test_lvtmdb ct_lvtmdb.t.cpp)
     target_link_libraries(test_lvtmdb Codethink::lvtprj lvttst)
     add_test(NAME test_lvtmdb COMMAND test_lvtmdb)
 endif()

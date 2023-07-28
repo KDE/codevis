@@ -1,4 +1,4 @@
-// ct_lvtprj_project_file.t.cpp                                         -*-C++-*-
+// ct_lvtmdb.t.cpp                                         -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
@@ -75,13 +75,16 @@ TEST_CASE("Merge Two Different Databases")
     std::filesystem::remove(project_path / "database_2.db", ec);
     // We don't care about the error code.
 
-    SociWriter writer;
-    CHECK(writer.createOrOpen(project_path / "database_1.db"));
-    store1.writeToDatabase(writer);
-
-    SociWriter writer2;
-    CHECK(writer2.createOrOpen(project_path / "database_2.db"));
-    store2.writeToDatabase(writer2);
+    {
+        SociWriter writer;
+        CHECK(writer.createOrOpen(project_path / "database_1.db"));
+        store1.writeToDatabase(writer);
+    }
+    {
+        SociWriter writer2;
+        CHECK(writer2.createOrOpen(project_path / "database_2.db"));
+        store2.writeToDatabase(writer2);
+    }
 
     SociReader reader;
     ObjectStore mergedStore;

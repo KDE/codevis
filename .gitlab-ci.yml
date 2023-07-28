@@ -1,5 +1,7 @@
 stages:
     - build
+    - prepare
+    - release
 
 variables:
     DEPENDENCIES_TAG_BRANCH: $CI_REGISTRY_IMAGE/dependencies:$CI_COMMIT_REF_SLUG
@@ -28,3 +30,50 @@ build-linux job:
         - docker build -f packaging/appimage/Dockerfile . --target pre-analysis
         - docker build -f packaging/appimage/Dockerfile . --target build-qt
         - docker build -f packaging/appimage/Dockerfile . --target tests
+
+
+prepare_job:
+  image: "docker:20.10.22"
+  services: ["docker:20.10.22-dind"]
+  stage: prepare                                              # This stage must run before the release stage
+  rules:
+    - if: $CI_COMMIT_TAG
+  variables:
+    OUTDIR: $CI_PROJECT_DIR/releases
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - export DOCKER_BUILDKIT=1
+    - docker build -f packaging/bundle-src/Dockerfile . -t source-deploy
+    - mkdir -p "$OUTDIR"
+    - docker run -v $OUTDIR:/tmp/deploy source-deploy
+  after_script:
+    - echo "TAG=$CI_COMMIT_TAG" >> variables.env             # and append to the variables.env file
+  artifacts:
+    paths:
+      - "$CI_PROJECT_DIR/*"
+    expire_in: never
+    reports:
+      dotenv: variables.env
+
+release_job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: prepare_job
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "running release_job for $TAG"
+  variables:
+      TAG: '$CI_COMMIT_SHA'
+  release:
+    name: 'Release $TAG'
+    description: 'New version of Codevis $TAG'
+    tag_name: '$TAG'                                                 # variables must be defined elsewhere
+    ref: '$CI_COMMIT_SHA'                                            # in the pipeline. For example, in the
+    assets:
+      links:
+        - name: "codevis_$TAG.zip"
+          url: "https://gitlab.com/CodethinkLabs/Codevis/-/jobs/$JOB_ID/artifacts/download"

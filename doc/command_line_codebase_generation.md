@@ -4,11 +4,11 @@
 There are two ways to run the codebase parse: The GUI and the command line
 interface. In this document we will discuss the command line interface.
 
-The `create_codebase_db` tool takes a `compile_commands.json` file as input and
+The `codevis_create_codebase_db` tool takes a `compile_commands.json` file as input and
 outputs an SQLite code database. Multiple `compile_commands.json` can be
 specified to generate a database spanning multiple projects.
 
-Run `create_codebase_db --help` to see all available parameters. Some parameters are summarized here:
+Run `codevis_create_codebase_db --help` to see all available parameters. Some parameters are summarized here:
 
 - `-j` option can be used to use multiple threads to parse the codebase. This
 is similar to the `-j` option to `make` and is strongly advised.
@@ -93,7 +93,7 @@ for your target/compiler configuration.
 
         $ create_codebase_db --compile-commands-json /path/to/bde/build --source-path /path/to/bde -j4
 
-The tool will then output a raw database file, which can be converted to a project file using the `create_prj_from_db` CLI tool.
+The tool will then output a raw database file, which can be converted to a project file using the `codevis_create_prj_from_db` CLI tool.
 
 
 ## Troubleshooting

@@ -19,10 +19,10 @@ AddTargetLibrary(
     Codethink::lvtshr
 )
 
-add_executable(create_prj_from_db
+add_executable(codevis_create_prj_from_db
     ct_lvtprj_create_prj_from_db.m.cpp
 )
-target_link_libraries(create_prj_from_db
+target_link_libraries(codevis_create_prj_from_db
     Codethink::lvtprj
     Codethink::lvtldr
 )

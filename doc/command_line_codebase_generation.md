@@ -31,6 +31,12 @@ one-definition-rule (as does the C++ linker). If two translation units are not
 intended to be linked into the same binary, they should not be included
 in the same code database.
 
+- `--compile-command` Ingests a *single* entry of the compile commands file in 
+the form of a JSON object with `file`, `directory`, `command`, `output` keys, and 
+produces a database file with *just* the contents of this translation unit (plus used headers).
+if you used the `--compile-commands` flag, you will need to merge the 
+resulting databases into a single one later on (just like you need to run a linter on multiple
+object files to produce a binary). for that we have the tool `codevis_merge_databases`
 
 # CLI run example
 

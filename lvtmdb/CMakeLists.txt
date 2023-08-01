@@ -55,3 +55,9 @@ target_include_directories(lvtmdb
     PRIVATE
     ${SQLite3_INCLUDE_DIRS}
 )
+
+if (COMPILE_TESTS)
+    add_executable(test_lvtmdb ct_lvtmdb.t.cpp)
+    target_link_libraries(test_lvtmdb Codethink::lvtprj lvttst)
+    add_test(NAME test_lvtmdb COMMAND test_lvtmdb)
+endif()

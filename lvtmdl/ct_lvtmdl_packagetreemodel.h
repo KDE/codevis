@@ -64,6 +64,8 @@ class LVTMDL_EXPORT PackageTreeModel : public BaseTreeModel
     explicit PackageTreeModel(lvtldr::NodeStorage& nodeStorage);
     // CONSTRUCTOR
 
+    ~PackageTreeModel();
+
     void reload() override;
 
     void fetchMore(const QModelIndex& parent) override;

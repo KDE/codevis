@@ -760,7 +760,7 @@ TEST_CASE("Test Project Database Loads Successfully")
     auto dbPath = project.cadDatabasePath();
 
     NodeStorage storage;
-    storage.setDatabaseSourcePath(project.cadDatabasePath());
+    storage.setDatabaseSourcePath(project.cadDatabasePath().string());
     REQUIRE_FALSE(storage.getTopLevelPackages().empty());
 
     // Test - setNotes used to crash when a database for cad

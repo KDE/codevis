@@ -28,3 +28,33 @@ build-linux job:
         - docker build -f packaging/appimage/Dockerfile . --target pre-analysis
         - docker build -f packaging/appimage/Dockerfile . --target build-qt
         - docker build -f packaging/appimage/Dockerfile . --target tests
+
+build-win job:
+    stage: build
+    tags:
+        - windows
+    script:
+        - git submodule deinit -f --all
+        - git submodule init
+        - git submodule update --recursive
+        - packaging/windows/llvm-build.bat "C:\Project\" "C:\Project\Build" "C:\Project\Install" "4"
+        # TODO: Reenable Windows tests runner on CI (Failing due to file permissions on our CI machine)
+        # - packaging/windows/run-tests.bat "$CI_PROJECT_DIR" "C:\Project\Build\diagram-server"
+        # gitlab doesn't allow copying artifacts from outside $CI_PROJECT_DIR
+        - Xcopy /E /I 'C:\Project\Build\diagram-server\desktopapp\Release' "$CI_PROJECT_DIR\Release"
+    artifacts:
+        paths:
+            - $CI_PROJECT_DIR\Release
+
+build-osx job:
+    stage: build
+    tags:
+        - macos
+    script:
+        - packaging/macos/llvm-build.sh "$HOME/Projects/" "$HOME/Projects/Build" "$HOME/Projects/Install" "5"
+        - cp -rp $HOME/Projects/Build/diagram-server/desktopapp/codevis.app $CI_PROJECT_DIR
+        - cp -rp $CI_PROJECT_DIR/python/ $CI_PROJECT_DIR
+    artifacts:
+        paths:
+            - "$CI_PROJECT_DIR/codevis.app"
+            - "$CI_PROJECT_DIR/python/"

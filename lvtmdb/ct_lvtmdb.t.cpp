@@ -77,21 +77,23 @@ TEST_CASE("Merge Two Different Databases")
 
     {
         SociWriter writer;
-        CHECK(writer.createOrOpen(project_path / "database_1.db"));
+        auto db_file = project_path / "database_1.db";
+        CHECK(writer.createOrOpen(db_file.string()));
         store1.writeToDatabase(writer);
     }
     {
         SociWriter writer2;
-        CHECK(writer2.createOrOpen(project_path / "database_2.db"));
+        auto db_file = project_path / "database_2.db";
+        CHECK(writer2.createOrOpen(db_file.string()));
         store2.writeToDatabase(writer2);
     }
 
     SociReader reader;
     ObjectStore mergedStore;
-    auto res = mergedStore.readFromDatabase(reader, project_path / "database_1.db");
+    auto res = mergedStore.readFromDatabase(reader, (project_path / "database_1.db").string());
     CHECK(!res.has_error());
 
-    res = mergedStore.readFromDatabase(reader, project_path / "database_2.db");
+    res = mergedStore.readFromDatabase(reader, (project_path / "database_2.db").string());
     CHECK(!res.has_error());
 
     // We have 3 namespaces on db1, 4 on db2. but they overlap.

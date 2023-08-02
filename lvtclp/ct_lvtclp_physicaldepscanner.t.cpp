@@ -98,6 +98,6 @@ TEST_CASE("Optional include location callbacks")
 
     REQUIRE(!err);
     REQUIRE(foundIncludes.size() == 2);
-    REQUIRE(foundIncludes.find(FoundIncludeTestData{"oneaaa_comp.h", "twoaaa_comp.h", 4}) != foundIncludes.end());
-    REQUIRE(foundIncludes.find(FoundIncludeTestData{"oneaaa_comp.cpp", "oneaaa_comp.h", 1}) != foundIncludes.end());
+    REQUIRE(foundIncludes.find(FoundIncludeTestData{"oneaaa_comp.h", "twoaaa_comp.h", 5}) != foundIncludes.end());
+    REQUIRE(foundIncludes.find(FoundIncludeTestData{"oneaaa_comp.cpp", "oneaaa_comp.h", 2}) != foundIncludes.end());
 }

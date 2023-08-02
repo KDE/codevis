@@ -60,7 +60,8 @@ struct FoundCommentTestData {
 
     friend auto operator<<(std::ostream& os, FoundCommentTestData const& self) -> std::ostream&
     {
-        return os << self.filename << " comment: '" << self.briefText << "' from line " << self.startLine << " to " << self.endLine;
+        return os << self.filename << " comment: '" << self.briefText << "' from line " << self.startLine << " to "
+                  << self.endLine;
     }
 };
 
@@ -75,33 +76,37 @@ TEST_CASE("Optional comment callbacks")
 
     auto const prjAPath = PREFIX + "/project_with_includes_outside_src/prjA";
     auto const prjBPath = PREFIX + "/project_with_includes_outside_src/prjB";
-    auto cdb =
-        StaticCompilationDatabase{{
-                                      {"groups/one/oneaaa/oneaaa_comp.cpp", "oneaaa_comp.o"},
-                                      {"groups/one/oneaaa/oneaaa_comp.h", "oneaaa_comp.h.o"}
-                                  },
-                                  "placeholder",
-                                  {"-I" + prjAPath + "/groups/one/oneaaa/", "-I" + prjBPath + "/groups/two/twoaaa/", "-fparse-all-comments", "-std=c++17"},
-                                  prjAPath};
+    auto cdb = StaticCompilationDatabase{{{"groups/one/oneaaa/oneaaa_comp.cpp", "oneaaa_comp.o"},
+                                          {"groups/one/oneaaa/oneaaa_comp.h", "oneaaa_comp.h.o"}},
+                                         "placeholder",
+                                         {"-I" + prjAPath + "/groups/one/oneaaa/",
+                                          "-I" + prjBPath + "/groups/two/twoaaa/",
+                                          "-fparse-all-comments",
+                                          "-std=c++17"},
+                                         prjAPath};
     auto memDb = lvtmdb::ObjectStore{};
 
     auto foundComments = std::unordered_set<FoundCommentTestData, FoundCommentTestData::HashFunc>{};
-    auto saveCommentsCallback = [&](const std::string& filename, const std::string& briefText, unsigned startLine, unsigned endLine) {
-        foundComments.insert({filename, briefText, startLine, endLine});
-    };
+    auto saveCommentsCallback =
+        [&](const std::string& filename, const std::string& briefText, unsigned startLine, unsigned endLine) {
+            foundComments.insert({filename, briefText, startLine, endLine});
+        };
 
     auto executor = ToolExecutor{cdb, 1, [](auto&& _1, auto&& _2) {}, memDb};
-    (void) executor.execute(std::make_unique<LogicalDepActionFactory>(memDb,
-                                                                          PREFIX,
-                                                                          std::vector<std::filesystem::path>{},
-                                                                          std::vector<std::pair<std::string, std::string>>{},
-                                                                          [](const std::string&) {},
-                                                                          std::nullopt,
-                                                                          false,
+    (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
+        memDb,
+        PREFIX,
+        std::vector<std::filesystem::path>{},
+        std::vector<std::pair<std::string, std::string>>{},
+        [](const std::string&) {},
+        std::nullopt,
+        false,
         saveCommentsCallback));
     REQUIRE(foundComments.size() == 4);
     REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.h", "klass", 7, 7}) != foundComments.end());
-    REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.h", "Test only include", 4, 4}) != foundComments.end());
-    REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.cpp", "Some other comment...?", 4, 4}) != foundComments.end());
+    REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.h", "Test only include", 4, 4})
+            != foundComments.end());
+    REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.cpp", "Some other comment...?", 4, 4})
+            != foundComments.end());
     REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.cpp", "Main include", 1, 1}) != foundComments.end());
 }

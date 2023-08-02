@@ -21,7 +21,6 @@
 #include <ct_lvtclp_physicaldepscanner.h>
 
 #include <ct_lvtclp_diagnostic_consumer.h>
-#include <ct_lvtclp_headercallbacks.h>
 
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
@@ -41,7 +40,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
     std::function<void(const std::string&)> d_filenameCallback;
     std::vector<std::string> d_ignoreGlobs;
-    // callback when we start processing a new file
+    std::optional<HeaderCallbacks::HeaderLocationCallback_f> d_headerLocationCallback;
 
   public:
     FrontendAction(lvtmdb::ObjectStore& memDb,
@@ -49,13 +48,15 @@ class FrontendAction : public clang::PreprocessOnlyAction {
                    std::vector<std::filesystem::path> nonLakosians,
                    std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                    std::function<void(const std::string&)> filenameCallback,
-                   std::vector<std::string> ignoreGlobs):
+                   std::vector<std::string> ignoreGlobs,
+                   std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
         d_memDb(memDb),
         d_prefix(std::move(prefix)),
         d_nonLakosianDirs(std::move(nonLakosians)),
         d_thirdPartyDirs(std::move(thirdPartyDirs)),
         d_filenameCallback(std::move(filenameCallback)),
-        d_ignoreGlobs(std::move(ignoreGlobs))
+        d_ignoreGlobs(std::move(ignoreGlobs)),
+        d_headerLocationCallback(std::move(headerLocationCallback))
     {
     }
 
@@ -76,7 +77,8 @@ class FrontendAction : public clang::PreprocessOnlyAction {
                                                                     d_prefix,
                                                                     d_nonLakosianDirs,
                                                                     d_thirdPartyDirs,
-                                                                    d_ignoreGlobs));
+                                                                    d_ignoreGlobs,
+                                                                    d_headerLocationCallback));
 
         // try our best not to bail on compilation errors
         clang::FrontendOptions& fOpts = compiler.getFrontendOpts();
@@ -117,31 +119,41 @@ struct DepScanActionFactory::Private {
     std::vector<std::pair<std::string, std::string>> thirdPartyDirs;
     std::function<void(const std::string&)> filenameCallback;
     std::vector<std::string> ignoreGlobs;
+    std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback;
 
     Private(lvtmdb::ObjectStore& memDb,
             std::filesystem::path prefix,
             std::vector<std::filesystem::path> nonLakosians,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
             std::function<void(const std::string&)> filenameCallback,
-            std::vector<std::string> ignoreGlobs):
+            std::vector<std::string> ignoreGlobs,
+            std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
         memDb(memDb),
         prefix(std::move(prefix)),
         nonLakosianDirs(std::move(nonLakosians)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         filenameCallback(std::move(filenameCallback)),
-        ignoreGlobs(std::move(ignoreGlobs))
+        ignoreGlobs(std::move(ignoreGlobs)),
+        headerLocationCallback(std::move(headerLocationCallback))
     {
     }
 };
 
-DepScanActionFactory::DepScanActionFactory(lvtmdb::ObjectStore& memDb,
-                                           const std::filesystem::path& prefix,
-                                           const std::vector<std::filesystem::path>& nonLakosians,
-                                           const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
-                                           std::function<void(const std::string&)> filenameCallback,
-                                           std::vector<std::string> ignoreGlobs):
-    d(std::make_unique<DepScanActionFactory::Private>(
-        memDb, prefix, nonLakosians, thirdPartyDirs, std::move(filenameCallback), std::move(ignoreGlobs)))
+DepScanActionFactory::DepScanActionFactory(
+    lvtmdb::ObjectStore& memDb,
+    const std::filesystem::path& prefix,
+    const std::vector<std::filesystem::path>& nonLakosians,
+    const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
+    std::function<void(const std::string&)> filenameCallback,
+    std::vector<std::string> ignoreGlobs,
+    std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
+    d(std::make_unique<DepScanActionFactory::Private>(memDb,
+                                                      prefix,
+                                                      nonLakosians,
+                                                      thirdPartyDirs,
+                                                      std::move(filenameCallback),
+                                                      std::move(ignoreGlobs),
+                                                      std::move(headerLocationCallback)))
 {
 }
 
@@ -154,7 +166,8 @@ std::unique_ptr<clang::FrontendAction> DepScanActionFactory::create()
                                             d->nonLakosianDirs,
                                             d->thirdPartyDirs,
                                             d->filenameCallback,
-                                            d->ignoreGlobs);
+                                            d->ignoreGlobs,
+                                            d->headerLocationCallback);
 }
 
 } // namespace Codethink::lvtclp

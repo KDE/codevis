@@ -30,6 +30,7 @@
 #include <clang/Basic/Version.h>
 
 #include <filesystem>
+#include <utility>
 
 namespace Codethink::lvtclp {
 
@@ -38,13 +39,15 @@ HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
                                  std::filesystem::path prefix,
                                  std::vector<std::filesystem::path> nonLakosians,
                                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                                 std::vector<std::string> ignoreGlobs):
+                                 std::vector<std::string> ignoreGlobs,
+                                 std::optional<HeaderLocationCallback_f> headerLocationCallback):
     sourceManager(*sm),
     d_memDb(memDb),
     d_prefix(std::move(prefix)),
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
-    d_ignoreGlobs(std::move(ignoreGlobs))
+    d_ignoreGlobs(std::move(ignoreGlobs)),
+    d_headerLocationCallback(std::move(headerLocationCallback))
 {
 }
 
@@ -94,6 +97,16 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
 
     if (filePtr == d_sourceFile_p) {
         return;
+    }
+
+    if (d_headerLocationCallback) {
+        auto sourceFile = std::string{};
+        d_sourceFile_p->withROLock([&]() {
+            sourceFile = d_sourceFile_p->name();
+        });
+        auto includedFile = FileName.str();
+        auto lineNo = sourceManager.getExpansionLineNumber(HashLoc);
+        (*d_headerLocationCallback)(sourceFile, includedFile, lineNo);
     }
 
     // add include relationship d_sourceFile_p -> filePtr

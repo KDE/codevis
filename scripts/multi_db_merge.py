@@ -81,7 +81,7 @@ if __name__ == "__main__":
         compile_command = command["command"]
         dict_str = '"' + str(command) + '"'
         dict_str = dict_str.replace("'", "\\\"")
-        cmd_str = f"create_codebase_db --source-path {source_path} --output  {output} --compile-command {dict_str} --use-system-headers {use_system_headers} --replace --silent"
+        cmd_str = f"codevis_create_codebase_db --source-path {source_path} --output  {output} --compile-command {dict_str} --use-system-headers {use_system_headers} --replace --silent"
         print(f"{curr} of {total}: Generating {output}")
         curr += 1
         generated_files.append(resolved_path / output)
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     ############################################################################
     # Generate the single database from the multiple db parts
     ############################################################################
-    cmd_str = f"lvtclp_merge_databases {database_str} --output multi.db"
+    cmd_str = f"codevis_merge_databases {database_str} --output multi.db"
     subprocess.run(cmd_str, shell=True)
     print("Generating single db from merged databases successfully")
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     # Generate the single database by re-scanning the entire codebase
     # using our multithreaded code
     ############################################################################
-    cmd_str = f"create_codebase_db --source-path {source_path} --output single.db --compile-commands-json {compile_commands_path} --use-system-headers {use_system_headers} --replace --silent"
+    cmd_str = f"codevis_create_codebase_db --source-path {source_path} --output single.db --compile-commands-json {compile_commands_path} --use-system-headers {use_system_headers} --replace --silent"
     result = subprocess.run(cmd_str, shell=True)
     if (result.returncode != 0):
         print(f"Trying to save database file {output}")

@@ -105,23 +105,27 @@ function(add_lvtclp_exec)
 endfunction()
 
 add_lvtclp_exec(
-    NAME create_codebase_db
+    NAME codevis_create_codebase_db
     SOURCES ct_lvtclp_create_codebase_db.m.cpp
     LIBRARIES Qt5::Core)
 
 add_lvtclp_exec(
-    NAME lvtclp_merge_databases
+    NAME codevis_merge_databases
     SOURCES ct_lvtclp_merge_databases.m.cpp
     LIBRARIES Qt5::Core Threads::Threads
 )
+install(TARGETS
+    codevis_merge_databases
+    RUNTIME
+    DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(TARGETS
-    create_codebase_db
+    codevis_create_codebase_db
     RUNTIME
     DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_lvtclp_exec(
-    NAME dump_database
+    NAME codevis_dump_database
     SOURCES ct_lvtclp_dumpdatabase.m.cpp)
 
 if (COMPILE_TESTS)
@@ -266,7 +270,7 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(TARGETS dump_database DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS codevis_dump_database DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS lvtclp DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
 if (APPLE)

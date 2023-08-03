@@ -94,20 +94,20 @@ target_link_libraries(
     ${CODEVIS_DESKTOP_QT_LIBRARIES}
 )
 
-add_executable(codevis
+add_executable(codevis_desktop
     MACOSX_BUNDLE
     ${WindowsKeyword}
     desktopapp.m.cpp
 )
 
 target_link_libraries(
-    codevis
+    codevis_desktop
 
     codevis_lib
 )
 
 install(TARGETS
-     codevis
+     codevis_desktop
      BUNDLE DESTINATION . COMPONENT Runtime
      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
 )
@@ -116,10 +116,10 @@ file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp
 
 if (WIN32)
     include(WinDeployQt)
-    windeployqt(codevis ${CMAKE_INSTALL_BINDIR})
+    windeployqt(codevis_desktop ${CMAKE_INSTALL_BINDIR})
 
     add_custom_command (
-        TARGET codevis POST_BUILD
+        TARGET codevis_desktop POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:lvtclp>
             $<TARGET_FILE:lvtcgn_adapter>
@@ -141,17 +141,17 @@ if (WIN32)
             $<TARGET_FILE:lakospreferences>
             $<TARGET_FILE:quazip>
             $<TARGET_FILE:MRichTextEdit>
-            $<TARGET_FILE_DIR:codevis>
+            $<TARGET_FILE_DIR:codevis_desktop>
     )
 
-	add_custom_command(TARGET codevis POST_BUILD
+	add_custom_command(TARGET codevis_desktop POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${CONAN_QT_ROOT}/bin/Qt5Svg.dll"
-			$<TARGET_FILE_DIR:codevis>)
+			$<TARGET_FILE_DIR:codevis_desktop>)
 endif()
 
 add_custom_command(
-    TARGET codevis POST_BUILD
+    TARGET codevis_desktop POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/database-spec/
         ${CMAKE_BINARY_DIR}/codevis/database-spec/
@@ -159,7 +159,7 @@ add_custom_command(
 
 if (APPLE)
     include(MacDeployQt)
-    macdeployqt(codevis ${CMAKE_INSTALL_BINDIR})
+    macdeployqt(codevis_desktop ${CMAKE_INSTALL_BINDIR})
 endif()
 
 if (COMPILE_TESTS)

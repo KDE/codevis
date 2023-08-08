@@ -50,6 +50,9 @@ namespace Codethink::lvtclp {
 // class LogicalDepActionFactory
 // =============================
 
+using HandleCppCommentsCallback_f = std::function<void(
+    const std::string& filename, const std::string& briefText, unsigned startLine, unsigned endLine)>;
+
 class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendActionFactory {
     // A factory for CodebaseDbFrontendAction
 
@@ -70,6 +73,8 @@ class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendAct
 
     bool d_catchCodeAnalysisOutput;
 
+    std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
+
   public:
     // CREATORS
     LogicalDepActionFactory(lvtmdb::ObjectStore& memDb,
@@ -78,7 +83,8 @@ class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendAct
                             std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
                             std::function<void(const std::string&)> filenameCallback,
                             std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                            bool catchCodeAnalysisOutput);
+                            bool catchCodeAnalysisOutput,
+                            std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt);
 
     // MANIPULATORS
     std::unique_ptr<clang::FrontendAction> create() override;

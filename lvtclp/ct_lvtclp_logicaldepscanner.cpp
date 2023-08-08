@@ -18,7 +18,6 @@
 */
 
 #include <ct_lvtclp_logicaldepscanner.h>
-
 #include <ct_lvtclp_logicaldepvisitor.h>
 
 #include <ct_lvtclp_staticfnhandler.h>
@@ -29,6 +28,8 @@
 #include <clang/Frontend/FrontendActions.h>
 
 #include <ct_lvtclp_diagnostic_consumer.h>
+
+#include <filesystem>
 
 namespace {
 
@@ -50,6 +51,11 @@ class LogicalDepConsumer : public clang::ASTConsumer {
     std::optional<std::function<void(const std::string&, long)>> d_messageCallback;
     // sends a message to the UI.
 
+    std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
+
+    std::string d_filename;
+    clang::ASTContext *d_context;
+
   public:
     // CREATORS
     LogicalDepConsumer(clang::ASTContext *context,
@@ -61,7 +67,8 @@ class LogicalDepConsumer : public clang::ASTConsumer {
                        const std::shared_ptr<VisitLog>& visitLog,
                        const std::shared_ptr<StaticFnHandler>& staticFnHandler,
                        std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                       bool catchCodeAnalysisOutput):
+                       bool catchCodeAnalysisOutput,
+                       std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
 
         // Instantiates a new LogicalDepConsumer for the given file as a
         // translation unit
@@ -74,7 +81,10 @@ class LogicalDepConsumer : public clang::ASTConsumer {
                   visitLog,
                   staticFnHandler,
                   std::move(messageCallback),
-                  catchCodeAnalysisOutput)
+                  catchCodeAnalysisOutput),
+        d_handleCppCommentsCallback(std::move(handleCppCommentsCallback)),
+        d_filename(file.str()),
+        d_context(context)
     {
     }
 
@@ -83,10 +93,26 @@ class LogicalDepConsumer : public clang::ASTConsumer {
     // Override the method that gets called for each parsed top-level
     // declaration
     {
+        if (d_handleCppCommentsCallback) {
+            auto& ctx = *d_context;
+            auto& sm = ctx.getSourceManager();
+            auto *commentsInFile = ctx.Comments.getCommentsInFile(sm.getMainFileID());
+            if (commentsInFile) {
+                for (auto&& [_, rawComment] : *commentsInFile) {
+                    auto filename = std::filesystem::path{d_filename}.filename().string();
+                    auto briefText = rawComment->getBriefText(ctx);
+                    auto startLine = sm.getExpansionLineNumber(rawComment->getBeginLoc());
+                    auto endLine = sm.getExpansionLineNumber(rawComment->getEndLoc());
+                    (*d_handleCppCommentsCallback)(filename, briefText, startLine, endLine);
+                }
+            }
+        }
+
         for (auto *b : declGroupRef) {
             // Traverse the declaration using our AST visitor.
             d_visitor.TraverseDecl(b);
         }
+
         return true;
     }
 };
@@ -117,6 +143,8 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
 
     bool d_catchCodeAnalysisOutput;
 
+    std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
+
   public:
     // CREATORS
     LogicalDepFrontendAction(lvtmdb::ObjectStore& memDb,
@@ -125,7 +153,8 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
                              std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                              std::function<void(const std::string&)> filenameCallback,
                              std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                             bool catchCodeAnalysisOutput):
+                             bool catchCodeAnalysisOutput,
+                             std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
         d_memDb(memDb),
         d_prefix(std::move(prefix)),
         d_nonLakosianDirs(std::move(nonLakosians)),
@@ -134,7 +163,8 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
         d_staticFnHandler_p(std::make_shared<StaticFnHandler>(memDb)),
         d_filenameCallback(std::move(filenameCallback)),
         d_messageCallback(std::move(messageCallback)),
-        d_catchCodeAnalysisOutput(catchCodeAnalysisOutput)
+        d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
+        d_handleCppCommentsCallback(std::move(handleCppCommentsCallback))
     {
     }
 
@@ -161,7 +191,8 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
                                                     d_visitLog_p,
                                                     d_staticFnHandler_p,
                                                     d_messageCallback,
-                                                    d_catchCodeAnalysisOutput);
+                                                    d_catchCodeAnalysisOutput,
+                                                    d_handleCppCommentsCallback);
     }
 
     bool BeginSourceFileAction(clang::CompilerInstance& ci) override
@@ -190,14 +221,16 @@ LogicalDepActionFactory::LogicalDepActionFactory(
     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
     std::function<void(const std::string&)> filenameCallback,
     std::optional<std::function<void(const std::string&, long)>> messageCallback,
-    bool catchCodeAnalysisOutput):
+    bool catchCodeAnalysisOutput,
+    std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback):
     d_memDb(memDb),
     d_prefix(std::move(prefix)),
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_filenameCallback(std::move(filenameCallback)),
     d_messageCallback(std::move(messageCallback)),
-    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput)
+    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
+    d_handleCppCommentsCallback(std::move(handleCppCommentsCallback))
 {
 }
 
@@ -209,7 +242,8 @@ std::unique_ptr<clang::FrontendAction> LogicalDepActionFactory::create()
                                                       d_thirdPartyDirs,
                                                       d_filenameCallback,
                                                       d_messageCallback,
-                                                      d_catchCodeAnalysisOutput);
+                                                      d_catchCodeAnalysisOutput,
+                                                      d_handleCppCommentsCallback);
 }
 
 } // namespace Codethink::lvtclp

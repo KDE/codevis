@@ -228,6 +228,18 @@ if (COMPILE_TESTS)
         SOURCES
             ct_lvtclp_clputil.t.cpp
     )
+
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_physicaldepscanner
+        SOURCES
+            ct_lvtclp_physicaldepscanner.t.cpp
+    )
+
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_logicaldepscanner
+        SOURCES
+            ct_lvtclp_logicaldepscanner.t.cpp
+    )
 endif()
     
 if (CMAKE_COMPILER_IS_GNUCXX AND ENABLE_CODE_COVERAGE)

@@ -33,6 +33,7 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 // llvm
@@ -56,6 +57,11 @@ namespace lvtclp {
 // =====================
 
 class HeaderCallbacks : public clang::PPCallbacks {
+  public:
+    using HeaderLocationCallback_f =
+        std::function<void(std::string const& sourceFile, std::string const& includedFile, unsigned lineNo)>;
+
+  private:
     // Implements clang::PPCallbacks. These callbacks make sure that new files
     // are added to the database as they are processed by clang
     // Not for use outside lvtclp
@@ -77,6 +83,8 @@ class HeaderCallbacks : public clang::PPCallbacks {
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
     std::vector<std::string> d_ignoreGlobs;
 
+    std::optional<HeaderLocationCallback_f> d_headerLocationCallback;
+
   public:
     // CREATORS
     HeaderCallbacks(clang::SourceManager *sm,
@@ -84,7 +92,8 @@ class HeaderCallbacks : public clang::PPCallbacks {
                     std::filesystem::path prefix,
                     std::vector<std::filesystem::path> nonLakosians,
                     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                    std::vector<std::string> ignoreGlobs);
+                    std::vector<std::string> ignoreGlobs,
+                    std::optional<HeaderLocationCallback_f> headerLocationCallback = std::nullopt);
 
     // MANIPULATORS
     void InclusionDirective(clang::SourceLocation HashLoc,

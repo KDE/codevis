@@ -33,7 +33,6 @@
 
 #include <clang/Tooling/CommonOptionsParser.h>
 
-#include <algorithm>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -355,6 +354,8 @@ struct Tool::Private {
     std::vector<std::filesystem::path> nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> thirdPartyDirs;
     bool printToConsole = false;
+    std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback = std::nullopt;
+    std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt;
 
     UseSystemHeaders useSystemHeaders = UseSystemHeaders::e_Query;
 
@@ -803,7 +804,8 @@ bool Tool::runPhysical(bool skipScan)
                                                d->nonLakosianDirs,
                                                d->thirdPartyDirs,
                                                filenameCallback,
-                                               d->ignoreList);
+                                               d->ignoreList,
+                                               d->headerLocationCallback);
 
     Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());
 
@@ -899,7 +901,8 @@ bool Tool::runFull(bool skipPhysical)
                                                   d->thirdPartyDirs,
                                                   filenameCallback,
                                                   messageOpt,
-                                                  d->printToConsole);
+                                                  d->printToConsole,
+                                                  d->handleCppCommentsCallback);
 
     Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());
 
@@ -952,6 +955,16 @@ bool Tool::runFull(bool skipPhysical)
 bool Tool::lastRunMadeChanges() const
 {
     return d->lastRunMadeChanges;
+}
+
+void Tool::setHeaderLocationCallback(HeaderCallbacks::HeaderLocationCallback_f const& headerLocationCallback)
+{
+    d->headerLocationCallback = headerLocationCallback;
+}
+
+void Tool::setHandleCppCommentsCallback(HandleCppCommentsCallback_f const& handleCppCommentsCallback)
+{
+    d->handleCppCommentsCallback = handleCppCommentsCallback;
 }
 
 void Tool::cancelRun()

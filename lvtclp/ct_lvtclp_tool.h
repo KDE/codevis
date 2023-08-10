@@ -29,6 +29,7 @@
 #include <lvtclp_export.h>
 
 #include <ct_lvtclp_filesystemscanner.h>
+#include <ct_lvtclp_headercallbacks.h>
 
 #include <ct_lvtmdb_objectstore.h>
 
@@ -138,6 +139,13 @@ class LVTCLP_EXPORT Tool : public QObject {
     // ACCESSORS
     [[nodiscard]] bool lastRunMadeChanges() const;
     // for testing: true only if there was work to do on the most recent run
+
+    void setHeaderLocationCallback(HeaderCallbacks::HeaderLocationCallback_f const& headerLocationCallback);
+
+    void setHandleCppCommentsCallback(
+        std::function<void(
+            const std::string& filename, const std::string& briefText, unsigned startLine, unsigned endLine)> const&
+            handleCppCommentsCallback);
 
     Q_SIGNAL void processingFileNotification(QString path);
     // notifies when we have a clang::FrontendAction::BeginSourceFileAction

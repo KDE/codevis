@@ -56,7 +56,9 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
                                          clang::StringRef FileName,
                                          bool IsAngled,
                                          clang::CharSourceRange FilenameRange,
-#if CLANG_VERSION_MAJOR >= 15
+#if CLANG_VERSION_MAJOR >= 16
+                                         clang::OptionalFileEntryRef File,
+#elif CLANG_VERSION_MAJOR >= 15
                                          clang::Optional<clang::FileEntryRef> File,
 #else
                                          const clang::FileEntry *File,
@@ -66,7 +68,11 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
                                          const clang::Module *Imported,
                                          clang::SrcMgr::CharacteristicKind FileType)
 {
-#if CLANG_VERSION_MAJOR >= 15
+#if CLANG_VERSION_MAJOR >= 16
+    if (!File.has_value()) {
+        return;
+    }
+#elif CLANG_VERSION_MAJOR >= 15
     if (!File.hasValue()) {
         return;
     }

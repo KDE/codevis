@@ -52,9 +52,9 @@ build-osx job:
         - macos
     script:
         - packaging/macos/llvm-build.sh "$HOME/Projects/" "$HOME/Projects/Build" "$HOME/Projects/Install" "5"
-        - cp -rp $HOME/Projects/Build/diagram-server/desktopapp/codevis.app $CI_PROJECT_DIR
+        - cp -rp $HOME/Projects/Build/diagram-server/desktopapp/codevis_desktop.app $CI_PROJECT_DIR
         - cp -rp $CI_PROJECT_DIR/python/ $CI_PROJECT_DIR
     artifacts:
         paths:
-            - "$CI_PROJECT_DIR/codevis.app"
+            - "$CI_PROJECT_DIR/codevis_desktop.app"
             - "$CI_PROJECT_DIR/python/"

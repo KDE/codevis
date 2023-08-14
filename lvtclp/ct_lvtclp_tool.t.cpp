@@ -640,3 +640,93 @@ TEST_CASE("Run Tool on project including other lakosian project")
         REQUIRE(session.getComponent("groups/two/twoaaa/twoaaa_comp"));
     });
 }
+
+struct HashFunc {
+    size_t operator()(const std::tuple<std::string, unsigned>& data) const
+    {
+        return std::hash<std::string>{}(std::get<0>(data)) ^ std::hash<unsigned>{}(std::get<1>(data));
+    }
+};
+
+TEST_CASE("Run Tool store test-only dependencies")
+{
+    auto *TEST_PRJ_PATH = std::getenv("TEST_PRJ_PATH");
+    WARN("TEST_PRJ_PATH not set. Please set it to <your_srcdir>/lvtclp/systemtests/");
+    REQUIRE(TEST_PRJ_PATH != nullptr);
+    auto const PREFIX = std::string{TEST_PRJ_PATH};
+
+    auto const prjAPath = PREFIX + "/test_only_dependencies/prjA";
+    StaticCompilationDatabase cmds(
+        {
+            {"groups/one/oneaaa/oneaaa_comp.cpp", "oneaaa_comp.o"},
+            {"groups/one/oneaaa/oneaaa_comp.t.cpp", "oneaaa_comp.t.o"},
+            {"groups/one/oneaaa/oneaaa_othercomp.cpp", "oneaaa_othercomp.o"},
+            {"groups/one/oneaaa/oneaaa_othercomp2.cpp", "oneaaa_othercomp2.o"},
+        },
+        "placeholder",
+        {"-I" + prjAPath + "/groups/one/oneaaa/", "-fparse-all-comments"},
+        prjAPath);
+    Tool tool(prjAPath, cmds, prjAPath + "/database");
+
+    using Filename = std::string;
+    using LineNo = unsigned;
+    using FileAndLine = std::tuple<Filename, LineNo>;
+    auto includesInFile = std::unordered_map<Filename, std::unordered_set<FileAndLine, HashFunc>>{};
+    tool.setHeaderLocationCallback(
+        [&includesInFile](Filename const& sourceFile, Filename const& includedFile, LineNo lineNo) {
+            if (includesInFile.find(sourceFile) == includesInFile.end()) {
+                includesInFile[sourceFile] = std::unordered_set<FileAndLine, HashFunc>{};
+            }
+            includesInFile[sourceFile].insert(std::make_tuple(includedFile, lineNo));
+        });
+
+    auto testOnlyDepComments = std::unordered_map<Filename, std::unordered_set<LineNo>>{};
+    tool.setHandleCppCommentsCallback([&testOnlyDepComments](Filename const& filename,
+                                                             std::string const& briefText,
+                                                             LineNo startLine,
+                                                             LineNo endLine) {
+        if (briefText != "Test only dependency") {
+            return;
+        }
+
+        if (testOnlyDepComments.find(filename) == testOnlyDepComments.end()) {
+            testOnlyDepComments[filename] = std::unordered_set<LineNo>{};
+        }
+        testOnlyDepComments[filename].insert(startLine);
+    });
+
+    ObjectStore& session = tool.getObjectStore();
+
+    REQUIRE(tool.runFull());
+    session.withROLock([&] {
+        REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_comp.cpp"));
+        REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_comp.h"));
+        REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_othercomp.cpp"));
+        REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_othercomp.h"));
+        REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_othercomp2.cpp"));
+        REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_othercomp2.h"));
+
+        REQUIRE(session.getComponent("groups/one/oneaaa/oneaaa_comp"));
+        REQUIRE(session.getComponent("groups/one/oneaaa/oneaaa_comp.t"));
+        REQUIRE(session.getComponent("groups/one/oneaaa/oneaaa_othercomp"));
+        REQUIRE(session.getComponent("groups/one/oneaaa/oneaaa_othercomp2"));
+    });
+
+    auto fileHasIncludeAtLine = [&includesInFile](Filename const& file, Filename const& included_file, LineNo line) {
+        auto& set = includesInFile.at(file);
+        return set.find(std::make_tuple(included_file, line)) != set.end();
+    };
+    REQUIRE(fileHasIncludeAtLine("oneaaa_othercomp2.cpp", "oneaaa_othercomp2.h", 1));
+    REQUIRE(fileHasIncludeAtLine("oneaaa_othercomp.cpp", "oneaaa_othercomp.h", 1));
+    REQUIRE(fileHasIncludeAtLine("oneaaa_comp.t.cpp", "oneaaa_comp.h", 1));
+    REQUIRE(fileHasIncludeAtLine("oneaaa_comp.t.cpp", "oneaaa_othercomp.h", 2));
+    REQUIRE(fileHasIncludeAtLine("oneaaa_comp.t.cpp", "oneaaa_othercomp2.h", 3));
+    REQUIRE(fileHasIncludeAtLine("oneaaa_comp.cpp", "oneaaa_comp.h", 1));
+    REQUIRE(fileHasIncludeAtLine("oneaaa_comp.cpp", "oneaaa_othercomp2.h", 2));
+
+    auto fileHasTestOnlyCommentAtLine = [&testOnlyDepComments](Filename const& file, LineNo line) {
+        auto& set = testOnlyDepComments.at(file);
+        return set.find(line) != set.end();
+    };
+    REQUIRE(fileHasTestOnlyCommentAtLine("oneaaa_comp.cpp", 2));
+}

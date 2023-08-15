@@ -57,6 +57,7 @@ AddTargetLibrary(
         Codethink::lvtqtc
         Codethink::lvtqtd
         Codethink::lvtprj
+        Codethink::lvtplg
         Qt5::Core
         Qt5::Gui
         Qt5::Widgets

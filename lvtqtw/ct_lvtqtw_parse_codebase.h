@@ -22,6 +22,8 @@
 
 #include <lvtqtw_export.h>
 
+#include <ct_lvtplg_pluginmanager.h>
+
 #include <QDialog>
 #include <QProcess>
 #include <QString>
@@ -65,6 +67,8 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
     Q_SLOT void updateDatabase();
 
     bool isLoadAllowedDependenciesChecked() const;
+
+    void setPluginManager(lvtplg::PluginManager& pluginManager);
 
   protected:
     void showEvent(QShowEvent *event) override;

@@ -197,6 +197,8 @@ struct ParseCodebaseDialog::Private {
     using ThirdPartyPath = std::string;
     using ThirdPartyPackageName = std::string;
     std::vector<std::pair<ThirdPartyPath, ThirdPartyPackageName>> thirdPartyPathMapping;
+
+    std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
 };
 
 ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
@@ -693,6 +695,41 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
                                                    nonLakosianDirs,
                                                    d->thirdPartyPathMapping,
                                                    catchCodeAnalysisOutput);
+
+        if (d->pluginManager) {
+            auto& pm = (*d->pluginManager).get();
+
+            d->tool_p->setHeaderLocationCallback(
+                [&pm](std::string const& sourceFile, std::string const& includedFile, unsigned lineNo) {
+                    pm.callHooksPhysicalParserOnHeaderFound(
+                        [&sourceFile]() {
+                            return sourceFile;
+                        },
+                        [&includedFile]() {
+                            return includedFile;
+                        },
+                        [&lineNo]() {
+                            return lineNo;
+                        });
+                });
+
+            d->tool_p->setHandleCppCommentsCallback(
+                [&pm](const std::string& filename, const std::string& briefText, unsigned startLine, unsigned endLine) {
+                    pm.callHooksPluginLogicalParserOnCppCommentFoundHandler(
+                        [&filename]() {
+                            return filename;
+                        },
+                        [&briefText]() {
+                            return briefText;
+                        },
+                        [&startLine]() {
+                            return startLine;
+                        },
+                        [&endLine]() {
+                            return endLine;
+                        });
+                });
+        }
     }
 
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
@@ -954,4 +991,9 @@ std::vector<std::filesystem::path> ParseCodebaseDialog::nonLakosianDirsAsStdVec(
                        return qstr.toStdString();
                    });
     return nonLakosianDirs;
+}
+
+void ParseCodebaseDialog::setPluginManager(Codethink::lvtplg::PluginManager& pluginManager)
+{
+    d->pluginManager = pluginManager;
 }

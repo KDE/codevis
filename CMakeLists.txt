@@ -40,8 +40,14 @@ include(GenerateExportHeader)
 include(GetGitVersion)
 include(GetDate)
 
-add_subdirectory(submodules/configuration-parser)
+if (UNIX)
+    if (APPLE)
+        set(CMAKE_MACOSX_RPATH 1)
+    endif()
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
 
+add_subdirectory(submodules/configuration-parser)
 set(SOCI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/soci)
 
 find_package(Doxygen)

@@ -1,60 +1,8 @@
-stages:
-    - build
+# SPDX-FileCopyrightText: None
+# SPDX-License-Identifier: CC0-1.0
 
-variables:
-    DEPENDENCIES_TAG_BRANCH: $CI_REGISTRY_IMAGE/dependencies:$CI_COMMIT_REF_SLUG
-    DEPENDENCIES_TAG_MASTER: $CI_REGISTRY_IMAGE/dependencies:master
-    APPIMAGE_TAG_BRANCH: $CI_REGISTRY_IMAGE/appimage:$CI_COMMIT_REF_SLUG
-    APPIMAGE_TAG_MASTER: $CI_REGISTRY_IMAGE/appimage:master
-    CENTOS_TAG_MASTER: $CI_REGISTRY_IMAGE/centos:master
-
-build-linux job:
-    image: "docker:20.10.22"
-    services: ["docker:20.10.22-dind"]
-    stage: build
-    variables:
-        OUTDIR: $CI_PROJECT_DIR/generated-diagrams
-    before_script:
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    script:
-        - export DOCKER_BUILDKIT=1
-        - docker build -f packaging/appimage/Dockerfile .
-            --target dependencies
-            --build-arg BUILDKIT_INLINE_CACHE=1
-            --cache-from $DEPENDENCIES_TAG_BRANCH
-            --cache-from $DEPENDENCIES_TAG_MASTER
-            -t $DEPENDENCIES_TAG_BRANCH
-        - docker push $DEPENDENCIES_TAG_BRANCH
-        - docker build -f packaging/appimage/Dockerfile . --target pre-analysis
-        - docker build -f packaging/appimage/Dockerfile . --target build-qt
-        - docker build -f packaging/appimage/Dockerfile . --target tests
-
-build-win job:
-    stage: build
-    tags:
-        - windows
-    script:
-        - git submodule deinit -f --all
-        - git submodule init
-        - git submodule update --recursive
-        - packaging/windows/llvm-build.bat "C:\Project\" "C:\Project\Build" "C:\Project\Install" "4"
-        # TODO: Reenable Windows tests runner on CI (Failing due to file permissions on our CI machine)
-        # - packaging/windows/run-tests.bat "$CI_PROJECT_DIR" "C:\Project\Build\diagram-server"
-        # gitlab doesn't allow copying artifacts from outside $CI_PROJECT_DIR
-        - Xcopy /E /I 'C:\Project\Build\diagram-server\desktopapp\Release' "$CI_PROJECT_DIR\Release"
-    artifacts:
-        paths:
-            - $CI_PROJECT_DIR\Release
-
-build-osx job:
-    stage: build
-    tags:
-        - macos
-    script:
-        - packaging/macos/llvm-build.sh "$HOME/Projects/" "$HOME/Projects/Build" "$HOME/Projects/Install" "5"
-        - cp -rp $HOME/Projects/Build/diagram-server/desktopapp/codevis_desktop.app $CI_PROJECT_DIR
-        - cp -rp $CI_PROJECT_DIR/python/ $CI_PROJECT_DIR
-    artifacts:
-        paths:
-            - "$CI_PROJECT_DIR/codevis_desktop.app"
-            - "$CI_PROJECT_DIR/python/"
+include:
+  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/linux.yml
+  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/freebsd.yml
+  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/windows.yml
+  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/flatpak.yml

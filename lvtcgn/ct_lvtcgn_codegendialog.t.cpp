@@ -262,37 +262,37 @@ TEST_CASE_METHOD(QTApplicationFixture, "codegen selections")
     setState(child1, Qt::Unchecked);
     setState(child2, Qt::Unchecked);
 
-    INFO("Selecting a parent item also updates the children")
-    INFO("parent Checked")
+    INFO("Selecting a parent item also updates the children");
+    INFO("parent Checked");
     setState(parent, Qt::Checked);
     requireState(parent, Qt::Checked);
     requireState(child1, Qt::Checked);
     requireState(child2, Qt::Checked);
 
-    INFO("parent Unchecked")
+    INFO("parent Unchecked");
     setState(parent, Qt::Unchecked);
     requireState(parent, Qt::Unchecked);
     requireState(child1, Qt::Unchecked);
     requireState(child2, Qt::Unchecked);
 
-    INFO("Selecting a child item also updates the parent")
-    INFO("child1 Checked")
+    INFO("Selecting a child item also updates the parent");
+    INFO("child1 Checked");
     setState(child1, Qt::Checked);
     requireState(parent, Qt::PartiallyChecked);
     requireState(child1, Qt::Checked);
     requireState(child2, Qt::Unchecked);
-    INFO("child2 Checked")
+    INFO("child2 Checked");
     setState(child2, Qt::Checked);
     requireState(parent, Qt::Checked);
     requireState(child1, Qt::Checked);
     requireState(child2, Qt::Checked);
 
-    INFO("child1 Unchecked")
+    INFO("child1 Unchecked");
     setState(child1, Qt::Unchecked);
     requireState(parent, Qt::PartiallyChecked);
     requireState(child1, Qt::Unchecked);
     requireState(child2, Qt::Checked);
-    INFO("child2 Unchecked")
+    INFO("child2 Unchecked");
     setState(child2, Qt::Unchecked);
     requireState(parent, Qt::Unchecked);
     requireState(child1, Qt::Unchecked);

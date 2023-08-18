@@ -447,7 +447,7 @@ void ModelUtil::checkSourceFiles(lvtmdb::ObjectStore& store,
 
         qDebug() << "And Expected files: \n";
         for (auto const& expected : files) {
-            INFO("Processing " << expected.path)
+            INFO("Processing " << expected.path);
             qDebug() << "\t" << expected.path.c_str();
         }
     }

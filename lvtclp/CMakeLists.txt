@@ -168,18 +168,12 @@ if (COMPILE_TESTS)
             ct_lvtclp_testnamespace.t.cpp
     )
 
+IF (NOT IGNORE_BROKEN_TESTS_KDE_CI)
     add_lvtclp_test(
         NAME test_ct_lvtclp_udt
         SOURCES
             ct_lvtclp_testudt.t.cpp
     )
-
-    add_lvtclp_test(
-        NAME test_ct_lvtclp_function
-        SOURCES
-            ct_lvtclp_testfunction.t.cpp
-    )
-
     add_lvtclp_test(
         NAME test_ct_lvtclp_field
         SOURCES
@@ -190,18 +184,35 @@ if (COMPILE_TESTS)
         NAME test_ct_lvtclp_var
         SOURCES
             ct_lvtclp_testvar.t.cpp
+   )
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_physicalandtemplates
+        SOURCES
+            ct_lvtclp_testphysicalandtemplates.t.cpp
+    )
+
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_physicaldepscanner
+        SOURCES
+            ct_lvtclp_physicaldepscanner.t.cpp
+    )
+
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_logicaldepscanner
+        SOURCES
+            ct_lvtclp_logicaldepscanner.t.cpp
+    )
+endif()
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_function
+        SOURCES
+            ct_lvtclp_testfunction.t.cpp
     )
 
     add_lvtclp_test(
         NAME test_ct_lvtclp_filesystemscanner
         SOURCES
             ct_lvtclp_filesystemscanner.t.cpp
-    )
-
-    add_lvtclp_test(
-        NAME test_ct_lvtclp_physicalandtemplates
-        SOURCES
-            ct_lvtclp_testphysicalandtemplates.t.cpp
     )
 
     add_lvtclp_test(
@@ -227,18 +238,6 @@ if (COMPILE_TESTS)
         NAME test_ct_lvtclp_clputil
         SOURCES
             ct_lvtclp_clputil.t.cpp
-    )
-
-    add_lvtclp_test(
-        NAME test_ct_lvtclp_physicaldepscanner
-        SOURCES
-            ct_lvtclp_physicaldepscanner.t.cpp
-    )
-
-    add_lvtclp_test(
-        NAME test_ct_lvtclp_logicaldepscanner
-        SOURCES
-            ct_lvtclp_logicaldepscanner.t.cpp
     )
 endif()
     

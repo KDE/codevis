@@ -9,6 +9,7 @@ option(BUILD_DESKTOP_APP "Compile the desktop app, and not just command line" ON
 option(BUILD_PLUGINS "Compile all application plugins in the plugins/ directory" ON)
 option(USE_QT_WEBENGINE "If set, will compile using Qt Webengine (preferred) to render HTML reports" ON)
 option(ENABLE_PYTHON_PLUGINS "If set, will consider plugins implemented in Python" ON)
+option(IGNORE_BROKEN_TESTS_KDE_CI "If set, ignores some broken tests on LLVM 16 / KDE CI." ON)
 
 if (APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE

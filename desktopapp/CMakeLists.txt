@@ -162,7 +162,7 @@ if (APPLE)
     macdeployqt(codevis_desktop ${CMAKE_INSTALL_BINDIR})
 endif()
 
-if (COMPILE_TESTS)
+if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testcrash.lks ${CMAKE_CURRENT_BINARY_DIR}/testcrash.lks COPYONLY)
     qt5_wrap_cpp(test_desktopapp_SRCS
         testmainwindow.h
@@ -184,6 +184,7 @@ if (COMPILE_TESTS)
         ${SYSTEM_EXTRA_LIBRARIES}
         Qt5::Test
     )
+
     add_test(NAME test_desktopapp COMMAND test_desktopapp)
     if (WIN32)
         add_custom_command(TARGET test_desktopapp POST_BUILD

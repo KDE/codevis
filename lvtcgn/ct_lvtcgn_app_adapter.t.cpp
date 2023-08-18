@@ -19,7 +19,7 @@
 
 #include <ct_lvtcgn_app_adapter.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <ct_lvtldr_nodestoragetestutils.h>
 #include <ct_lvttst_tmpdir.h>
 

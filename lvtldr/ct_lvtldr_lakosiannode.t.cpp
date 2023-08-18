@@ -34,7 +34,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 const PyDefaultGilReleasedContext defaultGilContextForTesting;
 

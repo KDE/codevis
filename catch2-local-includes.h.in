@@ -1,0 +1,8 @@
+#ifndef CATCH2_INTERNAL_HEADER_H
+#define CATCH2_INTERNAL_HEADER_H
+
+/* Auto generated header, do not edit. */
+
+#include <@CATCH2_INTERNAL_INCLUDE_FILE@>
+
+#endif

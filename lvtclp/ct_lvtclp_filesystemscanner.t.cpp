@@ -25,7 +25,7 @@
 #include <ct_lvtmdb_objectstore.h>
 
 #include <QtGlobal>
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>

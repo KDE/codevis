@@ -30,7 +30,7 @@
 #include <fstream>
 #include <initializer_list>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;

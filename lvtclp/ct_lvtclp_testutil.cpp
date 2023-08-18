@@ -37,7 +37,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <fstream>
 #include <initializer_list>
 #include <vector>

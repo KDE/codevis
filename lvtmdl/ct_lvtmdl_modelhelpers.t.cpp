@@ -22,7 +22,7 @@
 #include <ct_lvtmdl_modelhelpers.h>
 #include <ct_lvtshr_graphenums.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <ct_lvtldr_nodestoragetestutils.h>
 #include <ct_lvttst_tmpdir.h>
 

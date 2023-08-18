@@ -17,7 +17,7 @@
 // limitations under the License.
 */
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 #include <ct_lvtclr_colormanagement.h>
 #include <ct_lvtldr_lakosiannode.h>

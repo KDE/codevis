@@ -23,7 +23,7 @@
 #include <ct_lvttst_fixture_qt.h>
 
 #include <apptesting_fixture.h>
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <variant>
 
 #include <preferences.h>

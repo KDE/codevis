@@ -76,6 +76,20 @@ find_package(Clang REQUIRED)
 
 if (COMPILE_TESTS)
     find_package(Catch2 REQUIRED)
+    if (Catch2_VERSION_MAJOR EQUAL 2)
+        SET(CATCH2_INTERNAL_INCLUDE_FILE "catch2/catch.hpp")
+        configure_file(
+            "${PROJECT_SOURCE_DIR}/catch2-local-includes.h.in"
+            "${PROJECT_BINARY_DIR}/catch2-local-includes.h"
+        )
+    else()
+        SET(CATCH2_INTERNAL_INCLUDE_FILE "catch2/catch_all.hpp")
+        configure_file(
+            "${PROJECT_SOURCE_DIR}/catch2-local-includes.h.in"
+            "${PROJECT_BINARY_DIR}/catch2-local-includes.h"
+        )
+    endif()
+    INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
 endif()
 
 # find header files for clang tools to use for system includes

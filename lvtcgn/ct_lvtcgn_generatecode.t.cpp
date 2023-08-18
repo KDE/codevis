@@ -20,7 +20,7 @@
 #include <ct_lvtcgn_generatecode.h>
 #include <ct_lvtcgn_testutils.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <ct_lvttst_tmpdir.h>
 
 #pragma push_macro("slots")

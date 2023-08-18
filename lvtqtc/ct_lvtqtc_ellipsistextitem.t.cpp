@@ -17,7 +17,7 @@
 // limitations under the License.
 */
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <ct_lvtqtc_ellipsistextitem.h>
 #include <ct_lvttst_fixture_qt.h>
 

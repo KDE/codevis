@@ -19,7 +19,7 @@
 
 #include <ct_lvtclp_clputil.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 using namespace Codethink;
 

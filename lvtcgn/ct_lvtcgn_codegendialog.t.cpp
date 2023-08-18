@@ -29,7 +29,7 @@
 #include <QPushButton>
 #include <QStandardItemModel>
 #include <QTreeView>
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 #pragma push_macro("slots")
 #undef slots

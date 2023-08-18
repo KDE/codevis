@@ -22,7 +22,7 @@
 #include <ct_lvttst_fixture_qt.h>
 #include <preferences.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 using namespace Codethink::lvtqtw;
 

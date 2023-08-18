@@ -19,7 +19,7 @@
 
 #include <ct_lvtshr_stringhelpers.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 using Codethink::lvtshr::StrUtil;
 

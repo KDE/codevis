@@ -18,7 +18,7 @@
 */
 
 #define CATCH_CONFIG_RUNNER
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <ct_lvttst_testcfgoptions.h>
 
 int main(int argc, char *argv[])

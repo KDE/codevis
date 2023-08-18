@@ -21,7 +21,7 @@
 #include <ct_lvtqtc_nodestorage_testing_helpers.h>
 #include <ct_lvtqtc_testing_utils.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 #include <ct_lvttst_fixture_qt.h>
 #include <ct_lvttst_tmpdir.h>

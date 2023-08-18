@@ -26,7 +26,7 @@
 #include <ct_lvtqtc_packageentity.h>
 #include <ct_lvtshr_loaderinfo.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 #include <optional>
 #include <string>

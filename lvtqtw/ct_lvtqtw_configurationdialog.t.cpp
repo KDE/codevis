@@ -22,7 +22,7 @@
 #include <ct_lvttst_fixture_qt.h>
 #include <preferences.h>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 #include <lvtcgn/ui_ct_lvtcgn_codegendialog.h>
 #include <ui_ct_lvtqtw_configurationdialog.h>
 

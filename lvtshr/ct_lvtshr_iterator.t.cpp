@@ -20,7 +20,7 @@
 #include <ct_lvtshr_iterator.h>
 #include <vector>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 using Codethink::lvtshr::enumerate;
 

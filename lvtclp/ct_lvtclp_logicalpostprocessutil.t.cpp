@@ -31,7 +31,7 @@
 #include <initializer_list>
 #include <string>
 
-#include <catch2/catch.hpp>
+#include <catch2-local-includes.h>
 
 namespace {
 

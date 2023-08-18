@@ -84,7 +84,7 @@ if (NOT CT_CLANG_HEADERS_DIR)
 endif()
 message("Looking for clang tool headers at ${CT_CLANG_HEADERS_DIR}. You can change this by defining CT_CLANG_HEADERS_DIR")
 if (NOT EXISTS "${CT_CLANG_HEADERS_DIR}/stddef.h")
-    message(FATAL_ERROR "Cannot find clang tool headers at ${CT_CLANG_HEADERS_DIR}")
+    message("Cannot find clang tool headers at ${CT_CLANG_HEADERS_DIR}, Errors might happen in runtime.")
 endif()
 
 if (MSVC)

@@ -81,6 +81,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
+set(TEST_PRJ_PATH ${CMAKE_CURRENT_SOURCE_DIR}/systemtests)
+configure_file(
+    "test-project-paths.h.in"
+    "test-project-paths.h"
+)
+
 # add_lvtclp_exec(
 #     NAME exec_name
 #     SOURCES foo.cpp bar.cpp)
@@ -190,18 +196,6 @@ IF (NOT IGNORE_BROKEN_TESTS_KDE_CI)
         SOURCES
             ct_lvtclp_testphysicalandtemplates.t.cpp
     )
-
-    add_lvtclp_test(
-        NAME test_ct_lvtclp_physicaldepscanner
-        SOURCES
-            ct_lvtclp_physicaldepscanner.t.cpp
-    )
-
-    add_lvtclp_test(
-        NAME test_ct_lvtclp_logicaldepscanner
-        SOURCES
-            ct_lvtclp_logicaldepscanner.t.cpp
-    )
 endif()
     add_lvtclp_test(
         NAME test_ct_lvtclp_function
@@ -238,6 +232,18 @@ endif()
         NAME test_ct_lvtclp_clputil
         SOURCES
             ct_lvtclp_clputil.t.cpp
+    )
+
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_physicaldepscanner
+        SOURCES
+            ct_lvtclp_physicaldepscanner.t.cpp
+    )
+
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_logicaldepscanner
+        SOURCES
+            ct_lvtclp_logicaldepscanner.t.cpp
     )
 endif()
     

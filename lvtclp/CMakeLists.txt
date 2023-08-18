@@ -295,25 +295,4 @@ elseif (WIN32)
     # but we need to set this directory.
     # Winbdows threats directories without the first \ as relatives to the current folder.
     add_compile_definitions(CT_CLANG_HEADERS_RELATIVE_DIR="clang")
-else()
-    # install clang headers where the tool can look them up
-    # path chosen to match llvm proj dirs e.g. /usr/lib/llvm-12/lib/clang/12.0.0/include
-    set(CT_CLANG_HEADERS_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/clang/include")
-
-    # I can't convince install() to do the correct thing when CT_CLANG_HEADERS_DIR
-    # is a symlink (which it is on appimage) - so copy but only when running an install
-    install(CODE
-        "file(INSTALL \"${CT_CLANG_HEADERS_DIR}/\"
-             DESTINATION \"${CMAKE_INSTALL_PREFIX}/${CT_CLANG_HEADERS_INSTALL_DIR}\"
-             USE_SOURCE_PERMISSIONS
-        )"
-    )
-    # calculate relative path from where the binaries are to where the installed
-    # headers are
-    file(RELATIVE_PATH
-        CT_CLANG_HEADERS_RELATIVE_DIR
-        "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
-        "${CMAKE_INSTALL_PREFIX}/${CT_CLANG_HEADERS_INSTALL_DIR}"
-    )
-    add_compile_definitions(CT_CLANG_HEADERS_RELATIVE_DIR="${CT_CLANG_HEADERS_RELATIVE_DIR}")
 endif()

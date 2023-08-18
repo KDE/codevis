@@ -282,7 +282,12 @@ class F {
     REQUIRE(cde);
 
     cde->withROLock([&] {
+#if CLANG_VERSION_MAJOR >= 16
+        REQUIRE(cde->signature() == "C<D<E> >");
+#else
         REQUIRE(cde->signature() == "C<D<class E> >");
+#endif
+
         const auto variableTypes = cde->variableTypes();
         REQUIRE(variableTypes.size() == 3);
         auto it = std::find(variableTypes.begin(), variableTypes.end(), C);

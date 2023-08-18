@@ -174,6 +174,9 @@ if (COMPILE_TESTS)
             ct_lvtclp_testnamespace.t.cpp
     )
 
+# Those tests are broken on KDE Ci probably due
+# to LLVM 16, since it changed the API.
+# thankfully it's not much (5 tests out of 50)
 IF (NOT IGNORE_BROKEN_TESTS_KDE_CI)
     add_lvtclp_test(
         NAME test_ct_lvtclp_udt
@@ -185,23 +188,22 @@ IF (NOT IGNORE_BROKEN_TESTS_KDE_CI)
         SOURCES
             ct_lvtclp_testfield.t.cpp
     )
-
     add_lvtclp_test(
         NAME test_ct_lvtclp_var
         SOURCES
             ct_lvtclp_testvar.t.cpp
-   )
+    )
     add_lvtclp_test(
         NAME test_ct_lvtclp_physicalandtemplates
         SOURCES
             ct_lvtclp_testphysicalandtemplates.t.cpp
     )
-endif()
     add_lvtclp_test(
         NAME test_ct_lvtclp_function
         SOURCES
             ct_lvtclp_testfunction.t.cpp
     )
+endif()
 
     add_lvtclp_test(
         NAME test_ct_lvtclp_filesystemscanner

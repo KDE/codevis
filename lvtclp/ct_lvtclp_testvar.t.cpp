@@ -28,6 +28,7 @@
 #include <ct_lvtclp_testutil.h>
 
 #include <catch2-local-includes.h>
+#include <clang/Basic/Version.h>
 
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;

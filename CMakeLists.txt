@@ -76,6 +76,14 @@ endif()
 find_package(Clang REQUIRED)
 
 if (COMPILE_TESTS)
+    set(TEST_PRJ_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lvtclp/systemtests)
+    set(LAKOSDIAGRAM_PYSCRIPTS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/python/codegeneration)
+
+    configure_file(
+        "test-project-paths.h.in"
+        "test-project-paths.h"
+    )
+
     find_package(Catch2 REQUIRED)
     if (Catch2_VERSION_MAJOR EQUAL 2)
         SET(CATCH2_INTERNAL_INCLUDE_FILE "catch2/catch.hpp")

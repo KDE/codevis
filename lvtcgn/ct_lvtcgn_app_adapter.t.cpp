@@ -30,6 +30,7 @@
 #pragma pop_macro("slots")
 
 #include <ctime>
+#include <test-project-paths.h>
 
 using namespace Codethink::lvtcgn::app;
 using namespace Codethink::lvtcgn::mdl;
@@ -111,13 +112,7 @@ TEST_CASE("Code generation adapter")
 
 TEST_CASE("CMake code generation script")
 {
-    auto *const LAKOSDIAGRAM_PYSCRIPTS_PATH = std::getenv("LAKOSDIAGRAM_PYSCRIPTS_PATH");
-    if (LAKOSDIAGRAM_PYSCRIPTS_PATH == nullptr) {
-        FAIL(
-            "LAKOSDIAGRAM_PYSCRIPTS_PATH environment variable must be set to '<sourcedir>/python/codegeneration/' to "
-            "run this test");
-    }
-    auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_PYSCRIPTS_PATH) + "cmake/codegenerator.py";
+    auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_PYSCRIPTS_PATH) + "/cmake/codegenerator.py";
 
     SECTION("Basic package project without package groups")
     {

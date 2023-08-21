@@ -81,12 +81,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
-set(TEST_PRJ_PATH ${CMAKE_CURRENT_SOURCE_DIR}/systemtests)
-configure_file(
-    "test-project-paths.h.in"
-    "test-project-paths.h"
-)
-
 # add_lvtclp_exec(
 #     NAME exec_name
 #     SOURCES foo.cpp bar.cpp)

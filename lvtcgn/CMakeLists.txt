@@ -89,7 +89,7 @@ if (BUILD_DESKTOP_APP)
             lakospreferences
     )
 
-    if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
+    if (COMPILE_TESTS)
         add_executable(test_lvtcgn_app_adapter ct_lvtcgn_app_adapter.t.cpp)
         target_link_libraries(test_lvtcgn_app_adapter
                 Codethink::lvtcgn_adapter

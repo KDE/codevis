@@ -29,6 +29,7 @@
 #include <filesystem>
 
 #include <catch2-local-includes.h>
+#include <clang/Basic/Version.h>
 
 using namespace Codethink::lvtmdb;
 using namespace Codethink::lvtclp;

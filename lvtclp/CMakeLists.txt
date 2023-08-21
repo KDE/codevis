@@ -179,11 +179,6 @@ if (COMPILE_TESTS)
 # thankfully it's not much (5 tests out of 50)
 IF (NOT IGNORE_BROKEN_TESTS_KDE_CI)
     add_lvtclp_test(
-        NAME test_ct_lvtclp_var
-        SOURCES
-            ct_lvtclp_testvar.t.cpp
-    )
-    add_lvtclp_test(
         NAME test_ct_lvtclp_physicalandtemplates
         SOURCES
             ct_lvtclp_testphysicalandtemplates.t.cpp
@@ -203,6 +198,11 @@ endif()
         NAME test_ct_lvtclp_field
         SOURCES
             ct_lvtclp_testfield.t.cpp
+    )
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_var
+        SOURCES
+            ct_lvtclp_testvar.t.cpp
     )
     add_lvtclp_test(
         NAME test_ct_lvtclp_filesystemscanner

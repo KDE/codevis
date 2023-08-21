@@ -1823,7 +1823,13 @@ std::vector<lvtmdb::TypeObject *>
 LogicalDepVisitor::getTemplateArguments(const clang::QualType type, const clang::Decl *decl, const char *desc)
 {
     // find any template arguments of the type
-    const auto *const tmplSpec = clang::dyn_cast<clang::TemplateSpecializationType>(type);
+    auto *tmplSpec = clang::dyn_cast<clang::TemplateSpecializationType>(type);
+
+    // llvm15< works with the clang::dyn_cast, and llvm16 works with getAs.
+    if (!tmplSpec) {
+        tmplSpec = type->getAs<clang::TemplateSpecializationType>();
+    }
+
     if (!tmplSpec) {
         return {};
     }

@@ -35,6 +35,8 @@
 
 #include <catch2-local-includes.h>
 
+#include <clang/Basic/Version.h>
+
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;
 using namespace Codethink;
@@ -317,7 +319,12 @@ class D {
     session.withROLock([&] {
         C = session.getType("C");
         D = session.getType("D");
+
+#if CLANG_VERSION_MAJOR >= 16
+        method = session.getMethod("D::method", "method(const C & c)", std::string{}, "void");
+#else
         method = session.getMethod("D::method", "method(const class C & c)", std::string{}, "void");
+#endif
     });
 
     REQUIRE(D);

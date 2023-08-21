@@ -31,6 +31,7 @@
 #include <iostream>
 
 #include <catch2-local-includes.h>
+#include <clang/Basic/Version.h>
 
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;
@@ -349,7 +350,11 @@ class E {
     });
 
     cd->withROLock([&] {
+#if CLANG_VERSION_MAJOR >= 16
+        REQUIRE(cd->signature() == "C<D>");
+#else
         REQUIRE(cd->signature() == "C<class D>");
+#endif
         const auto cdVariableTypes = cd->variableTypes();
         REQUIRE(cdVariableTypes.size() == 2);
         auto it = std::find(cdVariableTypes.begin(), cdVariableTypes.end(), C);

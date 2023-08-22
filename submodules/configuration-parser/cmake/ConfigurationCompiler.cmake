@@ -47,7 +47,7 @@ function(compile_configuration target_or_source_var)
             MAIN_DEPENDENCY ${it}
         )
 
-        qt5_wrap_cpp(_wrapped_moc "${CMAKE_CURRENT_BINARY_DIR}/${_FILENAME_}.h")
+        qt_wrap_cpp(_wrapped_moc "${CMAKE_CURRENT_BINARY_DIR}/${_FILENAME_}.h")
         if (TARGET ${target_or_source_var})
             target_sources(${target_or_source_var} PRIVATE "${_FILENAME_}.cpp")
             target_sources(${target_or_source_var} PRIVATE ${_wrapped_moc})

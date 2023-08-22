@@ -10,26 +10,26 @@ set(CodeVisDesktop_SRCS
     projectsettingsdialog.cpp
 )
 
-qt5_wrap_cpp(CodeVisDesktop_SRCS
+qt_wrap_cpp(CodeVisDesktop_SRCS
     mainwindow.h
     aboutdialog.h
     projectsettingsdialog.h
     codevis_dbus_interface.h
 )
 
-qt5_wrap_ui(CodeVisDesktop_SRCS
+qt_wrap_ui(CodeVisDesktop_SRCS
     mainwindow.ui
     aboutdialog.ui
     projectsettingsdialog.ui
 )
 
 set(CODEVIS_DESKTOP_QT_LIBRARIES
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Widgets
+    Qt::Core
+    Qt::Gui
+    Qt::Widgets
 )
 if (USE_QT_WEBENGINE)
-    set(CODEVIS_DESKTOP_QT_LIBRARIES "${CODEVIS_DESKTOP_QT_LIBRARIES}" Qt5::WebEngineWidgets)
+    set(CODEVIS_DESKTOP_QT_LIBRARIES "${CODEVIS_DESKTOP_QT_LIBRARIES}" Qt::WebEngineWidgets)
 endif()
 
 # Mac and Windows are currently failing on the CI
@@ -38,7 +38,7 @@ if (UNIX AND NOT APPLE)
         ${CMAKE_CURRENT_BINARY_DIR}/org.codethink.CodeVis.xml
     )
 
-    qt5_generate_dbus_interface(
+    qt_generate_dbus_interface(
         codevis_dbus_interface.h
         org.codethink.CodeVis.xml
 
@@ -48,13 +48,13 @@ if (UNIX AND NOT APPLE)
 
     # install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.codethink.CodeVis.xml DESTINATION ${DBUS_INTERFACES_INSTALL_DIR})
 
-    qt5_add_dbus_adaptor(CodeVisDesktop_DBUS_SRCS
+    qt_add_dbus_adaptor(CodeVisDesktop_DBUS_SRCS
         ${CMAKE_CURRENT_BINARY_DIR}/org.codethink.CodeVis.xml
         codevis_dbus_interface.h
         CodeVisDBusInterface # Clasname used for the adaptor.
     )
 
-    set(CODEVIS_DESKTOP_QT_LIBRARIES ${CODEVIS_DESKTOP_QT_LIBRARIES} Qt5::DBus)
+    set(CODEVIS_DESKTOP_QT_LIBRARIES ${CODEVIS_DESKTOP_QT_LIBRARIES} Qt::DBus)
 endif()
 
 if (APPLE)
@@ -146,7 +146,7 @@ if (WIN32)
 
 	add_custom_command(TARGET codevis_desktop POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${CONAN_QT_ROOT}/bin/Qt5Svg.dll"
+                        "${CONAN_QT_ROOT}/bin/Qt${QT_VERSION_MAJOR}Svg.dll"
 			$<TARGET_FILE_DIR:codevis_desktop>)
 endif()
 

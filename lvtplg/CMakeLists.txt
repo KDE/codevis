@@ -19,7 +19,7 @@ AddTargetLibrary(
   LIBRARIES
     ${SYSTEM_EXTRA_LIBRARIES}
     Codethink::lvtshr
-    Qt5::Core
+    Qt::Core
     Python::Python
 )
 

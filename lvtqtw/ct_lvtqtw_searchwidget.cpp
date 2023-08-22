@@ -21,6 +21,7 @@
 #include <ui_ct_lvtqtw_searchwidget.h>
 
 #include <QAction>
+#include <QActionGroup>
 #include <QKeyEvent>
 
 using namespace Codethink::lvtqtw;

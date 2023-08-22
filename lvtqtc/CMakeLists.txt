@@ -123,9 +123,9 @@ AddTargetLibrary(
         Codethink::MRichTextEdit
         Codethink::InternalKWidgetsAddons
         lakospreferences
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Widgets
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
 )
 
 if (COMPILE_TESTS)
@@ -145,7 +145,7 @@ if (COMPILE_TESTS)
             Codethink::lvttst
             Codethink::lvttst_tmpdir
             Codethink::lvttst_fixture_qt
-            Qt5::Test
+            Qt::Test
         )
 
         add_test(NAME test_${TC_NAME} COMMAND test_${TC_NAME})

@@ -56,10 +56,17 @@ void PackageViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem& o
 void PackageViewDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex& index) const
 {
     QStyledItemDelegate::initStyleOption(option, index);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (auto *v4 = qstyleoption_cast<QStyleOptionViewItemV4 *>(option)) {
         const auto origIcon = index.data(Qt::DecorationRole).value<QIcon>();
         v4->icon = IconHelpers::iconFrom(origIcon);
     }
+#else
+    if (auto *v4 = qstyleoption_cast<QStyleOptionViewItem *>(option)) {
+        const auto origIcon = index.data(Qt::DecorationRole).value<QIcon>();
+        v4->icon = IconHelpers::iconFrom(origIcon);
+    }
+#endif
 }
 
 } // namespace Codethink::lvtqtd

@@ -38,7 +38,7 @@ AddTargetLibrary(
         Codethink::lvtmdb # Used only for testing, but clazy will complain if not added as a dependency explicitly
         Soci::Core
         Soci::soci_sqlite3
-        Qt5::Core
+        Qt::Core
         ${SQLite3_LIBRARIES}
 )
 
@@ -56,7 +56,7 @@ add_executable(physicalloader ct_lvtldr_physicalloader.m.cpp)
 target_link_libraries(physicalloader
     Codethink::lvtldr
     ${SYSTEM_EXTRA_LIBRARIES}
-    Qt5::Core
+    Qt::Core
 )
 
 if (COMPILE_TESTS)

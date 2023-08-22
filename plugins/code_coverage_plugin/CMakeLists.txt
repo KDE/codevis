@@ -15,4 +15,4 @@ add_library(code-cov-plugin
 )
 target_compile_options(code-cov-plugin PRIVATE "-fvisibility=default")
 set_property(TARGET code-cov-plugin PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(code-cov-plugin Qt5::Core)
+target_link_libraries(code-cov-plugin Qt::Core)

@@ -60,17 +60,23 @@ if (NOT SQLite3_FOUND)
     set(SQLite3_LIBRARIES sqlite3)
 endif()
 
-find_package(Qt5 REQUIRED COMPONENTS Core Test)
-if (BUILD_DESKTOP_APP)
-    find_package(Qt5 REQUIRED COMPONENTS Gui Widgets Svg)
-    if (USE_QT_WEBENGINE)
-        find_package(Qt5 REQUIRED COMPONENTS WebEngineWidgets)
-        add_compile_definitions(USE_WEB_ENGINE=1)
-    endif()
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+message("Found ${QT_VERSION_MAJOR}")
+
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Test)
+if (QT_VERSION_MAJOR EQUAL 6)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core5Compat)
 endif()
 
-if (UNIX AND NOT APPLE)
-    find_package(Qt5 REQUIRED COMPONENTS DBus)
+if (BUILD_DESKTOP_APP)
+    find_package(Qt${QT_VERSION_MAJOR} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)
+    if (USE_QT_WEBENGINE)
+        find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS WebEngineWidgets)
+        add_compile_definitions(USE_WEB_ENGINE=1)
+    endif()
+    if (UNIX AND NOT APPLE)
+        find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus)
+    endif()
 endif()
 
 find_package(Clang REQUIRED)
@@ -162,7 +168,7 @@ if (APPLE)
     SET(MACOSX_BUNDLE_ICON_FILE iconset.icns)
 endif()
 
-qt5_add_resources(resources_SRCS
+qt_add_resources(resources_SRCS
     resources.qrc
 )
 add_library(resources STATIC ${resources_SRCS})
@@ -218,7 +224,7 @@ add_subdirectory(lvttst)
 if (BUILD_DESKTOP_APP)
     if (WIN32)
         set(CONFIGURATION_SRCS preferences.cpp preferences.h)
-        qt5_wrap_cpp(CONFIGURATION_SRCS preferences.h)
+        qt_wrap_cpp(CONFIGURATION_SRCS preferences.h)
     else()
         compile_configuration(CONFIGURATION_SRCS EXPORT_HEADER lakospreferences preferences.conf)
     endif()
@@ -226,7 +232,7 @@ if (BUILD_DESKTOP_APP)
     add_library(lakospreferences SHARED ${CONFIGURATION_SRCS})
     generate_export_header(lakospreferences)
 
-    target_link_libraries(lakospreferences Qt5::Core Qt5::Gui Qt5::Widgets)
+    target_link_libraries(lakospreferences Qt::Core Qt::Gui Qt::Widgets)
 
     target_include_directories(lakospreferences
     PUBLIC

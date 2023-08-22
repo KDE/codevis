@@ -159,7 +159,7 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
     d->classOnlyActions.push_back(d->topBar->addWidget(d->traversalLimit));
     d->classOnlyActions.push_back(d->topBar->addWidget(d->relationLimit));
     d->topBar->addWidget(d->zoom);
-    d->topBar->layout()->setMargin(0);
+    d->topBar->layout()->setContentsMargins(0, 0, 0, 0);
 
     d->zoom->setMinimum(1);
     d->zoom->setMaximum(999);

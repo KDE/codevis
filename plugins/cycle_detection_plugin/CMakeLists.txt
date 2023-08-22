@@ -16,4 +16,4 @@ add_library(${PLUGIN_NAME}
 )
 target_compile_options(${PLUGIN_NAME} PRIVATE "-fvisibility=default")
 set_property(TARGET ${PLUGIN_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(${PLUGIN_NAME} Qt5::Core)
+target_link_libraries(${PLUGIN_NAME} Qt::Core)

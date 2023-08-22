@@ -57,10 +57,10 @@ AddTargetLibrary(
         Codethink::lvtqtc
         Codethink::lvtqtd
         Codethink::lvtprj
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Widgets
-        Qt5::Svg
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        Qt::Svg
         lakospreferences
 )
 
@@ -76,7 +76,7 @@ if (COMPILE_TESTS)
             Codethink::lvttst
             Codethink::lvttst_fixture_qt
             Codethink::lvttst_tmpdir
-            Qt5::Test
+            Qt::Test
         )
         add_test(NAME test_${TC_NAME} COMMAND test_${TC_NAME})
     endfunction()

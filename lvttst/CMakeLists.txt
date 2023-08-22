@@ -31,7 +31,7 @@ if (COMPILE_TESTS)
         )
 
         target_link_libraries(lvttst_fixture_qt
-            Qt5::Widgets
+            Qt::Widgets
         )
     endif()
     add_library(lvttst_tmpdir

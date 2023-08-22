@@ -19,7 +19,6 @@
 
 #include <ct_lvtqtc_minimap.h>
 
-#include <QDesktopWidget>
 #include <QGraphicsScene>
 #include <QGuiApplication>
 #include <QMenu>

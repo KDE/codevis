@@ -57,12 +57,16 @@ set (QUAZIP_SOURCES
   quazip/quazip/quazipnewinfo.cpp
 )
 
-qt5_wrap_cpp(QUAZIP_MOC ${QUAZIP_HEADERS})
+qt_wrap_cpp(QUAZIP_MOC ${QUAZIP_HEADERS})
 
 add_library(quazip SHARED ${QUAZIP_HEADERS} ${QUAZIP_SOURCES} ${QUAZIP_MOC})
 generate_export_header(quazip)
 
-target_link_libraries(quazip Qt5::Core)
+if (${QT_VERSION_MAJOR} STREQUAL "6")
+    target_link_libraries(quazip PUBLIC Qt::Core Qt::Core5Compat)
+else()
+    target_link_libraries(quazip PUBLIC Qt::Core)
+endif()
 
 target_include_directories(quazip
 PUBLIC

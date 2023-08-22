@@ -24,7 +24,7 @@ AddTargetLibrary(
     ct_lvtshr_stringhelpers.h
     ct_lvtshr_uniqueid.h
   LIBRARIES
-    Qt5::Core
+    Qt::Core
 )
 
 if (COMPILE_TESTS)

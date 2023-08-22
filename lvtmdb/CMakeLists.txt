@@ -1,6 +1,6 @@
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
-qt5_add_resources(db_res_SRCS
+qt_add_resources(db_res_SRCS
     ../database-spec/databases.qrc
 )
 

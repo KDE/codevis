@@ -18,10 +18,10 @@ macro(AddTargetLibrary)
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
     # Build the Meta Object Compiler targets
-    qt5_wrap_cpp(DTARGS_SOURCES ${DTARGS_QT_HEADERS} OPTIONS "--no-warnings" "--no-notes")
+    qt_wrap_cpp(DTARGS_SOURCES ${DTARGS_QT_HEADERS} OPTIONS "--no-warnings" "--no-notes")
 
     if (BUILD_DESKTOP_APP)
-        qt5_wrap_ui(DTARGS_SOURCES ${DTARGS_DESIGNER_FORMS})
+        qt_wrap_ui(DTARGS_SOURCES ${DTARGS_DESIGNER_FORMS})
     endif()
 
     add_library(${DTARGS_LIBRARY_NAME} SHARED ${DTARGS_SOURCES} ${DTARGS_HEADERS} ${DTARGS_QT_HEADERS})

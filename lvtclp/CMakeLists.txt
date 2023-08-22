@@ -72,7 +72,7 @@ AddTargetLibrary(
         Codethink::lvtshr
         ${CLANG_EXTRA_LIBRARIES}
         ${SYSTEM_EXTRA_LIBRARIES}
-        Qt5::Core
+        Qt::Core
         Python::Python
 )
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -107,12 +107,12 @@ endfunction()
 add_lvtclp_exec(
     NAME codevis_create_codebase_db
     SOURCES ct_lvtclp_create_codebase_db.m.cpp
-    LIBRARIES Qt5::Core)
+    LIBRARIES Qt::Core)
 
 add_lvtclp_exec(
     NAME codevis_merge_databases
     SOURCES ct_lvtclp_merge_databases.m.cpp
-    LIBRARIES Qt5::Core Threads::Threads
+    LIBRARIES Qt::Core Threads::Threads
 )
 install(TARGETS
     codevis_merge_databases

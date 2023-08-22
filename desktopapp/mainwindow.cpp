@@ -219,9 +219,9 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     addAction(ui.actionUndo);
 
 #if defined(Q_OS_WINDOWS)
-    ui.actionRedo->setShortcuts({Qt::Key_Redo, Qt::CTRL + Qt::Key_Y});
+    ui.actionRedo->setShortcuts({Qt::Key_Redo, Qt::CTRL | Qt::Key_Y});
 #else
-    ui.actionRedo->setShortcuts({Qt::Key_Redo, Qt::CTRL + Qt::SHIFT + Qt::Key_Z});
+    ui.actionRedo->setShortcuts({Qt::Key_Redo, Qt::CTRL | Qt::SHIFT | Qt::Key_Z});
 #endif
     connect(ui.actionRedo, &QAction::triggered, this, &MainWindow::triggerRedo);
     addAction(ui.actionRedo);

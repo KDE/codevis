@@ -6,7 +6,7 @@ AddTargetLibrary(
   QT_HEADERS
     ct_lvtclr_colormanagement.h
   LIBRARIES
-    Qt5::Core
+    Qt::Core
     lakospreferences
 )
 

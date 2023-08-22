@@ -28,7 +28,10 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/ConfigurationParser")
 
-find_package(Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt6 COMPONENTS Core)
+if (NOT Qt6_FOUND)
+    find_package(Qt5 REQUIRED COMPONENTS Core)
+endif()
 
 include_directories(.)
 
@@ -40,7 +43,7 @@ add_library(confgen_lib STATIC
     qobject/dump_qobject.cpp
     qsettings/dump_qsettings.cpp
 )
-target_link_libraries(confgen_lib Qt5::Core)
+target_link_libraries(confgen_lib Qt::Core)
 
 add_executable(confgen
     main.cpp

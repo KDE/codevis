@@ -142,11 +142,6 @@ if (WIN32)
             $<TARGET_FILE:MRichTextEdit>
             $<TARGET_FILE_DIR:codevis_desktop>
     )
-
-	add_custom_command(TARGET codevis_desktop POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "${CONAN_QT_ROOT}/bin/Qt${QT_VERSION_MAJOR}Svg.dll"
-			$<TARGET_FILE_DIR:codevis_desktop>)
 endif()
 
 add_custom_command(

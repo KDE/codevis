@@ -66,10 +66,10 @@ if (APPLE)
     set_source_files_properties(${AppleHeaders_SRCS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/include")
 endif()
 
-if (WIN32)
-    set(CodeVisIcon_SRCS ${PROJECT_SOURCE_DIR}/packaging/windows/applicationicon.rc)
-    set(WindowsKeyword WIN32)
-endif()
+# if (WIN32)
+#    set(CodeVisIcon_SRCS ${PROJECT_SOURCE_DIR}/packaging/windows/applicationicon.rc)
+#    set(WindowsKeyword WIN32)
+# endif()
 
 add_library(codevis_lib STATIC
     ${CodeVisDesktop_DBUS_SRCS}

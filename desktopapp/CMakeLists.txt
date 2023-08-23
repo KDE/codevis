@@ -139,7 +139,6 @@ if (WIN32)
             $<TARGET_FILE:soci_sqlite3>
             $<TARGET_FILE:InternalKWidgetsAddons>
             $<TARGET_FILE:lakospreferences>
-            $<TARGET_FILE:quazip>
             $<TARGET_FILE:MRichTextEdit>
             $<TARGET_FILE_DIR:codevis_desktop>
     )

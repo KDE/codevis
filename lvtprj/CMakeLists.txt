@@ -14,7 +14,7 @@ AddTargetLibrary(
   LIBRARIES
     ${SYSTEM_EXTRA_LIBRARIES}
     Codethink::lvtmdb
-    quazip
+    QuaZip::QuaZip
     Qt::Core
     Codethink::lvtshr
 )

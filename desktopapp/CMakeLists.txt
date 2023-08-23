@@ -164,7 +164,7 @@ endif()
 
 if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testcrash.lks ${CMAKE_CURRENT_BINARY_DIR}/testcrash.lks COPYONLY)
-    qt5_wrap_cpp(test_desktopapp_SRCS
+    qt_wrap_cpp(test_desktopapp_SRCS
         testmainwindow.h
     )
 
@@ -182,14 +182,14 @@ if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
         Codethink::lvttst_tmpdir
         codevis_lib
         ${SYSTEM_EXTRA_LIBRARIES}
-        Qt5::Test
+        Qt::Test
     )
 
     add_test(NAME test_desktopapp COMMAND test_desktopapp)
     if (WIN32)
         add_custom_command(TARGET test_desktopapp POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CONAN_QT_ROOT}/bin/Qt5Test.dll"
+                "${CONAN_QT_ROOT}/bin/Qt${QT_VERSION_MAJOR}Test.dll"
                 $<TARGET_FILE_DIR:test_desktopapp>)
     endif()
 
@@ -199,7 +199,7 @@ if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
         Codethink::lvttst_fixture_qt
         codevis_lib
         ${EXTRA_SYSTEM_LIBRARIES}
-        Qt5::Test
+        Qt::Test
     )
     add_test(NAME test_projectsettingsdialog COMMAND test_projectsettingsdialog)
 endif()

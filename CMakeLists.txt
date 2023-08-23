@@ -11,6 +11,18 @@ option(USE_QT_WEBENGINE "If set, will compile using Qt Webengine (preferred) to 
 option(ENABLE_PYTHON_PLUGINS "If set, will consider plugins implemented in Python" ON)
 option(IGNORE_BROKEN_TESTS_KDE_CI "If set, ignores some broken tests on LLVM 16 / KDE CI." ON)
 
+# Set a default build type if none was specified
+set(default_build_type "Release")
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+    "MinSizeRel" "RelWithDebInfo")
+endif()
+
 if (APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE
         STRING "Minimum OS X deployment version"

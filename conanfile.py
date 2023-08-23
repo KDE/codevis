@@ -33,6 +33,7 @@ class DiagramServerConan(ConanFile):
         "zlib/1.2.12",
         "libiconv/1.17",
         "libpng/1.6.38",
+        "quazip/1.4",
     )
 
     # There's an error currently with libxml2 on windows.

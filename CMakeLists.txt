@@ -315,5 +315,5 @@ install(
     ${CMAKE_CURRENT_SOURCE_DIR}/database-spec/cad_db.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/database-spec/codebase_db.sql
   DESTINATION
-    ${KDE_INSTALL_METAINFODIR}
+    ${KDE_INSTALL_DATAROOTDIR}/codevis/database-spec
 )

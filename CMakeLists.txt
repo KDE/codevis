@@ -1,6 +1,12 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(CodeVis CXX C)
+# KDE Applications version, managed by release script.
+set(RELEASE_SERVICE_VERSION_MAJOR "23")
+set(RELEASE_SERVICE_VERSION_MINOR "11")
+set(RELEASE_SERVICE_VERSION_MICRO "70")
+set(RELEASE_SERVICE_VERSION "${RELEASE_SERVICE_VERSION_MAJOR}.${RELEASE_SERVICE_VERSION_MINOR}.${RELEASE_SERVICE_VERSION_MICRO}")
+
+project(CodeVis LANGUAGES CXX C VERSION ${RELEASE_SERVICE_VERSION})
 
 option(USE_LLVM_STATIC_LIBS "Prefer the static llvm libs instead of the shared ones" OFF)
 option(COMPILE_TESTS "Compile tests (Needs Catch2 dependency installed)" ON)
@@ -10,6 +16,65 @@ option(BUILD_PLUGINS "Compile all application plugins in the plugins/ directory"
 option(USE_QT_WEBENGINE "If set, will compile using Qt Webengine (preferred) to render HTML reports" ON)
 option(ENABLE_PYTHON_PLUGINS "If set, will consider plugins implemented in Python" ON)
 option(IGNORE_BROKEN_TESTS_KDE_CI "If set, ignores some broken tests on LLVM 16 / KDE CI." ON)
+
+set(QT_MIN_VERSION "5.15.2")
+set(KF5_DEP_VERSION "5.90.0")
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/submodules/configuration-parser/cmake)
+
+find_package(ECM ${KF5_DEP_VERSION} QUIET REQUIRED NO_MODULE)
+list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+
+# This Breaks Soci.
+# For the future we should migrate to QtSql or something.
+# Soci does *not* have a good policy regarding releases,
+# and the current codebase is full of smaller c++ antipatterns
+# include(KDECompilerSettings NO_POLICY_SCOPE)
+
+# This Breaks Catch2
+# Catch2 Broke it's API on a minor release, and this made
+# me quite sad. It's also sad to see that it doesn't
+# use export headers, too, so it's hard to use it on a
+# shared library.
+#include(KDECMakeSettings)
+
+include(KDEInstallDirs)
+include(KDEClangFormat)
+include(KDEGitCommitHooks)
+
+include(ECMOptionalAddSubdirectory)
+include(ECMAddAppIcon)
+include(ECMInstallIcons)
+include(ECMDeprecationSettings)
+
+include(AddTargetLibrary)
+include(ConfigurationCompiler)
+include(GenerateExportHeader)
+include(GetGitVersion)
+include(GetDate)
+include(FeatureSummary)
+
+find_package(Doxygen)
+find_package(SQLite3 REQUIRED)
+find_package(Clang REQUIRED)
+
+set(CMAKE_AUTOMOC FALSE)
+set(CMAKE_AUTOUIC FALSE)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+
+if (QT_MAJOR_VERSION STREQUAL "6")
+    set(QT_REQUIRED_VERSION "6.4.0")
+    set(KF_MIN_VERSION "5.240.0")
+    set(KF_MAJOR_VERSION "6")
+else()
+    set(KF_MAJOR_VERSION "5")
+endif()
 
 # Set a default build type if none was specified
 set(default_build_type "Release")
@@ -23,36 +88,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if (APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE
-        STRING "Minimum OS X deployment version"
-        FORCE
-    )
-endif()
-
-if(EXISTS "${CMAKE_BINARY_DIR}/conan_paths.cmake")
-    message("Found conan paths")
-    include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
-else()
-    message("Couldn't find conan paths")
-endif()
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/submodules/configuration-parser/cmake" ${CMAKE_MODULE_PATH})
-
-enable_testing()
-
-include(GNUInstallDirs)
-include(AddTargetLibrary)
-include(ConfigurationCompiler)
-include(GenerateExportHeader)
-include(GetGitVersion)
-include(GetDate)
-
 if (UNIX)
     if (APPLE)
         set(CMAKE_MACOSX_RPATH 1)
@@ -63,40 +98,32 @@ endif()
 add_subdirectory(submodules/configuration-parser)
 set(SOCI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/soci)
 
-find_package(Doxygen)
-find_package(SQLite3)
-
-# This is horrible, but Sqlite3 exists on every package,
-# so we can force it to be found.
-if (NOT SQLite3_FOUND)
-    set(SQLite3_LIBRARIES sqlite3)
-endif()
-
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
-message("Found ${QT_VERSION_MAJOR}")
-
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Test)
-if (QT_VERSION_MAJOR EQUAL 6)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core5Compat)
+# Required here so that the version comparison below works
+find_package(Qt${QT_MAJOR_VERSION}Core ${QT_MIN_VERSION} CONFIG REQUIRED)
+if (QT_MAJOR_VERSION STREQUAL "6")
+    find_package(Qt6Core5Compat)
     find_package(QuaZip-Qt6 REQUIRED)
 else()
     find_package(QuaZip-Qt5 REQUIRED)
 endif()
+message("Found ${QT_MAJOR_VERSION}")
 
 if (BUILD_DESKTOP_APP)
-    find_package(Qt${QT_VERSION_MAJOR} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)
+    find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)
     if (USE_QT_WEBENGINE)
-        find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS WebEngineWidgets)
+        find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS WebEngineWidgets)
         add_compile_definitions(USE_WEB_ENGINE=1)
     endif()
     if (UNIX AND NOT APPLE)
-        find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus)
+        find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS DBus)
     endif()
 endif()
 
-find_package(Clang REQUIRED)
 
 if (COMPILE_TESTS)
+    enable_testing()
+    find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Test)
+
     set(TEST_PRJ_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lvtclp/systemtests)
     set(LAKOSDIAGRAM_PYSCRIPTS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/python/codegeneration)
 
@@ -143,10 +170,6 @@ if (MSVC)
     add_definitions(/W0)
 endif()
 
-set(CMAKE_AUTOMOC FALSE)
-set(CMAKE_AUTOUIC FALSE)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 option(SCANBUILD "Trimmed build for scan-build analysis" OFF)
 if (SCANBUILD)
@@ -273,13 +296,8 @@ if (BUILD_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
-# 5.79.0 is when ECM got GitCommitHooks
-find_package(ECM "5.79.0" NO_MODULE)
-if (ECM_VERSION VERSION_GREATER_EQUAL 5.79.0)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH})
-    include(KDEGitCommitHooks)
-    kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
-endif()
+include(KDEGitCommitHooks)
+kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND ENABLE_CODE_COVERAGE)
     # Warning: Not setting up any TARGET below. Assume ctest will be run before running `make coverage` so that we dont
@@ -289,3 +307,5 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND ENABLE_CODE_COVERAGE)
         BASE_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )
 endif()
+
+feature_summary(INCLUDE_QUIET_PACKAGES WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)

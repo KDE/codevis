@@ -183,7 +183,7 @@ if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
     if (WIN32)
         add_custom_command(TARGET test_desktopapp POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CONAN_QT_ROOT}/bin/Qt${QT_VERSION_MAJOR}Test.dll"
+                "${CONAN_QT_ROOT}/bin/Qt${QT_MAJOR_VERSION}Test.dll"
                 $<TARGET_FILE_DIR:test_desktopapp>)
     endif()
 

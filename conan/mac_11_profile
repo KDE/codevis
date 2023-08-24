@@ -1,5 +1,0 @@
-include(Default)
-
-[settings]
-os=Macos
-os.version=11.0

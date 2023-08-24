@@ -114,15 +114,6 @@ add_lvtclp_exec(
     SOURCES ct_lvtclp_merge_databases.m.cpp
     LIBRARIES Qt::Core Threads::Threads
 )
-install(TARGETS
-    codevis_merge_databases
-    RUNTIME
-    DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-install(TARGETS
-    codevis_create_codebase_db
-    RUNTIME
-    DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_lvtclp_exec(
     NAME codevis_dump_database
@@ -278,8 +269,9 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(TARGETS codevis_dump_database DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(TARGETS lvtclp DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 if (APPLE)
     # See desktopapp/CMakeLists.txt for copying the headers into the bundle

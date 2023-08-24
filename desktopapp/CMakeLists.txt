@@ -106,55 +106,9 @@ target_link_libraries(
     codevis_lib
 )
 
-install(TARGETS
-     codevis_desktop
-     BUNDLE DESTINATION . COMPONENT Runtime
-     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-)
+install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
-
-if (WIN32)
-    include(WinDeployQt)
-    windeployqt(codevis_desktop ${CMAKE_INSTALL_BINDIR})
-
-    add_custom_command (
-        TARGET codevis_desktop POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:lvtclp>
-            $<TARGET_FILE:lvtcgn_adapter>
-            $<TARGET_FILE:lvtcgn_gui>
-            $<TARGET_FILE:lvtcgn_mdl>
-            $<TARGET_FILE:lvtldr>
-            $<TARGET_FILE:lvtmdb>
-            $<TARGET_FILE:lvtqtc>
-            $<TARGET_FILE:lvtqtd>
-            $<TARGET_FILE:lvtqtw>
-            $<TARGET_FILE:lvtclr>
-            $<TARGET_FILE:lvtmdl>
-            $<TARGET_FILE:lvtprj>
-            $<TARGET_FILE:lvtplg>
-            $<TARGET_FILE:lvtshr>
-            $<TARGET_FILE:soci_core>
-            $<TARGET_FILE:soci_sqlite3>
-            $<TARGET_FILE:InternalKWidgetsAddons>
-            $<TARGET_FILE:lakospreferences>
-            $<TARGET_FILE:MRichTextEdit>
-            $<TARGET_FILE_DIR:codevis_desktop>
-    )
-endif()
-
-add_custom_command(
-    TARGET codevis_desktop POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/database-spec/
-        ${CMAKE_BINARY_DIR}/codevis/database-spec/
-)
-
-if (APPLE)
-    include(MacDeployQt)
-    macdeployqt(codevis_desktop ${CMAKE_INSTALL_BINDIR})
-endif()
 
 if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testcrash.lks ${CMAKE_CURRENT_BINARY_DIR}/testcrash.lks COPYONLY)

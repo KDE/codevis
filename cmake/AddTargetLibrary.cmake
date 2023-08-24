@@ -44,6 +44,6 @@ macro(AddTargetLibrary)
 
     install(TARGETS
         ${DTARGS_LIBRARY_NAME}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
     )
 endmacro()

@@ -36,16 +36,18 @@ bool hasBoolOpt(std::string optName, int argc, char *argv[]) {
 std::string exportHeader(int argc, char *argv[])
 {
     for (int i = 0; i < argc; i++) {
-        QString export_file(argv[i]);
-        if (export_file.contains("--with-export-header=")) {
+        auto export_file = QString::fromStdString(argv[i]);
+        if (export_file.contains(QStringLiteral("--with-export-header="))) {
             return export_file
-                .split("=",
+                .split(QStringLiteral("="),
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        QString::SkipEmptyParts
+                       QString::SkipEmptyParts
 #else
-    Qt::SkipEmptyParts
+                       Qt::SkipEmptyParts
 #endif
-            ).at(1).toStdString();
+                       )
+                .at(1)
+                .toStdString();
         }
     }
     return "";

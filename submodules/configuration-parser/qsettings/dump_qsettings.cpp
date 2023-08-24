@@ -21,7 +21,7 @@ void dump_source_class_settings_set_values(MetaClass *top,
   static std::string tabs;
 
   if (top->parent) {
-    file << tabs << "s.beginGroup(\"" << top->name << "\");" << std::endl;
+      file << tabs << "s.beginGroup(QStringLiteral(\"" << top->name << "\"));" << std::endl;
   }
 
   tabs += '\t';
@@ -33,10 +33,9 @@ void dump_source_class_settings_set_values(MetaClass *top,
   tabs += '\t';
   for (auto &&p : top->properties) {
     file << tabs << "if (" << get_call_chain(p, "") << " == " << get_call_chain(p, "Default") << "){" << std::endl;
-    file << tabs << "\ts.remove(\"" << camel_case_to_underscore(p->name) << "\");" << std::endl;
+    file << tabs << "\ts.remove(QStringLiteral(\"" << camel_case_to_underscore(p->name) << "\"));" << std::endl;
     file << tabs << "} else {" << std::endl;
-    file << tabs << "\ts.setValue(\"" << camel_case_to_underscore(p->name)
-         << "\",";
+    file << tabs << "\ts.setValue(QStringLiteral(\"" << camel_case_to_underscore(p->name) << "\"),";
 
     if (p->is_enum) {
       file << "(int) ";
@@ -55,7 +54,7 @@ void dump_source_class_settings_get_values(MetaClass *top,
   static std::string tabs;
 
   if (top->parent) {
-    file << tabs << "s.beginGroup(\"" << top->name << "\");" << std::endl;
+    file << tabs << "s.beginGroup(QStringLiteral(\"" << top->name << "\"));" << std::endl;
   }
 
   tabs += '\t';
@@ -82,7 +81,7 @@ void dump_source_class_settings_get_values(MetaClass *top,
     if (p->is_enum)
       file << "(" << p->type << ")";
 
-    file << "s.value(\"" << camel_case_to_underscore(p->name) << "\"";
+    file << "s.value(QStringLiteral(\"" << camel_case_to_underscore(p->name) << "\")";
 
     if (p->default_value.length() > 0) {
         file << ", " << p->default_value;
@@ -117,8 +116,12 @@ void dump_source_class(MetaClass *top, std::ofstream &file) {
   }
 
   // Constructors.
-  file << top->name << "::" << top->name
-       << "(QObject *parent) : QObject(parent)";
+  if (!top->parent) {
+    file << top->name << "::" << top->name << "() : QObject()";
+  } else {
+    file << top->name << "::" << top->name << "(QObject *parent) : QObject(parent)";
+  }
+
   for (auto &&c : top->subclasses) {
     file << ',' << std::endl
          << "\t_" << decapitalize(c->name, 0) << "(new " << c->name
@@ -264,7 +267,7 @@ void dump_header_class(
   file << std::endl;
   file << "public:" << std::endl;
   if (top->parent) {
-    file << "\t" << top->name << "(QObject *parent = 0);" << std::endl;
+    file << "\t" << top->name << "(QObject *parent);" << std::endl;
   } else {
     file << "\tvoid sync();" << std::endl;
     file << "\tvoid load();" << std::endl;
@@ -285,7 +288,7 @@ void dump_header_class(
     if (!top->properties.empty() || top->subclasses.empty()) {
       file << std::endl << "private:" << std::endl;
     }
-    file << "\t" << top->name << "(QObject *parent = 0);" << std::endl;
+    file << "\t" << top->name << "();" << std::endl;
   }
   file << "};" << std::endl << std::endl;
 }

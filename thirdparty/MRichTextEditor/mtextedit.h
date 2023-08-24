@@ -15,9 +15,9 @@ class MRICHTEXTEDIT_EXPORT MTextEdit : public QTextEdit {
     void        dropImage(const QImage& image, const QString& format);
 
   protected:
-    bool        canInsertFromMimeData(const QMimeData *source) const;
-    void        insertFromMimeData(const QMimeData *source);
-    QMimeData  *createMimeDataFromSelection() const;
+    bool        canInsertFromMimeData(const QMimeData *source) const override;
+    void        insertFromMimeData(const QMimeData *source) override;
+    QMimeData  *createMimeDataFromSelection() const override;
 
 };
 

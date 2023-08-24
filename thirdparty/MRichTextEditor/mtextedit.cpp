@@ -23,21 +23,20 @@ void MTextEdit::insertFromMimeData(const QMimeData *source) {
         QStringList formats = source->formats();
         QString format;
         for (int i=0; i<formats.size(); i++) {
-            if (formats[i] == "image/bmp")  { format = "BMP";  break; }
-            if (formats[i] == "image/jpeg") { format = "JPG";  break; }
-            if (formats[i] == "image/jpg")  { format = "JPG";  break; }
-            if (formats[i] == "image/gif")  { format = "GIF";  break; }
-            if (formats[i] == "image/png")  { format = "PNG";  break; }
-            if (formats[i] == "image/pbm")  { format = "PBM";  break; }
-            if (formats[i] == "image/pgm")  { format = "PGM";  break; }
-            if (formats[i] == "image/ppm")  { format = "PPM";  break; }
-            if (formats[i] == "image/tiff") { format = "TIFF"; break; }
-            if (formats[i] == "image/xbm")  { format = "XBM";  break; }
-            if (formats[i] == "image/xpm")  { format = "XPM";  break; }
+            if (formats[i] == QStringLiteral("image/bmp"))  { format = QStringLiteral("BMP");  break; }
+            if (formats[i] == QStringLiteral("image/jpeg")) { format = QStringLiteral("JPG");  break; }
+            if (formats[i] == QStringLiteral("image/jpg"))  { format = QStringLiteral("JPG");  break; }
+            if (formats[i] == QStringLiteral("image/gif"))  { format = QStringLiteral("GIF");  break; }
+            if (formats[i] == QStringLiteral("image/png"))  { format = QStringLiteral("PNG");  break; }
+            if (formats[i] == QStringLiteral("image/pbm"))  { format = QStringLiteral("PBM");  break; }
+            if (formats[i] == QStringLiteral("image/pgm"))  { format = QStringLiteral("PGM");  break; }
+            if (formats[i] == QStringLiteral("image/ppm"))  { format = QStringLiteral("PPM");  break; }
+            if (formats[i] == QStringLiteral("image/tiff")) { format = QStringLiteral("TIFF"); break; }
+            if (formats[i] == QStringLiteral("image/xbm"))  { format = QStringLiteral("XBM");  break; }
+            if (formats[i] == QStringLiteral("image/xpm"))  { format = QStringLiteral("XPM");  break; }
             }
         if (!format.isEmpty()) {
-//          dropImage(qvariant_cast<QImage>(source->imageData()), format);
-            dropImage(qvariant_cast<QImage>(source->imageData()), "JPG"); // Sorry, ale cokoli jiného dlouho trvá
+            dropImage(qvariant_cast<QImage>(source->imageData()), QStringLiteral("JPG"));
             return;
             }
         }
@@ -69,9 +68,9 @@ void MTextEdit::dropImage(const QImage& image, const QString& format) {
     QTextImageFormat imageFormat;
     imageFormat.setWidth  ( image.width() );
     imageFormat.setHeight ( image.height() );
-    imageFormat.setName   ( QString("data:image/%1;base64,%2")
-                                .arg(QString("%1.%2").arg(rand()).arg(format))
-                                .arg(base64l.data())
+    imageFormat.setName   ( QStringLiteral("data:image/%1;base64,%2")
+                                .arg(QStringLiteral("%1.%2").arg(rand()).arg(format))
+                            .arg(QString::fromLocal8Bit(base64l))
                                 );
     cursor.insertImage    ( imageFormat );
 }

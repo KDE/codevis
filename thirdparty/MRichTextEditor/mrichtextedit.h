@@ -45,11 +45,11 @@ class MRICHTEXTEDIT_EXPORT MRichTextEdit : public QWidget, protected Ui::MRichTe
     void           setTextCursor(const QTextCursor& cursor) { f_textedit->setTextCursor(cursor); }
 
 
-  public slots:
+  public Q_SLOTS:
     void setText(const QString &text);
     void clearSource();
 
-  protected slots:
+  protected Q_SLOTS:
     void setPlainText(const QString &text) { f_textedit->setPlainText(text); }
     void setHtml(const QString &text)      { f_textedit->setHtml(text); }
     void textRemoveFormat();
@@ -76,7 +76,7 @@ class MRICHTEXTEDIT_EXPORT MRichTextEdit : public QWidget, protected Ui::MRichTe
     void fontChanged(const QFont &f);
     void list(bool checked, QTextListFormat::Style style);
     void indent(int delta);
-    void focusInEvent(QFocusEvent *event);
+    void focusInEvent(QFocusEvent *event) override;
 
     QStringList m_paragraphItems;
     int m_fontsize_h1;

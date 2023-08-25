@@ -6,6 +6,10 @@ find_package(Threads REQUIRED)
 
 ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
+LINK_DIRECTORIES(
+    ${CLANG_LIBRARY_DIRS}
+)
+
 # Windows does not support yet the LLVM libraries as a shared library.
 # Specify all of them by hand. =/
 if (USE_LLVM_STATIC_LIBS OR MSVC)

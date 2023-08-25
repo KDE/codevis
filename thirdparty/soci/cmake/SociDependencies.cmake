@@ -20,17 +20,10 @@
 # List of SOCI dependncies
 #
 set(SOCI_CORE_DEPENDENCIES
-  Threads
-  Boost)
+  Threads)
 
 set(SOCI_BACKENDS_DB_DEPENDENCIES
-  MySQL
-  ODBC
-  Oracle
-  PostgreSQL
-  SQLite3
-  Firebird
-  DB2)
+  SQLite3)
 
 set(SOCI_ALL_DEPENDENCIES
   ${SOCI_CORE_DEPENDENCIES}

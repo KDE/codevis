@@ -17,13 +17,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    # Older versions of gcc don't link automatically to stdc++fs.
-    if(NOT APPLE)
-        set(EXTRA_SYSTEM_LIBRARIES stdc++fs)
-    endif()
-endif()
-
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 set(CMAKECONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/ConfigurationParser")

@@ -194,11 +194,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror -Wno-gnu-zero-variadic-macro-arguments ${SKIP_CLANG_WARNINGS}")
-
-    # Old versions of gnu don't link to stdfs by default.
-    if (NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
-        set(SYSTEM_EXTRA_LIBRARIES stdc++fs)
-    endif()
 endif()
 
 

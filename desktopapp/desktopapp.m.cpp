@@ -17,8 +17,6 @@
 // limitations under the License.
 */
 
-#include <backward.hpp>
-
 #include <QApplication>
 #include <QByteArray>
 #include <QCommandLineOption>
@@ -43,6 +41,10 @@
 #include <ct_lvtqtc_undo_manager.h>
 
 #include <preferences.h>
+
+#ifndef Q_OS_FREEBSD
+#include <backward.hpp>
+#endif
 
 static void setupPath(char *argv[]) // NOLINT
 {
@@ -104,7 +106,10 @@ int main(int argc, char *argv[])
     }
 
     std::filesystem::path dumpFile(filePath.toStdString());
+
+#ifndef Q_OS_FREEBSD
     backward::SignalHandling sh(backward::SignalHandling::make_default_signals(), dumpFile);
+#endif
 
     // Ensure standard number formatting is used for float and string conversions
     if (setlocale(LC_NUMERIC, "C") == nullptr) {

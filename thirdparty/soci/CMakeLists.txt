@@ -21,7 +21,6 @@ project(SOCI)
 option(SOCI_SHARED "Enable build of shared libraries" ON)
 option(SOCI_STATIC "Enable build of static libraries" ON)
 option(SOCI_TESTS "Enable build of collection of SOCI tests" ON)
-option(SOCI_ASAN "Enable address sanitizer on GCC v4.8+/Clang v 3.1+" OFF)
 option(SOCI_LTO "Enable link time optimization" OFF)
 option(SOCI_VISIBILITY "Enable hiding private symbol using ELF visibility if supported by the platform" ON)
 

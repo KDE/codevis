@@ -1,6 +1,5 @@
 ## External Libraries
 
-
 * cpp::result master
     * https://github.com/bitwizeshift/result
 * ECM - Extra CMake Modules

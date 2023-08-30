@@ -16,7 +16,6 @@ OPTION(SOCI_TESTS "" OFF)
 add_subdirectory(soci ${SOCI_BINARY_DIR})
 
 if (BUILD_DESKTOP_APP)
-  add_subdirectory(kwidgetsaddons)
   add_subdirectory(MRichTextEditor)
 endif()
 

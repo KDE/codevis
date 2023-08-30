@@ -28,7 +28,7 @@
 #include <QObject>
 #include <QUndoCommand>
 
-#include <kmessagewidget.h>
+#include <KMessageWidget>
 
 #include <memory>
 

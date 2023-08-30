@@ -121,7 +121,7 @@ AddTargetLibrary(
         Codethink::lvtplg
         Codethink::lvtprj
         Codethink::MRichTextEdit
-        Codethink::InternalKWidgetsAddons
+        KF${KF_MAJOR_VERSION}::WidgetsAddons
         lakospreferences
         Qt::Core
         Qt::Gui

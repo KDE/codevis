@@ -81,7 +81,7 @@ add_library(codevis_lib STATIC
 target_link_libraries(
     codevis_lib
 
-    Codethink::InternalKWidgetsAddons
+    KF${KF_MAJOR_VERSION}::WidgetsAddons
     Codethink::lvtmdl
     Codethink::lvtprj
     Codethink::lvtqtw

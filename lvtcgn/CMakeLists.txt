@@ -52,7 +52,7 @@ if (BUILD_DESKTOP_APP)
             Qt::Core
             Qt::Gui
             Qt::Widgets
-            Codethink::InternalKWidgetsAddons
+            KF${KF_MAJOR_VERSION}::WidgetsAddons
             Codethink::lvtqtw
             Codethink::lvtcgn_mdl
     )

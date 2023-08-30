@@ -51,7 +51,7 @@ AddTargetLibrary(
 
     LIBRARIES
         ${SYSTEM_EXTRA_LIBRARIES}
-        Codethink::InternalKWidgetsAddons
+        KF${KF_MAJOR_VERSION}::WidgetsAddons
         Codethink::lvtmdl
         Codethink::lvtclp
         Codethink::lvtqtc

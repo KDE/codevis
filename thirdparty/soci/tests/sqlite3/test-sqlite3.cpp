@@ -53,6 +53,208 @@ TEST_CASE("SQLite rowid", "[sqlite][rowid][oid]")
     sql << "drop table test1";
 }
 
+class SetupForeignKeys
+{
+public:
+    SetupForeignKeys(soci::session& sql)
+        : m_sql(sql)
+    {
+        m_sql <<
+        "create table parent ("
+        "    id integer primary key"
+        ")";
+
+        m_sql <<
+        "create table child ("
+        "    id integer primary key,"
+        "    parent integer,"
+        "    foreign key(parent) references parent(id)"
+        ")";
+
+        m_sql << "insert into parent(id) values(1)";
+        m_sql << "insert into child(id, parent) values(100, 1)";
+    }
+
+    ~SetupForeignKeys()
+    {
+        m_sql << "drop table child";
+        m_sql << "drop table parent";
+    }
+
+private:
+    SetupForeignKeys(const SetupForeignKeys&);
+    SetupForeignKeys& operator=(const SetupForeignKeys&);
+
+    soci::session& m_sql;
+};
+
+TEST_CASE("SQLite foreign keys are disabled by default", "[sqlite][foreignkeys]")
+{
+    soci::session sql(backEnd, connectString);
+
+    SetupForeignKeys setupForeignKeys(sql);
+
+    sql << "delete from parent where id = 1";
+
+    int parent = 0;
+    sql << "select parent from child where id = 100 ", into(parent);
+
+    CHECK(parent == 1);
+}
+
+TEST_CASE("SQLite foreign keys are enabled by foreign_keys option", "[sqlite][foreignkeys]")
+{
+    soci::session sql(backEnd, "dbname=:memory: foreign_keys=on");
+
+    SetupForeignKeys setupForeignKeys(sql);
+
+    CHECK_THROWS_WITH(sql << "delete from parent where id = 1",
+                      "sqlite3_statement_backend::loadOne: FOREIGN KEY "
+                      "constraint failed while executing "
+                      "\"delete from parent where id = 1\".");
+}
+
+class SetupAutoIncrementTable
+{
+public:
+    SetupAutoIncrementTable(soci::session& sql)
+        : m_sql(sql)
+    {
+        m_sql <<
+        "create table t("
+        "    id integer primary key autoincrement,"
+        "    name text"
+        ")";
+    }
+
+    ~SetupAutoIncrementTable()
+    {
+        m_sql << "drop table t";
+    }
+
+private:
+    SetupAutoIncrementTable(const SetupAutoIncrementTable&);
+    SetupAutoIncrementTable& operator=(const SetupAutoIncrementTable&);
+
+    soci::session& m_sql;
+};
+
+TEST_CASE("SQLite get_last_insert_id works with AUTOINCREMENT",
+          "[sqlite][rowid]")
+{
+    soci::session sql(backEnd, connectString);
+    SetupAutoIncrementTable createTable(sql);
+
+    sql << "insert into t(name) values('x')";
+    sql << "insert into t(name) values('y')";
+
+    long long val;
+    sql.get_last_insert_id("t", val);
+    CHECK(val == 2);
+}
+
+TEST_CASE("SQLite get_last_insert_id with AUTOINCREMENT does not reuse IDs when rows deleted",
+          "[sqlite][rowid]")
+{
+    soci::session sql(backEnd, connectString);
+    SetupAutoIncrementTable createTable(sql);
+
+    sql << "insert into t(name) values('x')";
+    sql << "insert into t(name) values('y')";
+
+    sql << "delete from t where id = 2";
+
+    long long val;
+    sql.get_last_insert_id("t", val);
+    CHECK(val == 2);
+}
+
+class SetupNoAutoIncrementTable
+{
+public:
+    SetupNoAutoIncrementTable(soci::session& sql)
+        : m_sql(sql)
+    {
+        m_sql <<
+        "create table t("
+        "    id integer primary key,"
+        "    name text"
+        ")";
+    }
+
+    ~SetupNoAutoIncrementTable()
+    {
+        m_sql << "drop table t";
+    }
+
+private:
+    SetupNoAutoIncrementTable(const SetupNoAutoIncrementTable&);
+    SetupNoAutoIncrementTable& operator=(const SetupNoAutoIncrementTable&);
+
+    soci::session& m_sql;
+};
+
+TEST_CASE("SQLite get_last_insert_id without AUTOINCREMENT reuses IDs when rows deleted",
+          "[sqlite][rowid]")
+{
+    soci::session sql(backEnd, connectString);
+    SetupNoAutoIncrementTable createTable(sql);
+
+    sql << "insert into t(name) values('x')";
+    sql << "insert into t(name) values('y')";
+
+    sql << "delete from t where id = 2";
+
+    long long val;
+    sql.get_last_insert_id("t", val);
+    CHECK(val == 1);
+}
+
+TEST_CASE("SQLite get_last_insert_id throws if table not found",
+          "[sqlite][rowid]")
+{
+    soci::session sql(backEnd, connectString);
+
+    long long val;
+    CHECK_THROWS(sql.get_last_insert_id("notexisting", val));
+}
+
+class SetupTableWithDoubleQuoteInName
+{
+public:
+    SetupTableWithDoubleQuoteInName(soci::session& sql)
+        : m_sql(sql)
+    {
+        m_sql <<
+        "create table \"t\"\"fff\"("
+        "    id integer primary key,"
+        "    name text"
+        ")";
+    }
+
+    ~SetupTableWithDoubleQuoteInName()
+    {
+        m_sql << "drop table \"t\"\"fff\"";
+    }
+
+private:
+    SetupTableWithDoubleQuoteInName(const SetupTableWithDoubleQuoteInName&);
+    SetupTableWithDoubleQuoteInName& operator=(const SetupTableWithDoubleQuoteInName&);
+
+    soci::session& m_sql;
+};
+
+TEST_CASE("SQLite get_last_insert_id escapes table name",
+          "[sqlite][rowid]")
+{
+    soci::session sql(backEnd, connectString);
+    SetupTableWithDoubleQuoteInName table(sql);
+
+    long long val;
+    sql.get_last_insert_id("t\"fff", val);
+    CHECK(val == 0);
+}
+
 // BLOB test
 struct blob_table_creator : public table_creator_base
 {
@@ -83,7 +285,7 @@ TEST_CASE("SQLite blob", "[sqlite][blob]")
         sql << "select img from soci_test where id = 7", into(b);
         CHECK(b.get_len() == 0);
 
-        b.write(0, buf, sizeof(buf));
+        b.write_from_start(buf, sizeof(buf));
         CHECK(b.get_len() == sizeof(buf));
         sql << "update soci_test set img=? where id = 7", use(b);
 
@@ -96,7 +298,7 @@ TEST_CASE("SQLite blob", "[sqlite][blob]")
         sql << "select img from soci_test where id = 8", into(b);
         CHECK(b.get_len() == 2 * sizeof(buf));
         char buf2[100];
-        b.read(0, buf2, 10);
+        b.read_from_start(buf2, 10);
         CHECK(std::strncmp(buf2, "abcdefghij", 10) == 0);
 
         sql << "select img from soci_test where id = 7", into(b);
@@ -391,6 +593,15 @@ struct table_creator_for_get_affected_rows : table_creator_base
 // Support for SOCI Common Tests
 //
 
+struct table_creator_from_str : table_creator_base
+{
+    table_creator_from_str(soci::session & sql, std::string const& sqlStr)
+        : table_creator_base(sql)
+    {
+        sql << sqlStr;
+    }
+};
+
 class test_context : public test_context_base
 {
 public:
@@ -398,46 +609,44 @@ public:
                 std::string const &connstr)
         : test_context_base(backend, connstr) {}
 
-    table_creator_base* table_creator_1(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_1(soci::session& s) const override
     {
         return new table_creator_one(s);
     }
 
-    table_creator_base* table_creator_2(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_2(soci::session& s) const override
     {
         return new table_creator_two(s);
     }
 
-    table_creator_base* table_creator_3(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_3(soci::session& s) const override
     {
         return new table_creator_three(s);
     }
 
-    table_creator_base* table_creator_4(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_4(soci::session& s) const override
     {
         return new table_creator_for_get_affected_rows(s);
     }
 
-    table_creator_base* table_creator_get_last_insert_id(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_get_last_insert_id(soci::session& s) const override
     {
-        struct table_creator_for_get_last_insert_id : table_creator_base
-        {
-            table_creator_for_get_last_insert_id(soci::session & sql)
-                : table_creator_base(sql)
-            {
-                sql << "create table soci_test (id integer primary key, val integer)";
-            }
-        };
-
-        return new table_creator_for_get_last_insert_id(s);
+        return new table_creator_from_str(s,
+            "create table soci_test (id integer primary key, val integer)");
     }
 
-    std::string to_date_time(std::string const &datdt_string) const SOCI_OVERRIDE
+    table_creator_base* table_creator_xml(soci::session& s) const override
+    {
+        return new table_creator_from_str(s,
+            "create table soci_test (id integer, x text)");
+    }
+
+    std::string to_date_time(std::string const &datdt_string) const override
     {
         return "datetime(\'" + datdt_string + "\')";
     }
 
-    bool has_fp_bug() const SOCI_OVERRIDE
+    bool has_fp_bug() const override
     {
         /*
             SQLite seems to be buggy when using text conversion, e.g.:
@@ -455,13 +664,13 @@ public:
         return true;
     }
 
-    bool enable_std_char_padding(soci::session&) const SOCI_OVERRIDE
+    bool enable_std_char_padding(soci::session&) const override
     {
         // SQLite does not support right padded char type.
         return false;
     }
 
-    std::string sql_length(std::string const& s) const SOCI_OVERRIDE
+    std::string sql_length(std::string const& s) const override
     {
         return "length(" + s + ")";
     }

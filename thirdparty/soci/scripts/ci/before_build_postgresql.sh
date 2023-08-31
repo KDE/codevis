@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 # Sets up environment for SOCI backend PostgreSQL in CI builds
 #
 # Mateusz Loskot <mateusz@loskot.net>, http://github.com/SOCI
@@ -13,6 +13,7 @@ case "$(uname)" in
         ;;
 
     Darwin)
+        pg_ctl init
         pg_ctl start
         pg_isready --timeout=60
         createuser --superuser postgres

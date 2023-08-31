@@ -20,10 +20,17 @@
 # List of SOCI dependncies
 #
 set(SOCI_CORE_DEPENDENCIES
-  Threads)
+  Threads
+  Boost)
 
 set(SOCI_BACKENDS_DB_DEPENDENCIES
-  SQLite3)
+  MySQL
+  ODBC
+  Oracle
+  PostgreSQL
+  SQLite3
+  Firebird
+  DB2)
 
 set(SOCI_ALL_DEPENDENCIES
   ${SOCI_CORE_DEPENDENCIES}
@@ -66,12 +73,29 @@ option(WITH_VALGRIND "Run tests under valgrind" OFF)
 #
 foreach(external ${SOCI_ALL_DEPENDENCIES})
   string(TOUPPER "${external}" EXTERNAL)
+
+  # For historical reasons we use both WITH_xxx and SOCI_xxx options, and
+  # setting either of them to e.g. OFF should disable the corresponding
+  # dependency.
   option(WITH_${EXTERNAL} "Attempt to find and configure ${external}" ON)
-  if(WITH_${EXTERNAL})
+  option(SOCI_${EXTERNAL} "Attempt to build ${external} backend" ON)
+
+  if(NOT WITH_${EXTERNAL})
+    set(disabled_var "WITH")
+  elseif(NOT SOCI_${EXTERNAL})
+    set(disabled_var "SOCI")
+  endif()
+
+  if(NOT DEFINED disabled_var)
     colormsg(HICYAN "${external}:")
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/${external}.cmake)
   else()
     set(${EXTERNAL}_FOUND FALSE CACHE BOOL "${external} found" FORCE)
-    colormsg(HIRED "${external}:" RED "disabled, since WITH_${EXTERNAL}=OFF")
+    colormsg(HICYAN "${external}:" YELLOW "disabled, since ${disabled_var}_${EXTERNAL}=OFF")
+    unset(disabled_var)
+  endif()
+
+  if(NOT ${EXTERNAL}_FOUND)
+    set(SOCI_${EXTERNAL} OFF)
   endif()
 endforeach()

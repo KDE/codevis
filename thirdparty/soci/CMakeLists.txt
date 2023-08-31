@@ -10,9 +10,14 @@
 ###############################################################################
 # General settings
 ###############################################################################
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8...3.20 FATAL_ERROR)
 
 project(SOCI)
+
+if(NOT DEFINED CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ###############################################################################
 # Build features and variants
@@ -21,6 +26,7 @@ project(SOCI)
 option(SOCI_SHARED "Enable build of shared libraries" ON)
 option(SOCI_STATIC "Enable build of static libraries" ON)
 option(SOCI_TESTS "Enable build of collection of SOCI tests" ON)
+option(SOCI_ASAN "Enable address sanitizer on GCC v4.8+/Clang v 3.1+" OFF)
 option(SOCI_LTO "Enable link time optimization" OFF)
 option(SOCI_VISIBILITY "Enable hiding private symbol using ELF visibility if supported by the platform" ON)
 
@@ -106,7 +112,6 @@ boost_report_value(SOCI_TESTS)
 boost_report_value(SOCI_ASAN)
 
 # from SociConfig.cmake
-boost_report_value(SOCI_CXX11)
 boost_report_value(LIB_SUFFIX)
 
 # Put the libaries and binaries that get built into directories at the
@@ -146,8 +151,31 @@ if(NOT MSVC)
   endif()
 endif()
 
-set(SOCI_HAVE_BOOST OFF)
-set(SOCI_HAVE_BOOST_DATE_TIME OFF)
+if(Boost_FOUND)
+  get_property(SOCI_COMPILE_DEFINITIONS
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    PROPERTY COMPILE_DEFINITIONS)
+
+  set(SOCI_HAVE_BOOST ON)
+
+  list(APPEND SOCI_COMPILE_DEFINITIONS "BOOST_ALL_NO_LIB")
+
+  if(Boost_DATE_TIME_FOUND)
+    list(APPEND SOCI_CORE_DEPS_LIBS ${Boost_DATE_TIME_LIBRARY})
+    set(SOCI_HAVE_BOOST_DATE_TIME ON)
+  endif()
+
+  list(APPEND SOCI_INCLUDE_DIRS ${Boost_INCLUDE_DIRS})
+  list(APPEND SOCI_CORE_INCLUDE_DIRS ${Boost_INCLUDE_DIRS})
+
+  set_directory_properties(PROPERTY COMPILE_DEFINITIONS "${SOCI_COMPILE_DEFINITIONS}")
+
+  set_property(DIRECTORY ${SOCI_SOURCE_DIR}
+    PROPERTY COMPILE_DEFINITIONS "${SOCI_COMPILE_DEFINITIONS}")
+else()
+  set(SOCI_HAVE_BOOST OFF)
+  set(SOCI_HAVE_BOOST_DATE_TIME OFF)
+endif()
 
 set(SOCI_HAVE_BOOST ${SOCI_HAVE_BOOST} CACHE INTERNAL "Boost library")
 set(SOCI_HAVE_BOOST_DATE_TIME ${SOCI_HAVE_BOOST_DATE_TIME} CACHE INTERNAL "Boost date_time library")

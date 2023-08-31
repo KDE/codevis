@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 # Sets up environment for SOCI backend MySQL in CI builds
 #
 # Mateusz Loskot <mateusz@loskot.net>, http://github.com/SOCI
@@ -16,6 +16,9 @@ fi
 mysql --version
 mysql -u root ${SOCI_MYSQL_PASSWORD_OPT} -e "CREATE DATABASE soci_test;"
 mysql -u root ${SOCI_MYSQL_PASSWORD_OPT} -e "GRANT ALL PRIVILEGES ON soci_test.* TO '${SOCI_MYSQL_USER}'@'%';";
+
+# This is necessary for MySQL stored procedure unit test to work.
+mysql -u root ${SOCI_MYSQL_PASSWORD_OPT} -e "SET GLOBAL log_bin_trust_function_creators=1";
 
 echo 'Testing connection to the database:'
 echo 'SELECT USER();' | mysql --database=soci_test

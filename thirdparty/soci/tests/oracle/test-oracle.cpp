@@ -119,97 +119,47 @@ struct blob_table_creator : public table_creator_base
 
 TEST_CASE("Oracle blob", "[oracle][blob]")
 {
+    soci::session sql(backEnd, connectString);
+
+    blob_table_creator tableCreator(sql);
+
+    char buf[] = "abcdefghijklmnopqrstuvwxyz";
+    sql << "insert into soci_test (id, img) values (7, empty_blob())";
+
     {
-        soci::session sql(backEnd, connectString);
+        blob b(sql);
 
-        blob_table_creator tableCreator(sql);
+        oracle_session_backend *sessionBackEnd
+            = static_cast<oracle_session_backend *>(sql.get_backend());
 
-        char buf[] = "abcdefghijklmnopqrstuvwxyz";
-        sql << "insert into soci_test (id, img) values (7, empty_blob())";
+        oracle_blob_backend *blobBackEnd
+            = static_cast<oracle_blob_backend *>(b.get_backend());
 
-        {
-            blob b(sql);
+        OCILobDisableBuffering(sessionBackEnd->svchp_,
+            sessionBackEnd->errhp_, blobBackEnd->lobp_);
 
-            oracle_session_backend *sessionBackEnd
-                = static_cast<oracle_session_backend *>(sql.get_backend());
+        sql << "select img from soci_test where id = 7", into(b);
+        CHECK(b.get_len() == 0);
 
-            oracle_blob_backend *blobBackEnd
-                = static_cast<oracle_blob_backend *>(b.get_backend());
+        b.write_from_start(buf, sizeof(buf));
+        CHECK(b.get_len() == sizeof(buf));
+        b.trim(10);
+        CHECK(b.get_len() == 10);
 
-            OCILobDisableBuffering(sessionBackEnd->svchp_,
-                sessionBackEnd->errhp_, blobBackEnd->lobp_);
-
-            sql << "select img from soci_test where id = 7", into(b);
-            CHECK(b.get_len() == 0);
-
-            // note: blob offsets start from 1
-            b.write(1, buf, sizeof(buf));
-            CHECK(b.get_len() == sizeof(buf));
-            b.trim(10);
-            CHECK(b.get_len() == 10);
-
-            // append does not work (Oracle bug #886191 ?)
-            //b.append(buf, sizeof(buf));
-            //assert(b.get_len() == sizeof(buf) + 10);
-            sql.commit();
-        }
-
-        {
-            blob b(sql);
-            sql << "select img from soci_test where id = 7", into(b);
-            //assert(b.get_len() == sizeof(buf) + 10);
-            CHECK(b.get_len() == 10);
-            char buf2[100];
-            b.read(1, buf2, 10);
-            CHECK(strncmp(buf2, "abcdefghij", 10) == 0);
-        }
+        // append does not work (Oracle bug #886191 ?)
+        //b.append(buf, sizeof(buf));
+        //assert(b.get_len() == sizeof(buf) + 10);
+        sql.commit();
     }
 
-    // additional sibling test for read_from_start and write_from_start
     {
-        soci::session sql(backEnd, connectString);
-
-        blob_table_creator tableCreator(sql);
-
-        char buf[] = "abcdefghijklmnopqrstuvwxyz";
-        sql << "insert into soci_test (id, img) values (7, empty_blob())";
-
-        {
-            blob b(sql);
-
-            oracle_session_backend *sessionBackEnd
-                = static_cast<oracle_session_backend *>(sql.get_backend());
-
-            oracle_blob_backend *blobBackEnd
-                = static_cast<oracle_blob_backend *>(b.get_backend());
-
-            OCILobDisableBuffering(sessionBackEnd->svchp_,
-                sessionBackEnd->errhp_, blobBackEnd->lobp_);
-
-            sql << "select img from soci_test where id = 7", into(b);
-            CHECK(b.get_len() == 0);
-
-            // note: blob offsets start from 1
-            b.write_from_start(buf, sizeof(buf));
-            CHECK(b.get_len() == sizeof(buf));
-            b.trim(10);
-            CHECK(b.get_len() == 10);
-
-            // append does not work (Oracle bug #886191 ?)
-            //b.append(buf, sizeof(buf));
-            //assert(b.get_len() == sizeof(buf) + 10);
-            sql.commit();
-        }
-
-        {
-            blob b(sql);
-            sql << "select img from soci_test where id = 7", into(b);
-            //assert(b.get_len() == sizeof(buf) + 10);
-            CHECK(b.get_len() == 10);
-            char buf2[100];
-            b.read_from_start(buf2, 10);
-            CHECK(strncmp(buf2, "abcdefghij", 10) == 0);
-        }
+        blob b(sql);
+        sql << "select img from soci_test where id = 7", into(b);
+        //assert(b.get_len() == sizeof(buf) + 10);
+        CHECK(b.get_len() == 10);
+        char buf2[100];
+        b.read_from_start(buf2, 10);
+        CHECK(strncmp(buf2, "abcdefghij", 10) == 0);
     }
 }
 
@@ -523,13 +473,13 @@ TEST_CASE("Oracle bulk insert", "[oracle][insert][bulk]")
     //verify an exception is thrown if into vector is zero length
     {
         std::vector<int> ids;
-        CHECK_THROWS_AS((sql << "select id from soci_test", into(ids)), soci_error&);
+        CHECK_THROWS_AS((sql << "select id from soci_test", into(ids)), soci_error);
     }
 
     // verify an exception is thrown if use vector is zero length
     {
         std::vector<int> ids;
-        CHECK_THROWS_AS((sql << "insert into soci_test(id) values(:id)", use(ids)), soci_error&);
+        CHECK_THROWS_AS((sql << "insert into soci_test(id) values(:id)", use(ids)), soci_error);
     }
 
     // test "no data" condition
@@ -1508,64 +1458,64 @@ public:
                 std::string const &connectString)
         : test_context_base(backEnd, connectString) {}
 
-    table_creator_base* table_creator_1(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_1(soci::session& s) const override
     {
         return new table_creator_one(s);
     }
 
-    table_creator_base* table_creator_2(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_2(soci::session& s) const override
     {
         return new table_creator_two(s);
     }
 
-    table_creator_base* table_creator_3(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_3(soci::session& s) const override
     {
         return new table_creator_three(s);
     }
 
-    table_creator_base* table_creator_4(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_4(soci::session& s) const override
     {
         return new table_creator_four(s);
     }
 
-    table_creator_base* table_creator_clob(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_clob(soci::session& s) const override
     {
         return new table_creator_for_clob(s);
     }
 
-    table_creator_base* table_creator_xml(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_xml(soci::session& s) const override
     {
         return new table_creator_for_xml(s);
     }
 
-    std::string to_xml(std::string const& x) const SOCI_OVERRIDE
+    std::string to_xml(std::string const& x) const override
     {
         return "xmltype(" + x + ")";
     }
 
-    std::string from_xml(std::string const& x) const SOCI_OVERRIDE
+    std::string from_xml(std::string const& x) const override
     {
         // Notice that using just x.getCLOBVal() doesn't work, only
         // table.x.getCLOBVal() or (x).getCLOBVal(), as used here, does.
         return "(" + x + ").getCLOBVal()";
     }
 
-    bool has_real_xml_support() const SOCI_OVERRIDE
+    bool has_real_xml_support() const override
     {
         return true;
     }
 
-    bool treats_empty_strings_as_null() const SOCI_OVERRIDE
+    bool treats_empty_strings_as_null() const override
     {
         return true;
     }
 
-    std::string to_date_time(std::string const &datdt_string) const SOCI_OVERRIDE
+    std::string to_date_time(std::string const &datdt_string) const override
     {
         return "to_date('" + datdt_string + "', 'YYYY-MM-DD HH24:MI:SS')";
     }
 
-    std::string sql_length(std::string const& s) const SOCI_OVERRIDE
+    std::string sql_length(std::string const& s) const override
     {
         // Oracle treats empty strings as NULLs, but we want to return the
         // length of 0 for them for consistency with the other backends, so use

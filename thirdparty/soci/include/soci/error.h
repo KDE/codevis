@@ -22,17 +22,17 @@ class SOCI_DECL soci_error : public std::runtime_error
 public:
     explicit soci_error(std::string const & msg);
 
-    soci_error(soci_error const& e);
-    soci_error& operator=(soci_error const& e);
+    soci_error(soci_error const& e) noexcept;
+    soci_error& operator=(soci_error const& e) noexcept;
 
-    ~soci_error() SOCI_NOEXCEPT SOCI_OVERRIDE;
+    ~soci_error() noexcept override;
 
     // Returns just the error message itself, without the context.
     std::string get_error_message() const;
 
     // Returns the full error message combining the message given to the ctor
     // with all the available context records.
-    char const* what() const SOCI_NOEXCEPT SOCI_OVERRIDE;
+    char const* what() const noexcept override;
 
     // This is used only by SOCI itself to provide more information about the
     // exception as it bubbles up. It can be called multiple times, with the

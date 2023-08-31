@@ -78,8 +78,6 @@ macro(soci_backend NAME)
 
   # Backend option available to user
   set(THIS_BACKEND_OPTION SOCI_${NAMEU})
-  option(${THIS_BACKEND_OPTION}
-    "Attempt to build ${PROJECT_NAME} backend for ${NAME}" ON)
 
   soci_backend_deps_found(${NAMEU} "${THIS_BACKEND_DEPENDS}" ${NAMEU}_DEPS_FOUND)
   if(NOT ${NAMEU}_DEPS_FOUND)
@@ -157,8 +155,7 @@ macro(soci_backend NAME)
           SHARED
           ${THIS_BACKEND_SOURCES}
           ${THIS_BACKEND_HEADERS})
-
-        add_library(Soci::${THIS_BACKEND_TARGET} ALIAS "${THIS_BACKEND_TARGET}")
+        add_library(Soci::${NAMEL} ALIAS ${THIS_BACKEND_TARGET})
 
         target_link_libraries(${THIS_BACKEND_TARGET}
           ${SOCI_CORE_TARGET}
@@ -196,6 +193,7 @@ macro(soci_backend NAME)
           STATIC
           ${THIS_BACKEND_SOURCES}
           ${THIS_BACKEND_HEADERS})
+        add_library(Soci::${NAMEL}_static ALIAS ${THIS_BACKEND_TARGET_STATIC})
 
         # Still need to link the libraries for tests to work
         target_link_libraries (${THIS_BACKEND_TARGET_STATIC}
@@ -232,7 +230,7 @@ macro(soci_backend NAME)
       endif()
 
     else()
-        colormsg(HIRED "${NAME}" RED "backend disabled, since")
+        colormsg(YELLOW "${NAME} backend explicitly disabled")
     endif()
 
   endif()
@@ -334,10 +332,6 @@ macro(soci_backend_test)
 
     if(NOT ${TEST_CONNSTR_VAR} AND THIS_TEST_CONNSTR)
       set(${TEST_CONNSTR_VAR} ${THIS_TEST_CONNSTR})
-      if(${TEST_CONNSTR_VAR} MATCHES ".dsn")
-        set(_dsnpath "${CMAKE_CURRENT_SOURCE_DIR}/${${TEST_CONNSTR_VAR}}")
-        set(${TEST_CONNSTR_VAR} "FILEDSN=${_dsnpath}")
-      endif()
     endif()
 
     boost_message_value(${TEST_CONNSTR_VAR})

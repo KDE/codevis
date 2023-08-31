@@ -11,6 +11,7 @@
 #include "soci/soci-platform.h"
 // std
 #include <cstddef>
+#include <memory>
 
 namespace soci
 {
@@ -29,9 +30,13 @@ public:
     explicit blob(session & s);
     ~blob();
 
+    blob(blob &&other) = default;
+    blob &operator=(blob &&other) = default;
+
     std::size_t get_len();
 
     // offset is backend-specific
+    [[deprecated("Use read_from_start instead")]]
     std::size_t read(std::size_t offset, char * buf, std::size_t toRead);
 
     // offset starts from 0
@@ -39,6 +44,7 @@ public:
         std::size_t offset = 0);
 
     // offset is backend-specific
+    [[deprecated("Use write_from_start instead")]]
     std::size_t write(std::size_t offset, char const * buf,
         std::size_t toWrite);
 
@@ -50,10 +56,12 @@ public:
 
     void trim(std::size_t newLen);
 
-    details::blob_backend * get_backend() { return backEnd_; }
+    details::blob_backend * get_backend() { return backEnd_.get(); }
 
 private:
-    details::blob_backend * backEnd_;
+    SOCI_NOT_COPYABLE(blob)
+
+    std::unique_ptr<details::blob_backend> backEnd_;
 };
 
 } // namespace soci

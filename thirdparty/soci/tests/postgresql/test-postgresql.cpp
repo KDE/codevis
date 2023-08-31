@@ -24,6 +24,97 @@ backend_factory const &backEnd = *soci::factory_postgresql();
 
 // Postgres-specific tests
 
+enum TestStringEnum
+{
+    VALUE_STR_1=0,
+    VALUE_STR_2,
+    VALUE_STR_3
+};
+
+enum TestIntEnum
+{
+    VALUE_INT_1=0,
+    VALUE_INT_2,
+    VALUE_INT_3
+};
+
+namespace soci {
+template <> struct type_conversion<TestStringEnum>
+{
+    typedef std::string base_type;
+    static void from_base(const std::string & v, indicator & ind, TestStringEnum & p)
+    {
+        if ( ind == i_null )
+            throw soci_error("Null value not allowed for this type");
+
+        if ( v.compare("A") == 0 )
+            p = TestStringEnum::VALUE_STR_1;
+        else if ( v.compare("B") == 0 )
+            p = TestStringEnum::VALUE_STR_2;
+        else if ( v.compare("C") == 0 )
+            p = TestStringEnum::VALUE_STR_3;
+        else
+            throw soci_error("Value not allowed for this type");
+    }
+    static void to_base(TestStringEnum & p, std::string & v, indicator & ind)
+    {
+        switch ( p )
+        {
+        case TestStringEnum::VALUE_STR_1:
+            v = "A";
+            ind = i_ok;
+            return;
+        case TestStringEnum::VALUE_STR_2:
+            v = "B";
+            ind = i_ok;
+            return;
+        case TestStringEnum::VALUE_STR_3:
+            v = "C";
+            ind = i_ok;
+            return;
+        default:
+            throw soci_error("Value not allowed for this type");
+        }
+    }
+};
+
+template <> struct type_conversion<TestIntEnum>
+{
+    typedef int base_type;
+    static void from_base(const int & v, indicator & ind, TestIntEnum & p)
+    {
+        if ( ind == i_null )
+            throw soci_error("Null value not allowed for this type");
+
+        switch( v )
+        {
+        case 0:
+        case 1:
+        case 2:
+            p = (TestIntEnum)v;
+            ind = i_ok;
+            return;
+        default:
+            throw soci_error("Null value not allowed for this type");
+        }
+    }
+    static void to_base(TestIntEnum & p, int & v, indicator & ind)
+    {
+        switch( p )
+        {
+        case TestIntEnum::VALUE_INT_1:
+        case TestIntEnum::VALUE_INT_2:
+        case TestIntEnum::VALUE_INT_3:
+            v = (int)p;
+            ind = i_ok;
+            return;
+        default:
+            throw soci_error("Value not allowed for this type");
+        }
+    }
+};
+}
+
 struct oid_table_creator : public table_creator_base
 {
     oid_table_creator(soci::session& sql)
@@ -153,82 +244,41 @@ struct blob_table_creator : public table_creator_base
 
 TEST_CASE("PostgreSQL blob", "[postgresql][blob]")
 {
+    soci::session sql(backEnd, connectString);
+
+    blob_table_creator tableCreator(sql);
+
+    char buf[] = "abcdefghijklmnopqrstuvwxyz";
+
+    sql << "insert into soci_test(id, img) values(7, lo_creat(-1))";
+
+    // in PostgreSQL, BLOB operations must be within transaction block
+    transaction tr(sql);
+
     {
-        soci::session sql(backEnd, connectString);
+        blob b(sql);
 
-        blob_table_creator tableCreator(sql);
+        sql << "select img from soci_test where id = 7", into(b);
+        CHECK(b.get_len() == 0);
 
-        char buf[] = "abcdefghijklmnopqrstuvwxyz";
+        b.write_from_start(buf, sizeof(buf));
+        CHECK(b.get_len() == sizeof(buf));
 
-        sql << "insert into soci_test(id, img) values(7, lo_creat(-1))";
-
-        // in PostgreSQL, BLOB operations must be within transaction block
-        transaction tr(sql);
-
-        {
-            blob b(sql);
-
-            sql << "select img from soci_test where id = 7", into(b);
-            CHECK(b.get_len() == 0);
-
-            b.write(0, buf, sizeof(buf));
-            CHECK(b.get_len() == sizeof(buf));
-
-            b.append(buf, sizeof(buf));
-            CHECK(b.get_len() == 2 * sizeof(buf));
-        }
-        {
-            blob b(sql);
-            sql << "select img from soci_test where id = 7", into(b);
-            CHECK(b.get_len() == 2 * sizeof(buf));
-            char buf2[100];
-            b.read(0, buf2, 10);
-            CHECK(std::strncmp(buf2, "abcdefghij", 10) == 0);
-        }
-
-        unsigned long oid;
-        sql << "select img from soci_test where id = 7", into(oid);
-        sql << "select lo_unlink(" << oid << ")";
+        b.append(buf, sizeof(buf));
+        CHECK(b.get_len() == 2 * sizeof(buf));
+    }
+    {
+        blob b(sql);
+        sql << "select img from soci_test where id = 7", into(b);
+        CHECK(b.get_len() == 2 * sizeof(buf));
+        char buf2[100];
+        b.read_from_start(buf2, 10);
+        CHECK(std::strncmp(buf2, "abcdefghij", 10) == 0);
     }
 
-    // additional sibling test for read_from_start and write_from_start
-    {
-        soci::session sql(backEnd, connectString);
-
-        blob_table_creator tableCreator(sql);
-
-        char buf[] = "abcdefghijklmnopqrstuvwxyz";
-
-        sql << "insert into soci_test(id, img) values(7, lo_creat(-1))";
-
-        // in PostgreSQL, BLOB operations must be within transaction block
-        transaction tr(sql);
-
-        {
-            blob b(sql);
-
-            sql << "select img from soci_test where id = 7", into(b);
-            CHECK(b.get_len() == 0);
-
-            b.write_from_start(buf, sizeof(buf));
-            CHECK(b.get_len() == sizeof(buf));
-
-            b.append(buf, sizeof(buf));
-            CHECK(b.get_len() == 2 * sizeof(buf));
-        }
-        {
-            blob b(sql);
-            sql << "select img from soci_test where id = 7", into(b);
-            CHECK(b.get_len() == 2 * sizeof(buf));
-            char buf2[100];
-            b.read_from_start(buf2, 10);
-            CHECK(std::strncmp(buf2, "abcdefghij", 10) == 0);
-        }
-
-        unsigned long oid;
-        sql << "select img from soci_test where id = 7", into(oid);
-        sql << "select lo_unlink(" << oid << ")";
-    }
+    unsigned long oid;
+    sql << "select img from soci_test where id = 7", into(oid);
+    sql << "select lo_unlink(" << oid << ")";
 }
 
 struct longlong_table_creator : table_creator_base
@@ -632,7 +682,7 @@ TEST_CASE("PostgreSQL JSON", "[postgresql][json]")
 
         CHECK_THROWS_AS((
             sql << "insert into soci_json_test (data) values(:data)",use(invalid_input)),
-            soci_error&
+            soci_error
         );
     }
     else
@@ -1057,6 +1107,170 @@ TEST_CASE("false_bind_variable_inside_identifier", "[postgresql][bind-variables]
     CHECK(type_value.compare("en_one")==0);
 }
 
+// test_enum_with_explicit_custom_type_string_rowset
+struct test_enum_with_explicit_custom_type_string_rowset : table_creator_base
+{
+    test_enum_with_explicit_custom_type_string_rowset(soci::session & sql)
+        : table_creator_base(sql)
+        , msession(sql)
+    {
+        try
+        {
+            sql << "CREATE TYPE EnumType AS ENUM ('A','B','C');";
+            sql << "CREATE TABLE soci_test (Type EnumType NOT NULL DEFAULT 'A');";
+        }
+        catch (...)
+        {
+            drop();
+        }
+
+    }
+    ~test_enum_with_explicit_custom_type_string_rowset()
+    {
+        drop();
+    }
+
+private:
+    void drop()
+    {
+        try
+        {
+            msession << "drop table if exists soci_test;";
+            msession << "DROP TYPE IF EXISTS EnumType ;";
+        }
+        catch (soci_error const& e){
+            std::cerr << e.what() << std::endl;
+        }
+    }
+    soci::session& msession;
+};
+
+TEST_CASE("test_enum_with_explicit_custom_type_string_rowset", "[postgresql][bind-variables]")
+{
+    TestStringEnum test_value = TestStringEnum::VALUE_STR_2;
+    TestStringEnum type_value;
+
+    {
+        soci::session sql(backEnd, connectString);
+        test_enum_with_explicit_custom_type_string_rowset tableCreator(sql);
+
+        statement s1 = (sql.prepare << "insert into soci_test values(:val);", use(test_value, "val"));
+        statement s2 = (sql.prepare << "SELECT Type FROM soci_test;");
+
+        s1.execute(false);
+        
+        soci::row result;
+        s2.define_and_bind();
+        s2.exchange_for_rowset(soci::into(result));
+        s2.execute(true);
+
+        type_value = result.get<TestStringEnum>("type");
+    }
+
+    CHECK(type_value==TestStringEnum::VALUE_STR_2);
+}
+
+TEST_CASE("test_enum_with_explicit_custom_type_string_into", "[postgresql][bind-variables]")
+{
+    TestStringEnum test_value = TestStringEnum::VALUE_STR_2;
+    TestStringEnum type_value;
+
+    {
+        soci::session sql(backEnd, connectString);
+        test_enum_with_explicit_custom_type_string_rowset tableCreator(sql);
+
+        statement s1 = (sql.prepare << "insert into soci_test values(:val);", use(test_value, "val"));
+        statement s2 = (sql.prepare << "SELECT Type FROM soci_test;", into(type_value));
+
+        s1.execute(false);
+        s2.execute(true);
+    }
+
+    CHECK(type_value==TestStringEnum::VALUE_STR_2);
+}
+
+// test_enum_with_explicit_custom_type_int_rowset
+struct test_enum_with_explicit_custom_type_int_rowset : table_creator_base
+{
+    test_enum_with_explicit_custom_type_int_rowset(soci::session & sql)
+        : table_creator_base(sql)
+        , msession(sql)
+    {
+
+        try
+        {
+            sql << "CREATE TABLE soci_test( Type smallint)";
+            ;
+        }
+        catch (...)
+        {
+            drop();
+        }
+
+    }
+    ~test_enum_with_explicit_custom_type_int_rowset()
+    {
+        drop();
+    }
+
+private:
+    void drop()
+    {
+        try
+        {
+            msession << "drop table if exists soci_test;";
+        }
+        catch (soci_error const& e){
+            std::cerr << e.what() << std::endl;
+        }
+    }
+    soci::session& msession;
+};
+
+TEST_CASE("test_enum_with_explicit_custom_type_int_rowset", "[postgresql][bind-variables]")
+{
+    TestIntEnum test_value = TestIntEnum::VALUE_INT_2;
+    TestIntEnum type_value;
+
+    {
+        soci::session sql(backEnd, connectString);
+        test_enum_with_explicit_custom_type_int_rowset tableCreator(sql);
+
+        statement s1 = (sql.prepare << "insert into soci_test(Type) values(:val)", use(test_value, "val"));
+        statement s2 = (sql.prepare << "SELECT Type FROM soci_test ;");
+
+        s1.execute(false);
+
+        soci::row result;
+        s2.define_and_bind();
+        s2.exchange_for_rowset(soci::into(result));
+        s2.execute(true);
+
+        type_value = result.get<TestIntEnum>("type");
+    }
+
+    CHECK(type_value==TestIntEnum::VALUE_INT_2);
+}
+
+TEST_CASE("test_enum_with_explicit_custom_type_int_into", "[postgresql][bind-variables]")
+{
+    TestIntEnum test_value = TestIntEnum::VALUE_INT_2;
+    TestIntEnum type_value;
+
+    {
+        soci::session sql(backEnd, connectString);
+        test_enum_with_explicit_custom_type_int_rowset tableCreator(sql);
+
+        statement s1 = (sql.prepare << "insert into soci_test(Type) values(:val)", use(test_value, "val"));
+        statement s2 = (sql.prepare << "SELECT Type FROM soci_test ;", into(type_value));
+
+        s1.execute(false);
+        s2.execute(true);
+    }
+
+    CHECK(type_value==TestIntEnum::VALUE_INT_2);
+}
+
 // false_bind_variable_inside_identifier
 struct table_creator_colon_in_double_quotes_in_single_quotes :
     table_creator_base
@@ -1160,52 +1374,52 @@ public:
         : test_context_base(backend, connstr)
     {}
 
-    table_creator_base* table_creator_1(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_1(soci::session& s) const override
     {
         return new table_creator_one(s);
     }
 
-    table_creator_base* table_creator_2(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_2(soci::session& s) const override
     {
         return new table_creator_two(s);
     }
 
-    table_creator_base* table_creator_3(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_3(soci::session& s) const override
     {
         return new table_creator_three(s);
     }
 
-    table_creator_base* table_creator_4(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_4(soci::session& s) const override
     {
         return new table_creator_for_get_affected_rows(s);
     }
 
-    table_creator_base* table_creator_xml(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_xml(soci::session& s) const override
     {
         return new table_creator_for_xml(s);
     }
 
-    table_creator_base* table_creator_clob(soci::session& s) const SOCI_OVERRIDE
+    table_creator_base* table_creator_clob(soci::session& s) const override
     {
         return new table_creator_for_clob(s);
     }
 
-    bool has_real_xml_support() const SOCI_OVERRIDE
+    bool has_real_xml_support() const override
     {
         return true;
     }
 
-    std::string to_date_time(std::string const &datdt_string) const SOCI_OVERRIDE
+    std::string to_date_time(std::string const &datdt_string) const override
     {
         return "timestamptz(\'" + datdt_string + "\')";
     }
 
-    bool has_fp_bug() const SOCI_OVERRIDE
+    bool has_fp_bug() const override
     {
         return false;
     }
 
-    std::string sql_length(std::string const& s) const SOCI_OVERRIDE
+    std::string sql_length(std::string const& s) const override
     {
         return "char_length(" + s + ")";
     }

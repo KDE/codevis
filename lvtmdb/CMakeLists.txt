@@ -46,8 +46,8 @@ AddTargetLibrary(
         ct_lvtmdb_soci_writer.h
     LIBRARIES
         Codethink::lvtshr
-        Soci::Core
-        Soci::soci_sqlite3
+        Soci::core
+        Soci::sqlite3
         ${SQLite3_LIBRARIES}
 )
 

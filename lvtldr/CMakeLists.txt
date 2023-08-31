@@ -36,8 +36,8 @@ AddTargetLibrary(
     LIBRARIES
         Codethink::lvtshr
         Codethink::lvtmdb # Used only for testing, but clazy will complain if not added as a dependency explicitly
-        Soci::Core
-        Soci::soci_sqlite3
+        Soci::core
+        Soci::sqlite3
         Qt::Core
         ${SQLite3_LIBRARIES}
 )

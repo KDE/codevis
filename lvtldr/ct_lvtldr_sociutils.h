@@ -117,7 +117,9 @@ class SociDatabaseHandler : public DatabaseHandler {
              << "" << optionalToDb(dao.classNamespaceId) << ", "
              << "" << optionalToDb(dao.parentPackageId) << ""
              << ")";
-        d_db.get_last_insert_id("source_component", dao.id);
+
+        d_db.get_last_insert_id("class_declaration", dao.id);
+
         for (auto&& id : dao.componentIds) {
             d_db << "insert into udt_component (component_id, udt_id) values "
                  << "(" << id << ", " << dao.id << ")";

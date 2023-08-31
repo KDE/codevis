@@ -151,7 +151,11 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(Boost_FOUND)
+# Do not try to use Boost on FreeBSD, it's too old.'
+if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  set(SOCI_HAVE_BOOST OFF)
+  set(SOCI_HAVE_BOOST_DATE_TIME OFF)
+elseif(Boost_FOUND)
   get_property(SOCI_COMPILE_DEFINITIONS
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY COMPILE_DEFINITIONS)

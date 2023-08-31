@@ -76,6 +76,7 @@ if (COMPILE_TESTS)
             Codethink::lvttst
             Codethink::lvttst_fixture_qt
             Codethink::lvttst_tmpdir
+            Codethink::lvtcgn_gui
             Qt::Test
         )
         add_test(NAME test_${TC_NAME} COMMAND test_${TC_NAME})

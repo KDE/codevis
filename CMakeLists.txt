@@ -191,7 +191,10 @@ endif (DOXYGEN_FOUND)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # warnings encountered in llvm/clang headers
-    set(SKIP_CLANG_WARNINGS "-Wno-unused-parameter -Wno-comment -Wno-strict-aliasing -Wno-nonnull -Wno-deprecated-declarations -Wno-error=maybe-uninitialized")
+    set(SKIP_CLANG_WARNINGS "-Wno-unused-parameter -Wno-comment -Wno-strict-aliasing -Wno-nonnull -Wno-deprecated-declarations")
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        SET(SKIP_CLANG_WARNINGS "${SKIP_CLANG_WARNINGS}  -Wno-error=maybe-uninitialized")
+    endif()
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror -Wno-gnu-zero-variadic-macro-arguments ${SKIP_CLANG_WARNINGS}")
 endif()

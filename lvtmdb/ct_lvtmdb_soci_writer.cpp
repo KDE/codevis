@@ -283,11 +283,12 @@ void exportFile(FileObject *file, soci::session& db)
 
     auto [pkg_id, pkg_ind] = get_or_add_thing(file->package(), db, "source_package", exportPackage);
     auto [component_id, component_ind] = get_or_add_thing(file->component(), db, "source_component", exportComponent);
+    const int isHeader = file->isHeader() ? 1 : 0;
 
     db << "insert into source_file(version, package_id, component_id, name, qualified_name, is_header, hash)"
           "values(0, :pkg_id, :comp_id, :name, :qual_name, :is_header, :hash)",
         soci::use(pkg_id, pkg_ind), soci::use(component_id, component_ind), soci::use(file->name()),
-        soci::use(file->qualifiedName()), soci::use(file->isHeader() ? 1 : 0), soci::use(file->hash());
+        soci::use(file->qualifiedName()), soci::use(isHeader), soci::use(file->hash());
 }
 
 void exportError(ErrorObject *error, soci::session& db)
@@ -336,11 +337,11 @@ void exportVariable(VariableObject *var, soci::session& db)
     }
 
     auto [nspc_id, nspc_ind] = get_or_add_thing(var->parent(), db, "namespace_declaration", exportNamespace);
-
+    const int isGlobal = var->isGlobal() ? 1 : 0;
     db << "insert into variable_declaration(version, namespace_id, name, qualified_name, signature, is_global)"
           "values(0, :namespace_id, :name, :qual_name, :sig, :global)",
         soci::use(nspc_id, nspc_ind), soci::use(var->name()), soci::use(var->qualifiedName()),
-        soci::use(var->signature()), soci::use(var->isGlobal() ? 1 : 0);
+        soci::use(var->signature()), soci::use(isGlobal);
 }
 
 void exportFunction(FunctionObject *fn, soci::session& db)
@@ -401,11 +402,12 @@ void exportField(FieldObject *field, soci::session& db)
 
     auto [class_id, class_ind] = get_or_add_thing(field->parent(), db, "class_declaration", exportUserDefinedType);
     const int access = static_cast<int>(field->access());
+    const int isStatic = field->isStatic() ? 1 : 0;
 
     db << "insert into field_declaration(version, class_id, name, qualified_name, signature, access, is_static)"
           "values(0, :class_id, :name, :qual_name, :signature, :access, :is_static)",
         soci::use(class_id, class_ind), soci::use(field->name()), soci::use(field->qualifiedName()),
-        soci::use(field->signature()), soci::use(access), soci::use(field->isStatic() ? 1 : 0);
+        soci::use(field->signature()), soci::use(access), soci::use(isStatic);
 }
 
 void exportMethod(MethodObject *method, soci::session& db)
@@ -420,6 +422,11 @@ void exportMethod(MethodObject *method, soci::session& db)
     auto [class_id, class_ind] = get_or_add_thing(method->parent(), db, "class_declaration", exportUserDefinedType);
     const int access = static_cast<int>(method->access());
 
+    const int isVirtual = method->isVirtual() ? 1 : 0;
+    const int isPure = method->isPure() ? 1 : 0;
+    const int isStatic = method->isStatic() ? 1 : 0;
+    const int isConst = method->isConst() ? 1 : 0;
+
     db << "insert into method_declaration(version, class_id, name, qualified_name, "
           "signature, return_type, template_parameters, access, "
           "is_virtual, is_pure, is_static, is_const) values (0, "
@@ -427,8 +434,7 @@ void exportMethod(MethodObject *method, soci::session& db)
           ":is_static, :is_const)",
         soci::use(class_id, class_ind), soci::use(method->name()), soci::use(method->qualifiedName()),
         soci::use(method->signature()), soci::use(method->returnType()), soci::use(method->templateParameters()),
-        soci::use(access), soci::use(method->isVirtual() ? 1 : 0), soci::use(method->isPure() ? 1 : 0),
-        soci::use(method->isStatic() ? 1 : 0), soci::use(method->isConst() ? 1 : 0);
+        soci::use(access), soci::use(isVirtual), soci::use(isPure), soci::use(isStatic), soci::use(isConst);
 }
 
 void exportPkgRelations(PackageObject *pkg, soci::session& db)

@@ -39,9 +39,8 @@ static RawDBData _getDBData(soci::row& row, size_t pos)
 {
     if (row.get_indicator(pos) != soci::i_null) {
         return RawDBData{row.get<T>(pos), false};
-    } else {
-        return RawDBData{T{}, true};
     }
+    return RawDBData{T{}, true};
 }
 
 static RawDBData getDBData(soci::row& row, size_t pos)

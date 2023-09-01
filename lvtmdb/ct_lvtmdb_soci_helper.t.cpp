@@ -24,7 +24,7 @@
 
 #include <filesystem>
 #include <iostream>
-#include <optional>
+#include <unordered_set>
 
 #include <catch2-local-includes.h>
 
@@ -32,13 +32,32 @@ namespace fs = std::filesystem;
 
 using namespace Codethink::lvtmdb;
 
-template<typename T>
-struct is_optional_t {
-    static constexpr bool value = false;
+struct DBTestResult {
+    struct HashFunc {
+        size_t operator()(const DBTestResult& data) const
+        {
+            return data.id;
+        }
+    };
+
+    int id;
+    int version;
+    long long parentId;
+    std::string name;
+    std::string qualifiedName;
+
+    bool operator==(const DBTestResult& other) const
+    {
+        return this->id == other.id && this->version == other.version && this->parentId == other.parentId
+            && this->name == other.name && this->qualifiedName == other.qualifiedName;
+    }
 };
-template<typename U>
-struct is_optional_t<std::optional<U>> {
-    static constexpr bool value = true;
+
+struct RawDBColsHashFunc2 {
+    size_t operator()(const std::any& data) const
+    {
+        return std::any_cast<int>(data);
+    }
 };
 
 TEST_CASE("Run single query helper")
@@ -67,41 +86,17 @@ TEST_CASE("Run single query helper")
     soci::session db;
     db.open(*soci::factory_sqlite3(), tmpDBPath.string());
     auto result = SociHelper::runSingleQuery(db, "SELECT * FROM namespace_declaration");
+    auto obtainedData = std::unordered_set<DBTestResult, DBTestResult::HashFunc>{};
+    for (auto&& rowdata : result) {
+        obtainedData.insert({std::any_cast<int>(rowdata[0].value()),
+                             std::any_cast<int>(rowdata[1].value()),
+                             rowdata[2].has_value() ? std::any_cast<long long>(rowdata[2].value()) : -1,
+                             std::any_cast<std::string>(rowdata[3].value()),
+                             std::any_cast<std::string>(rowdata[4].value())});
+    }
 
-    auto checkItem = [&result](auto row, auto col, auto expectedValue) {
-        if constexpr (is_optional_t<decltype(expectedValue)>::value) {
-            auto& [maybeData, isNull] = result[row][col];
-            if (expectedValue.has_value()) {
-                REQUIRE(std::any_cast<typename decltype(expectedValue)::value_type>(maybeData)
-                        == expectedValue.value());
-            } else {
-                REQUIRE(isNull);
-            }
-        } else {
-            auto& [maybeData, _] = result[row][col];
-            REQUIRE(std::any_cast<decltype(expectedValue)>(maybeData) == expectedValue);
-        }
-    };
-    auto checkRow = [&](int id,
-                        int version,
-                        std::optional<long long> parent_id,
-                        std::string const& name,
-                        std::string const& qualified_name) {
-        static auto constexpr ID = 0;
-        static auto constexpr VERSION = 1;
-        static auto constexpr PARENT_ID = 2;
-        static auto constexpr NAME = 3;
-        static auto constexpr QUALIFIED_NAME = 4;
-
-        checkItem(id - 1, ID, id);
-        checkItem(id - 1, VERSION, version);
-        checkItem(id - 1, PARENT_ID, parent_id);
-        checkItem(id - 1, NAME, name);
-        checkItem(id - 1, QUALIFIED_NAME, qualified_name);
-    };
-
-    REQUIRE(result.size() == 3);
-    checkRow(1, 0, std::nullopt, "parent", "parent");
-    checkRow(2, 0, 1, "b", "b");
-    checkRow(3, 0, 1, "c", "c");
+    auto expectedData = std::unordered_set<DBTestResult, DBTestResult::HashFunc>{{1, 0, -1, "parent", "parent"},
+                                                                                 {2, 0, 1, "b", "b"},
+                                                                                 {3, 0, 1, "c", "c"}};
+    REQUIRE(obtainedData == expectedData);
 }

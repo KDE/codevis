@@ -21,6 +21,7 @@
 #define INCLUDED_CT_LVTMDB_SOCI_HELPER
 
 #include <any>
+#include <optional>
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 #include <string>
@@ -28,7 +29,7 @@
 
 namespace Codethink::lvtmdb {
 
-using RawDBData = std::tuple<std::any, bool>;
+using RawDBData = std::optional<std::any>;
 using RawDBCols = std::vector<RawDBData>;
 using RawDBRows = std::vector<RawDBCols>;
 
@@ -38,9 +39,9 @@ template<typename T>
 static RawDBData _getDBData(soci::row& row, size_t pos)
 {
     if (row.get_indicator(pos) != soci::i_null) {
-        return RawDBData{row.get<T>(pos), false};
+        return row.get<T>(pos);
     }
-    return RawDBData{T{}, true};
+    return std::nullopt;
 }
 
 static RawDBData getDBData(soci::row& row, size_t pos)

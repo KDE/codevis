@@ -50,7 +50,7 @@ struct PluginLogicalParserOnCppCommentFoundHandler {
     std::function<unsigned()> const getEndLine;
 };
 
-using RawDBData = std::tuple<std::any, bool>;
+using RawDBData = std::optional<std::any>;
 using RawDBCols = std::vector<RawDBData>;
 using RawDBRows = std::vector<RawDBCols>;
 struct PluginParseCompletedHandler {

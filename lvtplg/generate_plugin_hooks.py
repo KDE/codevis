@@ -64,6 +64,9 @@ if __name__ == "__main__":
             'PluginContextMenuHandler',
             'PluginDockWidgetHandler',
             'PluginEntityReportHandler',
+            'PluginPhysicalParserOnHeaderFoundHandler',
+            'PluginLogicalParserOnCppCommentFoundHandler',
+            'PluginParseCompletedHandler',
         ],
         [
             HookInfo("void", "SetupPlugin", "PluginSetupHandler", "This hook is called as soon as the application initializes, and should be used to setup plugin data structures."),
@@ -71,5 +74,8 @@ if __name__ == "__main__":
             HookInfo("void", "GraphicsViewContextMenu", "PluginContextMenuHandler", "Hook to control the graphics view context menu."),
             HookInfo("void", "SetupDockWidget", "PluginDockWidgetHandler", "Can be used to setup new dock widgets (See PluginDockWidgetHandler)"),
             HookInfo("void", "SetupEntityReport", "PluginEntityReportHandler", "If implemented, will generate an action in the reports menu to create a HTML report."),
+            HookInfo("void", "PhysicalParserOnHeaderFound", "PluginPhysicalParserOnHeaderFoundHandler", "Called every time a header is found in the physical parser."),
+            HookInfo("void", "LogicalParserOnCppCommentFound", "PluginLogicalParserOnCppCommentFoundHandler", "Called every time a comment is found in the logical parser."),
+            HookInfo("void", "OnParseCompleted", "PluginParseCompletedHandler", "Called after the Physical and Logical (if enabled) parsing are done."),
         ]
     )

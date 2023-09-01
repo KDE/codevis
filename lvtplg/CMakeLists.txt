@@ -11,6 +11,7 @@ AddTargetLibrary(
   QT_HEADERS
     ct_lvtplg_basicpluginhooks.h
     ct_lvtplg_handlercontextmenuaction.h
+    ct_lvtplg_handlercodeanalysis.h
     ct_lvtplg_handlersetup.h
     ct_lvtplg_pluginmanager.h
     ct_lvtplg_sharedlibrarydispatcher.h

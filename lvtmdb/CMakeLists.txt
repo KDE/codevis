@@ -60,4 +60,8 @@ if (COMPILE_TESTS)
     add_executable(test_lvtmdb ct_lvtmdb.t.cpp)
     target_link_libraries(test_lvtmdb Codethink::lvtprj lvttst)
     add_test(NAME test_lvtmdb COMMAND test_lvtmdb)
+
+    add_executable(test_lvtmdb_soci_helper ct_lvtmdb_soci_helper.t.cpp)
+    target_link_libraries(test_lvtmdb_soci_helper Codethink::lvtprj lvttst)
+    add_test(NAME test_lvtmdb_soci_helper COMMAND test_lvtmdb_soci_helper)
 endif()

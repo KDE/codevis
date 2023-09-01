@@ -23,7 +23,6 @@
 #include <preferences.h>
 
 #include <catch2-local-includes.h>
-#include <lvtcgn/ui_ct_lvtcgn_codegendialog.h>
 #include <ui_ct_lvtqtw_configurationdialog.h>
 
 #include <QObject>

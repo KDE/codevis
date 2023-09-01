@@ -19,6 +19,7 @@
 #include <ct_lvtqtw_parse_codebase.h>
 
 #include <ct_lvtclp_tool.h>
+#include <ct_lvtmdb_soci_helper.h>
 #include <ct_lvtmdb_soci_writer.h>
 #include <ct_lvtprj_projectfile.h>
 #include <ct_lvtqtw_textview.h>
@@ -43,6 +44,7 @@
 
 #include <JlCompress.h>
 #include <preferences.h>
+#include <soci/soci.h>
 
 using namespace Codethink::lvtqtw;
 
@@ -197,6 +199,8 @@ struct ParseCodebaseDialog::Private {
     using ThirdPartyPath = std::string;
     using ThirdPartyPackageName = std::string;
     std::vector<std::pair<ThirdPartyPath, ThirdPartyPackageName>> thirdPartyPathMapping;
+
+    std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
 };
 
 ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
@@ -790,6 +794,41 @@ void ParseCodebaseDialog::updateDatabase()
     writer.createOrOpen(path);
     mdb.writeToDatabase(writer);
 
+    if (d->pluginManager) {
+        auto& pm = (*d->pluginManager).get();
+
+        d->tool_p->setHeaderLocationCallback(
+            [&pm](std::string const& sourceFile, std::string const& includedFile, unsigned lineNo) {
+                pm.callHooksPhysicalParserOnHeaderFound(
+                    [&sourceFile]() {
+                        return sourceFile;
+                    },
+                    [&includedFile]() {
+                        return includedFile;
+                    },
+                    [&lineNo]() {
+                        return lineNo;
+                    });
+            });
+
+        d->tool_p->setHandleCppCommentsCallback(
+            [&pm](const std::string& filename, const std::string& briefText, unsigned startLine, unsigned endLine) {
+                pm.callHooksPluginLogicalParserOnCppCommentFoundHandler(
+                    [&filename]() {
+                        return filename;
+                    },
+                    [&briefText]() {
+                        return briefText;
+                    },
+                    [&startLine]() {
+                        return startLine;
+                    },
+                    [&endLine]() {
+                        return endLine;
+                    });
+            });
+    }
+
     endParse();
 }
 
@@ -835,6 +874,19 @@ void ParseCodebaseDialog::endParse()
     }
     d->dialogState = State::Idle;
     d->tool_p = nullptr;
+
+    if (d->pluginManager) {
+        soci::session db;
+        std::string path = codebasePath().toStdString();
+        db.open(*soci::factory_sqlite3(), path);
+
+        auto& pm = (*d->pluginManager).get();
+        auto runQueryOnDatabase = [&](std::string const& dbQuery) {
+            (void) lvtmdb::SociHelper::runSingleQuery(db, dbQuery);
+        };
+        pm.callHooksOnParseCompleted(runQueryOnDatabase);
+    }
+
     close();
 }
 
@@ -954,4 +1006,9 @@ std::vector<std::filesystem::path> ParseCodebaseDialog::nonLakosianDirsAsStdVec(
                        return qstr.toStdString();
                    });
     return nonLakosianDirs;
+}
+
+void ParseCodebaseDialog::setPluginManager(Codethink::lvtplg::PluginManager& pluginManager)
+{
+    d->pluginManager = pluginManager;
 }

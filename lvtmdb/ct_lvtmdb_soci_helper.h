@@ -20,7 +20,61 @@
 #ifndef INCLUDED_CT_LVTMDB_SOCI_HELPER
 #define INCLUDED_CT_LVTMDB_SOCI_HELPER
 
+#include <any>
+#include <soci/soci.h>
+#include <soci/sqlite3/soci-sqlite3.h>
+#include <string>
+#include <vector>
+
 namespace Codethink::lvtmdb {
+
+struct RawDBData {
+    std::any data;
+    bool isNull;
+};
+
+namespace detail {
+
+template<typename T>
+static RawDBData _getDBData(soci::row& row, size_t pos)
+{
+    if (row.get_indicator(pos) != soci::i_null) {
+        return RawDBData{row.get<T>(pos), false};
+    } else {
+        return RawDBData{T{}, true};
+    }
+}
+
+static RawDBData getDBData(soci::row& row, size_t pos)
+{
+    auto const& props = row.get_properties(pos);
+    switch (props.get_data_type()) {
+    case soci::dt_string:
+        return _getDBData<std::string>(row, pos);
+    case soci::dt_double:
+        return _getDBData<double>(row, pos);
+    case soci::dt_integer:
+        return _getDBData<int>(row, pos);
+    case soci::dt_long_long:
+        return _getDBData<long long>(row, pos);
+    case soci::dt_unsigned_long_long:
+        return _getDBData<unsigned long long>(row, pos);
+    case soci::dt_date:
+        /* Ignored */
+        break;
+    case soci::dt_blob:
+        /* Ignored */
+        break;
+    case soci::dt_xml:
+        /* Ignored */
+        break;
+    }
+
+    throw std::runtime_error{"Unexpected data type"};
+};
+
+} // namespace detail
+
 struct SociHelper {
     //  Small helper methods and enums to be used from soci writer and
     // soci reader.
@@ -39,6 +93,28 @@ struct SociHelper {
     };
 
     static constexpr int CURRENT_VERSION = static_cast<int>(Version::March23);
+
+    static std::vector<std::vector<RawDBData>> runSingleQuery(soci::session& db, std::string const& query)
+    {
+        soci::transaction tr(db);
+        auto rowset = soci::rowset<soci::row>{db.prepare << query};
+        tr.commit();
+
+        // It is not possible to return the `rowset` directly since it'll lose internal references and most probably
+        // crash. Currently, the approach is to copy all results, but this _may_ be a performance issue in some
+        // contexts, but it seems the most user-friendly approach. One alternative would be to wrap the necessary
+        // objects in a struct and yield rows either using an iterator or a coroutine (C++20). This may be done in the
+        // future, if anyone ever has a plugin that is struggling due to those copies.
+        auto resultVector = std::vector<std::vector<RawDBData>>{};
+        for (auto&& row : rowset) {
+            auto resultRow = std::vector<RawDBData>{};
+            for (decltype(row.size()) i = 0; i < row.size(); ++i) {
+                resultRow.emplace_back(detail::getDBData(row, i));
+            }
+            resultVector.emplace_back(resultRow);
+        }
+        return resultVector;
+    }
 };
 
 } // namespace Codethink::lvtmdb

@@ -23,6 +23,7 @@
 #include <lvtplg_export.h>
 
 #include <ct_lvtplg_basicpluginhooks.h>
+#include <ct_lvtplg_handlercodeanalysis.h>
 #include <ct_lvtplg_handlercontextmenuaction.h>
 #include <ct_lvtplg_handlerdockwidget.h>
 #include <ct_lvtplg_handlerentityreport.h>
@@ -78,6 +79,25 @@ class LVTPLG_EXPORT PluginManager {
     using getEntity_f = decltype(PluginEntityReportHandler::getEntity);
     using addReport_f = decltype(PluginEntityReportHandler::addReport);
     void callHooksSetupEntityReport(getEntity_f const& getEntity, addReport_f const& addReport);
+
+    using getSourceFile_f = decltype(PluginPhysicalParserOnHeaderFoundHandler::getSourceFile);
+    using getIncludedFile_f = decltype(PluginPhysicalParserOnHeaderFoundHandler::getIncludedFile);
+    using getLineNo_f = decltype(PluginPhysicalParserOnHeaderFoundHandler::getLineNo);
+    void callHooksPhysicalParserOnHeaderFound(getSourceFile_f const& getSourceFile,
+                                              getIncludedFile_f const& getIncludedFile,
+                                              getLineNo_f const& getLineNo);
+
+    using getFilename_f = decltype(PluginLogicalParserOnCppCommentFoundHandler::getFilename);
+    using getBriefText_f = decltype(PluginLogicalParserOnCppCommentFoundHandler::getBriefText);
+    using getStartLine_f = decltype(PluginLogicalParserOnCppCommentFoundHandler::getStartLine);
+    using getEndLine_f = decltype(PluginLogicalParserOnCppCommentFoundHandler::getEndLine);
+    void callHooksPluginLogicalParserOnCppCommentFoundHandler(getFilename_f const& getFilename,
+                                                              getBriefText_f const& getBriefText,
+                                                              getStartLine_f const& getStartLine,
+                                                              getEndLine_f const& getEndLine);
+
+    using runQueryOnDatabase_f = decltype(PluginParseCompletedHandler::runQueryOnDatabase);
+    void callHooksOnParseCompleted(runQueryOnDatabase_f const& runQueryOnDatabase);
 
     void *getPluginData(std::string const& id) const;
 

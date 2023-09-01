@@ -1117,6 +1117,10 @@ void MainWindow::openGenerateDatabase()
                 this,
                 &MainWindow::generateCodeDatabaseFinished);
         d_status_bar->setParseCodebaseWindow(*d_parseCodebaseDialog_p);
+
+        if (d_pluginManager_p) {
+            d_parseCodebaseDialog_p->setPluginManager(*d_pluginManager_p);
+        }
     }
 
     d_parseCodebaseDialog_p->setCodebasePath(QString::fromStdString(d_projectFile.openLocation().string()));

@@ -57,6 +57,7 @@ AddTargetLibrary(
         Codethink::lvtqtc
         Codethink::lvtqtd
         Codethink::lvtprj
+        Codethink::lvtplg
         Qt::Core
         Qt::Gui
         Qt::Widgets
@@ -72,7 +73,7 @@ if (COMPILE_TESTS)
             ${TC_NAME}.t.cpp
         )
         target_link_libraries(test_${TC_NAME}
-            Codethink::lvtqtw
+           Codethink::lvtqtw
             Codethink::lvttst
             Codethink::lvttst_fixture_qt
             Codethink::lvttst_tmpdir

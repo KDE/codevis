@@ -125,6 +125,43 @@ void PluginManager::callHooksSetupEntityReport(getEntity_f const& getEntity, add
                                           PluginEntityReportHandler{getPluginData, getEntity, addReport});
 }
 
+void PluginManager::callHooksPhysicalParserOnHeaderFound(getSourceFile_f const& getSourceFile,
+                                                         getIncludedFile_f const& getIncludedFile,
+                                                         getLineNo_f const& getLineNo)
+{
+    auto getPluginData = [this](auto&& id) {
+        return this->getPluginData(id);
+    };
+    callAllHooks<hookPhysicalParserOnHeaderFound_f>(
+        "hookPhysicalParserOnHeaderFound",
+        PluginPhysicalParserOnHeaderFoundHandler{getPluginData, getSourceFile, getIncludedFile, getLineNo});
+}
+
+void PluginManager::callHooksPluginLogicalParserOnCppCommentFoundHandler(getFilename_f const& getFilename,
+                                                                         getBriefText_f const& getBriefText,
+                                                                         getStartLine_f const& getStartLine,
+                                                                         getEndLine_f const& getEndLine)
+{
+    auto getPluginData = [this](auto&& id) {
+        return this->getPluginData(id);
+    };
+    callAllHooks<hookLogicalParserOnCppCommentFound_f>("hookLogicalParserOnCppCommentFound",
+                                                       PluginLogicalParserOnCppCommentFoundHandler{getPluginData,
+                                                                                                   getFilename,
+                                                                                                   getBriefText,
+                                                                                                   getStartLine,
+                                                                                                   getEndLine});
+}
+
+void PluginManager::callHooksOnParseCompleted(runQueryOnDatabase_f const& runQueryOnDatabase)
+{
+    auto getPluginData = [this](auto&& id) {
+        return this->getPluginData(id);
+    };
+    callAllHooks<hookOnParseCompleted_f>("hookOnParseCompleted",
+                                         PluginParseCompletedHandler{getPluginData, runQueryOnDatabase});
+}
+
 void *PluginManager::getPluginData(std::string const& id) const
 {
     return pluginData.at(id);

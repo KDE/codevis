@@ -881,8 +881,8 @@ void ParseCodebaseDialog::endParse()
         db.open(*soci::factory_sqlite3(), path);
 
         auto& pm = (*d->pluginManager).get();
-        auto runQueryOnDatabase = [&](std::string const& dbQuery) {
-            (void) lvtmdb::SociHelper::runSingleQuery(db, dbQuery);
+        auto runQueryOnDatabase = [&](std::string const& dbQuery) -> std::vector<std::vector<RawDBData>> {
+            return lvtmdb::SociHelper::runSingleQuery(db, dbQuery);
         };
         pm.callHooksOnParseCompleted(runQueryOnDatabase);
     }

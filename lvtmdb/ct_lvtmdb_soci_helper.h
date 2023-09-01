@@ -28,10 +28,9 @@
 
 namespace Codethink::lvtmdb {
 
-struct RawDBData {
-    std::any data;
-    bool isNull;
-};
+using RawDBData = std::tuple<std::any, bool>;
+using RawDBCols = std::vector<RawDBData>;
+using RawDBRows = std::vector<RawDBCols>;
 
 namespace detail {
 
@@ -94,7 +93,7 @@ struct SociHelper {
 
     static constexpr int CURRENT_VERSION = static_cast<int>(Version::March23);
 
-    static std::vector<std::vector<RawDBData>> runSingleQuery(soci::session& db, std::string const& query)
+    static RawDBRows runSingleQuery(soci::session& db, std::string const& query)
     {
         soci::transaction tr(db);
         auto rowset = soci::rowset<soci::row>{db.prepare << query};
@@ -105,15 +104,15 @@ struct SociHelper {
         // contexts, but it seems the most user-friendly approach. One alternative would be to wrap the necessary
         // objects in a struct and yield rows either using an iterator or a coroutine (C++20). This may be done in the
         // future, if anyone ever has a plugin that is struggling due to those copies.
-        auto resultVector = std::vector<std::vector<RawDBData>>{};
-        for (auto&& row : rowset) {
-            auto resultRow = std::vector<RawDBData>{};
-            for (decltype(row.size()) i = 0; i < row.size(); ++i) {
-                resultRow.emplace_back(detail::getDBData(row, i));
+        auto resultRows = RawDBRows{};
+        for (auto&& rowdata : rowset) {
+            auto cols = RawDBCols{};
+            for (decltype(rowdata.size()) i = 0; i < rowdata.size(); ++i) {
+                cols.emplace_back(detail::getDBData(rowdata, i));
             }
-            resultVector.emplace_back(resultRow);
+            resultRows.emplace_back(cols);
         }
-        return resultVector;
+        return resultRows;
     }
 };
 

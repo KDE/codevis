@@ -25,7 +25,6 @@
 #include <filesystem>
 #include <iostream>
 #include <optional>
-#include <unordered_set>
 
 #include <catch2/catch.hpp>
 
@@ -71,14 +70,16 @@ TEST_CASE("Run single query helper")
 
     auto checkItem = [&result](auto row, auto col, auto expectedValue) {
         if constexpr (is_optional_t<decltype(expectedValue)>::value) {
+            auto& [maybeData, isNull] = result[row][col];
             if (expectedValue.has_value()) {
-                REQUIRE(std::any_cast<typename decltype(expectedValue)::value_type>(result[row][col].data)
+                REQUIRE(std::any_cast<typename decltype(expectedValue)::value_type>(maybeData)
                         == expectedValue.value());
             } else {
-                REQUIRE(result[row][col].isNull);
+                REQUIRE(isNull);
             }
         } else {
-            REQUIRE(std::any_cast<decltype(expectedValue)>(result[row][col].data) == expectedValue);
+            auto& [maybeData, _] = result[row][col];
+            REQUIRE(std::any_cast<decltype(expectedValue)>(maybeData) == expectedValue);
         }
     };
     auto checkRow = [&](int id,

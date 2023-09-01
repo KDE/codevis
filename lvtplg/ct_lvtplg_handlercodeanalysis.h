@@ -24,6 +24,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 struct PluginPhysicalParserOnHeaderFoundHandler {
@@ -49,18 +50,16 @@ struct PluginLogicalParserOnCppCommentFoundHandler {
     std::function<unsigned()> const getEndLine;
 };
 
-// struct QueryResult {
-//     std::function<std::vector<std::optional<std::any>>(int index)> const get;
-// };
-
+using RawDBData = std::tuple<std::any, bool>;
+using RawDBCols = std::vector<RawDBData>;
+using RawDBRows = std::vector<RawDBCols>;
 struct PluginParseCompletedHandler {
     /**
      * Returns the plugin data previously registered with `PluginSetupHandler::registerPluginData`.
      */
     std::function<void *(std::string const& id)> const getPluginData;
 
-    //    std::function<QueryResult(std::string const& query)> const runQueryOnDatabase;
-    std::function<void(std::string const& query)> const runQueryOnDatabase;
+    std::function<RawDBRows(std::string const& query)> const runQueryOnDatabase;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_PLUGINCODEANALYSISHANDLER_H

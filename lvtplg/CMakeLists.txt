@@ -1,4 +1,3 @@
-# Plugin library
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 AddTargetLibrary(
@@ -24,7 +23,6 @@ AddTargetLibrary(
     Python::Python
 )
 
-# TODO [#438]: Move thirdparty dependencies to Conan (Using 'cpp:result' and 'pybind11' here)
 target_include_directories(lvtplg
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/../thirdparty/
@@ -68,3 +66,9 @@ endfunction()
 export_plugin_header(ct_lvtplg_basicpluginhooks.h)
 export_plugin_header(ct_lvtplg_handlersetup.h)
 export_plugin_header(ct_lvtplg_handlercontextmenuaction.h)
+
+if (COMPILE_TESTS)
+    add_executable(test_lvtplg_pythonlibrarydispatcher ct_lvtplg_pythonlibrarydispatcher.t.cpp)
+    target_link_libraries(test_lvtplg_pythonlibrarydispatcher lvtplg lvttst lvttst_tmpdir)
+    add_test(NAME test_lvtplg_pythonlibrarydispatcher COMMAND test_lvtplg_pythonlibrarydispatcher)
+endif()

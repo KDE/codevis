@@ -27,6 +27,8 @@
 #include <ct_lvtplg_handlersetup.h>
 #include <ct_lvtplg_librarydispatcherinterface.h>
 
+#include <lvtplg_export.h>
+
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -50,7 +52,7 @@ namespace py = pybind11;
 
 namespace Codethink::lvtplg {
 
-class PythonLibraryDispatcher : public ILibraryDispatcher {
+class LVTPLG_EXPORT PythonLibraryDispatcher : public ILibraryDispatcher {
   public:
     static const std::string pluginDataId;
 

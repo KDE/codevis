@@ -38,6 +38,7 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
     d->doc = editor->createDocument(this);
     d->view = d->doc->createView(this);
+    d->doc->setHighlightingMode("Python");
 
     auto *l = new QBoxLayout(QBoxLayout::BottomToTop);
     l->addWidget(d->view);

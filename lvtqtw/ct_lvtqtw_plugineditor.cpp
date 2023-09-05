@@ -103,6 +103,7 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
     l->addWidget(toolBar);
     l->addWidget(d->documentViews);
     l->setContentsMargins(0, 0, 0, 0);
+    l->setSpacing(0);
 
     setLayout(l);
 }

@@ -20,10 +20,13 @@
 #ifndef INCLUDED_LVTQTW_PLUGINEDITOR
 #define INCLUDED_LVTQTW_PLUGINEDITOR
 
+#include <QDir>
 #include <QWidget>
+
 #include <memory>
 
 #include <lvtqtw_export.h>
+#include <result/result.hpp>
 
 namespace Codethink::lvtqtw {
 
@@ -34,6 +37,13 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     ~PluginEditor();
 
     Q_SIGNAL void execute(const QString& plugin);
+    Q_SIGNAL void sendErrorMsg(const QString& err);
+
+    void loadPluginByName(const QString& pluginName);
+    void loadPlugin();
+    void createPlugin();
+
+    static QDir basePluginPath();
 
   private:
     struct Private;

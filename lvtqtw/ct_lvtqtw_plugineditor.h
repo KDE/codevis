@@ -33,6 +33,8 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     PluginEditor(QWidget *parent);
     ~PluginEditor();
 
+    Q_SIGNAL void execute(const QString& plugin);
+
   private:
     struct Private;
     std::unique_ptr<Private> d;

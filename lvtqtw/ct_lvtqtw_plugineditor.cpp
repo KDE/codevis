@@ -102,6 +102,7 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
     l->addWidget(toolBar);
     l->addWidget(d->documentViews);
+    l->setContentsMargins(0, 0, 0, 0);
 
     setLayout(l);
 }
@@ -126,7 +127,6 @@ void PluginEditor::close()
             d->docReadme->save();
         }
     }
-
     d->docPlugin->closeUrl();
     d->docReadme->closeUrl();
     d->documentViews->setEnabled(false);

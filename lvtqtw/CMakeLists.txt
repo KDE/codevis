@@ -19,6 +19,7 @@ AddTargetLibrary(
         ct_lvtqtw_tabwidget.cpp
         ct_lvtqtw_textview.cpp
         ct_lvtqtw_treeview.cpp
+        ct_lvtqtw_plugineditor.cpp
         ct_lvtqtw_toolbox.cpp
         ct_lvtqtw_searchwidget.cpp
         ct_lvtqtw_welcomescreen.cpp
@@ -37,6 +38,7 @@ AddTargetLibrary(
         ct_lvtqtw_statusbar.h
         ct_lvtqtw_splitterview.h
         ct_lvtqtw_treeview.h
+        ct_lvtqtw_plugineditor.h
         ct_lvtqtw_toolbox.h
         ct_lvtqtw_searchwidget.h
         ct_lvtqtw_welcomescreen.h
@@ -52,6 +54,7 @@ AddTargetLibrary(
     LIBRARIES
         ${SYSTEM_EXTRA_LIBRARIES}
         KF${KF_MAJOR_VERSION}::WidgetsAddons
+        KF${KF_MAJOR_VERSION}::TextEditor
         Codethink::lvtmdl
         Codethink::lvtclp
         Codethink::lvtqtc

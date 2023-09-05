@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>988</width>
+    <width>1419</width>
     <height>1152</height>
    </rect>
   </property>
@@ -524,6 +524,20 @@
      <height>27</height>
     </rect>
    </property>
+  <widget class="QDockWidget" name="pluginEditorDock">
+   <property name="windowTitle">
+    <string>Plugin Editor</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="Codethink::lvtqtw::PluginEditor" name="widget" native="true"/>
+     </item>
+    </layout>
+   </widget>
   </widget>
  </widget>
  <customwidgets>
@@ -553,6 +567,12 @@
    <class>Codethink::lvtqtw::WelcomeScreen</class>
    <extends>QWidget</extends>
    <header location="global">ct_lvtqtw_welcomescreen.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Codethink::lvtqtw::PluginEditor</class>
+   <extends>QWidget</extends>
+   <header location="global">ct_lvtqtw_plugineditor.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

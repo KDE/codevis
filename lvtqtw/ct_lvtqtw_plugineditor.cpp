@@ -84,7 +84,7 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
     d->closePlugin = new QAction(tr("Close plugin"));
     d->closePlugin->setIcon(QIcon::fromTheme("document-close"));
-    connect(d->savePlugin, &QAction::triggered, this, &PluginEditor::close);
+    connect(d->closePlugin, &QAction::triggered, this, &PluginEditor::close);
 
     d->runPlugin = new QAction(tr("Run Script"));
     d->runPlugin->setIcon(QIcon::fromTheme("system-run"));

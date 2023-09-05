@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gui name="texteditor"
+     version="3"
+     xmlns="http://www.kde.org/standards/kxmlgui/1.0"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.kde.org/standards/kxmlgui/1.0
+                         http://www.kde.org/standards/kxmlgui/1.0/kxmlgui.xsd">
+  <MenuBar>
+    <Menu name="file" >
+      <Action name="new_project_from_source" />
+      <Action name="parse_aditional" />
+      <Action name="generate_code" />
+    </Menu>
+    <Menu name="edit">
+      <text>Edit</text>
+      <Action name="project_settings" />
+    </Menu >
+    <Menu name="export">
+      <text>Export</text>
+      <Action name="export_svg" />
+    </Menu >
+    <Menu name="window">
+      <text>Window</text>
+      <Action name="toggle_split_view" />
+      <Action name="new_tab" />
+      <Action name="close_current_tab" />
+    </Menu >
+    <Menu name="bookmarks">
+        <text>Bookmarks</text>
+    </Menu >
+    <Menu name="view">
+        <text>View</text>
+    </Menu >
+  </MenuBar>
+</gui>

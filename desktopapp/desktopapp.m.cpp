@@ -26,6 +26,9 @@
 #include <QStyle>
 #include <QStyleFactory>
 
+#include <KAboutData>
+#include <KLocalizedString>
+
 #include <mainwindow.h>
 
 #include <cstdlib>
@@ -42,42 +45,8 @@
 
 #include <preferences.h>
 
-#ifndef Q_OS_FREEBSD
-#include <backward.hpp>
-#endif
-
-static void setupPath(char *argv[]) // NOLINT
-{
-    const std::filesystem::path argv0(argv[0]);
-    const std::filesystem::path appimagePath = argv0.parent_path();
-
-    qputenv("CT_LVT_BINDIR", QByteArray::fromStdString(appimagePath.string()));
-}
-
-void setApplicationStyle()
-{
-    QStyle *style = QApplication::style();
-
-    // This style is the fallback style for Qt, it is basically
-    // a windows95 version of the style bundled with each Qt app.
-    // but there are other styles we can try that are not as rough.
-
-    // documentation asks this to be set before the creation of QApplication
-    if (!style || style->objectName() == "windows") {
-        // "macintosh" theme only exists on osx, this will not break anything.
-        for (const auto *newStyle : {"windowsvista", "fusion", "macintosh", "windows"}) {
-            auto *retStyle = QApplication::setStyle(newStyle);
-            if (retStyle) {
-                break;
-            }
-        }
-    }
-}
-
 int main(int argc, char *argv[])
 {
-    setApplicationStyle();
-
     // This should be called before the creation of the QApplication
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
@@ -86,16 +55,40 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication app(argc, argv);
-    QCoreApplication::setOrganizationName("Codethink");
-    QCoreApplication::setOrganizationDomain("codethink.com");
-    QCoreApplication::setApplicationName("Codevis");
+
+    // setup translation string domain for the i18n calls
+    KLocalizedString::setApplicationDomain("codevis");
+    // create a KAboutData object to use for setting the application metadata
+    KAboutData aboutData("codevis",
+                         i18n("Codevis"),
+                         "0.1",
+                         i18n("Visualize and extract information from Large Codebases"),
+                         KAboutLicense::BSDL, // Apache, but KAboutLicense lacks that.
+                         i18n("Copyright 2023 KDE"),
+                         QString(),
+                         "https://invent.kde.org/sdk/codevis");
+
+    // overwrite default-generated values of organizationDomain & desktopFileName
+    aboutData.setOrganizationDomain("kde.org");
+    aboutData.setDesktopFileName("org.kde.codevis");
+
+    aboutData.addAuthor(i18n("Tomaz Canabrava"), i18n("Developer"), QStringLiteral("tcanabrava@kde.org"));
+    aboutData.addAuthor(i18n("Tarcisio Fischer"), i18n("Developer"), QStringLiteral("tarcisio.fisher@codethink.co.uk"));
+    aboutData.addAuthor(i18n("Richard Dale"), i18n("Developer"), QStringLiteral("richard.dale@codethink.co.uk"));
+    aboutData.addAuthor(i18n("Tom Eccles"), i18n("Developer"));
+    aboutData.addAuthor(i18n("Poppy Singleton"), i18n("Developer"));
+
+    // set the application metadata
+    KAboutData::setApplicationData(aboutData);
+
+    // in GUI apps set the window icon manually, not covered by KAboutData
+    // needed for environments where the icon name is not extracted from
+    // the information in the application's desktop file
+    QApplication::setWindowIcon(QIcon::fromTheme(QStringLiteral("codevis")));
 
     const QString folderPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + QDir::separator()
         + qApp->applicationName() // Folder
         + QDir::separator();
-
-    const QString filePath = folderPath + qApp->applicationName() // File name
-        + "_CrashDump_" + QDateTime::currentDateTime().toString(Qt::ISODate) + ".dump";
 
     QDir dir(folderPath);
     if (!dir.exists()) {
@@ -105,12 +98,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::filesystem::path dumpFile(filePath.toStdString());
-
-#ifndef Q_OS_FREEBSD
-    backward::SignalHandling sh(backward::SignalHandling::make_default_signals(), dumpFile);
-#endif
-
     // Ensure standard number formatting is used for float and string conversions
     if (setlocale(LC_NUMERIC, "C") == nullptr) {
         std::cerr << "Failed to set locale" << std::endl;
@@ -118,9 +105,7 @@ int main(int argc, char *argv[])
     }
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("CodeVis");
-    parser.addHelpOption();
-    parser.addVersionOption();
+    aboutData.setupCommandLine(&parser);
 
     QCommandLineOption inputFile(QStringList({"project-file"}),
                                  QObject::tr("[file path] a .lks file"),
@@ -142,6 +127,7 @@ int main(int argc, char *argv[])
     parser.addOption(resetProject);
 
     parser.process(app);
+    aboutData.processCommandLine(&parser);
 
     if (parser.isSet(crashInfo)) {
         qInfo() << "Current Crash Dumps on folder:" << dir.absolutePath();
@@ -162,8 +148,6 @@ int main(int argc, char *argv[])
 
     Q_INIT_RESOURCE(resources);
 
-    setupPath(argv);
-
     // We need the debug model early to catch every possible debug message.
     Codethink::lvtmdl::DebugModel debugModel;
     qInstallMessageHandler(Codethink::lvtmdl::DebugModel::debugMessageHandler);
@@ -174,21 +158,22 @@ int main(int argc, char *argv[])
 
     auto sharedNodeStorage = Codethink::lvtldr::NodeStorage{};
     auto undoManager = Codethink::lvtqtc::UndoManager{};
-    MainWindow mWindow{sharedNodeStorage, &pluginManager, &undoManager, &debugModel};
-    CodeVisDBusInterface dbusInterface{mWindow}; // cppcheck-suppress unreadVariable
+    auto *mWindow = new MainWindow(sharedNodeStorage, &pluginManager, &undoManager, &debugModel);
+
+    CodeVisDBusInterface dbusInterface(*mWindow); // cppcheck-suppress unreadVariable
 
     if (parser.isSet(inputFile)) {
-        const bool isOpen = mWindow.openProjectFromPath(parser.value(inputFile));
+        const bool isOpen = mWindow->openProjectFromPath(parser.value(inputFile));
         (void) isOpen; // NOLINT
     } else {
         const QString lastProject = Preferences::self()->document()->lastDocument();
         if (lastProject.size()) {
-            const bool isOpen = mWindow.openProjectFromPath(lastProject);
+            const bool isOpen = mWindow->openProjectFromPath(lastProject);
             (void) isOpen; // NOLINT
         }
     }
 
-    mWindow.show();
+    mWindow->show();
 
     int retValue = QApplication::exec();
 

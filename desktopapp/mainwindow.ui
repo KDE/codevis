@@ -86,83 +86,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>988</width>
-     <height>27</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-    <addaction name="actionNew_Project"/>
-    <addaction name="actionGenerate_Database"/>
-    <addaction name="actionOpen_Project"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_as"/>
-    <addaction name="actionClose_Project"/>
-    <addaction name="separator"/>
-    <addaction name="actionParse_Codebase"/>
-    <addaction name="actionCode_Generation"/>
-    <addaction name="separator"/>
-    <addaction name="actionPreferences"/>
-    <addaction name="separator"/>
-    <addaction name="actionQuit"/>
-   </widget>
-   <widget class="QMenu" name="menuWindow">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <addaction name="actionToggle_Split_View"/>
-    <addaction name="separator"/>
-    <addaction name="actionNew_Tab"/>
-    <addaction name="actionClose_Current_Tab"/>
-   </widget>
-   <widget class="QMenu" name="menuExport">
-    <property name="title">
-     <string>Export</string>
-    </property>
-    <addaction name="actionSvg"/>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="actionProjectSettings"/>
-    <addaction name="actionSearch"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionAbout"/>
-    <addaction name="actionDump_usage_log"/>
-    <addaction name="actionReset_usage_log"/>
-   </widget>
-   <widget class="QMenu" name="menuView">
-    <property name="title">
-     <string>View</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuBookmarks">
-    <property name="title">
-     <string>Bookmarks</string>
-    </property>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
-   <addaction name="menuExport"/>
-   <addaction name="menuBookmarks"/>
-   <addaction name="menuView"/>
-   <addaction name="menuWindow"/>
-   <addaction name="menuHelp"/>
-  </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="objectHierarchyDoc">
    <property name="windowTitle">
@@ -592,6 +515,16 @@
    </attribute>
    <widget class="Codethink::lvtqtw::ErrorView" name="errorView"/>
   </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>988</width>
+     <height>27</height>
+    </rect>
+   </property>
+  </widget>
   <action name="actionOpen_Project">
    <property name="text">
     <string>Open Project</string>
@@ -749,11 +682,6 @@
    <class>Codethink::lvtqtw::NamespaceTreeView</class>
    <extends>QTreeView</extends>
    <header location="global">ct_lvtqtw_namespacetreeview.h</header>
-  </customwidget>
-  <customwidget>
-   <class>Codethink::lvtqtw::CycleTreeView</class>
-   <extends>QTreeView</extends>
-   <header location="global">ct_lvtqtw_cycletreeview.h</header>
   </customwidget>
   <customwidget>
    <class>Codethink::lvtqtw::ErrorView</class>

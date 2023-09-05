@@ -66,7 +66,6 @@
 
 #include <ct_lvtcgn_app_adapter.h>
 
-#include <aboutdialog.h>
 #include <fstream>
 #include <preferences.h>
 #include <projectsettingsdialog.h>
@@ -79,6 +78,10 @@
 #else
 #include <QTextBrowser>
 #endif
+
+#include <KActionCollection>
+#include <KLocalizedString>
+#include <KStandardAction>
 
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(LogWindow)
@@ -134,16 +137,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     ui.topMessageWidget->setWordWrap(true);
 
     connect(ui.mainSplitter, &SplitterView::currentTabChanged, this, &MainWindow::currentGraphSplitChanged);
-
-    connect(ui.actionSvg, &QAction::triggered, this, &MainWindow::exportSvg);
-    connect(ui.actionOpen_Project, &QAction::triggered, this, &MainWindow::openProjectAction);
-    connect(ui.actionNew_Project, &QAction::triggered, this, &MainWindow::newProject);
-    connect(ui.actionClose_Project, &QAction::triggered, this, &MainWindow::closeProject);
-    connect(ui.actionSave, &QAction::triggered, this, &MainWindow::saveProject);
-    connect(ui.actionSave_as, &QAction::triggered, this, &MainWindow::saveProjectAs);
-    connect(ui.actionCode_Generation, &QAction::triggered, this, &MainWindow::openCodeGenerationWindow);
-    connect(ui.actionParse_Codebase, &QAction::triggered, this, &MainWindow::openGenerateDatabase);
-
     connect(ui.namespaceFilter, &QLineEdit::textChanged, ui.namespaceTree, &TreeView::setFilterText);
     connect(ui.packagesFilter, &QLineEdit::textChanged, ui.packagesTree, &TreeView::setFilterText);
 
@@ -162,16 +155,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     connect(ui.actionToggle_Split_View, &QAction::toggled, ui.mainSplitter, &SplitterView::toggle);
     connect(ui.actionPreferences, &QAction::triggered, this, [this]() {
         openPreferences();
-    });
-    connect(ui.actionGenerate_Database, &QAction::triggered, this, &MainWindow::newProjectFromSource);
-    connect(ui.actionNew_Tab, &QAction::triggered, this, &MainWindow::newTab);
-    connect(ui.actionClose_Current_Tab, &QAction::triggered, this, &MainWindow::closeCurrentTab);
-    connect(ui.actionQuit, &QAction::triggered, this, &QMainWindow::close);
-    connect(ui.actionSearch, &QAction::triggered, this, &MainWindow::requestSearch);
-    connect(ui.actionProjectSettings, &QAction::triggered, this, &MainWindow::openProjectSettings);
-    connect(ui.actionAbout, &QAction::triggered, this, [] {
-        AboutDialog dialog;
-        dialog.exec();
     });
 
     connect(ui.actionReset_usage_log, &QAction::triggered, this, [this] {
@@ -251,7 +234,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     setStatusBar(d_status_bar);
     connect(d_status_bar, &CodeVisStatusBar::mouseInteractionLabelClicked, this, [&]() {
-        openPreferences(tr("Mouse"));
+        openPreferencesAt(tr("Mouse"));
     });
 
     ui.errorDock->setVisible(false);
@@ -279,9 +262,77 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, d_dockReports);
     d_dockReports->setWidget(d_reportsTabWidget);
     d_dockReports->hide();
+
+    setupActions();
 }
 
 MainWindow::~MainWindow() noexcept = default;
+
+void MainWindow::setupActions()
+{
+    auto *action = new QAction(this);
+    action->setText(tr("New from source"));
+    action->setIcon(QIcon::fromTheme("document-new"));
+    actionCollection()->addAction("new_project_from_source", action);
+    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::SHIFT | Qt::Key_N);
+    connect(action, &QAction::triggered, this, &MainWindow::newProjectFromSource);
+
+    action = new QAction(this);
+    action->setText(tr("Parse Aditional Source"));
+    action->setIcon(QIcon::fromTheme("document-new"));
+    actionCollection()->addAction("parse_aditional", action);
+    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::Key_P);
+    connect(action, &QAction::triggered, this, &MainWindow::openGenerateDatabase);
+
+    action = new QAction(this);
+    action->setText(tr("Generate Code"));
+    action->setIcon(QIcon::fromTheme("document-new"));
+    actionCollection()->addAction("generate_code", action);
+    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::Key_G);
+    connect(action, &QAction::triggered, this, &MainWindow::openCodeGenerationWindow);
+
+    action = new QAction(this);
+    action->setText(tr("Svg"));
+    action->setIcon(QIcon::fromTheme("document-new"));
+    actionCollection()->addAction("export_svg", action);
+    connect(action, &QAction::triggered, this, &MainWindow::exportSvg);
+
+    action = new QAction(this);
+    action->setCheckable(true);
+    action->setText(tr("Toggle split view"));
+    action->setIcon(QIcon::fromTheme("document-new"));
+    actionCollection()->addAction("toggle_split_view", action);
+    connect(action, &QAction::toggled, this, &MainWindow::toggleSplitView);
+
+    action = new QAction(this);
+    action->setText(tr("New Tab"));
+    action->setIcon(QIcon::fromTheme("document-new"));
+    actionCollection()->addAction("new_tab", action);
+    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::Key_T);
+    connect(action, &QAction::triggered, this, &MainWindow::newTab);
+
+    action = new QAction(this);
+    action->setText(tr("Close current tab"));
+    action->setIcon(QIcon::fromTheme("document-new"));
+    actionCollection()->addAction("close_current_tab", action);
+    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::SHIFT | Qt::Key_W);
+    connect(action, &QAction::triggered, this, &MainWindow::closeCurrentTab);
+
+    // Common Set of Actions that most applications have. Those *do not* need to be
+    // specified in the codevisui.rc
+    KStandardAction::find(this, &MainWindow::requestSearch, actionCollection());
+    KStandardAction::openNew(this, &MainWindow::newProject, actionCollection());
+    KStandardAction::close(this, &MainWindow::closeProject, actionCollection());
+    KStandardAction::undo(this, &MainWindow::triggerUndo, actionCollection());
+    KStandardAction::redo(this, &MainWindow::triggerRedo, actionCollection());
+    KStandardAction::preferences(this, &MainWindow::openPreferences, actionCollection());
+    KStandardAction::save(this, &MainWindow::saveProject, actionCollection());
+    KStandardAction::saveAs(this, &MainWindow::saveProjectAs, actionCollection());
+    KStandardAction::open(this, &MainWindow::openProjectAction, actionCollection());
+    KStandardAction::quit(qApp, &QCoreApplication::quit, actionCollection());
+
+    setupGUI(Default, QStringLiteral("codevisui.rc"));
+}
 
 void MainWindow::closeEvent(QCloseEvent *ev)
 {
@@ -647,7 +698,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     return false;
 }
 
-void MainWindow::openPreferences(std::optional<QString> preferredPage)
+void MainWindow::openPreferences()
+{
+    if (!m_confDialog_p) {
+        m_confDialog_p = new Codethink::lvtqtw::ConfigurationDialog(this);
+    }
+    m_confDialog_p->show();
+}
+
+void MainWindow::openPreferencesAt(std::optional<QString> preferredPage)
 {
     if (!m_confDialog_p) {
         m_confDialog_p = new Codethink::lvtqtw::ConfigurationDialog(this);
@@ -843,13 +902,20 @@ void MainWindow::showEvent(QShowEvent *event)
 
     static bool initialized = [this]() -> bool {
         const auto dockWidgets = findChildren<QDockWidget *>();
+
+        // object name setup by the codevisui.rc
+        QMenu *menuView = menuBar()->findChild<QMenu *>("view");
+        if (!menuView) {
+            menuView = menuBar()->addMenu("View");
+        }
+
         for (auto *dock : dockWidgets) {
             auto *action = new QAction();
             action->setText(dock->windowTitle());
             action->setCheckable(true);
             action->setChecked(dock->isVisible());
             connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
-            ui.menuView->addAction(action);
+            menuView->addAction(action);
         }
         return true;
     }();
@@ -1300,11 +1366,15 @@ void MainWindow::requestMenuNamespaceView(const QModelIndex& idx, const QPoint& 
 
 void MainWindow::bookmarksChanged()
 {
-    ui.menuBookmarks->clear();
+    auto menuBookmarks = menuBar()->findChild<QMenu *>("bookmarks");
+    if (!menuBookmarks) {
+        menuBookmarks = menuBar()->addMenu("Bookmarks");
+    }
+    menuBookmarks->clear();
 
     const auto bookmarks = d_projectFile.bookmarks();
     for (const auto& bookmark : bookmarks) {
-        auto *bookmarkAction = ui.menuBookmarks->addAction(bookmark);
+        auto *bookmarkAction = menuBookmarks->addAction(bookmark);
         connect(bookmarkAction, &QAction::triggered, this, [this, bookmark] {
             QJsonDocument doc = d_projectFile.getBookmark(bookmark);
             currentGraphTab->loadBookmark(doc);

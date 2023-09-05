@@ -35,9 +35,10 @@
 
 #include <ui_mainwindow.h>
 
+#include <KXmlGuiWindow>
+
 #include <QElapsedTimer>
 #include <QFileDialog>
-#include <QMainWindow>
 #include <QSplitter>
 #include <optional>
 
@@ -45,35 +46,24 @@ class QModelIndex;
 class QLabel;
 
 class CodeVisApplicationTestFixture;
+
 namespace Codethink::lvtmdl {
 class CircularRelationshipsModel;
-}
-namespace Codethink::lvtmdl {
 class ErrorsModel;
-}
-namespace Codethink::lvtmdl {
 class NamespaceTreeModel;
-}
-namespace Codethink::lvtmdl {
 class PackageTreeModel;
-}
-namespace Codethink::lvtmdl {
 class TreeFilterModel;
-}
-namespace Codethink::lvtmdl {
 class BaseTableModel;
 }
+
 namespace Codethink::lvtqtc {
 class GraphicsView;
 class UndoManager;
 }
+
 namespace Codethink::lvtqtw {
 class TabWidget;
-}
-namespace Codethink::lvtqtw {
 class ParseCodebaseDialog;
-}
-namespace Codethink::lvtqtw {
 class ConfigurationDialog;
 }
 
@@ -90,7 +80,7 @@ class WrappedUiMainWindow : public Ui::MainWindow {
     Codethink::lvtplg::PluginManager *pluginManager = nullptr;
 };
 
-class MainWindow : public QMainWindow {
+class MainWindow : public KXmlGuiWindow {
     Q_OBJECT
   public:
     friend class ::CodeVisApplicationTestFixture;
@@ -121,6 +111,8 @@ class MainWindow : public QMainWindow {
     Codethink::lvtprj::ProjectFile& projectFile();
 
     [[nodiscard]] QString currentMessage() const;
+
+    void setupActions();
 
   protected:
     virtual QString requestProjectName();
@@ -198,8 +190,10 @@ class MainWindow : public QMainWindow {
     Q_SLOT void changeCurrentGraphWidget(int graphTabIdx);
     // callback for when the tab we update the title.
 
-    Q_SLOT void openPreferences(std::optional<QString> preferredPage = std::nullopt);
+    Q_SLOT void openPreferences();
     // callback for openPreferences action
+
+    Q_SLOT void openPreferencesAt(std::optional<QString> preferredPage = std::nullopt);
 
     Q_SLOT void saveProject();
     // saves the current project

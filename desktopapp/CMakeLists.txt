@@ -6,20 +6,17 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../submodules/backward-cpp)
 set(CodeVisDesktop_SRCS
     codevis_dbus_interface.cpp
     mainwindow.cpp
-    aboutdialog.cpp
     projectsettingsdialog.cpp
 )
 
 qt_wrap_cpp(CodeVisDesktop_SRCS
     mainwindow.h
-    aboutdialog.h
     projectsettingsdialog.h
     codevis_dbus_interface.h
 )
 
 qt_wrap_ui(CodeVisDesktop_SRCS
     mainwindow.ui
-    aboutdialog.ui
     projectsettingsdialog.ui
 )
 
@@ -82,6 +79,10 @@ target_link_libraries(
     codevis_lib
 
     KF${KF_MAJOR_VERSION}::WidgetsAddons
+    KF${KF_MAJOR_VERSION}::XmlGui
+    KF${KF_MAJOR_VERSION}::CoreAddons
+    KF${KF_MAJOR_VERSION}::I18n
+
     Codethink::lvtmdl
     Codethink::lvtprj
     Codethink::lvtqtw
@@ -107,6 +108,7 @@ target_link_libraries(
 )
 
 install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUI5DIR}/codevis)
 
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
 

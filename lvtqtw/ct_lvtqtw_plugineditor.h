@@ -39,9 +39,11 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     Q_SIGNAL void execute(const QString& plugin);
     Q_SIGNAL void sendErrorMsg(const QString& err);
 
-    void loadPluginByName(const QString& pluginName);
-    void loadPlugin();
-    void createPlugin();
+    void save();
+    void close();
+    void loadByName(const QString& pluginName);
+    void load();
+    void create();
 
     static QDir basePluginPath();
 

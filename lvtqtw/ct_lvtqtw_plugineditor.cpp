@@ -19,6 +19,8 @@
 
 #include <ct_lvtqtw_plugineditor.h>
 
+#include <KMessageBox>
+
 #include <KTextEditor/Document>
 #include <KTextEditor/Editor>
 #include <KTextEditor/View>
@@ -50,7 +52,10 @@ struct PluginEditor::Private {
     QAction *openFile = nullptr;
     QAction *newPlugin = nullptr;
     QAction *savePlugin = nullptr;
-    QAction *runScript = nullptr;
+    QAction *runPlugin = nullptr;
+    QAction *closePlugin = nullptr;
+
+    bool hasPlugin = false;
 };
 
 PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique<PluginEditor::Private>())
@@ -67,23 +72,33 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
     d->openFile = new QAction(tr("Open Python Plugin"));
     d->openFile->setIcon(QIcon::fromTheme("document-open"));
-    connect(d->openFile, &QAction::triggered, this, &PluginEditor::loadPlugin);
-
-    d->runScript = new QAction(tr("Run Script"));
-    d->runScript->setIcon(QIcon::fromTheme("system-run"));
+    connect(d->openFile, &QAction::triggered, this, &PluginEditor::load);
 
     d->newPlugin = new QAction(tr("New Plugin"));
     d->newPlugin->setIcon(QIcon::fromTheme("document-new"));
-    connect(d->newPlugin, &QAction::triggered, this, &PluginEditor::createPlugin);
+    connect(d->newPlugin, &QAction::triggered, this, &PluginEditor::create);
+
+    d->savePlugin = new QAction(tr("Save plugin"));
+    d->savePlugin->setIcon(QIcon::fromTheme("document-save"));
+    connect(d->savePlugin, &QAction::triggered, this, &PluginEditor::save);
+
+    d->closePlugin = new QAction(tr("Close plugin"));
+    d->closePlugin->setIcon(QIcon::fromTheme("document-close"));
+    connect(d->savePlugin, &QAction::triggered, this, &PluginEditor::close);
+
+    d->runPlugin = new QAction(tr("Run Script"));
+    d->runPlugin->setIcon(QIcon::fromTheme("system-run"));
 
     auto *toolBar = new QToolBar(this);
-    toolBar->addActions({d->newPlugin, d->openFile, d->runScript});
+    toolBar->addActions({d->newPlugin, d->openFile, d->savePlugin, d->closePlugin, d->runPlugin});
 
     d->documentViews = new QTabWidget();
     d->documentViews->addTab(d->viewReadme, QStringLiteral("README.md"));
     d->documentViews->addTab(d->viewPlugin, QString());
 
     auto *l = new QBoxLayout(QBoxLayout::TopToBottom);
+
+    d->documentViews->setEnabled(false);
 
     l->addWidget(toolBar);
     l->addWidget(d->documentViews);
@@ -93,7 +108,31 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
 PluginEditor::~PluginEditor() = default;
 
-void PluginEditor::createPlugin()
+void PluginEditor::close()
+{
+    if (d->docPlugin->isModified() || d->docReadme->isModified()) {
+        auto saveAction = KGuiItem(tr("Save Plugins"));
+        auto discardAction = KGuiItem(tr("Discard Changes"));
+
+        const bool saveThings = KMessageBox::questionTwoActions(this,
+                                                                tr("Plugin has changed, Save it?"),
+                                                                tr("Save plugins?"),
+                                                                saveAction,
+                                                                discardAction)
+            == KMessageBox::ButtonCode::PrimaryAction;
+
+        if (saveThings) {
+            d->docPlugin->save();
+            d->docReadme->save();
+        }
+    }
+
+    d->docPlugin->closeUrl();
+    d->docReadme->closeUrl();
+    d->documentViews->setEnabled(false);
+}
+
+void PluginEditor::create()
 {
     const QString pluginName = QInputDialog::getText(this, tr("Create a new Python Plugin"), tr("Plugin Name:"));
 
@@ -115,10 +154,16 @@ void PluginEditor::createPlugin()
     QFile pluginFile(pluginPath.path() + QStringLiteral("/") + pluginName + QStringLiteral(".py"));
     pluginFile.open(QIODevice::ReadWrite);
 
-    loadPluginByName(pluginName);
+    loadByName(pluginName);
 }
 
-void PluginEditor::loadPlugin()
+void PluginEditor::save()
+{
+    d->docPlugin->save();
+    d->docReadme->save();
+}
+
+void PluginEditor::load()
 {
     const QString fName = QFileDialog::getExistingDirectory(this, tr("Python Script File"), QDir::homePath());
 
@@ -128,10 +173,10 @@ void PluginEditor::loadPlugin()
     }
 
     const QString pluginName = fName.split(QDir::separator()).last();
-    loadPluginByName(pluginName);
+    loadByName(pluginName);
 }
 
-void PluginEditor::loadPluginByName(const QString& pluginName)
+void PluginEditor::loadByName(const QString& pluginName)
 {
     const QString thisPluginPath = basePluginPath().path() + QStringLiteral("/") + pluginName;
 
@@ -153,4 +198,6 @@ void PluginEditor::loadPluginByName(const QString& pluginName)
     d->docPlugin->openUrl(
         QUrl::fromLocalFile(thisPluginPath + QStringLiteral("/") + pluginName + QStringLiteral(".py")));
     d->documentViews->setTabText(1, pluginName + QStringLiteral(".py"));
+
+    d->documentViews->setEnabled(true);
 }

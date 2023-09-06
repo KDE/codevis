@@ -54,7 +54,6 @@ include(ECMDeprecationSettings)
 include(ECMEnableSanitizers) 
 
 include(AddTargetLibrary)
-include(ConfigurationCompiler)
 include(GenerateExportHeader)
 include(GetGitVersion)
 include(GetDate)
@@ -95,7 +94,6 @@ if (UNIX)
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
-add_subdirectory(submodules/configuration-parser)
 set(SOCI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/soci)
 
 # Required here so that the version comparison below works
@@ -270,7 +268,6 @@ if (BUILD_DESKTOP_APP)
         set(CONFIGURATION_SRCS preferences.cpp preferences.h)
         qt_wrap_cpp(CONFIGURATION_SRCS preferences.h)
     else()
-        compile_configuration(CONFIGURATION_SRCS EXPORT_HEADER lakospreferences preferences.conf)
     endif()
 
     add_library(lakospreferences SHARED ${CONFIGURATION_SRCS})

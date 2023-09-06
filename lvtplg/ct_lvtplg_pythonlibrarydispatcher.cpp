@@ -57,17 +57,17 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         py::class_<T>(m, "PluginSetupHandler")
             .def("registerPluginData",
                  [](T const& self, std::string const& id, py::object pyObject) {
-                     auto *rawPtr = (void *) (pyObject.ptr());
+                     auto *rawPtr = static_cast<void *>(pyObject.ptr());
                      Py_XINCREF(rawPtr);
                      self.registerPluginData(id, rawPtr);
                  })
             .def("getPluginData",
                  [](T const& self, std::string const& id) {
-                     auto *rawPtr = (PyObject *) self.getPluginData(id);
+                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
                      return py::reinterpret_borrow<py::object>(rawPtr);
                  })
             .def("unregisterPluginData", [](T const& self, std::string const& id) {
-                auto *rawPtr = (PyObject *) self.getPluginData(id);
+                auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
                 Py_XDECREF(rawPtr);
                 self.unregisterPluginData(id);
             });
@@ -78,7 +78,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         py::class_<T>(m, "PluginContextMenuHandler")
             .def("getPluginData",
                  [](T const& self, std::string const& id) {
-                     auto *rawPtr = (PyObject *) self.getPluginData(id);
+                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
                      return py::reinterpret_borrow<py::object>(rawPtr);
                  })
             .def_readonly("getAllEntitiesInCurrentView", &T::getAllEntitiesInCurrentView)
@@ -91,7 +91,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         py::class_<T>(m, "PluginContextMenuActionHandler")
             .def("getPluginData",
                  [](T const& self, std::string const& id) {
-                     auto *rawPtr = (PyObject *) self.getPluginData(id);
+                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
                      return py::reinterpret_borrow<py::object>(rawPtr);
                  })
             .def_readonly("getAllEntitiesInCurrentView", &T::getAllEntitiesInCurrentView)
@@ -103,7 +103,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         py::class_<T>(m, "PluginDockWidgetHandler")
             .def("getPluginData",
                  [](T const& self, std::string const& id) {
-                     auto *rawPtr = (PyObject *) self.getPluginData(id);
+                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
                      return py::reinterpret_borrow<py::object>(rawPtr);
                  })
             .def_readonly("createNewDock", &T::createNewDock)
@@ -118,7 +118,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         py::class_<T>(m, "PluginEntityReportHandler")
             .def("getPluginData",
                  [](T const& self, std::string const& id) {
-                     auto *rawPtr = (PyObject *) self.getPluginData(id);
+                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
                      return py::reinterpret_borrow<py::object>(rawPtr);
                  })
             .def_readonly("getEntity", &T::getEntity)
@@ -130,7 +130,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         py::class_<T>(m, "PluginEntityReportActionHandler")
             .def("getPluginData",
                  [](T const& self, std::string const& id) {
-                     auto *rawPtr = (PyObject *) self.getPluginData(id);
+                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
                      return py::reinterpret_borrow<py::object>(rawPtr);
                  })
             .def_readonly("getEntity", &T::getEntity)

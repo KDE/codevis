@@ -20,6 +20,7 @@
 #ifndef DIAGRAM_SERVER_CT_LVTPLG_LIBRARYDISPATCHERINTERFACE_H
 #define DIAGRAM_SERVER_CT_LVTPLG_LIBRARYDISPATCHERINTERFACE_H
 
+#include <memory>
 #include <string>
 
 typedef void (*functionPointer)();
@@ -28,10 +29,21 @@ namespace Codethink::lvtplg {
 
 class ILibraryDispatcher {
   public:
+    struct ResolveContext {
+        ResolveContext(functionPointer const& hook): hook(hook)
+        {
+        }
+
+        virtual ~ResolveContext()
+        {
+        }
+
+        functionPointer hook = nullptr;
+    };
+
     virtual ~ILibraryDispatcher() = 0;
-    virtual functionPointer resolve(std::string const& functionName) = 0;
+    virtual std::unique_ptr<ResolveContext> resolve(std::string const& functionName) = 0;
     virtual std::string fileName() = 0;
-    virtual void *getPluginData() = 0;
 };
 
 inline ILibraryDispatcher::~ILibraryDispatcher() = default;

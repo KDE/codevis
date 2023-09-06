@@ -32,14 +32,18 @@
 
 namespace Codethink::lvtplg {
 
-void PluginManager::loadPlugins()
+void PluginManager::loadPlugins(std::optional<QDir> preferredPath)
 {
     auto homePath = QDir(QDir::homePath() + "/lks-plugins");
     auto appPath = QDir(QCoreApplication::applicationDirPath() + "/lks-plugins");
-    auto appPathStr = appPath.path().toStdString();
-    for (auto pluginsPath : {homePath, appPath}) {
+    auto searchPaths = std::vector<QDir>{homePath, appPath};
+    if (preferredPath) {
+        searchPaths.insert(searchPaths.begin(), *preferredPath);
+    }
+    for (auto pluginsPath : searchPaths) {
+        qDebug() << "Loading plugins from " << pluginsPath.path() << "...";
         if (!pluginsPath.exists() || !pluginsPath.isReadable()) {
-            qDebug() << "Could not find plugins on path " << pluginsPath << ". Will not use plugins.";
+            qDebug() << "Couldn't find any plugin on path " << pluginsPath.path();
             continue;
         }
 
@@ -53,6 +57,11 @@ void PluginManager::loadPlugins()
             tryInstallPlugin<PythonLibraryDispatcher>(pluginDir);
 #endif
         }
+    }
+
+    qDebug() << "Loaded plugins:";
+    for (auto&& p : this->libraries) {
+        qDebug() << "+ " << QString::fromStdString(p->fileName());
     }
 }
 
@@ -164,7 +173,11 @@ void PluginManager::callHooksOnParseCompleted(runQueryOnDatabase_f const& runQue
 
 void *PluginManager::getPluginData(std::string const& id) const
 {
-    return pluginData.at(id);
+    try {
+        return pluginData.at(id);
+    } catch (std::out_of_range const&) {
+        return nullptr;
+    }
 }
 
 void PluginManager::registerPluginQObject(std::string const& id, QObject *object)

@@ -54,53 +54,28 @@ namespace Codethink::lvtplg {
 
 class LVTPLG_EXPORT PythonLibraryDispatcher : public ILibraryDispatcher {
   public:
+    class PyResolveContext : public ILibraryDispatcher::ResolveContext {
+      public:
+        PyResolveContext(py::module_& pyModule, std::string const& functionName);
+        PyResolveContext(PyResolveContext&) = delete;
+        PyResolveContext(PyResolveContext&&) = delete;
+        ~PyResolveContext();
+
+        static py::module_ *activeModule;
+        py::gil_scoped_acquire acquiredGil;
+    };
+
+    static constexpr auto name = "PythonLib";
     static const std::string pluginDataId;
 
-    void *getPluginData() override;
-    functionPointer resolve(std::string const& functionName) override;
+    std::unique_ptr<ResolveContext> resolve(std::string const& functionName) override;
     std::string fileName() override;
+
     static bool isValidPlugin(QDir const& pluginDir);
     static std::unique_ptr<ILibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);
 
   private:
-    struct CppToPythonBridge {
-#define REGISTER_PLUGIN_WRAPPER(_hookName, _handlerType)                                                               \
-    static void _hookName##Wrapper(_handlerType *handler)                                                              \
-    {                                                                                                                  \
-        auto module = *static_cast<py::module_ *>(handler->getPluginData(PythonLibraryDispatcher::pluginDataId));      \
-        auto func = module.attr(#_hookName);                                                                           \
-        auto pyLksPlugin = py::module_::import("pyLksPlugin");                                                         \
-        (void) pyLksPlugin;                                                                                            \
-        func(handler);                                                                                                 \
-    }
-
-#define REGISTER_PLUGIN_WRAPPER_GETTER(_hookName)                                                                      \
-    if (hookName == #_hookName) {                                                                                      \
-        return (functionPointer) (&CppToPythonBridge::_hookName##Wrapper);                                             \
-    }
-
-        REGISTER_PLUGIN_WRAPPER(hookSetupPlugin, PluginSetupHandler)
-        REGISTER_PLUGIN_WRAPPER(hookTeardownPlugin, PluginSetupHandler)
-        REGISTER_PLUGIN_WRAPPER(hookGraphicsViewContextMenu, PluginContextMenuHandler)
-        REGISTER_PLUGIN_WRAPPER(hookSetupDockWidget, PluginDockWidgetHandler)
-        REGISTER_PLUGIN_WRAPPER(hookSetupEntityReport, PluginEntityReportHandler)
-
-        static functionPointer get(std::string const& hookName)
-        {
-            REGISTER_PLUGIN_WRAPPER_GETTER(hookSetupPlugin)
-            REGISTER_PLUGIN_WRAPPER_GETTER(hookTeardownPlugin)
-            REGISTER_PLUGIN_WRAPPER_GETTER(hookGraphicsViewContextMenu)
-            REGISTER_PLUGIN_WRAPPER_GETTER(hookSetupDockWidget)
-            REGISTER_PLUGIN_WRAPPER_GETTER(hookSetupEntityReport)
-
-            return nullptr;
-        }
-    };
-
     py::module_ pyModule;
-
-#undef REGISTER_PLUGIN_WRAPPER
-#undef REGISTER_PLUGIN_WRAPPER_GETTER
 };
 
 } // namespace Codethink::lvtplg

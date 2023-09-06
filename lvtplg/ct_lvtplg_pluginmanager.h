@@ -57,7 +57,7 @@ class LVTPLG_EXPORT PluginManager {
     PluginManager(PluginManager&&) = delete;
     PluginManager operator=(PluginManager const&) = delete;
     PluginManager operator=(PluginManager&) = delete;
-    void loadPlugins();
+    void loadPlugins(std::optional<QDir> preferredPath = std::nullopt);
 
     void callHooksSetupPlugin();
     void callHooksTeardownPlugin();
@@ -105,27 +105,13 @@ class LVTPLG_EXPORT PluginManager {
     QObject *getPluginQObject(std::string const& id) const;
 
   private:
-    static bool isValidPlugin(QDir const& pluginDir);
-    static std::unique_ptr<ILibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);
-
     template<typename HookFunctionType, typename HandlerType>
     void callAllHooks(std::string&& hookName, HandlerType&& handler)
     {
-        auto findAndCallHook = [&hookName, &handler](auto&& pluginLib) {
-            auto hook = reinterpret_cast<HookFunctionType>(pluginLib->resolve(hookName.c_str()));
-            if (!hook) {
-                // Plugin doesnt implement this hook
-                return;
-            }
-            hook(&handler);
-        };
-
         for (auto&& pluginLib : libraries) {
-            if (dynamic_cast<PythonLibraryDispatcher *>(pluginLib.get())) {
-                py::gil_scoped_acquire _;
-                findAndCallHook(pluginLib);
-            } else {
-                findAndCallHook(pluginLib);
+            auto resolveContext = pluginLib->resolve(hookName);
+            if (resolveContext->hook) {
+                reinterpret_cast<HookFunctionType>(resolveContext->hook)(&handler);
             }
         }
     }
@@ -133,18 +119,22 @@ class LVTPLG_EXPORT PluginManager {
     template<typename DispatcherType>
     void tryInstallPlugin(QString const& pluginDir)
     {
+        QDebug dbg(QtDebugMsg);
+
+        dbg << "(" << DispatcherType::name << "): Trying to install plugin " << pluginDir << "... ";
         if (!DispatcherType::isValidPlugin(pluginDir)) {
+            dbg << "Invalid plugin.";
             return;
         }
 
         auto lib = DispatcherType::loadSinglePlugin(pluginDir);
         if (!lib) {
-            qDebug() << "Could not load valid plugin: " << pluginDir;
+            dbg << "Could not load *valid* plugin: " << pluginDir;
             return;
         }
 
-        pluginData[DispatcherType::pluginDataId] = lib->getPluginData();
         libraries.push_back(std::move(lib));
+        dbg << "Plugin successfully loaded!";
     }
 
 #ifdef ENABLE_PYTHON_PLUGINS

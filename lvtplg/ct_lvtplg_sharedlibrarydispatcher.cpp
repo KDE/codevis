@@ -27,14 +27,9 @@ SharedLibraryDispatcher::SharedLibraryDispatcher(QString const& fileName): libra
 {
 }
 
-void *SharedLibraryDispatcher::getPluginData()
+std::unique_ptr<ILibraryDispatcher::ResolveContext> SharedLibraryDispatcher::resolve(std::string const& functionName)
 {
-    return nullptr;
-}
-
-functionPointer SharedLibraryDispatcher::resolve(std::string const& functionName)
-{
-    return library.resolve(functionName.c_str());
+    return std::make_unique<ILibraryDispatcher::ResolveContext>(library.resolve(functionName.c_str()));
 }
 
 std::string SharedLibraryDispatcher::fileName()

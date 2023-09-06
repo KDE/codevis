@@ -57,8 +57,8 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         py::class_<T>(m, "PluginSetupHandler")
             .def("registerPluginData",
                  [](T const& self, std::string const& id, py::object pyObject) {
-                     // Doesn't increment the internal counter. Lifetime must be ensured by caller.
                      auto *rawPtr = (void *) (pyObject.ptr());
+                     Py_XINCREF(rawPtr);
                      self.registerPluginData(id, rawPtr);
                  })
             .def("getPluginData",
@@ -66,7 +66,11 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
                      auto *rawPtr = (PyObject *) self.getPluginData(id);
                      return py::reinterpret_borrow<py::object>(rawPtr);
                  })
-            .def_readonly("unregisterPluginData", &T::unregisterPluginData);
+            .def("unregisterPluginData", [](T const& self, std::string const& id) {
+                auto *rawPtr = (PyObject *) self.getPluginData(id);
+                Py_XDECREF(rawPtr);
+                self.unregisterPluginData(id);
+            });
     }
 
     {
@@ -137,23 +141,59 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
 
 namespace Codethink::lvtplg {
 
-void *PythonLibraryDispatcher::getPluginData()
-{
-    return &this->pyModule;
-}
-
-functionPointer PythonLibraryDispatcher::resolve(std::string const& functionName)
-{
-    if (!py::hasattr(pyModule, functionName.c_str())) {
-        return nullptr;
+#define REGISTER_PLUGIN_WRAPPER(_hookName, _handlerType)                                                               \
+    static void _hookName##Wrapper(_handlerType *handler)                                                              \
+    {                                                                                                                  \
+        auto& module = *PythonLibraryDispatcher::PyResolveContext::activeModule;                                       \
+        auto func = module.attr(#_hookName);                                                                           \
+        auto pyLksPlugin = py::module_::import("pyLksPlugin");                                                         \
+        (void) pyLksPlugin;                                                                                            \
+        func(handler);                                                                                                 \
     }
 
-    return CppToPythonBridge::get(functionName);
+REGISTER_PLUGIN_WRAPPER(hookSetupPlugin, PluginSetupHandler)
+REGISTER_PLUGIN_WRAPPER(hookTeardownPlugin, PluginSetupHandler)
+REGISTER_PLUGIN_WRAPPER(hookGraphicsViewContextMenu, PluginContextMenuHandler)
+REGISTER_PLUGIN_WRAPPER(hookSetupDockWidget, PluginDockWidgetHandler)
+REGISTER_PLUGIN_WRAPPER(hookSetupEntityReport, PluginEntityReportHandler)
+
+#define REGISTER_PLUGIN_HOOK_SELECTOR(_hookName)                                                                       \
+    if (hookName == #_hookName) {                                                                                      \
+        this->hook = (functionPointer) (&_hookName##Wrapper);                                                          \
+    }
+
+py::module_ *PythonLibraryDispatcher::PyResolveContext::activeModule = nullptr;
+
+PythonLibraryDispatcher::PyResolveContext::PyResolveContext(py::module_& module, const std::string& hookName):
+    ILibraryDispatcher::ResolveContext(nullptr)
+{
+    PythonLibraryDispatcher::PyResolveContext::activeModule = &module;
+    if (py::hasattr(module, hookName.c_str())) {
+        REGISTER_PLUGIN_HOOK_SELECTOR(hookSetupPlugin)
+        REGISTER_PLUGIN_HOOK_SELECTOR(hookTeardownPlugin)
+        REGISTER_PLUGIN_HOOK_SELECTOR(hookGraphicsViewContextMenu)
+        REGISTER_PLUGIN_HOOK_SELECTOR(hookSetupDockWidget)
+        REGISTER_PLUGIN_HOOK_SELECTOR(hookSetupEntityReport)
+    }
+}
+
+#undef REGISTER_PLUGIN_WRAPPER
+#undef REGISTER_PLUGIN_HOOK_SELECTOR
+
+PythonLibraryDispatcher::PyResolveContext::~PyResolveContext()
+{
+    PythonLibraryDispatcher::PyResolveContext::activeModule = nullptr;
+}
+
+std::unique_ptr<ILibraryDispatcher::ResolveContext> PythonLibraryDispatcher::resolve(std::string const& functionName)
+{
+    return std::make_unique<PyResolveContext>(this->pyModule, functionName);
 }
 
 std::string PythonLibraryDispatcher::fileName()
 {
-    return "";
+    py::gil_scoped_acquire _;
+    return this->pyModule.attr("__file__").cast<std::string>();
 }
 
 bool PythonLibraryDispatcher::isValidPlugin(QDir const& pluginDir)

@@ -33,12 +33,12 @@ namespace Codethink::lvtplg {
 
 class SharedLibraryDispatcher : public ILibraryDispatcher {
   public:
+    static constexpr auto name = "SharedLib";
     static const std::string pluginDataId;
 
     SharedLibraryDispatcher(QString const& fileName);
 
-    void *getPluginData() override;
-    functionPointer resolve(std::string const& functionName) override;
+    std::unique_ptr<ResolveContext> resolve(std::string const& functionName) override;
     std::string fileName() override;
 
     static bool isValidPlugin(QDir const& pluginDir);

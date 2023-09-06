@@ -151,33 +151,33 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test ConfigurationDialog class Functiona
     REQUIRE(toolBox != nullptr);
     SECTION("Test load function")
     {
-        const bool t = Preferences::self()->window()->graphTab()->showLegend();
-        REQUIRE((bool) toolBox->checkState() == Preferences::self()->window()->graphTab()->showLegend());
-        Preferences::self()->window()->graphTab()->setShowLegend(!t);
-        REQUIRE((bool) toolBox->checkState() != Preferences::self()->window()->graphTab()->showLegend());
+        const bool t = Preferences::self()->showLegend();
+        REQUIRE((bool) toolBox->checkState() == Preferences::self()->showLegend());
+        Preferences::self()->setShowLegend(!t);
+        REQUIRE((bool) toolBox->checkState() != Preferences::self()->showLegend());
         configDialog.load();
-        REQUIRE((bool) toolBox->checkState() == Preferences::self()->window()->graphTab()->showLegend());
+        REQUIRE((bool) toolBox->checkState() == Preferences::self()->showLegend());
     }
 
     SECTION("Test UI effect on Preferences")
     {
         toolBox->setCheckState(Qt::Unchecked);
-        REQUIRE((bool) toolBox->checkState() == Preferences::self()->window()->graphTab()->showLegend());
+        REQUIRE((bool) toolBox->checkState() == Preferences::self()->showLegend());
 
         toolBox->setCheckState(Qt::Checked);
-        REQUIRE((bool) toolBox->checkState() == Preferences::self()->window()->graphTab()->showLegend());
+        REQUIRE((bool) toolBox->checkState() == Preferences::self()->showLegend());
 
         toolBox->setCheckState(Qt::Unchecked);
-        REQUIRE((bool) toolBox->checkState() == Preferences::self()->window()->graphTab()->showLegend());
+        REQUIRE((bool) toolBox->checkState() == Preferences::self()->showLegend());
     }
 
     SECTION("Test restoreDefaults function")
     {
-        const bool t = Preferences::self()->window()->graphTab()->showLegend();
-        REQUIRE((bool) toolBox->checkState() == Preferences::self()->window()->graphTab()->showLegend());
-        Preferences::self()->window()->graphTab()->setShowLegend(!t);
-        REQUIRE((bool) toolBox->checkState() != Preferences::self()->window()->graphTab()->showLegend());
+        const bool t = Preferences::self()->showLegend();
+        REQUIRE((bool) toolBox->checkState() == Preferences::self()->showLegend());
+        Preferences::self()->setShowLegend(!t);
+        REQUIRE((bool) toolBox->checkState() != Preferences::self()->showLegend());
         configDialog.restoreDefaults();
-        REQUIRE((bool) toolBox->checkState() == Preferences::self()->window()->graphTab()->showLegend());
+        REQUIRE((bool) toolBox->checkState() == Preferences::self()->showLegend());
     }
 }

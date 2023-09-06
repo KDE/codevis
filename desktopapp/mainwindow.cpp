@@ -230,9 +230,9 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     changeCurrentGraphWidget(0);
 
     QObject::connect(&sharedNodeStorage, &NodeStorage::storageChanged, this, [this] {
-        d_projectFile.requestAutosave(Preferences::self()->document()->autoSaveBackupIntervalMsecs());
-        Preferences::self()->document()->setLastDocument(QString::fromStdString(d_projectFile.backupPath().string()));
-        Preferences::self()->sync();
+        d_projectFile.requestAutosave(Preferences::self()->autoSaveBackupIntervalMsecs());
+        Preferences::self()->setLastDocument(QString::fromStdString(d_projectFile.backupPath().string()));
+        Preferences::self()->save();
     });
 
     setStatusBar(d_status_bar);
@@ -408,7 +408,7 @@ void MainWindow::closeProject()
     }
     d_status_bar->reset();
     showWelcomeScreen();
-    Preferences::self()->document()->setLastDocument(QString());
+    Preferences::self()->setLastDocument(QString());
 }
 
 bool MainWindow::askCloseCurrentProject()
@@ -519,7 +519,7 @@ void MainWindow::saveProject()
         return;
     }
 
-    Preferences::self()->document()->setLastDocument(QString::fromStdString(d_projectFile.location().string()));
+    Preferences::self()->setLastDocument(QString::fromStdString(d_projectFile.location().string()));
 }
 
 void MainWindow::saveProjectAs()
@@ -546,7 +546,7 @@ void MainWindow::saveProjectAs()
         return;
     }
 
-    Preferences::self()->document()->setLastDocument(QString::fromStdString(d_projectFile.location().string()));
+    Preferences::self()->setLastDocument(QString::fromStdString(d_projectFile.location().string()));
     setWindowTitle(qApp->applicationName() + " " + QString::fromStdString(d_projectFile.location().string()));
 }
 
@@ -604,7 +604,7 @@ bool MainWindow::openProjectFromPath(const QString& path)
     updateSessionPtr();
 
     const QString project = QString::fromStdString(d_projectFile.location().string());
-    Preferences::self()->document()->setLastDocument(project);
+    Preferences::self()->setLastDocument(project);
     setWindowTitle(qApp->applicationName() + " " + project);
 
     loadTabsFromProject();

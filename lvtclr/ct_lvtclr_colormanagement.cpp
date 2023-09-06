@@ -82,14 +82,8 @@ ColorManagement::ColorManagement(bool doConnectSignals): d(std::make_unique<Colo
     d->baseColor = QColor(255, 255, 255);
 
     if (doConnectSignals) {
-        connect(Preferences::self()->window()->graphWindow(),
-                &GraphWindow::useColorBlindFillChanged,
-                this,
-                &ColorManagement::colorBlindChanged);
-        connect(Preferences::self()->window()->graphWindow(),
-                &GraphWindow::colorBlindModeChanged,
-                this,
-                &ColorManagement::colorBlindChanged);
+        connect(Preferences::self(), &Preferences::useColorBlindFillChanged, this, &ColorManagement::colorBlindChanged);
+        connect(Preferences::self(), &Preferences::colorBlindModeChanged, this, &ColorManagement::colorBlindChanged);
     }
 }
 
@@ -226,12 +220,12 @@ void ColorManagement::resetCaches()
 
 bool ColorManagement::isColorBlindModeActive() const
 {
-    return Preferences::self()->window()->graphWindow()->colorBlindMode();
+    return Preferences::self()->colorBlindMode();
 }
 
 bool Codethink::lvtclr::ColorManagement::isUsingColorBlindFill() const
 {
-    return Preferences::self()->window()->graphWindow()->useColorBlindFill();
+    return Preferences::self()->useColorBlindFill();
 }
 
 } // namespace Codethink::lvtclr

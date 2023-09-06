@@ -276,28 +276,27 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     updateChildrenLoadedInfo();
     layoutIgnoredItems();
 
-    auto *preferences = Preferences::self()->window()->graphWindow();
-    d->color = preferences->entityBackgroundColor();
-    d->enableGradientOnMainNode = preferences->enableGradientOnMainNode();
-    d->selectedNodeColor = preferences->selectedEntityBackgroundColor();
-    connect(preferences, &GraphWindow::lakosEntityNamePosChanged, this, [this] {
+    d->color = Preferences::self()->entityBackgroundColor();
+    d->enableGradientOnMainNode = Preferences::self()->enableGradientOnMainNode();
+    d->selectedNodeColor = Preferences::self()->selectedEntityBackgroundColor();
+    connect(Preferences::self(), &Preferences::lakosEntityNamePosChanged, this, [this] {
         layoutIgnoredItems();
     });
-    connect(preferences, &GraphWindow::entityBackgroundColorChanged, this, [this](QColor const& newValue) {
-        d->color = newValue;
+    connect(Preferences::self(), &Preferences::entityBackgroundColorChanged, this, [this] {
+        d->color = Preferences::self()->entityBackgroundColor();
         updateBackground();
     });
-    connect(preferences, &GraphWindow::enableGradientOnMainNodeChanged, this, [this](bool newValue) {
-        d->enableGradientOnMainNode = newValue;
+    connect(Preferences::self(), &Preferences::enableGradientOnMainNodeChanged, this, [this] {
+        d->enableGradientOnMainNode = Preferences::self()->enableGradientOnMainNode();
         updateBackground();
     });
-    connect(preferences, &GraphWindow::selectedEntityBackgroundColorChanged, this, [this](QColor const& newValue) {
-        d->selectedNodeColor = newValue;
+    connect(Preferences::self(), &Preferences::selectedEntityBackgroundColorChanged, this, [this] {
+        d->selectedNodeColor = Preferences::self()->selectedEntityBackgroundColor();
         updateBackground();
     });
 
-    connect(preferences, &GraphWindow::showLevelNumbersChanged, this, [this](bool newValue) {
-        d->levelNr->setVisible(newValue && !d->forceHideLevelNr);
+    connect(Preferences::self(), &Preferences::showLevelNumbersChanged, this, [this] {
+        d->levelNr->setVisible(Preferences::self()->showLevelNumbers() && !d->forceHideLevelNr);
     });
 
     // static, we don't need to open the file more than once.
@@ -305,7 +304,7 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     static auto pixmap = QPixmap::fromImage(QImage(":/icons/notes").scaled(fm.height(), fm.height()));
 
     d->notesIcon->setPixmap(pixmap);
-    d->levelNr->setVisible(preferences->showLevelNumbers() && !d->forceHideLevelNr);
+    d->levelNr->setVisible(Preferences::self()->showLevelNumbers() && !d->forceHideLevelNr);
 }
 
 LakosEntity::~LakosEntity()
@@ -362,8 +361,7 @@ void LakosEntity::toggleExpansion(QtcUtil::CreateUndoAction createUndoAction,
 
 void LakosEntity::layoutIgnoredItems()
 {
-    auto *graphPrefs = Preferences::self()->window()->graphWindow();
-    const auto titleCorner = graphPrefs->lakosEntityNamePos();
+    const auto titleCorner = Preferences::self()->lakosEntityNamePos();
     const auto textRect = d->text->boundingRect();
 
     const auto x = [&]() -> qreal {
@@ -823,8 +821,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         auto *verticalLayout = new QAction(tr("Vertical"));
 
         connect(verticalLayout, &QAction::triggered, this, [this, scenePosition] {
-            auto *preferences = Preferences::self()->window()->graphWindow();
-            auto direction = preferences->invertVerticalLevelizationLayout() ? +1 : -1;
+            auto direction = Preferences::self()->invertVerticalLevelizationLayout() ? +1 : -1;
             levelizationLayout(LevelizationLayoutType::Vertical, direction, scenePosition);
             Q_EMIT graphUpdate();
         });
@@ -832,8 +829,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
 
         auto *horizontalLayout = new QAction(tr("Horizontal"));
         connect(horizontalLayout, &QAction::triggered, this, [this, scenePosition] {
-            auto *preferences = Preferences::self()->window()->graphWindow();
-            auto direction = preferences->invertHorizontalLevelizationLayout() ? +1 : -1;
+            auto direction = Preferences::self()->invertHorizontalLevelizationLayout() ? +1 : -1;
             levelizationLayout(LevelizationLayoutType::Horizontal, direction, scenePosition);
             Q_EMIT graphUpdate();
         });
@@ -1229,7 +1225,7 @@ void LakosEntity::mouseMoveEvent(QGraphicsSceneMouseEvent *ev)
 
 void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)
 {
-    if (Preferences::self()->debug()->enableDebugOutput()) {
+    if (Preferences::self()->enableDebugOutput()) {
         qDebug() << "LakosEntity MouseReleaseEvent" << QString::fromStdString(name());
     }
 
@@ -1445,22 +1441,20 @@ void LakosEntity::updateBackground()
 void LakosEntity::setColorManagement(lvtclr::ColorManagement *colorManagement)
 {
     assert(colorManagement);
-    auto *preferences = Preferences::self()->window()->graphWindow();
-    if (preferences->colorBlindMode()) {
+    if (Preferences::self()->colorBlindMode()) {
         d->color = colorManagement->getColorFor(d->colorId);
     } else {
-        d->color = preferences->entityBackgroundColor();
+        d->color = Preferences::self()->entityBackgroundColor();
     }
     d->fillPattern = colorManagement->fillPattern(d->colorId);
 
     updateBackground();
 
     connect(colorManagement, &lvtclr::ColorManagement::requestNewColor, this, [this, colorManagement] {
-        auto *preferences = Preferences::self()->window()->graphWindow();
-        if (preferences->colorBlindMode()) {
+        if (Preferences::self()->colorBlindMode()) {
             d->color = colorManagement->getColorFor(d->colorId);
         } else {
-            d->color = preferences->entityBackgroundColor();
+            d->color = Preferences::self()->entityBackgroundColor();
         }
         d->fillPattern = colorManagement->fillPattern(d->colorId);
         updateBackground();
@@ -1914,7 +1908,7 @@ std::string LakosEntity::legendText() const
     information += "Qualified Name: " + qualifiedName() + "\n";
     information += "Color ID: " + colorIdText() + "\n";
 
-    if (QtcUtil::isDebugMode() && Preferences::self()->debug()->enableSceneContextMenu()) {
+    if (QtcUtil::isDebugMode() && Preferences::self()->enableSceneContextMenu()) {
         information += "Cover Status " + std::to_string(d->isOpaque) + "\n";
         information += "Item Visibility: " + std::to_string(d->cover->isVisible()) + "\n";
         information += "Pos: " + std::to_string(pos().x()) + ',' + std::to_string(pos().y()) + "\n";

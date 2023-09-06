@@ -43,12 +43,15 @@ CodeVisStatusBar::CodeVisStatusBar():
     m_labelParseCodebaseWindowStatus->setStyleSheet("font-weight: bold; color: #F19143;");
     connect(m_labelParseCodebaseWindowStatus, &QPushButton::clicked, this, &CodeVisStatusBar::openParseCodebaseWindow);
 
-    using GraphWindowPreferences = GraphWindow;
-    auto *pref = Preferences::self()->window()->graphWindow();
-    connect(pref, &GraphWindowPreferences::panModifierChanged, this, &CodeVisStatusBar::updatePanText);
-    connect(pref, &GraphWindowPreferences::zoomModifierChanged, this, &CodeVisStatusBar::updateZoomText);
-    updatePanText(pref->panModifier());
-    updateZoomText(pref->zoomModifier());
+    connect(Preferences::self(), &Preferences::panModifierChanged, this, [this] {
+        updatePanText(Preferences::self()->panModifier());
+    });
+    connect(Preferences::self(), &Preferences::zoomModifierChanged, this, [this] {
+        updateZoomText(Preferences::zoomModifier());
+    });
+
+    updatePanText(Preferences::self()->panModifier());
+    updateZoomText(Preferences::self()->zoomModifier());
 }
 
 void CodeVisStatusBar::updatePanText(int newModifier)

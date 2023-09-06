@@ -47,9 +47,10 @@ PackageEntity::PackageEntity(lvtldr::LakosianNode *node, lvtshr::LoaderInfo info
         forceHideLevelNumbers();
     }
 
-    auto *fontPrefs = Preferences::self()->window()->fonts();
-    setFont(fontPrefs->pkgFont());
-    connect(fontPrefs, &Fonts::pkgFontChanged, this, &PackageEntity::setFont);
+    setFont(Preferences::self()->pkgFont());
+    connect(Preferences::self(), &Preferences::pkgFontChanged, this, [this] {
+        setFont(Preferences::self()->pkgFont());
+    });
 
     connect(this, &LakosEntity::formFactorChanged, this, [this] {
         if (isExpanded()) {

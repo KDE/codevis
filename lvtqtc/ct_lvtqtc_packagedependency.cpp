@@ -39,7 +39,7 @@ lvtshr::LakosRelationType PackageDependency::relationType() const
 
 void PackageDependency::updateFlavor()
 {
-    if (!Preferences::self()->document()->useDependencyTypes()) {
+    if (!Preferences::self()->useDependencyTypes()) {
         setFlavor(PackageDependencyFlavor::ConcreteDependency);
         return;
     }

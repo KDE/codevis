@@ -407,7 +407,7 @@ ToolBox::ToolBox(QWidget *parent): QWidget(parent), d(std::make_unique<ToolBox::
     d->layout = new ToolBoxLayout(d->widget);
 
     d->layout->setSpacing(0);
-    d->layout->setOneLine(Preferences::self()->window()->tools()->showText());
+    d->layout->setOneLine(Preferences::self()->showText());
 
     d->actionGroup = new QActionGroup(d->widget);
     d->actionGroup->setExclusive(true);
@@ -421,7 +421,7 @@ ToolBox::ToolBox(QWidget *parent): QWidget(parent), d(std::make_unique<ToolBox::
 
     d->toggleInformativeViewAction = new QAction(tr("Informative View"), this);
     d->toggleInformativeViewAction->setCheckable(true);
-    d->toggleInformativeViewAction->setChecked(Preferences::self()->window()->tools()->showText());
+    d->toggleInformativeViewAction->setChecked(Preferences::self()->showText());
     QObject::connect(d->toggleInformativeViewAction, &QAction::toggled, this, &ToolBox::setInformativeView);
     addAction(d->toggleInformativeViewAction);
     setContextMenuPolicy(Qt::ActionsContextMenu);
@@ -432,7 +432,7 @@ ToolBox::~ToolBox() = default;
 QToolButton *ToolBox::createToolButton(const QString& category, QAction *action)
 {
     auto *button = new LayoutToolButton(this);
-    if (Preferences::self()->window()->tools()->showText()) {
+    if (Preferences::self()->showText()) {
         button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     } else {
         button->setToolButtonStyle(Qt::ToolButtonIconOnly);
@@ -473,7 +473,7 @@ void ToolBox::createGroup(const QString& category)
 
 void ToolBox::setInformativeView(bool isActive)
 {
-    Preferences::self()->window()->tools()->setShowText(isActive);
+    Preferences::self()->setShowText(isActive);
     for (QToolButton *button : qAsConst(d->toolButtons)) {
         button->setToolButtonStyle(isActive ? Qt::ToolButtonTextBesideIcon : Qt::ToolButtonIconOnly);
     }

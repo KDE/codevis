@@ -1,0 +1,8 @@
+File=preferences.kcfg
+ClassName=Preferences
+Mutators=true
+DefaultValueGetters=true
+Singleton=true
+GenerateProperties=true
+Visibility=LAKOSPREFERENCES_EXPORT
+IncludeFiles=\"lakospreferences_export.h\"

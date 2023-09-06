@@ -219,13 +219,12 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     ui->loadAllowedDependencies->setChecked(true);
     ui->loadAllowedDependencies->setVisible(false);
 
-    auto *settings = Preferences::self()->codeExtractor();
-    ui->ignorePattern->setText(settings->lastIgnorePattern());
-    ui->compileCommandsFolder->setText(settings->lastConfigureJson());
-    ui->sourceFolder->setText(settings->lastSourceFolder());
+    ui->ignorePattern->setText(Preferences::self()->lastIgnorePattern());
+    ui->compileCommandsFolder->setText(Preferences::self()->lastConfigureJson());
+    ui->sourceFolder->setText(Preferences::self()->lastSourceFolder());
     ui->showDbErrors->setVisible(false);
 
-    ui->nonLakosians->setText(getNonLakosianDirSettings(settings->lastConfigureJson()));
+    ui->nonLakosians->setText(getNonLakosianDirSettings(Preferences::self()->lastConfigureJson()));
 
     connect(this, &ParseCodebaseDialog::parseFinished, this, [this] {
         ui->btnSaveOutput->setEnabled(true);
@@ -241,20 +240,17 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     connect(ui->thirdPartyPkgMappingBtn, &QPushButton::clicked, this, &ParseCodebaseDialog::selectThirdPartyPkgMapping);
 
     connect(ui->ignorePattern, &QLineEdit::textChanged, this, [this] {
-        auto *settings = Preferences::self()->codeExtractor();
-        settings->setLastIgnorePattern(ui->ignorePattern->text());
+        Preferences::self()->setLastIgnorePattern(ui->ignorePattern->text());
     });
 
     connect(ui->compileCommandsFolder, &QLineEdit::textChanged, this, [this] {
-        auto *settings = Preferences::self()->codeExtractor();
-        settings->setLastConfigureJson(ui->compileCommandsFolder->text());
+        Preferences::self()->setLastConfigureJson(ui->compileCommandsFolder->text());
 
         ui->nonLakosians->setText(getNonLakosianDirSettings(ui->compileCommandsFolder->text()));
     });
 
     connect(ui->sourceFolder, &QLineEdit::textChanged, this, [this] {
-        auto *settings = Preferences::self()->codeExtractor();
-        settings->setLastSourceFolder(ui->sourceFolder->text());
+        Preferences::self()->setLastSourceFolder(ui->sourceFolder->text());
     });
 
     connect(ui->nonLakosians, &QLineEdit::textChanged, this, [this] {
@@ -291,8 +287,8 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
         }
     });
 
-    connect(ui->btnResetIgnorePattern, &QPushButton::clicked, this, [this, settings] {
-        ui->ignorePattern->setText(settings->lastIgnorePatternDefault());
+    connect(ui->btnResetIgnorePattern, &QPushButton::clicked, this, [this] {
+        ui->ignorePattern->setText(Preferences::self()->defaultLastIgnorePatternValue());
     });
 
     ui->progressBar->setMinimum(0);
@@ -381,7 +377,7 @@ void ParseCodebaseDialog::validate()
 
 ParseCodebaseDialog::~ParseCodebaseDialog()
 {
-    Preferences::self()->sync();
+    Preferences::self()->save();
 }
 
 QString ParseCodebaseDialog::getNonLakosianDirSettings(const QString& buildDir)
@@ -686,7 +682,7 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
                                           const std::vector<std::string>& ignoreList,
                                           const std::vector<std::filesystem::path>& nonLakosianDirs)
 {
-    const bool catchCodeAnalysisOutput = Preferences::self()->debug()->enableDebugOutput();
+    const bool catchCodeAnalysisOutput = Preferences::self()->enableDebugOutput();
 
     if (!d->tool_p) {
         d->tool_p = std::make_unique<lvtclp::Tool>(sourcePath(),

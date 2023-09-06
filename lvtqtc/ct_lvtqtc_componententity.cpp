@@ -53,21 +53,20 @@ ComponentEntity::ComponentEntity(lvtldr::LakosianNode *node, lvtshr::LoaderInfo 
     ComponentEntity::setText(node->name());
     truncateTitle(EllipsisTextItem::Truncate::No);
 
-    auto *fontPrefs = Preferences::self()->window()->fonts();
-    setFont(fontPrefs->componentFont());
-    connect(fontPrefs, &Fonts::componentFontChanged, this, &ComponentEntity::setFont);
+    setFont(Preferences::self()->componentFont());
+    connect(Preferences::self(), &Preferences::componentFontChanged, this, [this] {
+        setFont(Preferences::self()->componentFont());
+    });
 
-    auto *graphWindowPrefs = Preferences::self()->window()->graphWindow();
-    connect(graphWindowPrefs, &GraphWindow::hidePackagePrefixOnComponentsChanged, this, [this](bool newValue) {
+    connect(Preferences::self(), &Preferences::hidePackagePrefixOnComponentsChanged, this, [this] {
         setText(name());
     });
 }
 
 void ComponentEntity::setText(const std::string& text)
 {
-    auto *graphWindowPrefs = Preferences::self()->window()->graphWindow();
     auto newText =
-        graphWindowPrefs->hidePackagePrefixOnComponents() ? nodeNameWithoutParentPrefix(internalNode(), text) : text;
+        Preferences::self()->hidePackagePrefixOnComponents() ? nodeNameWithoutParentPrefix(internalNode(), text) : text;
     LakosEntity::setText(newText);
 }
 

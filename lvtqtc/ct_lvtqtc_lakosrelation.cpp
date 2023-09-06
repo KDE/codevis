@@ -134,22 +134,16 @@ LakosRelation::LakosRelation(LakosEntity *source, LakosEntity *target): d(std::m
     d->fromIntersectionItem->setVisible(false);
     d->toIntersectionItem->setVisible(false);
 
-    d->color = Preferences::self()->window()->graphWindow()->edgeColor();
-    d->highlightColor = Preferences::self()->window()->graphWindow()->highlightEdgeColor();
-    connect(Preferences::self()->window()->graphWindow(),
-            &GraphWindow::edgeColorChanged,
-            this,
-            [this](QColor const& newValue) {
-                d->color = newValue;
-                update();
-            });
-    connect(Preferences::self()->window()->graphWindow(),
-            &GraphWindow::highlightEdgeColorChanged,
-            this,
-            [this](QColor const& newValue) {
-                d->highlightColor = newValue;
-                update();
-            });
+    d->color = Preferences::self()->edgeColor();
+    d->highlightColor = Preferences::self()->highlightEdgeColor();
+    connect(Preferences::self(), &Preferences::edgeColorChanged, this, [this] {
+        d->color = Preferences::self()->edgeColor();
+        update();
+    });
+    connect(Preferences::self(), &Preferences::highlightEdgeColorChanged, this, [this] {
+        d->highlightColor = Preferences::self()->highlightEdgeColor();
+        update();
+    });
 }
 
 LakosRelation::~LakosRelation() = default;
@@ -555,7 +549,7 @@ std::string LakosRelation::legendText() const
     std::string ret = from()->name() + " to " + to()->name() + "\n";
     ret += "Type: " + relationTypeAsString() + "\n";
 
-    if (Preferences::self()->debug()->enableSceneContextMenu()) {
+    if (Preferences::self()->enableSceneContextMenu()) {
         const std::string x1 = std::to_string(d->adjustedLine.p1().x());
         const std::string x2 = std::to_string(d->adjustedLine.p2().x());
         const std::string y1 = std::to_string(d->adjustedLine.p1().y());

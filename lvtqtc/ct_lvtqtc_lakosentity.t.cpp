@@ -82,8 +82,6 @@ TEST_CASE_METHOD(QTApplicationFixture, "LakosEntity tests")
     auto *pkgGroupA = nodeStorage.addPackage("A", "A", nullptr).value();
     auto *pkgChildA = nodeStorage.addPackage("PkgChildA", "A/PkgChildA", pkgGroupA).value();
 
-    auto *graphPrefs = Preferences::self()->window()->graphWindow();
-
     auto info = LoaderInfo{false, true, true};
     LakosEntity *entityA = new PackageEntity(pkgGroupA, info);
     LakosEntity *childA = new PackageEntity(pkgChildA, info);
@@ -104,19 +102,19 @@ TEST_CASE_METHOD(QTApplicationFixture, "LakosEntity tests")
     entityA->expand(QtcUtil::CreateUndoAction::e_No);
     REQUIRE(entityA->isExpanded());
 
-    graphPrefs->setLakosEntityNamePos(Qt::TopLeftCorner);
+    Preferences::self()->setLakosEntityNamePos(Qt::TopLeftCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x(), entityA->boundingRect().left()));
     REQUIRE(textItem->pos().y() < entityA->boundingRect().top());
 
-    graphPrefs->setLakosEntityNamePos(Qt::TopRightCorner);
+    Preferences::self()->setLakosEntityNamePos(Qt::TopRightCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x() + textItem->boundingRect().width(), entityA->boundingRect().right()));
     REQUIRE(textItem->pos().y() < entityA->boundingRect().top());
 
-    graphPrefs->setLakosEntityNamePos(Qt::BottomRightCorner);
+    Preferences::self()->setLakosEntityNamePos(Qt::BottomRightCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x() + textItem->boundingRect().width(), entityA->boundingRect().right()));
     REQUIRE(qFuzzyCompare(textItem->pos().y(), entityA->boundingRect().bottom()));
 
-    graphPrefs->setLakosEntityNamePos(Qt::BottomLeftCorner);
+    Preferences::self()->setLakosEntityNamePos(Qt::BottomLeftCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x(), entityA->boundingRect().left()));
     REQUIRE(qFuzzyCompare(textItem->pos().y(), entityA->boundingRect().bottom()));
 }

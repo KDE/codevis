@@ -176,7 +176,7 @@ void ToolReparentEntity::mouseReleaseEvent(QMouseEvent *event)
 
         auto oldName = entity->name();
         auto newName = [&]() {
-            if (Preferences::self()->document()->useLakosianRules()) {
+            if (Preferences::self()->useLakosianRules()) {
                 auto oldPrefix = oldParent->name();
                 auto prefixIndex = oldName.find(oldPrefix);
                 if (prefixIndex != 0) {

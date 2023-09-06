@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+                          http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+
+    <include>QApplication</include>
+    <include>QString</include>
+
+    <group name="Debug">
+        <entry name="enableSceneContextMenu" type="Bool">
+            <label>Displays a Debug context menu on the Graphics Scene</label>
+            <default>false</default>
+        </entry>
+        <entry name="enableDebugOutput" type="Bool">
+            <label>Dumps debug messages to stdout. This can potentially slowdown the Code Analysis step</label>
+            <default>false</default>
+        </entry>
+        <entry name="storeDebugOutput" type="Bool">
+            <label>Stores the debug output on a file in disk. This can potentially slowdown the Code Analysis step</label>
+            <default>false</default>
+        </entry>
+    </group>
+
+    <group name="Document">
+        <entry name="lastDocument" type="String">
+            <label>Last document opened</label>
+        </entry>
+        <entry name="useDependencyTypes" type="Bool">
+            <label>Use dependency types on the document</label>
+            <default>true</default>
+        </entry>
+        <entry name="useLakosianRules" type="Bool">
+            <label>Use a strict set of rules for large C++ codebases</label>
+            <default>false</default>
+        </entry>
+        <entry name="autoSaveBackupIntervalMsecs" type="Int">
+            <label>auto save backup interval (in milisseconds)</label>
+            <default>1000</default>
+        </entry>
+    </group>
+
+    <group name="GraphTab">
+        <entry name="showMinimap" type="Bool">
+            <label>Use dependency types on the document</label>
+            <default>true</default>
+        </entry>
+        <entry name="showLegend" type="Bool">
+            <label>Use dependency types on the document</label>
+            <default>true</default>
+        </entry>
+        <entry name="classLimit" type="Int">
+            <label>Limit of autoloading classes</label>
+            <default>2</default>
+        </entry>
+        <entry name="relationLimit" type="Int">
+            <label>Maximum number of relationships automatically loaded</label>
+            <default>20</default>
+        </entry>
+        <entry name="zoomLevel" type="Int">
+            <label>Default Zoom Level</label>
+            <default>100</default>
+        </entry>
+        <entry name="updateIntervalMsec" type="Int">
+            <label>Automatically try to update the scene</label>
+            <default>500</default>
+        </entry>
+    </group>
+
+    <group name="GraphWindow">
+        <entry name="dragModifier" type="Int">
+            <label>Drag Modifier Key</label>
+            <default>Qt::SHIFT</default>
+        </entry>
+        <entry name="panModifier" type="Int">
+            <label>Drag Modifier Key</label>
+            <default>Qt::ALT</default>
+        </entry>
+        <entry name="zoomModifier" type="Int">
+            <label>Drag Modifier Key</label>
+            <default>Qt::CTRL</default>
+        </entry>
+        <entry name="minimapSize" type="Int">
+            <label>Drag Modifier Key</label>
+            <default>10</default>
+        </entry>
+        <entry name="lakosEntityNamePos" type="Int">
+            <label>Drag Modifier Key</label>
+            <default>Qt::BottomLeftCorner</default>
+        </entry>
+        <entry name="colorBlindMode" type="Bool">
+            <label>Use a colorblind palette for the Graph Visualizer</label>
+            <default>false</default>
+        </entry>
+        <entry name="useColorBlindFill" type="Bool">
+            <label>Use a stronger fill brush on ColorBlind mode</label>
+            <default>false</default>
+        </entry>
+        <entry name="enableGradientOnMainNode" type="Bool">
+            <label>Use a gradient on the selected node</label>
+            <default>false</default>
+        </entry>
+        <entry name="showRedundantEdgesDefault" type="Bool">
+            <label>Show all edges (even the redundant ones) by default</label>
+            <default>false</default>
+        </entry>
+        <entry name="hidePackagePrefixOnComponents" type="Bool">
+            <label>Do not show the first three letters of package names if in Lakosian Mode</label>
+            <default>false</default>
+        </entry>
+        <entry name="invertHorizontalLevelizationLayout" type="Bool">
+            <label>Layout Right to Left instead of Left to Right</label>
+            <default>false</default>
+        </entry>
+        <entry name="invertVerticalLevelizationLayout" type="Bool">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>false</default>
+        </entry>
+        <entry name="showLevelNumbers" type="Bool">
+            <label>Show the Levelization Numbers on the Entities on Screen</label>
+            <default>true</default>
+        </entry>
+        <entry name="backgroundColor" type="Color">
+            <label>Background color of the Graph Visualizer</label>
+            <default>white</default>
+        </entry>
+        <entry name="entityBackgroundColor" type="Color">
+            <label>Background color of the Graph Visualizer</label>
+            <default>green</default>
+        </entry>
+        <entry name="selectedEntityBackgroundColor" type="Color">
+            <label>Background color of the Graph Visualizer</label>
+            <default>cyan</default>
+        </entry>
+        <entry name="edgeColor" type="Color">
+            <label>Background color of the Graph Visualizer</label>
+            <default>black</default>
+        </entry>
+        <entry name="highlightEdgeColor" type="Color">
+            <label>Background color of the Graph Visualizer</label>
+            <default>red</default>
+        </entry>
+
+    </group>
+
+    <group name="GraphFonts">
+        <entry name="pkgGroupFont" type="Font">
+            <label>Font for Package Groups</label>
+            <default>qApp->font()</default>
+        </entry>
+            <entry name="pkgFont" type="Font">
+            <label>Font for Packages</label>
+            <default>qApp->font()</default>
+        </entry>
+        <entry name="componentFont" type="Font">
+            <label>Font for Components</label>
+            <default>qApp->font()</default>
+        </entry>
+        <entry name="classFont" type="Font">
+            <label>Font for Classes</label>
+            <default>qApp->font()</default>
+        </entry>
+        <entry name="structFont" type="Font">
+            <label>Font for Structs</label>
+            <default>qApp->font()</default>
+        </entry>
+        <entry name="enumFont" type="Font">
+            <label>Font for Enums</label>
+            <default>qApp->font()</default>
+        </entry>
+    </group>
+
+    <group name="GraphTools">
+        <entry name="showText" type="Bool">
+            <label>Show help text on the tools</label>
+            <default>true</default>
+        </entry>
+    </group>
+
+    <group name="GraphLoadInfo">
+        <entry name="showIsARelation" type="Bool">
+            <label>Show relationships between base and parent classes</label>
+            <default>true</default>
+        </entry>
+        <entry name="showUsesInTheImplementationRelation" type="Bool">
+            <label>Show relationships between classes that uses other inside of the methods</label>
+            <default>true</default>
+        </entry>
+        <entry name="showUsesInTheInterfaceRelation" type="Bool">
+            <label>Show relationships between classes that uses others on the Headers</label>
+            <default>true</default>
+        </entry>
+        <entry name="showClients" type="Bool">
+            <label>Load entities that uses the loaded entity</label>
+            <default>true</default>
+        </entry>
+        <entry name="showProviders" type="Bool">
+            <label>Load entities that are used by the loaded entity</label>
+            <default>false</default>
+        </entry>
+        <entry name="showExternalEdges" type="Bool">
+            <label>Show edges that crosses boundaries between entities</label>
+            <default>false</default>
+        </entry>
+    </group>
+
+    <group name="CodeExtractor">
+        <entry name="lastConfigureJson" type="String">
+            <label>Last compile_commands.json used</label>
+        </entry>
+        <entry name="lastSourceFolder" type="String">
+            <label>Last project source folder used</label>
+        </entry>
+        <entry name="lastIgnorePattern" type="String">
+            <label>Last document opened</label>
+            <default>
+                *.t.cpp,*.m.cpp,moc_*.cpp,*standalone*,*thirdparty*
+            </default>
+        </entry>
+    </group>
+
+    <group name="CodeGeneration">
+        <entry name="lastOutputDir" type="String">
+            <label>Folder to dump the code generation</label>
+        </entry>
+    </group>
+</kcfg>

@@ -201,8 +201,7 @@ bool DebugModel::saveAs(const QString& filename) const
 
 void DebugModel::debugMessageHandler(QtMsgType msgType, const QMessageLogContext& context, const QString& message)
 {
-    auto *debugPrefs = Preferences::self()->debug();
-    if (self && debugPrefs->storeDebugOutput()) {
+    if (self && Preferences::self()->storeDebugOutput()) {
         DebugData d;
         d.category = context.category;
         d.file = context.file;
@@ -214,7 +213,7 @@ void DebugModel::debugMessageHandler(QtMsgType msgType, const QMessageLogContext
         self->addData(d);
     }
 
-    if (!debugPrefs->enableDebugOutput()) {
+    if (!Preferences::self()->enableDebugOutput()) {
         return;
     }
 

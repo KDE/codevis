@@ -65,6 +65,7 @@ if (BUILD_DESKTOP_APP)
             Codethink::lvttst
             Codethink::lvttst_fixture_qt
             Codethink::lvttst_tmpdir
+            Codethink::lakospreferences
             ${SYSTEM_EXTRA_LIBRARIES}
         )
         add_test(NAME test_lvtcgn_codegendialog COMMAND test_lvtcgn_codegendialog)

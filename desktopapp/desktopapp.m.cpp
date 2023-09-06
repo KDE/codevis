@@ -139,11 +139,11 @@ int main(int argc, char *argv[])
     }
 
     if (parser.isSet(resetSettings)) {
-        Preferences::self()->loadDefaults();
+        Preferences::self()->setDefaults();
     }
 
     if (parser.isSet(resetProject)) {
-        Preferences::self()->document()->setLastDocument("");
+        Preferences::self()->setLastDocument("");
     }
 
     Q_INIT_RESOURCE(resources);
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
         const bool isOpen = mWindow->openProjectFromPath(parser.value(inputFile));
         (void) isOpen; // NOLINT
     } else {
-        const QString lastProject = Preferences::self()->document()->lastDocument();
+        const QString lastProject = Preferences::self()->lastDocument();
         if (lastProject.size()) {
             const bool isOpen = mWindow->openProjectFromPath(lastProject);
             (void) isOpen; // NOLINT
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
     int retValue = QApplication::exec();
 
-    Preferences::self()->sync();
+    Preferences::self()->save();
     pluginManager.callHooksTeardownPlugin();
     return retValue;
 }

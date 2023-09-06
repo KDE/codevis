@@ -54,120 +54,107 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
     populateMouseTabOptions();
     load();
 
-    auto *debugPreferences = Preferences::self()->debug();
-    connect(d->ui.debugContextMenu, &QCheckBox::toggled, debugPreferences, &Debug::setEnableSceneContextMenu);
-    connect(d->ui.enableDebugOutput, &QCheckBox::toggled, debugPreferences, &Debug::setEnableDebugOutput);
-    connect(d->ui.storeDebugOutput, &QCheckBox::toggled, debugPreferences, &Debug::setStoreDebugOutput);
+    connect(d->ui.debugContextMenu, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableSceneContextMenu);
+    connect(d->ui.enableDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableDebugOutput);
+    connect(d->ui.storeDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setStoreDebugOutput);
 
-    auto *graphPreferences = Preferences::self()->window()->graphTab();
-    auto *graphLoadInfo = Preferences::self()->graphLoadInfo();
-
-    connect(d->ui.isARelation, &QCheckBox::toggled, graphLoadInfo, &GraphLoadInfo::setShowIsARelation);
+    connect(d->ui.isARelation, &QCheckBox::toggled, Preferences::self(), &Preferences::setShowIsARelation);
     connect(d->ui.usesInTheImplementation,
             &QCheckBox::toggled,
-            graphLoadInfo,
-            &GraphLoadInfo::setShowUsesInTheImplementationRelation);
+            Preferences::self(),
+            &Preferences::setShowUsesInTheImplementationRelation);
     connect(d->ui.usesInTheInterface,
             &QCheckBox::toggled,
-            graphLoadInfo,
-            &GraphLoadInfo::setShowUsesInTheInterfaceRelation);
+            Preferences::self(),
+            &Preferences::setShowUsesInTheInterfaceRelation);
 
-    connect(d->ui.showClients, &QCheckBox::toggled, graphLoadInfo, &GraphLoadInfo::setShowClients);
-    connect(d->ui.showProviders, &QCheckBox::toggled, graphLoadInfo, &GraphLoadInfo::setShowProviders);
+    connect(d->ui.showClients, &QCheckBox::toggled, Preferences::self(), &Preferences::setShowClients);
+    connect(d->ui.showProviders, &QCheckBox::toggled, Preferences::self(), &Preferences::setShowProviders);
 
-    connect(d->ui.minimap, &QCheckBox::toggled, graphPreferences, &GraphTab::setShowMinimap);
-    connect(d->ui.toolBox, &QCheckBox::toggled, graphPreferences, &GraphTab::setShowLegend);
-    connect(d->ui.classLimit, QOverload<int>::of(&QSpinBox::valueChanged), graphPreferences, &GraphTab::setClassLimit);
+    connect(d->ui.minimap, &QCheckBox::toggled, Preferences::self(), &Preferences::setShowMinimap);
+    connect(d->ui.toolBox, &QCheckBox::toggled, Preferences::self(), &Preferences::setShowLegend);
+    connect(d->ui.classLimit,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            Preferences::self(),
+            &Preferences::setClassLimit);
     connect(d->ui.relationLimit,
             QOverload<int>::of(&QSpinBox::valueChanged),
-            graphPreferences,
-            &GraphTab::setRelationLimit);
-    connect(d->ui.zoomLevel, QOverload<int>::of(&QSpinBox::valueChanged), graphPreferences, &GraphTab::setZoomLevel);
+            Preferences::self(),
+            &Preferences::setRelationLimit);
+    connect(d->ui.zoomLevel,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            Preferences::self(),
+            &Preferences::setZoomLevel);
 
-    auto *graphWindowPreferences = Preferences::self()->window()->graphWindow();
-    connect(d->ui.comboPanModifier,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
-            [this, graphWindowPreferences] {
-                graphWindowPreferences->setPanModifier(
-                    ModifierHelpers::stringToModifier(d->ui.comboPanModifier->currentText()));
-            });
-
-    connect(d->ui.showLevelNumbers, &QCheckBox::toggled, this, [this, graphWindowPreferences] {
-        graphWindowPreferences->setShowLevelNumbers(d->ui.showLevelNumbers->isChecked());
+    connect(d->ui.comboPanModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
+        Preferences::self()->setPanModifier(ModifierHelpers::stringToModifier(d->ui.comboPanModifier->currentText()));
     });
 
-    connect(d->ui.backgroundColor, &KColorButton::changed, this, [this, graphWindowPreferences] {
-        graphWindowPreferences->setBackgroundColor(d->ui.backgroundColor->color());
+    connect(d->ui.showLevelNumbers, &QCheckBox::toggled, this, [this] {
+        Preferences::self()->setShowLevelNumbers(d->ui.showLevelNumbers->isChecked());
     });
-    connect(d->ui.entityBackgroundColor, &KColorButton::changed, this, [this, graphWindowPreferences] {
-        graphWindowPreferences->setEntityBackgroundColor(d->ui.entityBackgroundColor->color());
+
+    connect(d->ui.backgroundColor, &KColorButton::changed, this, [this] {
+        Preferences::self()->setBackgroundColor(d->ui.backgroundColor->color());
     });
-    connect(d->ui.selectedEntityBackgroundColor, &KColorButton::changed, this, [this, graphWindowPreferences] {
-        graphWindowPreferences->setSelectedEntityBackgroundColor(d->ui.selectedEntityBackgroundColor->color());
+    connect(d->ui.entityBackgroundColor, &KColorButton::changed, this, [this] {
+        Preferences::self()->setEntityBackgroundColor(d->ui.entityBackgroundColor->color());
+    });
+    connect(d->ui.selectedEntityBackgroundColor, &KColorButton::changed, this, [this] {
+        Preferences::self()->setSelectedEntityBackgroundColor(d->ui.selectedEntityBackgroundColor->color());
     });
     connect(d->ui.chkSelectedEntityHasGradient,
             &QCheckBox::toggled,
-            graphWindowPreferences,
-            [graphWindowPreferences](bool value) {
-                graphWindowPreferences->setEnableGradientOnMainNode(value);
-            });
-    connect(d->ui.edgeColor, &KColorButton::changed, this, [this, graphWindowPreferences] {
-        graphWindowPreferences->setEdgeColor(d->ui.edgeColor->color());
+            Preferences::self(),
+            &Preferences::setEnableGradientOnMainNode);
+
+    connect(d->ui.edgeColor, &KColorButton::changed, this, [this] {
+        Preferences::self()->setEdgeColor(d->ui.edgeColor->color());
     });
-    connect(d->ui.highlightEdgeColor, &KColorButton::changed, this, [this, graphWindowPreferences] {
-        graphWindowPreferences->setHighlightEdgeColor(d->ui.highlightEdgeColor->color());
+    connect(d->ui.highlightEdgeColor, &KColorButton::changed, this, [this] {
+        Preferences::self()->setHighlightEdgeColor(d->ui.highlightEdgeColor->color());
     });
 
-    connect(d->ui.comboZoomModifier,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
-            [this, graphWindowPreferences] {
-                graphWindowPreferences->setZoomModifier(
-                    ModifierHelpers::stringToModifier(d->ui.comboZoomModifier->currentText()));
-            });
-    connect(d->ui.chkColorBlindness, &QCheckBox::toggled, graphWindowPreferences, &GraphWindow::setColorBlindMode);
-    connect(d->ui.chkColorPattern, &QCheckBox::toggled, graphWindowPreferences, &GraphWindow::setUseColorBlindFill);
+    connect(d->ui.comboZoomModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
+        Preferences::self()->setZoomModifier(ModifierHelpers::stringToModifier(d->ui.comboZoomModifier->currentText()));
+    });
+    connect(d->ui.chkColorBlindness, &QCheckBox::toggled, Preferences::self(), &Preferences::setColorBlindMode);
+    connect(d->ui.chkColorPattern, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseColorBlindFill);
 
-    connect(d->ui.entityNamePos,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
-            [this, graphWindowPreferences] {
-                graphWindowPreferences->setLakosEntityNamePos(stringToCorner(d->ui.entityNamePos->currentText()));
-            });
-    auto *documentPreferences = Preferences::self()->document();
-    connect(d->ui.lakosianRules, &QCheckBox::toggled, documentPreferences, &Document::setUseLakosianRules);
-    connect(d->ui.useDependencyTypes, &QCheckBox::toggled, documentPreferences, &Document::setUseDependencyTypes);
+    connect(d->ui.entityNamePos, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
+        Preferences::self()->setLakosEntityNamePos(stringToCorner(d->ui.entityNamePos->currentText()));
+    });
+
+    connect(d->ui.lakosianRules, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseLakosianRules);
+    connect(d->ui.useDependencyTypes, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseDependencyTypes);
     connect(d->ui.showRedundantEdgesDefaultCheckbox,
             &QCheckBox::toggled,
-            graphWindowPreferences,
-            &GraphWindow::setShowRedundantEdgesDefault);
+            Preferences::self(),
+            &Preferences::setShowRedundantEdgesDefault);
     connect(d->ui.hidePkgPrefixOnComponents,
             &QCheckBox::toggled,
-            graphWindowPreferences,
-            &GraphWindow::setHidePackagePrefixOnComponents);
+            Preferences::self(),
+            &Preferences::setHidePackagePrefixOnComponents);
     connect(d->ui.invertHorizontalLvlLayout,
             &QCheckBox::toggled,
-            graphWindowPreferences,
-            &GraphWindow::setInvertHorizontalLevelizationLayout);
+            Preferences::self(),
+            &Preferences::setInvertHorizontalLevelizationLayout);
     connect(d->ui.invertVerticalLvlLayout,
             &QCheckBox::toggled,
-            graphWindowPreferences,
-            &GraphWindow::setInvertVerticalLevelizationLayout);
+            Preferences::self(),
+            &Preferences::setInvertVerticalLevelizationLayout);
 
-    auto *font = Preferences::self()->window()->fonts();
-    connect(d->ui.pkgGroupFont, &KFontRequester::fontSelected, font, &Fonts::setPkgGroupFont);
-    connect(d->ui.pkgFont, &KFontRequester::fontSelected, font, &Fonts::setPkgFont);
-    connect(d->ui.componentFont, &KFontRequester::fontSelected, font, &Fonts::setComponentFont);
-    connect(d->ui.classFont, &KFontRequester::fontSelected, font, &Fonts::setClassFont);
-    connect(d->ui.structFont, &KFontRequester::fontSelected, font, &Fonts::setStructFont);
-    connect(d->ui.enumFont, &KFontRequester::fontSelected, font, &Fonts::setEnumFont);
+    connect(d->ui.pkgGroupFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setPkgGroupFont);
+    connect(d->ui.pkgFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setPkgFont);
+    connect(d->ui.componentFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setComponentFont);
+    connect(d->ui.classFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setClassFont);
+    connect(d->ui.structFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setStructFont);
+    connect(d->ui.enumFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setEnumFont);
 
-    auto *doc = Preferences::self()->document();
     connect(d->ui.autoSaveBackupIntervalMsecs,
             QOverload<int>::of(&QSpinBox::valueChanged),
-            doc,
-            &Document::setAutoSaveBackupIntervalMsecs);
+            Preferences::self(),
+            &Preferences::setAutoSaveBackupIntervalMsecs);
 
     auto *btn = d->ui.buttonBox->button(QDialogButtonBox::Save);
     auto *btnDefaults = d->ui.buttonBox->button(QDialogButtonBox::RestoreDefaults);
@@ -210,73 +197,67 @@ ConfigurationDialog::~ConfigurationDialog() = default;
 
 void ConfigurationDialog::load()
 {
-    auto *debugPreferences = Preferences::self()->debug();
-    d->ui.debugContextMenu->setChecked(debugPreferences->enableSceneContextMenu());
-    d->ui.enableDebugOutput->setChecked(debugPreferences->enableDebugOutput());
-    d->ui.storeDebugOutput->setChecked(debugPreferences->storeDebugOutput());
-    auto *graphPreferences = Preferences::self()->window()->graphTab();
-    auto *graphLoadInfo = Preferences::self()->graphLoadInfo();
-    d->ui.showProviders->setChecked(graphLoadInfo->showProviders());
-    d->ui.showClients->setChecked(graphLoadInfo->showClients());
-    d->ui.isARelation->setChecked(graphLoadInfo->showIsARelation());
-    d->ui.usesInTheImplementation->setChecked(graphLoadInfo->showUsesInTheImplementationRelation());
-    d->ui.usesInTheInterface->setChecked(graphLoadInfo->showUsesInTheInterfaceRelation());
-    d->ui.minimap->setChecked(graphPreferences->showMinimap());
-    d->ui.toolBox->setChecked(graphPreferences->showLegend());
-    d->ui.classLimit->setValue(graphPreferences->classLimit());
-    d->ui.relationLimit->setValue(graphPreferences->relationLimit());
-    d->ui.zoomLevel->setValue(graphPreferences->zoomLevel());
+    d->ui.debugContextMenu->setChecked(Preferences::self()->enableSceneContextMenu());
+    d->ui.enableDebugOutput->setChecked(Preferences::self()->enableDebugOutput());
+    d->ui.storeDebugOutput->setChecked(Preferences::self()->storeDebugOutput());
+    d->ui.showProviders->setChecked(Preferences::self()->showProviders());
+    d->ui.showClients->setChecked(Preferences::self()->showClients());
+    d->ui.isARelation->setChecked(Preferences::self()->showIsARelation());
+    d->ui.usesInTheImplementation->setChecked(Preferences::self()->showUsesInTheImplementationRelation());
+    d->ui.usesInTheInterface->setChecked(Preferences::self()->showUsesInTheInterfaceRelation());
+    d->ui.minimap->setChecked(Preferences::self()->showMinimap());
+    d->ui.toolBox->setChecked(Preferences::self()->showLegend());
+    d->ui.classLimit->setValue(Preferences::self()->classLimit());
+    d->ui.relationLimit->setValue(Preferences::self()->relationLimit());
+    d->ui.zoomLevel->setValue(Preferences::self()->zoomLevel());
 
-    auto *graphWindowPreferences = Preferences::self()->window()->graphWindow();
-    d->ui.chkColorBlindness->setChecked(graphWindowPreferences->colorBlindMode());
-    d->ui.chkColorPattern->setChecked(graphWindowPreferences->useColorBlindFill());
-    d->ui.showLevelNumbers->setChecked(graphWindowPreferences->showLevelNumbers());
+    d->ui.chkColorBlindness->setChecked(Preferences::self()->colorBlindMode());
+    d->ui.chkColorPattern->setChecked(Preferences::self()->useColorBlindFill());
+    d->ui.showLevelNumbers->setChecked(Preferences::self()->showLevelNumbers());
 
     d->ui.comboPanModifier->setCurrentText(
-        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(graphWindowPreferences->panModifier())));
+        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::self()->panModifier())));
     d->ui.comboZoomModifier->setCurrentText(
-        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(graphWindowPreferences->zoomModifier())));
+        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::self()->zoomModifier())));
 
-    d->ui.backgroundColor->setColor(graphWindowPreferences->backgroundColor());
-    d->ui.entityBackgroundColor->setColor(graphWindowPreferences->entityBackgroundColor());
-    d->ui.selectedEntityBackgroundColor->setColor(graphWindowPreferences->selectedEntityBackgroundColor());
-    d->ui.edgeColor->setColor(graphWindowPreferences->edgeColor());
-    d->ui.highlightEdgeColor->setColor(graphWindowPreferences->highlightEdgeColor());
+    d->ui.backgroundColor->setColor(Preferences::self()->backgroundColor());
+    d->ui.entityBackgroundColor->setColor(Preferences::self()->entityBackgroundColor());
+    d->ui.selectedEntityBackgroundColor->setColor(Preferences::self()->selectedEntityBackgroundColor());
+    d->ui.edgeColor->setColor(Preferences::self()->edgeColor());
+    d->ui.highlightEdgeColor->setColor(Preferences::self()->highlightEdgeColor());
 
-    const Qt::Corner cnr = graphWindowPreferences->lakosEntityNamePos();
+    const Qt::Corner cnr = static_cast<Qt::Corner>(Preferences::self()->lakosEntityNamePos());
     d->ui.entityNamePos->setCurrentText(cnr == Qt::TopLeftCorner          ? tr("Top Left")
                                             : cnr == Qt::TopRightCorner   ? tr("Top Right")
                                             : cnr == Qt::BottomLeftCorner ? tr("Bottom Left")
                                                                           : tr("Bottom Right"));
 
-    auto *font = Preferences::self()->window()->fonts();
-    d->ui.pkgGroupFont->setFont(font->pkgGroupFont());
-    d->ui.pkgFont->setFont(font->pkgFont());
-    d->ui.componentFont->setFont(font->componentFont());
-    d->ui.classFont->setFont(font->classFont());
-    d->ui.structFont->setFont(font->structFont());
-    d->ui.enumFont->setFont(font->enumFont());
+    d->ui.pkgGroupFont->setFont(Preferences::self()->pkgGroupFont());
+    d->ui.pkgFont->setFont(Preferences::self()->pkgFont());
+    d->ui.componentFont->setFont(Preferences::self()->componentFont());
+    d->ui.classFont->setFont(Preferences::self()->classFont());
+    d->ui.structFont->setFont(Preferences::self()->structFont());
+    d->ui.enumFont->setFont(Preferences::self()->enumFont());
 
-    auto *document = Preferences::self()->document();
-    d->ui.autoSaveBackupIntervalMsecs->setValue(document->autoSaveBackupIntervalMsecs());
+    d->ui.autoSaveBackupIntervalMsecs->setValue(Preferences::self()->autoSaveBackupIntervalMsecs());
 
-    auto *documentPreferences = Preferences::self()->document();
-    d->ui.lakosianRules->setChecked(documentPreferences->useLakosianRules());
-    d->ui.useDependencyTypes->setChecked(documentPreferences->useDependencyTypes());
-    d->ui.showRedundantEdgesDefaultCheckbox->setChecked(graphWindowPreferences->showRedundantEdgesDefault());
-    d->ui.hidePkgPrefixOnComponents->setChecked(graphWindowPreferences->hidePackagePrefixOnComponents());
-    d->ui.hidePkgPrefixOnComponents->setChecked(graphWindowPreferences->invertHorizontalLevelizationLayout());
-    d->ui.hidePkgPrefixOnComponents->setChecked(graphWindowPreferences->invertVerticalLevelizationLayout());
+    d->ui.lakosianRules->setChecked(Preferences::self()->useLakosianRules());
+    d->ui.useDependencyTypes->setChecked(Preferences::self()->useDependencyTypes());
+    d->ui.showRedundantEdgesDefaultCheckbox->setChecked(Preferences::self()->showRedundantEdgesDefault());
+    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::self()->hidePackagePrefixOnComponents());
+    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::self()->invertHorizontalLevelizationLayout());
+    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::self()->invertVerticalLevelizationLayout());
 }
 
 void ConfigurationDialog::save()
 {
-    Preferences::self()->sync();
+    Preferences::self()->save();
 }
 
 void ConfigurationDialog::restoreDefaults()
 {
-    Preferences::self()->loadDefaults();
+    // TODO: Figure out how to load defaults.
+    Preferences::self()->setDefaults();
     load();
 }
 

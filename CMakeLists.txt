@@ -110,6 +110,7 @@ if (BUILD_DESKTOP_APP)
     find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)
 
     find_package(KF${KF_MAJOR_VERSION} ${KF5_DEP_VERSION} REQUIRED COMPONENTS
+        Config
         CoreAddons
         WidgetsAddons
         XmlGui
@@ -270,10 +271,16 @@ if (BUILD_DESKTOP_APP)
     else()
     endif()
 
+    kconfig_add_kcfg_files(CONFIGURATION_SRCS GENERATE_MOC preferences.kcfgc)
     add_library(lakospreferences SHARED ${CONFIGURATION_SRCS})
+    add_library(Codethink::lakospreferences ALIAS lakospreferences)
     generate_export_header(lakospreferences)
 
-    target_link_libraries(lakospreferences Qt::Core Qt::Gui Qt::Widgets)
+    target_link_libraries(lakospreferences
+        Qt::Widgets
+        KF${KF_MAJOR_VERSION}::ConfigCore
+        KF${KF_MAJOR_VERSION}::ConfigGui
+    )
 
     target_include_directories(lakospreferences
     PUBLIC

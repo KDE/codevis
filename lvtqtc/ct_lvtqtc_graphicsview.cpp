@@ -108,11 +108,10 @@ GraphicsView::GraphicsView(NodeStorage& nodeStorage, lvtprj::ProjectFile const& 
         d->minimap->setSceneRect(mapToScene(rect()).boundingRect());
     });
 
-    auto *graphPrefs = Preferences::self()->window()->graphWindow();
-    connect(graphPrefs, &GraphWindow::backgroundColorChanged, this, [this](const QColor& c) {
-        setBackgroundBrush(QBrush(c));
+    connect(Preferences::self(), &Preferences::backgroundColorChanged, this, [this] {
+        setBackgroundBrush(QBrush(Preferences::self()->backgroundColor()));
     });
-    setBackgroundBrush(QBrush(graphPrefs->backgroundColor()));
+    setBackgroundBrush(QBrush(Preferences::self()->backgroundColor()));
 
     setCacheMode(QGraphicsView::CacheNone);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
@@ -238,7 +237,7 @@ void GraphicsView::fitRectInView(QRectF const& r)
 void GraphicsView::wheelEvent(QWheelEvent *event)
 {
     // Handle Zoom
-    auto zoomModifier = Preferences::self()->window()->graphWindow()->zoomModifier();
+    auto zoomModifier = Preferences::self()->zoomModifier();
     if (event->modifiers() & zoomModifier || zoomModifier == Qt::KeyboardModifier::NoModifier) {
         if (event->angleDelta().y() > 0) {
             setZoomFactor(d->zoomFactor + 2);
@@ -322,8 +321,7 @@ void GraphicsView::zoomIntoRect(const QPoint& topLeft, const QPoint& bottomRight
 
 void GraphicsView::keyPressEvent(QKeyEvent *event)
 {
-    auto *prefs = Preferences::self()->window()->graphWindow();
-    if (event->modifiers() & prefs->panModifier()) {
+    if (event->modifiers() & Preferences::self()->panModifier()) {
         setDragMode(QGraphicsView::DragMode::ScrollHandDrag);
         event->accept();
         return;
@@ -334,10 +332,8 @@ void GraphicsView::keyPressEvent(QKeyEvent *event)
 
 void GraphicsView::keyReleaseEvent(QKeyEvent *event)
 {
-    auto *prefs = Preferences::self()->window()->graphWindow();
-
     Qt::Key modifier = Qt::Key_Alt;
-    switch (prefs->panModifier()) {
+    switch (Preferences::self()->panModifier()) {
     case Qt::AltModifier:
         modifier = Qt::Key_Alt;
         break;
@@ -361,7 +357,7 @@ void GraphicsView::keyReleaseEvent(QKeyEvent *event)
 
 void GraphicsView::mousePressEvent(QMouseEvent *event)
 {
-    if (Preferences::self()->debug()->enableDebugOutput()) {
+    if (Preferences::self()->enableDebugOutput()) {
         qDebug() << "GraphicsView mousePressEvent";
     }
     if (event->button() == Qt::ForwardButton) {
@@ -373,8 +369,8 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-    auto *prefs = Preferences::self()->window()->graphWindow();
-    if (event->modifiers() & prefs->panModifier() || prefs->panModifier() == Qt::KeyboardModifier::NoModifier) {
+    if (event->modifiers() & Preferences::self()->panModifier()
+        || Preferences::self()->panModifier() == Qt::KeyboardModifier::NoModifier) {
         setDragMode(QGraphicsView::DragMode::ScrollHandDrag);
     }
 
@@ -394,7 +390,7 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
 
 void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (Preferences::self()->debug()->enableDebugOutput()) {
+    if (Preferences::self()->enableDebugOutput()) {
         qDebug() << "GraphicsView mouseReleaseEvent";
     }
 
@@ -601,7 +597,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event)
 
     QMenu *debugMenu = nullptr;
 
-    if (Preferences::self()->debug()->enableSceneContextMenu()) {
+    if (Preferences::self()->enableSceneContextMenu()) {
         debugMenu = new QMenu(tr("Debug tools"));
         debugMenu->setToolTipsVisible(true);
     }

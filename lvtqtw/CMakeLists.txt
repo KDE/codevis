@@ -62,7 +62,7 @@ AddTargetLibrary(
         Qt::Gui
         Qt::Widgets
         Qt::Svg
-        lakospreferences
+        Codethink::lakospreferences
 )
 
 if (COMPILE_TESTS)

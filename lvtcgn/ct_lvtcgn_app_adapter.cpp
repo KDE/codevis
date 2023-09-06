@@ -179,11 +179,11 @@ void CodegenAppAdapter::run(QWidget *parent, Codethink::lvtldr::NodeStorage& sha
     auto dataProvider = NodeStorageDataProvider{sharedNodeStorage};
     auto dialog = CodeGenerationDialog{dataProvider, nullptr, parent};
 
-    dialog.setOutputDir(Preferences::self()->codeGeneration()->lastOutputDir());
+    dialog.setOutputDir(Preferences::self()->lastOutputDir());
 
     dialog.exec();
 
-    Preferences::self()->codeGeneration()->setLastOutputDir(dialog.outputDir());
+    Preferences::self()->setLastOutputDir(dialog.outputDir());
 }
 
 } // namespace Codethink::lvtcgn::app

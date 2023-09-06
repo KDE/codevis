@@ -171,18 +171,16 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
     d->classView->addItems(d->classViewMap.keys());
     d->scope->addItems(d->scopeMap.keys());
 
-    auto *graphPreferences = Preferences::self()->window()->graphTab();
-
-    d->traversalLimit->setValue(graphPreferences->classLimit());
+    d->traversalLimit->setValue(Preferences::self()->classLimit());
     d->traversalLimit->setPrefix(tr("Traversal Limit: "));
 
-    d->relationLimit->setValue(graphPreferences->relationLimit());
+    d->relationLimit->setValue(Preferences::self()->relationLimit());
     d->relationLimit->setPrefix(tr("Relation Limit: "));
 
     d->classView->setCurrentText(tr("Traverse by relation"));
     d->scope->setCurrentText(tr("All"));
 
-    d->zoom->setValue(Preferences::self()->window()->graphTab()->zoomLevel());
+    d->zoom->setValue(Preferences::self()->zoomLevel());
 
     // sets up the scene.
     auto *scene = qobject_cast<lvtqtc::GraphicsScene *>(d->graphicsView->scene());
@@ -269,8 +267,8 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
 
     setClassViewMode();
 
-    d->graphicsView->toggleLegend(graphPreferences->showLegend());
-    d->graphicsView->toggleMinimap(graphPreferences->showMinimap());
+    d->graphicsView->toggleLegend(Preferences::self()->showLegend());
+    d->graphicsView->toggleMinimap(Preferences::self()->showMinimap());
 
     d->searchWidget->setVisible(false);
 
@@ -281,7 +279,6 @@ GraphTabElement::~GraphTabElement() = default;
 
 void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
 {
-    auto *graphPreferences = Preferences::self()->window()->graphTab();
     auto *scene = qobject_cast<lvtqtc::GraphicsScene *>(d->graphicsView->scene());
 
     lvtqtc::ITool *zoomTool = new lvtqtc::ToolZoom(d->graphicsView);
@@ -335,7 +332,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     minimapAction->setText(tr("Show Minimap"));
     minimapAction->setIcon(IconHelpers::iconFrom(":/icons/map"));
     minimapAction->setCheckable(true);
-    minimapAction->setChecked(graphPreferences->showMinimap());
+    minimapAction->setChecked(Preferences::self()->showMinimap());
     connect(minimapAction, &QAction::triggered, d->graphicsView, &lvtqtc::GraphicsView::toggleMinimap);
 
     auto *legendAction = new QAction();
@@ -343,7 +340,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     legendAction->setText(tr("Information Panel"));
     legendAction->setIcon(IconHelpers::iconFrom(":/icons/help"));
     legendAction->setCheckable(true);
-    legendAction->setChecked(graphPreferences->showMinimap());
+    legendAction->setChecked(Preferences::self()->showMinimap());
     connect(legendAction, &QAction::triggered, d->graphicsView, &lvtqtc::GraphicsView::toggleLegend);
 
     auto *fitInViewAction = new QAction();
@@ -418,7 +415,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
 
     visualizationModeTriggered();
 
-    if (!Preferences::self()->debug()->enableSceneContextMenu()) {
+    if (!Preferences::self()->enableSceneContextMenu()) {
         ui->toolBox->hideElements("Debug");
     }
 }

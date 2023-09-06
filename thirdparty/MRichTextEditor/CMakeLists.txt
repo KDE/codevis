@@ -15,3 +15,4 @@ AddTargetLibrary(
         Qt::Gui
         Qt::Widgets
 )
+set_property(TARGET MRichTextEdit PROPERTY CXX_STANDARD 17)

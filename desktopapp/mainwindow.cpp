@@ -178,7 +178,9 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     ui.namespaceFilter->installEventFilter(this);
     ui.packagesFilter->installEventFilter(this);
-    ui.actionSearch->setShortcuts({Qt::Key_Find, Qt::CTRL + Qt::Key_F, Qt::Key_Slash});
+    ui.actionSearch->setShortcuts({Qt::Key_Find,
+                                   static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) + static_cast<int>(Qt::Key_F)),
+                                   Qt::Key_Slash});
 
     ui.mainSplitter->setUndoManager(d_undoManager_p);
     d_undoManager_p->createDock(this);
@@ -197,7 +199,8 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     ui.graphLoadProgress->setMinimum(static_cast<int>(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress::Start));
     ui.graphLoadProgress->setMaximum(static_cast<int>(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress::Done));
 
-    ui.actionUndo->setShortcuts({Qt::Key_Undo, Qt::CTRL + Qt::Key_Z});
+    ui.actionUndo->setShortcuts(
+        {Qt::Key_Undo, static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) + static_cast<int>(Qt::Key_Z))});
     connect(ui.actionUndo, &QAction::triggered, this, &MainWindow::triggerUndo);
     addAction(ui.actionUndo);
 
@@ -274,21 +277,28 @@ void MainWindow::setupActions()
     action->setText(tr("New from source"));
     action->setIcon(QIcon::fromTheme("document-new"));
     actionCollection()->addAction("new_project_from_source", action);
-    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::SHIFT | Qt::Key_N);
+    actionCollection()->setDefaultShortcut(action,
+                                           static_cast<QKeySequence>(static_cast<int>(Qt::CTRL)
+                                                                     | static_cast<int>(Qt::SHIFT)
+                                                                     | static_cast<int>(Qt::Key_N)));
     connect(action, &QAction::triggered, this, &MainWindow::newProjectFromSource);
 
     action = new QAction(this);
     action->setText(tr("Parse Aditional Source"));
     action->setIcon(QIcon::fromTheme("document-new"));
     actionCollection()->addAction("parse_aditional", action);
-    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::Key_P);
+    actionCollection()->setDefaultShortcut(
+        action,
+        static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_P)));
     connect(action, &QAction::triggered, this, &MainWindow::openGenerateDatabase);
 
     action = new QAction(this);
     action->setText(tr("Generate Code"));
     action->setIcon(QIcon::fromTheme("document-new"));
     actionCollection()->addAction("generate_code", action);
-    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::Key_G);
+    actionCollection()->setDefaultShortcut(
+        action,
+        static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_G)));
     connect(action, &QAction::triggered, this, &MainWindow::openCodeGenerationWindow);
 
     action = new QAction(this);
@@ -308,14 +318,19 @@ void MainWindow::setupActions()
     action->setText(tr("New Tab"));
     action->setIcon(QIcon::fromTheme("document-new"));
     actionCollection()->addAction("new_tab", action);
-    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::Key_T);
+    actionCollection()->setDefaultShortcut(
+        action,
+        static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_T)));
     connect(action, &QAction::triggered, this, &MainWindow::newTab);
 
     action = new QAction(this);
     action->setText(tr("Close current tab"));
     action->setIcon(QIcon::fromTheme("document-new"));
     actionCollection()->addAction("close_current_tab", action);
-    actionCollection()->setDefaultShortcut(action, Qt::CTRL | Qt::SHIFT | Qt::Key_W);
+    actionCollection()->setDefaultShortcut(action,
+                                           static_cast<QKeySequence>(static_cast<int>(Qt::CTRL)
+                                                                     | static_cast<int>(Qt::SHIFT)
+                                                                     | static_cast<int>(Qt::Key_W)));
     connect(action, &QAction::triggered, this, &MainWindow::closeCurrentTab);
 
     // Common Set of Actions that most applications have. Those *do not* need to be

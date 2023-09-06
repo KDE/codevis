@@ -3520,6 +3520,15 @@ inline RESULT_INLINE_VISIBILITY constexpr RESULT_NS_IMPL::detail::result_union<T
 
 //-----------------------------------------------------------------------------
 
+#if __cplusplus >= 202002L
+template<typename T, typename E>
+inline RESULT_INLINE_VISIBILITY
+    RESULT_NS_IMPL::detail::result_union<T, E, false>::result_union::~result_union() noexcept(
+        std::is_nothrow_destructible<T>::value&& std::is_nothrow_destructible<E>::value)
+{
+    destroy();
+}
+#else
 template<typename T, typename E>
 inline RESULT_INLINE_VISIBILITY
     RESULT_NS_IMPL::detail::result_union<T, E, false>::~result_union<T, E, false>() noexcept(
@@ -3527,6 +3536,7 @@ inline RESULT_INLINE_VISIBILITY
 {
     destroy();
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Modifiers

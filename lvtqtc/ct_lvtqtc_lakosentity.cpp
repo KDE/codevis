@@ -953,7 +953,7 @@ std::unique_ptr<QDialog> LakosEntity::createNotesDialog()
 
     connect(buttonBox, &QDialogButtonBox::accepted, notesDialog.get(), &QDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, notesDialog.get(), &QDialog::reject);
-    connect(notesDialog.get(), &QDialog::accepted, this, [=] {
+    connect(notesDialog.get(), &QDialog::accepted, this, [=, this] {
         const std::string oldNotes = d->node->notes();
         const std::string newNotes = notesTextEdit->toHtml().toStdString();
         const QString text = notesTextEdit->toHtml();

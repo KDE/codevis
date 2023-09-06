@@ -68,7 +68,15 @@ export_plugin_header(ct_lvtplg_handlersetup.h)
 export_plugin_header(ct_lvtplg_handlercontextmenuaction.h)
 
 if (COMPILE_TESTS)
-    add_executable(test_lvtplg_pythonlibrarydispatcher ct_lvtplg_pythonlibrarydispatcher.t.cpp)
-    target_link_libraries(test_lvtplg_pythonlibrarydispatcher lvtplg lvttst lvttst_tmpdir)
-    add_test(NAME test_lvtplg_pythonlibrarydispatcher COMMAND test_lvtplg_pythonlibrarydispatcher)
+    add_subdirectory(testplugins)
+
+    function(add_lvtplg_test TESTNAME)
+        add_executable(test_${TESTNAME} ${TESTNAME}.t.cpp)
+        target_link_libraries(test_${TESTNAME} lvtplg lvttst lvttst_tmpdir)
+        add_test(NAME test_${TESTNAME} COMMAND test_${TESTNAME})
+        add_dependencies(test_${TESTNAME} basicplugin basicpythonplugin)
+    endfunction()
+
+    add_lvtplg_test(ct_lvtplg_pythonlibrarydispatcher)
+    add_lvtplg_test(ct_lvtplg_pluginmanager)
 endif()

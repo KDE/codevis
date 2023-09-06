@@ -133,6 +133,7 @@ if (COMPILE_TESTS)
     find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Test)
 
     set(TEST_PRJ_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lvtclp/systemtests)
+    set(TEST_PLG_PATH ${CMAKE_BINARY_DIR}/lvtplg/testplugins)
     set(LAKOSDIAGRAM_PYSCRIPTS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/python/codegeneration)
 
     configure_file(

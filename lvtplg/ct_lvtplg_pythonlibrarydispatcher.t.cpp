@@ -47,21 +47,24 @@ TEST_CASE("Python dispatcher")
     REQUIRE(PythonLibraryDispatcher::isValidPlugin(plgDirAsQDir));
     auto pluginLib = PythonLibraryDispatcher::loadSinglePlugin(plgDirAsQDir);
     {
-        py::gil_scoped_acquire _;
-
-        auto *setupHook = reinterpret_cast<hookSetupPlugin_f>(pluginLib->resolve("hookSetupPlugin"));
-        REQUIRE(setupHook != nullptr);
-
+        auto resolveCtx = pluginLib->resolve("hookSetupPlugin");
+        (void) resolveCtx;
+        auto *setupHook = reinterpret_cast<hookSetupPlugin_f>(resolveCtx->hook);
         auto handler = PluginSetupHandler{
             [](auto _1, auto _2) {},
-            [&pluginLib](std::string const& id) {
-                return pluginLib->getPluginData();
+            [](std::string const& id) {
+                return nullptr;
             },
             [](auto _1) {},
         };
-        setupHook(&handler);
 
-        auto *notImplementedHook = reinterpret_cast<hookTeardownPlugin_f>(pluginLib->resolve("hookTeardownPlugin"));
+        REQUIRE(setupHook != nullptr);
+        setupHook(&handler);
+    }
+
+    {
+        auto resolveCtx = pluginLib->resolve("hookTeardownPlugin");
+        auto *notImplementedHook = reinterpret_cast<hookTeardownPlugin_f>(resolveCtx->hook);
         REQUIRE(notImplementedHook == nullptr);
     }
 }

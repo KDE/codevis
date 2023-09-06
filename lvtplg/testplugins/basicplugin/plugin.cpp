@@ -1,7 +1,3 @@
-#pragma once
-
-// ct_lvtclp_clputil.h                                                -*-C++-*-
-
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
 // SPDX-License-Identifier: Apache-2.0
@@ -19,6 +15,21 @@
 // limitations under the License.
 */
 
-#define TEST_PRJ_PATH "@TEST_PRJ_PATH@"
-#define TEST_PLG_PATH "@TEST_PLG_PATH@"
-#define LAKOSDIAGRAM_PYSCRIPTS_PATH "@LAKOSDIAGRAM_PYSCRIPTS_PATH@"
+#include <ct_lvtplg_basicpluginhooks.h>
+#include <ct_lvtplg_handlersetup.h>
+
+auto constexpr PLUGIN_ID = "cppTestPlugin";
+
+struct TestPluginData { };
+
+void hookSetupPlugin(PluginSetupHandler *handler)
+{
+    handler->registerPluginData(PLUGIN_ID, new TestPluginData{});
+}
+
+void hookTeardownPlugin(PluginSetupHandler *handler)
+{
+    auto *data = static_cast<TestPluginData *>(handler->getPluginData(PLUGIN_ID));
+    handler->unregisterPluginData(PLUGIN_ID);
+    delete data;
+}

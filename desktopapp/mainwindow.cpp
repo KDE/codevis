@@ -152,15 +152,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     connect(ui.packagesTree, &TreeView::branchRightClicked, this, &MainWindow::requestMenuPackageView);
     connect(ui.packagesTree, &TreeView::leafRightClicked, this, &MainWindow::requestMenuPackageView);
 
-    connect(ui.actionToggle_Split_View, &QAction::toggled, ui.mainSplitter, &SplitterView::toggle);
-    connect(ui.actionPreferences, &QAction::triggered, this, [this]() {
-        openPreferences();
-    });
-
-    connect(ui.actionReset_usage_log, &QAction::triggered, this, [this] {
-        this->debugModel->clear();
-    });
-
     ui.namespaceTree->setModel(namespaceModel);
     ui.packagesTree->setModel(packageModel);
     ui.packagesTree->setItemDelegateForColumn(0, new PackageViewDelegate());
@@ -178,10 +169,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     ui.namespaceFilter->installEventFilter(this);
     ui.packagesFilter->installEventFilter(this);
-    ui.actionSearch->setShortcuts({Qt::Key_Find,
-                                   static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) + static_cast<int>(Qt::Key_F)),
-                                   Qt::Key_Slash});
-
     ui.mainSplitter->setUndoManager(d_undoManager_p);
     d_undoManager_p->createDock(this);
 
@@ -199,19 +186,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     ui.graphLoadProgress->setMinimum(static_cast<int>(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress::Start));
     ui.graphLoadProgress->setMaximum(static_cast<int>(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress::Done));
 
-    ui.actionUndo->setShortcuts(
-        {Qt::Key_Undo, static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) + static_cast<int>(Qt::Key_Z))});
-    connect(ui.actionUndo, &QAction::triggered, this, &MainWindow::triggerUndo);
-    addAction(ui.actionUndo);
-
-#if defined(Q_OS_WINDOWS)
-    ui.actionRedo->setShortcuts({Qt::Key_Redo, Qt::CTRL | Qt::Key_Y});
-#else
-    ui.actionRedo->setShortcuts({Qt::Key_Redo, Qt::CTRL | Qt::SHIFT | Qt::Key_Z});
-#endif
-    connect(ui.actionRedo, &QAction::triggered, this, &MainWindow::triggerRedo);
-    addAction(ui.actionRedo);
-
     // Always open with the welcome page on. When the welcomePage triggers a signal, or a
     // signal happens, we hide it.
     showWelcomeScreen();
@@ -219,8 +193,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     connect(ui.welcomeWidget, &WelcomeScreen::requestNewProject, this, &MainWindow::newProject);
     connect(ui.welcomeWidget, &WelcomeScreen::requestParseProject, this, &MainWindow::newProjectFromSource);
     connect(ui.welcomeWidget, &WelcomeScreen::requestExistingProject, this, &MainWindow::openProjectAction);
-
-    setProjectWidgetsEnabled(false);
 
     // NOLINTNEXTLINE
     currentGraphTab = qobject_cast<Codethink::lvtqtw::TabWidget *>(ui.mainSplitter->widget(0));
@@ -241,17 +213,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     });
 
     ui.errorDock->setVisible(false);
-    connect(ui.actionDump_usage_log, &QAction::triggered, this, [this] {
-        const QString fileName = QFileDialog::getSaveFileName();
-        if (fileName.isEmpty()) {
-            return;
-        }
-
-        const bool ret = this->debugModel->saveAs(fileName);
-        if (!ret) {
-            showMessage(tr("Could not save dump file"), KMessageWidget::MessageType::Error);
-        }
-    });
 
     connect(&d_projectFile, &Codethink::lvtprj::ProjectFile::bookmarksChanged, this, &MainWindow::bookmarksChanged);
 
@@ -267,12 +228,33 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     d_dockReports->hide();
 
     setupActions();
+    setProjectWidgetsEnabled(false);
 }
 
 MainWindow::~MainWindow() noexcept = default;
 
 void MainWindow::setupActions()
 {
+    // Dump Usage Log:
+    //     connect(ui.actionDump_usage_log, &QAction::triggered, this, [this] {
+    //     const QString fileName = QFileDialog::getSaveFileName();
+    //     if (fileName.isEmpty()) {
+    //         return;
+    //     }
+    //
+    //     const bool ret = this->debugModel->saveAs(fileName);
+    //     if (!ret) {
+    //         showMessage(tr("Could not save dump file"), KMessageWidget::MessageType::Error);
+    //     }
+    // });
+
+    // Reset usage log:
+    //    connect(ui.actionReset_usage_log, &QAction::triggered, this, [this] {
+    //    this->debugModel->clear();
+    //});
+
+    // Project Settings
+
     auto *action = new QAction(this);
     action->setText(tr("New from source"));
     action->setIcon(QIcon::fromTheme("document-new"));
@@ -371,17 +353,22 @@ void MainWindow::setProjectWidgetsEnabled(bool enabled)
         docks->setEnabled(enabled);
     }
 
-    ui.actionClose_Current_Tab->setEnabled(enabled);
-    ui.actionClose_Project->setEnabled(enabled);
-    ui.actionCode_Generation->setEnabled(enabled);
-    ui.actionParse_Codebase->setEnabled(enabled);
-    ui.actionImage->setEnabled(enabled);
-    ui.actionNew_Tab->setEnabled(enabled);
-    ui.actionSave_as->setEnabled(enabled);
-    ui.actionSave->setEnabled(enabled);
-    ui.actionSearch->setEnabled(enabled);
-    ui.actionProjectSettings->setEnabled(enabled);
-    ui.actionToggle_Split_View->setEnabled(enabled);
+    // Uncomment this if you want to see all names of configured actions.
+    // for (const auto *action : actionCollection()->actions()) {
+    //    std::cout << action->objectName().toStdString() << std::endl;
+    //}
+
+    actionCollection()->action("close_current_tab")->setEnabled(enabled);
+    actionCollection()->action("file_close")->setEnabled(enabled);
+    actionCollection()->action("generate_code")->setEnabled(enabled);
+    actionCollection()->action("parse_aditional")->setEnabled(enabled);
+    actionCollection()->action("export_svg")->setEnabled(enabled);
+    actionCollection()->action("new_tab")->setEnabled(enabled);
+    actionCollection()->action("file_save_as")->setEnabled(enabled);
+    actionCollection()->action("file_save")->setEnabled(enabled);
+    actionCollection()->action("edit_find")->setEnabled(enabled);
+    actionCollection()->action("options_configure")->setEnabled(enabled);
+    actionCollection()->action("toggle_split_view")->setEnabled(enabled);
 }
 
 void MainWindow::closeProject()

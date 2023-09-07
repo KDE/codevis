@@ -227,6 +227,8 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     d_dockReports->setWidget(d_reportsTabWidget);
     d_dockReports->hide();
 
+    ui.pluginEditorView->setPluginManager(d_pluginManager_p);
+
     setupActions();
     setProjectWidgetsEnabled(false);
 }

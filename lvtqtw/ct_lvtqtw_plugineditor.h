@@ -28,6 +28,10 @@
 #include <lvtqtw_export.h>
 #include <result/result.hpp>
 
+namespace Codethink::lvtplg {
+class PluginManager;
+}
+
 namespace Codethink::lvtqtw {
 
 class LVTQTW_EXPORT PluginEditor : public QWidget {
@@ -39,11 +43,13 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     Q_SIGNAL void execute(const QString& plugin);
     Q_SIGNAL void sendErrorMsg(const QString& err);
 
+    void setPluginManager(lvtplg::PluginManager *manager);
     void save();
     void close();
     void loadByName(const QString& pluginName);
     void load();
     void create();
+    void reloadPlugin();
 
     static QDir basePluginPath();
 

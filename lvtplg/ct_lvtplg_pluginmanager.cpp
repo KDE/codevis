@@ -36,10 +36,12 @@ void PluginManager::loadPlugins(std::optional<QDir> preferredPath)
 {
     auto homePath = QDir(QDir::homePath() + "/lks-plugins");
     auto appPath = QDir(QCoreApplication::applicationDirPath() + "/lks-plugins");
+
     auto searchPaths = std::vector<QDir>{homePath, appPath};
     if (preferredPath) {
         searchPaths.insert(searchPaths.begin(), *preferredPath);
     }
+
     for (auto pluginsPath : searchPaths) {
         qDebug() << "Loading plugins from " << pluginsPath.path() << "...";
         if (!pluginsPath.exists() || !pluginsPath.isReadable()) {

@@ -32,6 +32,8 @@
 #include <QToolBar>
 #include <QToolButton>
 
+#include <ct_lvtplg_pluginmanager.h>
+
 using namespace Codethink::lvtqtw;
 
 QDir PluginEditor::basePluginPath()
@@ -55,6 +57,8 @@ struct PluginEditor::Private {
     QAction *runPlugin = nullptr;
     QAction *closePlugin = nullptr;
 
+    lvtplg::PluginManager *pluginManager = nullptr;
+
     bool hasPlugin = false;
 };
 
@@ -69,6 +73,9 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
     d->docReadme->setHighlightingMode("Markdown");
     d->docPlugin->setHighlightingMode("Python");
+
+    d->viewReadme->setContextMenu(d->viewReadme->defaultContextMenu());
+    d->viewPlugin->setContextMenu(d->viewPlugin->defaultContextMenu());
 
     d->openFile = new QAction(tr("Open Python Plugin"));
     d->openFile->setIcon(QIcon::fromTheme("document-open"));
@@ -86,8 +93,9 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
     d->closePlugin->setIcon(QIcon::fromTheme("document-close"));
     connect(d->closePlugin, &QAction::triggered, this, &PluginEditor::close);
 
-    d->runPlugin = new QAction(tr("Run Script"));
+    d->runPlugin = new QAction(tr("Reload Script"));
     d->runPlugin->setIcon(QIcon::fromTheme("system-run"));
+    connect(d->runPlugin, &QAction::triggered, this, &PluginEditor::reloadPlugin);
 
     auto *toolBar = new QToolBar(this);
     toolBar->addActions({d->newPlugin, d->openFile, d->savePlugin, d->closePlugin, d->runPlugin});
@@ -109,6 +117,26 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 }
 
 PluginEditor::~PluginEditor() = default;
+
+void PluginEditor::reloadPlugin()
+{
+    // TODO: Implement reloading only the current plugin
+    //
+    // Implementation notes:
+    // Reloading a single plugin will either lose it's state or put it in a bad state (depending on how the plugin is
+    // implemented). Main issue that I'm thinking is the plugin data (registerPluginData and getPluginData). Need to
+    // check if we'll re-run the setup hooks or just leave the plugin in the last-state. Perhaps having a dedicated
+    // button to "reload" and another to "restart" plugin (Restart would run the setup hook and cleanup data
+    // structures?)
+
+    save();
+    d->pluginManager->loadPlugins();
+}
+
+void PluginEditor::setPluginManager(lvtplg::PluginManager *manager)
+{
+    d->pluginManager = manager;
+}
 
 void PluginEditor::close()
 {
@@ -143,12 +171,30 @@ void PluginEditor::create()
     }
 
     QDir pluginPath(basePluginPath().path() + QStringLiteral("/") + pluginName);
+    QFileInfo pluginPathInfo(pluginPath.path());
+    if (pluginPathInfo.exists()) {
+        auto firstAction = KGuiItem(tr("Open Existing"));
+        auto secondAction = KGuiItem(tr("Create New"));
+
+        const bool openExsting = KMessageBox::questionTwoActions(this,
+                                                                 tr("Plugin has changed, Save it?"),
+                                                                 tr("Save plugins?"),
+                                                                 firstAction,
+                                                                 secondAction)
+            == KMessageBox::ButtonCode::PrimaryAction;
+        if (openExsting) {
+            loadByName(pluginName);
+            return;
+        }
+
+        pluginPath.removeRecursively();
+    }
+
     const bool success = pluginPath.mkpath(pluginPath.path());
     if (!success) {
         sendErrorMsg(tr("Error creating the Plugin folder"));
     }
 
-    // TODO: Use a better approach than handcreating those files.
     QFile markdownFile(pluginPath.path() + QStringLiteral("/README.md"));
     markdownFile.open(QIODevice::ReadWrite);
 

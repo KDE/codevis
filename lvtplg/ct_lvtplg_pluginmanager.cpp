@@ -67,6 +67,38 @@ void PluginManager::loadPlugins(std::optional<QDir> preferredPath)
     }
 }
 
+#ifdef ENABLE_PYTHON_PLUGINS
+void PluginManager::reloadPythonPlugin(const QString& pluginFolder)
+{
+    for (auto&& p : this->libraries) {
+        QString loadedLibrary = QString::fromStdString(p->fileName());
+
+        qDebug() << "Existing Library:" << loadedLibrary;
+        if (loadedLibrary.startsWith(pluginFolder)) {
+            PythonLibraryDispatcher *lib = dynamic_cast<PythonLibraryDispatcher *>(p.get());
+            if (!lib) {
+                std::cout << "Error converting the python library\n";
+                return;
+            }
+
+            std::cout << "Reload succeeded\n";
+            lib->reload();
+            return;
+        }
+    }
+
+    std::cout << "Folder: " << pluginFolder.toStdString() << "Is not installed, installing.\n";
+    QFileInfo pluginPath(pluginFolder);
+    if (!pluginPath.exists()) {
+        return;
+    }
+
+    tryInstallPlugin<PythonLibraryDispatcher>(pluginPath.absoluteFilePath());
+    return;
+}
+
+#endif
+
 void PluginManager::callHooksSetupPlugin()
 {
     callAllHooks<hookSetupPlugin_f>("hookSetupPlugin",

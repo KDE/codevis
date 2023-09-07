@@ -59,6 +59,8 @@ struct PluginEditor::Private {
 
     lvtplg::PluginManager *pluginManager = nullptr;
 
+    QString currentPluginFolder;
+
     bool hasPlugin = false;
 };
 
@@ -130,7 +132,7 @@ void PluginEditor::reloadPlugin()
     // structures?)
 
     save();
-    d->pluginManager->loadPlugins();
+    d->pluginManager->reloadPythonPlugin(d->currentPluginFolder);
 }
 
 void PluginEditor::setPluginManager(lvtplg::PluginManager *manager)
@@ -247,4 +249,5 @@ void PluginEditor::loadByName(const QString& pluginName)
     d->documentViews->setTabText(1, pluginName + QStringLiteral(".py"));
 
     d->documentViews->setEnabled(true);
+    d->currentPluginFolder = thisPluginPath;
 }

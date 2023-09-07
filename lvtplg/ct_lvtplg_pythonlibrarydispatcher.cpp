@@ -222,4 +222,10 @@ std::unique_ptr<ILibraryDispatcher> PythonLibraryDispatcher::loadSinglePlugin(QD
     return pyLib;
 }
 
+void PythonLibraryDispatcher::reload()
+{
+    py::gil_scoped_acquire _;
+    pyModule.reload();
+}
+
 } // namespace Codethink::lvtplg

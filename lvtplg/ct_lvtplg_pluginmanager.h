@@ -59,6 +59,10 @@ class LVTPLG_EXPORT PluginManager {
     PluginManager operator=(PluginManager&) = delete;
     void loadPlugins(std::optional<QDir> preferredPath = std::nullopt);
 
+#ifdef ENABLE_PYTHON_PLUGINS
+    void reloadPythonPlugin(const QString& pluginName);
+#endif
+
     void callHooksSetupPlugin();
     void callHooksTeardownPlugin();
 
@@ -135,6 +139,19 @@ class LVTPLG_EXPORT PluginManager {
 
         libraries.push_back(std::move(lib));
         dbg << "Plugin successfully loaded!";
+    }
+
+    template<typename DispatcherType>
+    void tryReloadPlugin(QString const& pluginDir)
+    {
+        QDebug dbg(QtDebugMsg);
+
+        dbg << "(" << DispatcherType::name << "): Trying to reload plugin " << pluginDir << "... ";
+        const bool res = DispatcherType::reloadSinglePlugin(pluginDir);
+        if (!res) {
+            dbg << "Could not load *valid* plugin: " << pluginDir;
+            return;
+        }
     }
 
 #ifdef ENABLE_PYTHON_PLUGINS

@@ -1841,6 +1841,15 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         auto registerContextMenu =
             [this, &menu, getAllEntitiesInCurrentView, getEntityByQualifiedName](std::string const& title,
                                                                                  ctxMenuAction_f const& userAction) {
+                // Remove pre-existing actions with the same title.
+                for (QAction *act : menu.actions()) {
+                    if (act->text().toStdString() == title) {
+                        menu.removeAction(act);
+                        act->deleteLater();
+                    }
+                }
+
+                // Add the new action.
                 auto *action = menu.addAction(QString::fromStdString(title));
                 connect(action,
                         &QAction::triggered,

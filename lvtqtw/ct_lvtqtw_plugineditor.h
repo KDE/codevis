@@ -33,7 +33,7 @@ namespace Codethink::lvtqtw {
 class LVTQTW_EXPORT PluginEditor : public QWidget {
     Q_OBJECT
   public:
-    PluginEditor(QWidget *parent);
+    PluginEditor(QWidget *parent = 0);
     ~PluginEditor();
 
     Q_SIGNAL void execute(const QString& plugin);

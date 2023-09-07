@@ -31,5 +31,9 @@
     <Menu name="view">
         <text>View</text>
     </Menu >
+    <Menu name="help">
+      <Action name="dump_usage_log" />
+      <Action name="reset_usage_log" />
+    </Menu >
   </MenuBar>
 </gui>

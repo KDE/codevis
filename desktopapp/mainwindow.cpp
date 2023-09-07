@@ -235,26 +235,6 @@ MainWindow::~MainWindow() noexcept = default;
 
 void MainWindow::setupActions()
 {
-    // Dump Usage Log:
-    //     connect(ui.actionDump_usage_log, &QAction::triggered, this, [this] {
-    //     const QString fileName = QFileDialog::getSaveFileName();
-    //     if (fileName.isEmpty()) {
-    //         return;
-    //     }
-    //
-    //     const bool ret = this->debugModel->saveAs(fileName);
-    //     if (!ret) {
-    //         showMessage(tr("Could not save dump file"), KMessageWidget::MessageType::Error);
-    //     }
-    // });
-
-    // Reset usage log:
-    //    connect(ui.actionReset_usage_log, &QAction::triggered, this, [this] {
-    //    this->debugModel->clear();
-    //});
-
-    // Project Settings
-
     auto *action = new QAction(this);
     action->setText(tr("New from source"));
     action->setIcon(QIcon::fromTheme("document-new"));
@@ -273,6 +253,27 @@ void MainWindow::setupActions()
         action,
         static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_P)));
     connect(action, &QAction::triggered, this, &MainWindow::openGenerateDatabase);
+
+    action = new QAction(this);
+    action->setText(tr("Dump usage log"));
+    actionCollection()->addAction("dump_usage_log", action);
+    connect(action, &QAction::triggered, this, [this] {
+        const QString fileName = QFileDialog::getSaveFileName();
+        if (fileName.isEmpty()) {
+            return;
+        }
+
+        const bool ret = this->debugModel->saveAs(fileName);
+        if (!ret) {
+            showMessage(tr("Could not save dump file"), KMessageWidget::MessageType::Error);
+        }
+    });
+
+    action = new QAction(this);
+    action->setText(tr("Reset usage log"));
+    connect(action, &QAction::triggered, this, [this] {
+        debugModel->clear();
+    });
 
     action = new QAction(this);
     action->setText(tr("Generate Code"));

@@ -57,6 +57,7 @@
 #include <ct_lvtplg_pluginmanager.h>
 #include <ct_lvtqtc_pluginmanagerutils.h>
 
+#include <kmessagebox.h>
 #include <preferences.h>
 
 #include <QAction>
@@ -1841,6 +1842,20 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         auto registerContextMenu =
             [this, &menu, getAllEntitiesInCurrentView, getEntityByQualifiedName](std::string const& title,
                                                                                  ctxMenuAction_f const& userAction) {
+                // make a copy of all the actions we currently have so we can
+                // iterate through it without having problems.
+                const auto currentActions = menu.actions();
+
+                // Remove pre-existing actions from scripts.
+                for (QAction *act : currentActions) {
+                    if (act->text() == QString::fromStdString(title)) {
+                        errorMessage(
+                            "Two or more of your plugins declares\n"
+                            "the same context menu, This is not supported.");
+                        return;
+                    }
+                }
+
                 // Add the new action.
                 auto *action = menu.addAction(QString::fromStdString(title));
                 action->setData(QStringLiteral("script-action"));

@@ -20,10 +20,9 @@
 #include <ct_lvtqtc_graphicsview.h>
 #include <ct_lvtqtc_testing_utils.h>
 
-#include <ct_lvtclr_colormanagement.h>
-#include <ct_lvtldr_nodestorage.h>
-#include <ct_lvtqtc_lakosrelation.h>
-#include <ct_lvtqtw_exportmanager.h>
+#include <ct_lvtplg_pluginmanager.h>
+#include <ct_lvtqtw_plugineditor.h>
+
 #include <ct_lvttst_fixture_qt.h>
 
 #include <catch2-local-includes.h>
@@ -31,29 +30,36 @@
 #include <QFileInfo>
 #include <QTemporaryDir>
 
-using namespace Codethink::lvtqtc;
 using namespace Codethink::lvtqtw;
-using namespace Codethink::lvtclr;
-using namespace Codethink::lvtshr;
-using namespace Codethink::lvtprj;
 
-TEST_CASE_METHOD(QTApplicationFixture, "Export graphicsview contents to image files")
+TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
 {
-    Codethink::lvtldr::NodeStorage storage;
-    auto projectFile = ProjectFileForTesting{};
-    auto *view = new Codethink::lvtqtc::GraphicsView(storage, projectFile);
+    auto *editor = new PluginEditor();
+    int numErrorMessages = 0;
 
-    view->show();
-    QApplication::processEvents();
+    QObject::connect(editor,
+                     &Codethink::lvtqtw::PluginEditor::sendErrorMsg,
+                     editor,
+                     [&numErrorMessages](const QString& s) {
+                         qDebug() << s;
+                         numErrorMessages += 1;
+                     });
 
-    Codethink::lvtqtw::ExportManager manager(view);
+    editor->create("test");
+    editor->save();
+    editor->reloadPlugin();
+    editor->close();
 
-    QTemporaryDir dir;
-    QString filename = dir.path() + "/file.svg";
+    REQUIRE(numErrorMessages == 4);
 
-    auto ret = manager.exportSvg(filename);
-    REQUIRE(ret.has_value());
+    numErrorMessages = 0;
+    Codethink::lvtplg::PluginManager manager;
+    editor->setPluginManager(&manager);
 
-    QFileInfo info(filename);
-    REQUIRE(info.exists());
+    editor->create("test2");
+    editor->save();
+    editor->reloadPlugin();
+    editor->close();
+
+    REQUIRE(numErrorMessages == 0);
 }

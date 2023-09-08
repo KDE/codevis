@@ -55,7 +55,7 @@ struct PluginEditor::Private {
     QAction *openFile = nullptr;
     QAction *newPlugin = nullptr;
     QAction *savePlugin = nullptr;
-    QAction *runPlugin = nullptr;
+    QAction *reloadPlugin = nullptr;
     QAction *closePlugin = nullptr;
 
     lvtplg::PluginManager *pluginManager = nullptr;
@@ -67,12 +67,18 @@ struct PluginEditor::Private {
 
 PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique<PluginEditor::Private>())
 {
-    auto editor = KTextEditor::Editor::instance();
+    d->documentViews = new QTabWidget();
+
+    auto *editor = KTextEditor::Editor::instance();
+    if (!editor) {
+        std::cout << "Error getting the ktexteditor\n";
+        abort();
+    }
 
     d->docReadme = editor->createDocument(this);
-    d->viewReadme = d->docReadme->createView(this);
+    d->viewReadme = d->docReadme->createView(d->documentViews);
     d->docPlugin = editor->createDocument(this);
-    d->viewPlugin = d->docPlugin->createView(this);
+    d->viewPlugin = d->docPlugin->createView(d->documentViews);
 
     d->docReadme->setHighlightingMode("Markdown");
     d->docPlugin->setHighlightingMode("Python");
@@ -86,7 +92,9 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
     d->newPlugin = new QAction(tr("New Plugin"));
     d->newPlugin->setIcon(QIcon::fromTheme("document-new"));
-    connect(d->newPlugin, &QAction::triggered, this, &PluginEditor::create);
+    connect(d->newPlugin, &QAction::triggered, this, [this] {
+        create();
+    });
 
     d->savePlugin = new QAction(tr("Save plugin"));
     d->savePlugin->setIcon(QIcon::fromTheme("document-save"));
@@ -96,14 +104,13 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
     d->closePlugin->setIcon(QIcon::fromTheme("document-close"));
     connect(d->closePlugin, &QAction::triggered, this, &PluginEditor::close);
 
-    d->runPlugin = new QAction(tr("Reload Script"));
-    d->runPlugin->setIcon(QIcon::fromTheme("system-run"));
-    connect(d->runPlugin, &QAction::triggered, this, &PluginEditor::reloadPlugin);
+    d->reloadPlugin = new QAction(tr("Reload Script"));
+    d->reloadPlugin->setIcon(QIcon::fromTheme("system-run"));
+    connect(d->reloadPlugin, &QAction::triggered, this, &PluginEditor::reloadPlugin);
 
     auto *toolBar = new QToolBar(this);
-    toolBar->addActions({d->newPlugin, d->openFile, d->savePlugin, d->closePlugin, d->runPlugin});
+    toolBar->addActions({d->newPlugin, d->openFile, d->savePlugin, d->closePlugin, d->reloadPlugin});
 
-    d->documentViews = new QTabWidget();
     d->documentViews->addTab(d->viewReadme, QStringLiteral("README.md"));
     d->documentViews->addTab(d->viewPlugin, QString());
 
@@ -131,12 +138,12 @@ void PluginEditor::reloadPlugin()
     // check if we'll re-run the setup hooks or just leave the plugin in the last-state. Perhaps having a dedicated
     // button to "reload" and another to "restart" plugin (Restart would run the setup hook and cleanup data
     // structures?)
-
-    save();
     if (!d->pluginManager) {
-        sendErrorMsg(tr("$1 was build without plugin support.").arg(qApp->applicationName()));
+        sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
         return;
     }
+
+    save();
     d->pluginManager->reloadPlugin(d->currentPluginFolder);
 }
 
@@ -147,6 +154,11 @@ void PluginEditor::setPluginManager(lvtplg::PluginManager *manager)
 
 void PluginEditor::close()
 {
+    if (!d->pluginManager) {
+        sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
+        return;
+    }
+
     if (d->docPlugin->isModified() || d->docReadme->isModified()) {
         auto saveAction = KGuiItem(tr("Save Plugins"));
         auto discardAction = KGuiItem(tr("Discard Changes"));
@@ -168,16 +180,23 @@ void PluginEditor::close()
     d->documentViews->setEnabled(false);
 }
 
-void PluginEditor::create()
+void PluginEditor::create(const QString& pluginName)
 {
-    const QString pluginName = QInputDialog::getText(this, tr("Create a new Python Plugin"), tr("Plugin Name:"));
-
-    // User canceled.
-    if (pluginName.isEmpty()) {
+    if (!d->pluginManager) {
+        sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
         return;
     }
 
-    QDir pluginPath(basePluginPath().path() + QStringLiteral("/") + pluginName);
+    const QString internalPluginName = pluginName.isEmpty()
+        ? QInputDialog::getText(this, tr("Create a new Python Plugin"), tr("Plugin Name:"))
+        : pluginName;
+
+    // User canceled.
+    if (internalPluginName.isEmpty()) {
+        return;
+    }
+
+    QDir pluginPath(basePluginPath().path() + QStringLiteral("/") + internalPluginName);
     QFileInfo pluginPathInfo(pluginPath.path());
     if (pluginPathInfo.exists()) {
         auto firstAction = KGuiItem(tr("Open Existing"));
@@ -190,7 +209,7 @@ void PluginEditor::create()
                                                                  secondAction)
             == KMessageBox::ButtonCode::PrimaryAction;
         if (openExsting) {
-            loadByName(pluginName);
+            loadByName(internalPluginName);
             return;
         }
 
@@ -200,6 +219,7 @@ void PluginEditor::create()
     const bool success = pluginPath.mkpath(pluginPath.path());
     if (!success) {
         sendErrorMsg(tr("Error creating the Plugin folder"));
+        return;
     }
 
     QFile markdownFile(pluginPath.path() + QStringLiteral("/README.md"));
@@ -213,12 +233,22 @@ void PluginEditor::create()
 
 void PluginEditor::save()
 {
+    if (!d->pluginManager) {
+        sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
+        return;
+    }
+
     d->docPlugin->save();
     d->docReadme->save();
 }
 
 void PluginEditor::load()
 {
+    if (!d->pluginManager) {
+        sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
+        return;
+    }
+
     const QString fName = QFileDialog::getExistingDirectory(this, tr("Python Script File"), QDir::homePath());
 
     // User clicked "cancel", not an error.
@@ -232,6 +262,11 @@ void PluginEditor::load()
 
 void PluginEditor::loadByName(const QString& pluginName)
 {
+    if (!d->pluginManager) {
+        sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
+        return;
+    }
+
     const QString thisPluginPath = basePluginPath().path() + QStringLiteral("/") + pluginName;
 
     QFileInfo readmeInfo(thisPluginPath, QStringLiteral("README.md"));

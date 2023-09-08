@@ -51,7 +51,9 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     void create(const QString& pluginName = QString());
     void reloadPlugin();
 
-    static QDir basePluginPath();
+    // Used for testing purposes. defaults to ~/lks-plugins
+    void setBasePluginPath(const QString& path);
+    QDir basePluginPath();
 
   private:
     struct Private;

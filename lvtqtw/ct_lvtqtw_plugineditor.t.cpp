@@ -29,12 +29,17 @@
 
 #include <QFileInfo>
 #include <QTemporaryDir>
+#include <qtemporarydir.h>
 
 using namespace Codethink::lvtqtw;
 
 TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
 {
+    QTemporaryDir tempDir;
+
     auto *editor = new PluginEditor();
+    editor->setBasePluginPath(tempDir.path());
+
     int numErrorMessages = 0;
 
     QObject::connect(editor,

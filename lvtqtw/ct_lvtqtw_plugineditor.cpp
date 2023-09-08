@@ -37,11 +37,6 @@
 
 using namespace Codethink::lvtqtw;
 
-QDir PluginEditor::basePluginPath()
-{
-    return QDir::homePath() + "/lks-plugins/";
-}
-
 struct PluginEditor::Private {
     KTextEditor::Document *docReadme = nullptr;
     KTextEditor::View *viewReadme = nullptr;
@@ -61,6 +56,7 @@ struct PluginEditor::Private {
     lvtplg::PluginManager *pluginManager = nullptr;
 
     QString currentPluginFolder;
+    QString basePluginPath = QDir::homePath() + "/lks-plugins/";
 
     bool hasPlugin = false;
 };
@@ -128,10 +124,18 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
 PluginEditor::~PluginEditor() = default;
 
+QDir PluginEditor::basePluginPath()
+{
+    return d->basePluginPath;
+}
+
+void PluginEditor::setBasePluginPath(const QString& path)
+{
+    d->basePluginPath = path;
+}
+
 void PluginEditor::reloadPlugin()
 {
-    // TODO: Implement reloading only the current plugin
-    //
     // Implementation notes:
     // Reloading a single plugin will either lose it's state or put it in a bad state (depending on how the plugin is
     // implemented). Main issue that I'm thinking is the plugin data (registerPluginData and getPluginData). Need to

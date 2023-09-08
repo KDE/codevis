@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include <QDebug>
 #include <ct_lvtplg_sharedlibrarydispatcher.h>
 
 namespace Codethink::lvtplg {
@@ -35,6 +36,11 @@ std::unique_ptr<ILibraryDispatcher::ResolveContext> SharedLibraryDispatcher::res
 std::string SharedLibraryDispatcher::fileName()
 {
     return library.fileName().toStdString();
+}
+
+void SharedLibraryDispatcher::reload()
+{
+    qWarning() << "Shared Library Reload: Not implemented yet";
 }
 
 bool SharedLibraryDispatcher::isValidPlugin(QDir const& pluginDir)

@@ -70,7 +70,7 @@ class LVTPLG_EXPORT PythonLibraryDispatcher : public ILibraryDispatcher {
 
     std::unique_ptr<ResolveContext> resolve(std::string const& functionName) override;
     std::string fileName() override;
-    void reload();
+    void reload() override;
 
     static bool isValidPlugin(QDir const& pluginDir);
     static std::unique_ptr<ILibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);

@@ -57,7 +57,6 @@
 #include <ct_lvtplg_pluginmanager.h>
 #include <ct_lvtqtc_pluginmanagerutils.h>
 
-#include <kmessagebox.h>
 #include <preferences.h>
 
 #include <QAction>

@@ -25,6 +25,7 @@
 #include <KTextEditor/Editor>
 #include <KTextEditor/View>
 
+#include <QApplication>
 #include <QBoxLayout>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -132,7 +133,11 @@ void PluginEditor::reloadPlugin()
     // structures?)
 
     save();
-    d->pluginManager->reloadPythonPlugin(d->currentPluginFolder);
+    if (!d->pluginManager) {
+        sendErrorMsg(tr("$1 was build without plugin support.").arg(qApp->applicationName()));
+        return;
+    }
+    d->pluginManager->reloadPlugin(d->currentPluginFolder);
 }
 
 void PluginEditor::setPluginManager(lvtplg::PluginManager *manager)

@@ -37,7 +37,7 @@ class SharedLibraryDispatcher : public ILibraryDispatcher {
     static const std::string pluginDataId;
 
     SharedLibraryDispatcher(QString const& fileName);
-
+    void reload() override;
     std::unique_ptr<ResolveContext> resolve(std::string const& functionName) override;
     std::string fileName() override;
 

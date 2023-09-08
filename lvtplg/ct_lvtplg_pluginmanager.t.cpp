@@ -46,4 +46,10 @@ TEST_CASE("Plugin manager")
     pm.callHooksTeardownPlugin();
     REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) == nullptr);
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
+
+    const QString basicPythonPluginPath =
+        QString::fromStdString(pluginsPath) + QDir::separator() + QStringLiteral("basicpythonplugin");
+
+    // Make sure it doesn't crashes reloading the plugin.'
+    pm.reloadPlugin(basicPythonPluginPath);
 }

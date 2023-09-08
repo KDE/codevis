@@ -41,6 +41,7 @@ class ILibraryDispatcher {
         functionPointer hook = nullptr;
     };
 
+    virtual void reload() = 0;
     virtual ~ILibraryDispatcher() = 0;
     virtual std::unique_ptr<ResolveContext> resolve(std::string const& functionName) = 0;
     virtual std::string fileName() = 0;

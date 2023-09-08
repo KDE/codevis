@@ -59,9 +59,7 @@ class LVTPLG_EXPORT PluginManager {
     PluginManager operator=(PluginManager&) = delete;
     void loadPlugins(std::optional<QDir> preferredPath = std::nullopt);
 
-#ifdef ENABLE_PYTHON_PLUGINS
-    void reloadPythonPlugin(const QString& pluginName);
-#endif
+    void reloadPlugin(const QString& pluginfolder);
 
     void callHooksSetupPlugin();
     void callHooksTeardownPlugin();

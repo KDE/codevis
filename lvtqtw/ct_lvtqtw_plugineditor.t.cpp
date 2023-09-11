@@ -1,4 +1,4 @@
-// ct_lvtqtw_exportmanager.t.cpp                           -*-C++-*-
+// ct_lvtqtw_plugineditor.t.cpp                           -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>

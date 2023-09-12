@@ -55,6 +55,9 @@ struct PluginContextMenuHandler {
      */
     using ctxMenuAction_f = std::function<void(PluginContextMenuActionHandler *)>;
     std::function<void(std::string const& title, ctxMenuAction_f const& action)> const registerContextMenu;
+
+    std::function<std::optional<Edge>(std::string const& fromQualifiedName, std::string const& toQualifiedName)> const
+        getEdgeByQualifiedName;
 };
 
 struct PluginContextMenuActionHandler {
@@ -78,6 +81,9 @@ struct PluginContextMenuActionHandler {
     std::function<std::optional<Entity>(std::string const& qualifiedName)> const getEntityByQualifiedName;
 
     std::function<PluginTreeWidgetHandler(std::string const& id)> const getTree;
+
+    std::function<std::optional<Edge>(std::string const& fromQualifiedName, std::string const& toQualifiedName)> const
+        getEdgeByQualifiedName;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_PLUGINCONTEXTMENUACTIONHANDLER_H

@@ -30,6 +30,8 @@
 struct PluginGraphicsViewHandler {
     std::function<std::optional<Entity>(std::string const& qualifiedName)> const getEntityByQualifiedName;
     std::function<std::vector<Entity>()> const getVisibleEntities;
+    std::function<std::optional<Edge>(std::string const& fromQualifiedName, std::string const& toQualifiedName)> const
+        getEdgeByQualifiedName;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_HANDLERPLUGINGRAPHICSVIEW_H

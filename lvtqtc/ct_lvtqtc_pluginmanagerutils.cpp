@@ -26,27 +26,28 @@ namespace Codethink::lvtqtc {
 using lvtplg::PluginManager;
 using QtUserDataMap = QMap<QString, void *>;
 
-PluginTreeItemHandler PluginManagerQtUtils::createPluginTreeItemHandler(QTreeView *treeView,
-                                                                        QStandardItemModel *treeModel,
-                                                                        QStandardItem *item,
-                                                                        GraphicsScene *gs)
+PluginTreeItemHandler PluginManagerQtUtils::createPluginTreeItemHandler(
+    PluginManager *pm, QTreeView *treeView, QStandardItemModel *treeModel, QStandardItem *item, GraphicsScene *gs)
 {
-    auto addItem = [treeView, treeModel, item, gs](std::string const& label) {
+    auto getPluginData = [pm](auto&& id) {
+        return pm->getPluginData(id);
+    };
+    auto addItem = [pm, treeView, treeModel, item, gs](std::string const& label) {
         auto *child = new QStandardItem(QString::fromStdString(label));
         child->setData(QVariant::fromValue(QtUserDataMap{}));
         item->appendRow(child);
-        return createPluginTreeItemHandler(treeView, treeModel, child, gs);
+        return createPluginTreeItemHandler(pm, treeView, treeModel, child, gs);
     };
-    auto addOnClickAction = [treeView, treeModel, item, gs](PluginTreeItemHandler::onClickItemAction_f const& f) {
+    auto addOnClickAction = [pm, treeView, treeModel, item, gs](PluginTreeItemHandler::onClickItemAction_f const& f) {
         QObject::connect(treeView,
                          &QTreeView::clicked,
                          treeView,
-                         [item, f, treeView, treeModel, gs](const QModelIndex& index) {
+                         [pm, item, f, treeView, treeModel, gs](const QModelIndex& index) {
                              auto *selectedItem = qobject_cast<QStandardItemModel *>(treeModel)->itemFromIndex(index);
                              if (selectedItem != item) {
                                  return;
                              }
-                             auto handler = createPluginTreeItemClickedActionHandler(treeView, treeModel, item, gs);
+                             auto handler = createPluginTreeItemClickedActionHandler(pm, treeView, treeModel, item, gs);
                              f(&handler);
                          });
     };
@@ -59,19 +60,22 @@ PluginTreeItemHandler PluginManagerQtUtils::createPluginTreeItemHandler(QTreeVie
         auto userDataMap = item->data().value<QtUserDataMap>();
         return userDataMap[QString::fromStdString(dataId)];
     };
-    return PluginTreeItemHandler{addItem, addUserData, getUserData, addOnClickAction};
+    return PluginTreeItemHandler{getPluginData, addItem, addUserData, getUserData, addOnClickAction};
 }
 
 PluginTreeWidgetHandler
 PluginManagerQtUtils::createPluginTreeWidgetHandler(PluginManager *pm, std::string const& id, GraphicsScene *gs)
 {
+    auto getPluginData = [pm](auto&& id) {
+        return pm->getPluginData(id);
+    };
     auto addRootItem = [pm, id, gs](std::string const& label) -> PluginTreeItemHandler {
         auto *treeView = dynamic_cast<QTreeView *>(pm->getPluginQObject(id + "::view"));
         auto *treeModel = dynamic_cast<QStandardItemModel *>(pm->getPluginQObject(id + "::model"));
         auto *item = new QStandardItem(QString::fromStdString(label));
         item->setData(QVariant::fromValue(QtUserDataMap{}));
         treeModel->invisibleRootItem()->appendRow(item);
-        return PluginManagerQtUtils::createPluginTreeItemHandler(treeView, treeModel, item, gs);
+        return PluginManagerQtUtils::createPluginTreeItemHandler(pm, treeView, treeModel, item, gs);
     };
 
     auto clear = [pm, id]() {
@@ -79,20 +83,23 @@ PluginManagerQtUtils::createPluginTreeWidgetHandler(PluginManager *pm, std::stri
         treeModel->clear();
     };
 
-    return PluginTreeWidgetHandler{addRootItem, clear};
+    return PluginTreeWidgetHandler{getPluginData, addRootItem, clear};
 }
 
 PluginTreeItemClickedActionHandler PluginManagerQtUtils::createPluginTreeItemClickedActionHandler(
-    QTreeView *treeView, QStandardItemModel *treeModel, QStandardItem *item, GraphicsScene *gs)
+    PluginManager *pm, QTreeView *treeView, QStandardItemModel *treeModel, QStandardItem *item, GraphicsScene *gs)
 {
-    auto getItem = [treeView, treeModel, item, gs]() {
-        return createPluginTreeItemHandler(treeView, treeModel, item, gs);
+    auto getPluginData = [pm](auto&& id) {
+        return pm->getPluginData(id);
+    };
+    auto getItem = [pm, treeView, treeModel, item, gs]() {
+        return createPluginTreeItemHandler(pm, treeView, treeModel, item, gs);
     };
     auto getGraphicsView = [gs]() {
         return createPluginGraphicsViewHandler(gs);
     };
 
-    return PluginTreeItemClickedActionHandler{getItem, getGraphicsView};
+    return PluginTreeItemClickedActionHandler{getPluginData, getItem, getGraphicsView};
 }
 
 PluginGraphicsViewHandler PluginManagerQtUtils::createPluginGraphicsViewHandler(GraphicsScene *gs)
@@ -111,8 +118,20 @@ PluginGraphicsViewHandler PluginManagerQtUtils::createPluginGraphicsViewHandler(
         }
         return entities;
     };
+    auto getEdgeByQualifiedName = [gs](std::string const& fromQualifiedName,
+                                       std::string const& toQualifiedName) -> std::optional<Edge> {
+        auto *fromEntity = gs->entityByQualifiedName(fromQualifiedName);
+        if (!fromEntity) {
+            return std::nullopt;
+        }
+        auto *toEntity = gs->entityByQualifiedName(toQualifiedName);
+        if (!toEntity) {
+            return std::nullopt;
+        }
+        return createWrappedEdgeFromLakosEntity(fromEntity, toEntity);
+    };
 
-    return PluginGraphicsViewHandler{getEntityByQualifiedName, getVisibleEntities};
+    return PluginGraphicsViewHandler{getEntityByQualifiedName, getVisibleEntities, getEdgeByQualifiedName};
 }
 
 } // namespace Codethink::lvtqtc

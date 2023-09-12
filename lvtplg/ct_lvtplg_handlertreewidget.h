@@ -27,6 +27,7 @@
 
 struct PluginTreeItemClickedActionHandler;
 struct PluginTreeItemHandler {
+    std::function<void *(std::string const& id)> const getPluginData;
     std::function<PluginTreeItemHandler(std::string const& label)> const addChild;
     std::function<void(std::string const& dataId, void *userData)> const addUserData;
     std::function<void *(std::string const& dataId)> const getUserData;
@@ -36,11 +37,13 @@ struct PluginTreeItemHandler {
 };
 
 struct PluginTreeItemClickedActionHandler {
+    std::function<void *(std::string const& id)> const getPluginData;
     std::function<PluginTreeItemHandler()> getItem;
     std::function<PluginGraphicsViewHandler()> getGraphicsView;
 };
 
 struct PluginTreeWidgetHandler {
+    std::function<void *(std::string const& id)> const getPluginData;
     std::function<PluginTreeItemHandler(std::string const& label)> const addRootItem;
     std::function<void()> const clear;
 };

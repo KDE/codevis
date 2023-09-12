@@ -66,9 +66,11 @@ class LVTPLG_EXPORT PluginManager {
 
     using getAllEntitiesInCurrentView_f = decltype(PluginContextMenuHandler::getAllEntitiesInCurrentView);
     using getEntityByQualifiedName_f = decltype(PluginContextMenuHandler::getEntityByQualifiedName);
+    using getEdgeByQualifiedName_f = decltype(PluginContextMenuHandler::getEdgeByQualifiedName);
     using registerContextMenu_f = decltype(PluginContextMenuHandler::registerContextMenu);
     void callHooksContextMenu(getAllEntitiesInCurrentView_f const& getAllEntitiesInCurrentView,
                               getEntityByQualifiedName_f const& getEntityByQualifiedName,
+                              getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
                               registerContextMenu_f const& registerContextMenu);
 
     using createPluginDock_f = decltype(PluginDockWidgetHandler::createNewDock);

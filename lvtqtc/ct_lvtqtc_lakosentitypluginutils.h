@@ -26,7 +26,7 @@
 namespace Codethink::lvtqtc {
 
 Entity createWrappedEntityFromLakosEntity(LakosEntity *e);
-
+Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to);
 }
 
 #endif // DIAGRAM_SERVER_CT_LVTQTC_LAKOSENTITYPLUGINUTILS_H

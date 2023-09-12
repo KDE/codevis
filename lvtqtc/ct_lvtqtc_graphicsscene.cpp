@@ -1837,65 +1837,53 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
             }
             return createWrappedEntityFromLakosEntity(e);
         };
+        auto getEdgeByQualifiedName = [this](std::string const& fromQualifiedName,
+                                             std::string const& toQualifiedName) -> std::optional<Edge> {
+            auto *fromEntity = entityByQualifiedName(fromQualifiedName);
+            if (!fromEntity) {
+                return std::nullopt;
+            }
+            auto *toEntity = entityByQualifiedName(toQualifiedName);
+            if (!toEntity) {
+                return std::nullopt;
+            }
+            return createWrappedEdgeFromLakosEntity(fromEntity, toEntity);
+        };
         using ctxMenuAction_f = PluginContextMenuHandler::ctxMenuAction_f;
-        auto registerContextMenu =
-            [this, &menu, getAllEntitiesInCurrentView, getEntityByQualifiedName](std::string const& title,
-                                                                                 ctxMenuAction_f const& userAction) {
-                // make a copy of all the actions we currently have so we can
-                // iterate through it without having problems.
-                const auto currentActions = menu.actions();
-
-                // Remove pre-existing actions from scripts.
-                for (QAction *act : currentActions) {
-                    if (act->text() == QString::fromStdString(title)) {
-                        errorMessage(
-                            "Two or more of your plugins declares\n"
-                            "the same context menu, This is not supported.");
-                        return;
-                    }
-                }
-
-                // Add the new action.
-                auto *action = menu.addAction(QString::fromStdString(title));
-                action->setData(QStringLiteral("script-action"));
-
-                connect(action,
-                        &QAction::triggered,
-                        this,
-                        [this, userAction, getAllEntitiesInCurrentView, getEntityByQualifiedName]() {
-                            auto getPluginData = [this](auto&& id) {
-                                auto& pm = d->pluginManager.value().get();
-                                return pm.getPluginData(id);
-                            };
-                            auto getTree = [this](std::string const& id) {
-                                auto *pm = &d->pluginManager->get();
-                                return PluginManagerQtUtils::createPluginTreeWidgetHandler(pm, id, this);
-                            };
-                            auto handler = PluginContextMenuActionHandler{getPluginData,
-                                                                          getAllEntitiesInCurrentView,
-                                                                          getEntityByQualifiedName,
-                                                                          getTree};
-                            userAction(&handler);
-                        });
-            };
+        auto registerContextMenu = [this,
+                                    &menu,
+                                    getAllEntitiesInCurrentView,
+                                    getEntityByQualifiedName,
+                                    getEdgeByQualifiedName](std::string const& title,
+                                                            ctxMenuAction_f const& userAction) {
+            auto *action = menu.addAction(QString::fromStdString(title));
+            connect(
+                action,
+                &QAction::triggered,
+                this,
+                [this, userAction, getAllEntitiesInCurrentView, getEntityByQualifiedName, getEdgeByQualifiedName]() {
+                    auto getPluginData = [this](auto&& id) {
+                        auto& pm = d->pluginManager.value().get();
+                        return pm.getPluginData(id);
+                    };
+                    auto getTree = [this](std::string const& id) {
+                        auto *pm = &d->pluginManager->get();
+                        return PluginManagerQtUtils::createPluginTreeWidgetHandler(pm, id, this);
+                    };
+                    auto handler = PluginContextMenuActionHandler{getPluginData,
+                                                                  getAllEntitiesInCurrentView,
+                                                                  getEntityByQualifiedName,
+                                                                  getTree,
+                                                                  getEdgeByQualifiedName};
+                    userAction(&handler);
+                });
+        };
 
         auto& pm = d->pluginManager.value().get();
-
-        {
-            // make a copy of all the actions we currently have so we can
-            // iterate through it without having problems.
-            const auto currentActions = menu.actions();
-
-            // Remove pre-existing actions from scripts.
-            for (QAction *act : currentActions) {
-                if (act->data().toString() == QStringLiteral("script-action")) {
-                    menu.removeAction(act);
-                    act->deleteLater();
-                }
-            }
-        }
-
-        pm.callHooksContextMenu(getAllEntitiesInCurrentView, getEntityByQualifiedName, registerContextMenu);
+        pm.callHooksContextMenu(getAllEntitiesInCurrentView,
+                                getEntityByQualifiedName,
+                                getEdgeByQualifiedName,
+                                registerContextMenu);
     }
 
     if (d->showTransitive) {

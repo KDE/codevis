@@ -18,18 +18,48 @@
 #include <ct_lvtplg_basicpluginhooks.h>
 #include <ct_lvtplg_handlercontextmenuaction.h>
 #include <ct_lvtplg_handlerdockwidget.h>
+#include <ct_lvtplg_handlersetup.h>
 
-#include <iostream>
+#include <string>
 #include <vector>
 
 using EntityUniqueId = std::string;
-using HistoryList = std::vector<EntityUniqueId>;
+using Cycle = std::vector<EntityUniqueId>;
 
-static std::vector<HistoryList> d_cycles;
+static auto const PLUGIN_DATA_ID = "cycle_detection_plugin";
 static auto const DOCK_WIDGET_TITLE = "Cycle detection";
 static auto const DOCK_WIDGET_ID = "cyc_detection_plg";
 static auto const DOCK_WIDGET_TREE_ID = "cyc_detection_tree";
 static auto const ITEM_USER_DATA_CYCLE_ID = "cycle";
+static auto const NODE_SELECTED_COLOR = Color{200, 50, 50};
+static auto const NODE_UNSELECTED_COLOR = Color{200, 200, 200};
+static auto const EDGE_SELECTED_COLOR = Color{230, 40, 40};
+static auto const EDGE_UNSELECTED_COLOR = Color{230, 230, 230};
+enum class SelectedState { Selected, NotSelected };
+
+struct CycleDetectionPluginData {
+    std::vector<Cycle> allCycles;
+    Cycle selectedCycle;
+    Cycle prevSelectedCycle;
+};
+
+template<typename Handler_t>
+CycleDetectionPluginData *getPluginData(Handler_t *handler)
+{
+    return static_cast<CycleDetectionPluginData *>(handler->getPluginData(PLUGIN_DATA_ID));
+}
+
+void hookSetupPlugin(PluginSetupHandler *handler)
+{
+    handler->registerPluginData(PLUGIN_DATA_ID, new CycleDetectionPluginData{});
+}
+
+void hookTeardownPlugin(PluginSetupHandler *handler)
+{
+    auto *data = getPluginData(handler);
+    handler->unregisterPluginData(PLUGIN_DATA_ID);
+    delete data;
+}
 
 void highlightCycles(PluginContextMenuActionHandler *handler);
 void hookGraphicsViewContextMenu(PluginContextMenuHandler *handler)
@@ -43,21 +73,21 @@ void hookSetupDockWidget(PluginDockWidgetHandler *handler)
     handler->addTree(DOCK_WIDGET_ID, DOCK_WIDGET_TREE_ID);
 }
 
-bool containsPermutation(const HistoryList& cycle, const std::vector<HistoryList>& cycles)
+bool containsPermutation(const Cycle& cycle, const std::vector<Cycle>& allCycles)
 // returns true if cycles contains any permutation of cycle
 // cycle must not contain the duplicated node
 //
 // This is a static method so we can re-use this logic elsewhere
 {
-    if (cycles.empty()) {
+    if (allCycles.empty()) {
         return false;
     }
 
     // generate all permutations of the cycle
-    std::vector<HistoryList> permutations;
+    std::vector<Cycle> permutations;
     permutations.reserve(cycle.size());
     for (std::size_t shiftAmount = 0; shiftAmount < cycle.size(); ++shiftAmount) {
-        HistoryList permutation;
+        Cycle permutation;
         permutation.reserve(cycle.size());
 
         for (std::size_t i = shiftAmount; i < (cycle.size() + shiftAmount); ++i) {
@@ -67,13 +97,13 @@ bool containsPermutation(const HistoryList& cycle, const std::vector<HistoryList
     }
 
     // check against existing cycles
-    for (const HistoryList& oldCycle : cycles) {
+    for (const Cycle& oldCycle : allCycles) {
         // -1 because oldCycle includes the duplicate node
         if ((oldCycle.size() - 1) != cycle.size()) {
             continue;
         }
 
-        for (const HistoryList& permutation : permutations) {
+        for (const Cycle& permutation : permutations) {
             // std::equal will only check the first oldCycle.size() - 1 nodes
             // because that is the size of permutation
             // (therefore skipping the duplicate node)
@@ -87,7 +117,7 @@ bool containsPermutation(const HistoryList& cycle, const std::vector<HistoryList
     return false;
 }
 
-void addCycle(const std::size_t first, const HistoryList& history)
+void addCycle(const std::size_t first, const Cycle& history, std::vector<Cycle>& allCycles)
 // Polishes up a history list to be the minimum possible to provide
 // nice output of the cycles
 //
@@ -98,83 +128,85 @@ void addCycle(const std::size_t first, const HistoryList& history)
 // Doing this is slow but we only pay for it for each cycle permutation
 // found in the graph.
 {
-    // copy form the first occurance of the duplicate in the history instead
+    // copy form the first occurrence of the duplicate in the history instead
     // of history.begin() so that we do not include any early nodes not
-    // nesecarry for the cycle:
+    // necessary for the cycle:
     // e.g. output "C B D C" not "A X Y Z C B D C"
-    HistoryList cycle;
-    cycle.reserve(history.size() - first);
+    Cycle maybeNewCycle;
+    maybeNewCycle.reserve(history.size() - first);
     // don't include the duplicate node on the end yet because that throws
     // off the permutations (which would have different duplicate nodes)
     for (std::size_t i = first; i < history.size() - 1; ++i) {
-        cycle.push_back(history[i]);
+        maybeNewCycle.push_back(history[i]);
     }
 
     // now check if this is just a permutation of an existing cycle
-    if (containsPermutation(cycle, d_cycles)) {
+    if (containsPermutation(maybeNewCycle, allCycles)) {
         // skip
         return;
     }
 
     // add duplicate node
-    cycle.push_back(cycle.front());
-    d_cycles.push_back(std::move(cycle));
+    maybeNewCycle.push_back(maybeNewCycle.front());
+    allCycles.push_back(std::move(maybeNewCycle));
 }
 
-void traverseDependencies(Entity& e, HistoryList const& history);
-void traverse(Entity& node, HistoryList history)
+void traverseDependencies(Entity& e, Cycle const& maybeCycle, std::vector<Cycle>& allCycles);
+void traverse(Entity& node, Cycle maybeCycle, std::vector<Cycle>& allCycles)
 // Recursive depth first search, keeping track of where we have been.
 // If we encounter a node we have already seen in this path, that means
 // there's a cycle (back edge).
 // Passing history by value is delibirate: we want our own copy so that
 // it acts like a stack.
 {
-    bool cycle = false;
+    bool hasCycle = false;
 
     // we want an index instead of an iterator so that it remains valid after
-    // appending node to history. Therefore we can't use std::find
+    // appending node to history. Therefore, we can't use std::find
     std::size_t i = 0;
-    for (i = 0; i < history.size(); ++i) {
-        if (history[i] == node.getQualifiedName()) {
-            cycle = true;
+    for (i = 0; i < maybeCycle.size(); ++i) {
+        if (maybeCycle[i] == node.getQualifiedName()) {
+            hasCycle = true;
             break;
         }
     }
 
     // add the current node to the history
-    history.push_back(node.getQualifiedName());
+    maybeCycle.push_back(node.getQualifiedName());
 
-    if (cycle) {
-        addCycle(i, history);
+    if (hasCycle) {
+        addCycle(i, maybeCycle, allCycles);
         // skip iterating over dependencies because we have visited this
         // node before
         return;
     }
 
     // continue depth first search
-    traverseDependencies(node, history);
+    traverseDependencies(node, maybeCycle, allCycles);
 }
 
-void traverseDependencies(Entity& e, HistoryList const& history)
+void traverseDependencies(Entity& e, Cycle const& maybeCycle, std::vector<Cycle>& allCycles)
 {
     for (auto& dependency : e.getDependencies()) {
-        traverse(dependency, history);
+        traverse(dependency, maybeCycle, allCycles);
     }
 }
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler);
 void highlightCycles(PluginContextMenuActionHandler *handler)
 {
-    d_cycles.clear();
+    auto *pluginData = getPluginData(handler);
+    auto& allCycles = pluginData->allCycles;
+    allCycles.clear();
 
     for (auto&& e : handler->getAllEntitiesInCurrentView()) {
-        auto history = HistoryList{};
-        traverse(e, history);
+        auto maybeCycle = Cycle{};
+        traverse(e, maybeCycle, allCycles);
     }
 
     auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
     tree.clear();
-    for (auto&& cycle : d_cycles) {
+    for (auto&& cycle : allCycles) {
         auto firstName = cycle[0];
         auto lastName = cycle[cycle.size() - 1];
         auto rootItem = tree.addRootItem("From " + firstName + " to " + lastName);
@@ -185,28 +217,50 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
             rootItem.addChild(qualifiedName);
         }
     }
+    for (auto const& e0 : handler->getAllEntitiesInCurrentView()) {
+        e0.setColor(NODE_UNSELECTED_COLOR);
+        for (auto const& e1 : e0.getDependencies()) {
+            auto edge = handler->getEdgeByQualifiedName(e0.getQualifiedName(), e1.getQualifiedName());
+            if (edge.has_value()) {
+                edge->setColor(EDGE_UNSELECTED_COLOR);
+            }
+        }
+    }
 }
 
-HistoryList& extractHistoryListFrom(void *userData)
+Cycle& extractCycleFrom(void *userData)
 {
-    return *static_cast<HistoryList *>(userData);
+    return *static_cast<Cycle *>(userData);
 }
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
 {
-    auto const SELECTED_COLOR = Color{200, 50, 50};
-    auto const UNSELECTED_COLOR = Color{200, 200, 200};
-
-    auto selectedItem = handler->getItem();
     auto gv = handler->getGraphicsView();
-    auto& cycle = extractHistoryListFrom(selectedItem.getUserData(ITEM_USER_DATA_CYCLE_ID));
-    for (auto&& e : gv.getVisibleEntities()) {
-        e.setColor(UNSELECTED_COLOR);
-    }
-    for (auto&& qualifiedName : cycle) {
-        auto e = gv.getEntityByQualifiedName(qualifiedName);
-        if (e) {
-            e->setColor(SELECTED_COLOR);
+    auto paintCycle = [&gv](auto&& cycle, auto&& state) {
+        auto prevQualifiedName = std::optional<std::string>();
+        for (auto&& qualifiedName : cycle) {
+            auto entity = gv.getEntityByQualifiedName(qualifiedName);
+            if (!entity) {
+                continue;
+            }
+            entity->setColor(state == SelectedState::Selected ? NODE_SELECTED_COLOR : NODE_UNSELECTED_COLOR);
+
+            if (prevQualifiedName) {
+                auto fromQualifiedName = *prevQualifiedName;
+                auto toQualifiedName = qualifiedName;
+                auto edge = gv.getEdgeByQualifiedName(fromQualifiedName, toQualifiedName);
+                if (edge) {
+                    edge->setColor(state == SelectedState::Selected ? EDGE_SELECTED_COLOR : EDGE_UNSELECTED_COLOR);
+                }
+            }
+            prevQualifiedName = qualifiedName;
         }
-    }
+    };
+
+    auto *pluginData = getPluginData(handler);
+    auto selectedItem = handler->getItem();
+    auto& selectedCycle = extractCycleFrom(selectedItem.getUserData(ITEM_USER_DATA_CYCLE_ID));
+    paintCycle(pluginData->prevSelectedCycle, SelectedState::NotSelected);
+    paintCycle(selectedCycle, SelectedState::Selected);
+    pluginData->prevSelectedCycle = selectedCycle;
 }

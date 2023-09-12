@@ -63,4 +63,23 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
     return Entity{getName, getQualifiedName, getType, setColor, addHoverInfo, getDependencies};
 }
 
+Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to)
+{
+    auto setColor = [from, to](Color c) {
+        auto& ecs = from->edgesCollection();
+        auto foundToNode = std::find_if(ecs.begin(), ecs.end(), [to](auto const& ec) {
+            return ec->to() == to;
+        });
+        if (foundToNode == ecs.end()) {
+            return;
+        }
+        auto *relation = (*foundToNode)->relations()[0];
+        if (!relation) {
+            return;
+        }
+        relation->setColor(QColor{c.r, c.g, c.b, c.a});
+    };
+    return Edge{setColor};
+}
+
 } // namespace Codethink::lvtqtc

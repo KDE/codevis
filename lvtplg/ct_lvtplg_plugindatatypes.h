@@ -24,9 +24,9 @@
 #include <string>
 
 struct Color {
-    int r;
-    int g;
-    int b;
+    int r = 0;
+    int g = 0;
+    int b = 0;
     int a = 255;
 };
 
@@ -39,6 +39,10 @@ struct Entity {
     std::function<void(Color rgbColor)> const setColor;
     std::function<void(std::string info)> const addHoverInfo;
     std::function<std::vector<Entity>()> const getDependencies;
+};
+
+struct Edge {
+    std::function<void(Color rgbColor)> const setColor;
 };
 
 #endif

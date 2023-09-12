@@ -125,6 +125,7 @@ void PluginManager::callHooksTeardownPlugin()
 
 void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& getAllEntitiesInCurrentView,
                                          getEntityByQualifiedName_f const& getEntityByQualifiedName,
+                                         getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
                                          registerContextMenu_f const& registerContextMenu)
 {
     auto getPluginData = [this](auto&& id) {
@@ -134,7 +135,8 @@ void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& ge
                                                 PluginContextMenuHandler{getPluginData,
                                                                          getAllEntitiesInCurrentView,
                                                                          getEntityByQualifiedName,
-                                                                         registerContextMenu});
+                                                                         registerContextMenu,
+                                                                         getEdgeByQualifiedName});
 }
 
 void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPluginDock,

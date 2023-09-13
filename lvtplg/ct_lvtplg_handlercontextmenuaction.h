@@ -90,6 +90,20 @@ struct PluginContextMenuActionHandler {
      * loaded.
      */
     std::function<void(std::string const& qualifiedName)> const loadEntityByQualifiedName;
+
+    /**
+     * Creates a new edge connecting the entities with the respective qualified names. If any of those entities is not
+     * found, will not create the edge. The edge won't be persisted.
+     */
+    std::function<std::optional<Edge>(std::string const& fromQualifiedName, std::string const& toQualifiedName)>
+        addEdgeByQualifiedName;
+
+    /**
+     * Removes an edge connecting the entities with the respective qualified names. If connection or entities are not
+     * found, nothing is done. This action is not persisted.
+     */
+    std::function<void(std::string const& fromQualifiedName, std::string const& toQualifiedName)>
+        removeEdgeByQualifiedName;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_PLUGINCONTEXTMENUACTIONHANDLER_H

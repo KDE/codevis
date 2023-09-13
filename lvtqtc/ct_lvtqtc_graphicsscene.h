@@ -321,7 +321,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // the children.
     // Removing the children is a recursive operation.
 
-    void removeEdge(LakosRelation *relation);
+    void removeEdge(LakosEntity& fromEntity, LakosEntity& toEntity);
 
     lvtprj::ProjectFile const& projectFile() const;
 

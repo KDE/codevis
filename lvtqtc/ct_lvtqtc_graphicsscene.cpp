@@ -1853,14 +1853,27 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
             this->loadEntityByQualifiedName(QString::fromStdString(qualifiedName), {0, 0});
             this->reLayout();
         };
+        auto addEdgeByQualifiedName = [this](std::string const& fromQualifiedName,
+                                             std::string const& toQualifiedName) -> std::optional<Edge> {
+            auto *fromEntity = entityByQualifiedName(fromQualifiedName);
+            auto *toEntity = entityByQualifiedName(toQualifiedName);
+            if (!fromEntity || !toEntity || fromEntity == toEntity || fromEntity->hasRelationshipWith(toEntity)) {
+                return std::nullopt;
+            }
+            this->addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::PackageDependency);
+            return createWrappedEdgeFromLakosEntity(fromEntity, toEntity);
+        };
+        auto removeEdgeByQualifiedName = [this](std::string const& fromQualifiedName,
+                                                std::string const& toQualifiedName) {
+            auto *fromEntity = entityByQualifiedName(fromQualifiedName);
+            auto *toEntity = entityByQualifiedName(toQualifiedName);
+            if (!fromEntity || !toEntity || fromEntity == toEntity || !fromEntity->hasRelationshipWith(toEntity)) {
+                return;
+            }
+            this->removeEdge(*fromEntity, *toEntity);
+        };
         using ctxMenuAction_f = PluginContextMenuHandler::ctxMenuAction_f;
-        auto registerContextMenu = [this,
-                                    &menu,
-                                    getAllEntitiesInCurrentView,
-                                    getEntityByQualifiedName,
-                                    getEdgeByQualifiedName,
-                                    loadEntityByQualifiedName](std::string const& title,
-                                                               ctxMenuAction_f const& userAction) {
+        auto registerContextMenu = [=, this, &menu](std::string const& title, ctxMenuAction_f const& userAction) {
             auto *action = menu.addAction(QString::fromStdString(title));
             connect(action, &QAction::triggered, this, [=, this]() {
                 auto getPluginData = [this](auto&& id) {
@@ -1876,7 +1889,9 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
                                                               getEntityByQualifiedName,
                                                               getTree,
                                                               getEdgeByQualifiedName,
-                                                              loadEntityByQualifiedName};
+                                                              loadEntityByQualifiedName,
+                                                              addEdgeByQualifiedName,
+                                                              removeEdgeByQualifiedName};
                 userAction(&handler);
             });
         };
@@ -2399,6 +2414,40 @@ void GraphicsScene::setPluginManager(Codethink::lvtplg::PluginManager& pm)
     for (auto *e : allEntities()) {
         e->setPluginManager(pm);
     }
+}
+
+void GraphicsScene::removeEdge(LakosEntity& fromEntity, LakosEntity& toEntity)
+{
+    auto edgeCollection = fromEntity.getRelationshipWith(&toEntity);
+    if (!edgeCollection || edgeCollection->relations().empty()) {
+        return;
+    }
+
+    // explicit copy, so we don't mess with internal iterators.
+    auto allCollections = fromEntity.edgesCollection();
+
+    std::vector<LakosRelation *> toDelete;
+    for (const auto& collection : allCollections) {
+        if (collection->to() == &toEntity) {
+            for (auto *relation : collection->relations()) {
+                fromEntity.removeEdge(relation);
+                toEntity.removeEdge(relation);
+                toDelete.push_back(relation);
+            }
+        }
+    }
+
+    for (LakosRelation *rel : toDelete) {
+        rel->setParent(nullptr);
+        removeItem(rel);
+        d->relationVec.erase(std::remove(std::begin(d->relationVec), std::end(d->relationVec), rel),
+                             std::end(d->relationVec));
+
+        delete rel;
+    }
+
+    fromEntity.getTopLevelParent()->calculateEdgeVisibility();
+    fromEntity.recursiveEdgeRelayout();
 }
 
 } // end namespace Codethink::lvtqtc

@@ -104,3 +104,30 @@ TEST_CASE_METHOD(QTApplicationFixture, "Relayout Single Entity")
 
     REQUIRE(gs->items().size() == original_size);
 }
+
+TEST_CASE_METHOD(QTApplicationFixture, "Add and remove edges")
+{
+    auto tmpDir = TmpDir{"add_rm_edges"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    auto gv = GraphicsViewWrapperForTesting{nodeStorage};
+    auto *gs = qobject_cast<GraphicsScene *>(gv.scene());
+    gv.setColorManagement(std::make_shared<ColorManagement>(false));
+    gv.show();
+
+    auto *pkg1 = nodeStorage.addPackage("pkg", "pkg", nullptr, gv.scene()).value();
+    REQUIRE(nodeStorage.addComponent("pkg1_comp1", "pkg1_comp1", pkg1).has_value());
+    REQUIRE(nodeStorage.addComponent("pkg1_comp2", "pkg1_comp2", pkg1).has_value());
+
+    auto *pkgComp1 = gs->entityByQualifiedName("pkg1_comp1");
+    REQUIRE(pkgComp1);
+    auto *pkgComp2 = gs->entityByQualifiedName("pkg1_comp2");
+    REQUIRE(pkgComp2);
+
+    REQUIRE_FALSE(pkgComp1->hasRelationshipWith(pkgComp2));
+    (void) gs->addPackageDependencyRelation(pkgComp1, pkgComp2);
+    REQUIRE(pkgComp1->hasRelationshipWith(pkgComp2));
+    gs->removeEdge(*pkgComp1, *pkgComp2);
+    REQUIRE_FALSE(pkgComp1->hasRelationshipWith(pkgComp2));
+}

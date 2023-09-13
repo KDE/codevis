@@ -24,6 +24,7 @@
 #include <utils.h>
 
 enum class ToggleTestEntitiesState { VISIBLE, HIDDEN };
+enum class MergeTestDependenciesOnCUT { YES, NO };
 static auto const BAD_TEST_DEPENDENCY_COLOR = Color{225, 225, 0};
 
 struct PluginData {
@@ -52,7 +53,8 @@ void hookTeardownPlugin(PluginSetupHandler *handler)
     delete data;
 }
 
-void toggleMergeTestEntities(PluginContextMenuActionHandler *handler)
+void toggleMergeTestEntitiesHelper(PluginContextMenuActionHandler *handler,
+                                   MergeTestDependenciesOnCUT keepTestEntitiesOnCUT)
 {
     auto *pluginData = getPluginData(handler);
     if (pluginData->toggleState == ToggleTestEntitiesState::VISIBLE) {
@@ -66,13 +68,18 @@ void toggleMergeTestEntities(PluginContextMenuActionHandler *handler)
                     handler->getEntityByQualifiedName(utils::string{testDriver.getQualifiedName()}.split('.')[0]);
                 if (component) {
                     for (auto&& dependency : testDriver.getDependencies()) {
-                        auto newEdge = handler->addEdgeByQualifiedName(component->getQualifiedName(),
-                                                                       dependency.getQualifiedName());
-                        if (newEdge) {
-                            newEdge->setColor(BAD_TEST_DEPENDENCY_COLOR);
-                            newEdge->setStyle(EdgeStyle::DotLine);
-                            pluginData->testOnlyEdges.emplace_back(component->getQualifiedName(),
-                                                                   dependency.getQualifiedName());
+                        auto from = component->getQualifiedName();
+                        auto to = dependency.getQualifiedName();
+
+                        if (!handler->hasEdgeByQualifiedName(from, to)) {
+                            pluginData->testOnlyEdges.emplace_back(from, to);
+                        }
+                        if (keepTestEntitiesOnCUT == MergeTestDependenciesOnCUT::YES) {
+                            auto newEdge = handler->addEdgeByQualifiedName(from, to);
+                            if (newEdge) {
+                                newEdge->setColor(BAD_TEST_DEPENDENCY_COLOR);
+                                newEdge->setStyle(EdgeStyle::DotLine);
+                            }
                         }
                     }
                 }
@@ -95,6 +102,16 @@ void toggleMergeTestEntities(PluginContextMenuActionHandler *handler)
 
         pluginData->toggleState = ToggleTestEntitiesState::VISIBLE;
     }
+}
+
+void toggleTestEntities(PluginContextMenuActionHandler *handler)
+{
+    toggleMergeTestEntitiesHelper(handler, MergeTestDependenciesOnCUT::NO);
+}
+
+void toggleMergeTestEntities(PluginContextMenuActionHandler *handler)
+{
+    toggleMergeTestEntitiesHelper(handler, MergeTestDependenciesOnCUT::YES);
 }
 
 void paintBadTestComponents(PluginContextMenuActionHandler *handler)
@@ -139,6 +156,7 @@ void paintBadTestComponents(PluginContextMenuActionHandler *handler)
 
 void hookGraphicsViewContextMenu(PluginContextMenuHandler *handler)
 {
-    handler->registerContextMenu("Merge test entities with their components", &toggleMergeTestEntities);
-    handler->registerContextMenu("Search invalid test dependencies", &paintBadTestComponents);
+    handler->registerContextMenu("Toggle test entities", &toggleTestEntities);
+    handler->registerContextMenu("Toggle merge test entities with their components", &toggleMergeTestEntities);
+    handler->registerContextMenu("Mark invalid test dependencies", &paintBadTestComponents);
 }

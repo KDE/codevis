@@ -1872,6 +1872,14 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
             }
             this->removeEdge(*fromEntity, *toEntity);
         };
+        auto hasEdgeByQualifiedName = [this](std::string const& fromQualifiedName, std::string const& toQualifiedName) {
+            auto *fromEntity = entityByQualifiedName(fromQualifiedName);
+            auto *toEntity = entityByQualifiedName(toQualifiedName);
+            if (!fromEntity || !toEntity || fromEntity == toEntity) {
+                return false;
+            }
+            return fromEntity->hasRelationshipWith(toEntity);
+        };
         using ctxMenuAction_f = PluginContextMenuHandler::ctxMenuAction_f;
         auto registerContextMenu = [=, this, &menu](std::string const& title, ctxMenuAction_f const& userAction) {
             auto *action = menu.addAction(QString::fromStdString(title));
@@ -1891,7 +1899,8 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
                                                               getEdgeByQualifiedName,
                                                               loadEntityByQualifiedName,
                                                               addEdgeByQualifiedName,
-                                                              removeEdgeByQualifiedName};
+                                                              removeEdgeByQualifiedName,
+                                                              hasEdgeByQualifiedName};
                 userAction(&handler);
             });
         };

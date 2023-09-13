@@ -104,6 +104,14 @@ struct PluginContextMenuActionHandler {
      */
     std::function<void(std::string const& fromQualifiedName, std::string const& toQualifiedName)>
         removeEdgeByQualifiedName;
+
+    /**
+     * Check if there's an edge between the entities with the respective qualified name currently on the scene.
+     * Note that this doesn't necessarily mean that they have or they have not an actual dependency, since it could be
+     * a plugin dependency.
+     */
+    std::function<bool(std::string const& fromQualifiedName, std::string const& toQualifiedName)>
+        hasEdgeByQualifiedName;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_PLUGINCONTEXTMENUACTIONHANDLER_H

@@ -54,6 +54,7 @@ class LVTQTC_EXPORT LakosRelation : public QObject, public QGraphicsItem {
     ~LakosRelation() override;
 
     void setColor(QColor const& newColor);
+    void setStyle(Qt::PenStyle const& newStyle);
 
     /*! \brief The type of a particular instance of sub class LakosRelation
      */

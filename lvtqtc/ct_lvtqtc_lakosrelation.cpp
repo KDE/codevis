@@ -101,6 +101,7 @@ struct LakosRelation::Private {
     // thickness of the line being drawn.
 
     bool dashed = false;
+    Qt::PenStyle penStyle = Qt::PenStyle::SolidLine;
 
     bool shouldBeHidden = false;
     // This will not be touched by Qt when we show() or hide()
@@ -155,6 +156,15 @@ void LakosRelation::setColor(QColor const& newColor)
     }
 
     d->color = newColor;
+    update();
+}
+
+void LakosRelation::setStyle(Qt::PenStyle const& newStyle)
+{
+    if (newStyle == d->penStyle) {
+        return;
+    }
+    d->penStyle = newStyle;
     update();
 }
 
@@ -337,7 +347,7 @@ void LakosRelation::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     } else {
         pen.setWidthF(d->thickness);
     }
-    pen.setStyle(d->dashed ? Qt::DashLine : Qt::SolidLine);
+    pen.setStyle(d->penStyle);
 
     painter->save();
     painter->setPen(pen);
@@ -488,6 +498,7 @@ void LakosRelation::setDashed(bool dashed)
     }
 
     d->dashed = dashed;
+    this->setStyle(d->dashed ? Qt::DashLine : Qt::SolidLine);
     update();
 }
 

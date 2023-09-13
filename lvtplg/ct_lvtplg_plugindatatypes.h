@@ -30,6 +30,8 @@ struct Color {
     int a = 255;
 };
 
+enum class EdgeStyle { SolidLine, DashLine, DotLine, DashDotLine, DashDotDotLine };
+
 enum class EntityType { Unknown, PackageGroup, Package, Component };
 
 struct Entity {
@@ -49,6 +51,7 @@ struct Entity {
 
 struct Edge {
     std::function<void(Color rgbColor)> const setColor;
+    std::function<void(EdgeStyle style)> const setStyle;
 };
 
 #endif

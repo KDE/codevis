@@ -70,6 +70,7 @@ void toggleMergeTestEntities(PluginContextMenuActionHandler *handler)
                                                                        dependency.getQualifiedName());
                         if (newEdge) {
                             newEdge->setColor(BAD_TEST_DEPENDENCY_COLOR);
+                            newEdge->setStyle(EdgeStyle::DotLine);
                             pluginData->testOnlyEdges.emplace_back(component->getQualifiedName(),
                                                                    dependency.getQualifiedName());
                         }

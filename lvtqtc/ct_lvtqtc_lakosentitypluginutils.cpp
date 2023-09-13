@@ -68,21 +68,49 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
 
 Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to)
 {
-    auto setColor = [from, to](Color c) {
+    auto getRelation = [from, to]() -> LakosRelation * {
+        if (!from || !to) {
+            return nullptr;
+        }
         auto& ecs = from->edgesCollection();
         auto foundToNode = std::find_if(ecs.begin(), ecs.end(), [to](auto const& ec) {
             return ec->to() == to;
         });
         if (foundToNode == ecs.end()) {
-            return;
+            return nullptr;
         }
-        auto *relation = (*foundToNode)->relations()[0];
+        return (*foundToNode)->relations()[0];
+    };
+    auto setColor = [getRelation](Color c) {
+        auto *relation = getRelation();
         if (!relation) {
             return;
         }
         relation->setColor(QColor{c.r, c.g, c.b, c.a});
     };
-    return Edge{setColor};
+    auto setStyle = [getRelation](EdgeStyle s) {
+        auto *relation = getRelation();
+        if (!relation) {
+            return;
+        }
+        auto qtStyle = [&]() {
+            switch (s) {
+            case EdgeStyle::SolidLine:
+                return Qt::PenStyle::SolidLine;
+            case EdgeStyle::DashLine:
+                return Qt::PenStyle::DashLine;
+            case EdgeStyle::DotLine:
+                return Qt::PenStyle::DotLine;
+            case EdgeStyle::DashDotLine:
+                return Qt::PenStyle::DashDotLine;
+            case EdgeStyle::DashDotDotLine:
+                return Qt::PenStyle::DashDotDotLine;
+            }
+            return Qt::PenStyle::NoPen;
+        }();
+        relation->setStyle(qtStyle);
+    };
+    return Edge{setColor, setStyle};
 }
 
 } // namespace Codethink::lvtqtc

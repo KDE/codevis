@@ -60,7 +60,10 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
         }
         return dependencies;
     };
-    return Entity{getName, getQualifiedName, getType, setColor, addHoverInfo, getDependencies};
+    auto unloadFromScene = [e]() {
+        Q_EMIT e->unloadThis();
+    };
+    return Entity{getName, getQualifiedName, getType, setColor, addHoverInfo, getDependencies, unloadFromScene};
 }
 
 Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to)

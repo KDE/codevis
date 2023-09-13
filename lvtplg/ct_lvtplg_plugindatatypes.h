@@ -39,6 +39,12 @@ struct Entity {
     std::function<void(Color rgbColor)> const setColor;
     std::function<void(std::string info)> const addHoverInfo;
     std::function<std::vector<Entity>()> const getDependencies;
+
+    /**
+     * Unloads the entity from the current scene.
+     * Warning: The Entity instance becomes invalid after method this is called, and must *not* be used.
+     */
+    std::function<void()> const unloadFromScene;
 };
 
 struct Edge {

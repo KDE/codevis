@@ -120,6 +120,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp
 set(DEPLOYED_PLUGINS
     code_coverage_plugin
     cycle_detection_plugin
+    lakosian_test_rules_plugin
 )
 add_dependencies(codevis_desktop deploy_app_plugins)
 function (add_plugin_file SOURCE_FILE TARGET_FILE LIST_PROCESSED_PLUGINS IS_REQUIRED)

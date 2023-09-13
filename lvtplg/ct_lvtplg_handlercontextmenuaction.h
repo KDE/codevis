@@ -84,6 +84,12 @@ struct PluginContextMenuActionHandler {
 
     std::function<std::optional<Edge>(std::string const& fromQualifiedName, std::string const& toQualifiedName)> const
         getEdgeByQualifiedName;
+
+    /**
+     * Loads an entity into the current graphics scene by qualified name. If the entity doesn't exists, nothing is
+     * loaded.
+     */
+    std::function<void(std::string const& qualifiedName)> const loadEntityByQualifiedName;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_PLUGINCONTEXTMENUACTIONHANDLER_H

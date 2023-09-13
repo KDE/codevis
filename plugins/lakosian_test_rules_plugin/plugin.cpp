@@ -20,9 +20,11 @@
 #include <ct_lvtplg_handlercontextmenuaction.h>
 #include <ct_lvtplg_handlersetup.h>
 
+#include <algorithm>
 #include <utils.h>
 
 enum class ToggleTestEntitiesState { VISIBLE, HIDDEN };
+static auto const BAD_TEST_DEPENDENCY_COLOR = Color{255, 20, 20};
 
 struct PluginData {
     static auto constexpr ID = "LKS_TEST_RULES_PLG";
@@ -70,7 +72,47 @@ void toggleTestEntities(PluginContextMenuActionHandler *handler)
     }
 }
 
+void paintBadTestComponents(PluginContextMenuActionHandler *handler)
+{
+    for (auto&& e : handler->getAllEntitiesInCurrentView()) {
+        if (!utils::string{e.getQualifiedName()}.endswith(".t")) {
+            continue;
+        }
+
+        auto& testDriver = e;
+        auto component = handler->getEntityByQualifiedName(utils::string{testDriver.getQualifiedName()}.split('.')[0]);
+        if (!component) {
+            // If we can't find the test driver's CUT (Component-Under-Test), then skip.
+            continue;
+        }
+
+        // CUT (Component-Under-Test)
+        auto& cut = *component;
+        for (auto&& dependency : testDriver.getDependencies()) {
+            // It is ok for the test driver to depend on the CUT
+            if (dependency.getName() == cut.getName()) {
+                continue;
+            }
+
+            // It is ok for the test driver to depend on things that the CUT
+            // also depends on ("redundant dependencies").
+            if (std::ranges::any_of(cut.getDependencies(), [&](auto&& cutDependency) {
+                    return cutDependency.getName() == dependency.getName();
+                })) {
+                continue;
+            }
+
+            // All other dependencies are marked as "invalid"
+            auto edge = handler->getEdgeByQualifiedName(testDriver.getQualifiedName(), dependency.getQualifiedName());
+            if (edge) {
+                edge->setColor(BAD_TEST_DEPENDENCY_COLOR);
+            }
+        }
+    }
+}
+
 void hookGraphicsViewContextMenu(PluginContextMenuHandler *handler)
 {
     handler->registerContextMenu("Toggle test entities", &toggleTestEntities);
+    handler->registerContextMenu("Search invalid test dependencies", &paintBadTestComponents);
 }

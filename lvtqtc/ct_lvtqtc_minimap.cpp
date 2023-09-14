@@ -53,7 +53,7 @@ Minimap::Minimap(QGraphicsScene *mainScene, QWidget *parent):
 
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
-    d->minimapSize = Preferences::self()->minimapSize();
+    d->minimapSize = Preferences::minimapSize();
 
     setGeometry(QRect(0, 0, 100, 80));
 
@@ -120,7 +120,7 @@ void Minimap::setMapSize(MinimapSize size)
     }
 
     d->minimapSize = size;
-    Preferences::self()->setMinimapSize(size);
+    Preferences::setMinimapSize(size);
 
     calculateGeometry();
 }
@@ -166,7 +166,7 @@ void Minimap::drawForeground(QPainter *painter, const QRectF& rect)
 
 void Minimap::mousePressEvent(QMouseEvent *ev)
 {
-    if (ev->modifiers() & Preferences::self()->dragModifier()) {
+    if (ev->modifiers() & Preferences::dragModifier()) {
         d->isDraggingScene = false;
         d->isDraggingSelf = true;
 

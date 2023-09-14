@@ -102,19 +102,19 @@ TEST_CASE_METHOD(QTApplicationFixture, "LakosEntity tests")
     entityA->expand(QtcUtil::CreateUndoAction::e_No);
     REQUIRE(entityA->isExpanded());
 
-    Preferences::self()->setLakosEntityNamePos(Qt::TopLeftCorner);
+    Preferences::setLakosEntityNamePos(Qt::TopLeftCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x(), entityA->boundingRect().left()));
     REQUIRE(textItem->pos().y() < entityA->boundingRect().top());
 
-    Preferences::self()->setLakosEntityNamePos(Qt::TopRightCorner);
+    Preferences::setLakosEntityNamePos(Qt::TopRightCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x() + textItem->boundingRect().width(), entityA->boundingRect().right()));
     REQUIRE(textItem->pos().y() < entityA->boundingRect().top());
 
-    Preferences::self()->setLakosEntityNamePos(Qt::BottomRightCorner);
+    Preferences::setLakosEntityNamePos(Qt::BottomRightCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x() + textItem->boundingRect().width(), entityA->boundingRect().right()));
     REQUIRE(qFuzzyCompare(textItem->pos().y(), entityA->boundingRect().bottom()));
 
-    Preferences::self()->setLakosEntityNamePos(Qt::BottomLeftCorner);
+    Preferences::setLakosEntityNamePos(Qt::BottomLeftCorner);
     REQUIRE(qFuzzyCompare(textItem->pos().x(), entityA->boundingRect().left()));
     REQUIRE(qFuzzyCompare(textItem->pos().y(), entityA->boundingRect().bottom()));
 }

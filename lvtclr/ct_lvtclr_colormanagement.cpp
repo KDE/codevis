@@ -220,12 +220,12 @@ void ColorManagement::resetCaches()
 
 bool ColorManagement::isColorBlindModeActive() const
 {
-    return Preferences::self()->colorBlindMode();
+    return Preferences::colorBlindMode();
 }
 
 bool Codethink::lvtclr::ColorManagement::isUsingColorBlindFill() const
 {
-    return Preferences::self()->useColorBlindFill();
+    return Preferences::useColorBlindFill();
 }
 
 } // namespace Codethink::lvtclr

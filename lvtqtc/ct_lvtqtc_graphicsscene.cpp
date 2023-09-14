@@ -209,7 +209,7 @@ struct GraphicsScene::Private {
     explicit Private(NodeStorage& nodeStorage, lvtprj::ProjectFile const& projectFile):
         physicalLoader(nodeStorage), nodeStorage(nodeStorage), projectFile(projectFile)
     {
-        showTransitive = Preferences::self()->showRedundantEdgesDefault();
+        showTransitive = Preferences::showRedundantEdgesDefault();
     }
 };
 
@@ -624,7 +624,7 @@ void GraphicsScene::reLayout()
 void GraphicsScene::clearGraph()
 {
     d->mainEntity = nullptr;
-    d->showTransitive = Preferences::self()->showRedundantEdgesDefault();
+    d->showTransitive = Preferences::showRedundantEdgesDefault();
     d->vertices.clear();
     d->verticesVec.clear();
     d->relationVec.clear();
@@ -632,14 +632,14 @@ void GraphicsScene::clearGraph()
     d->transitiveReductionAlg->reset();
 
     clear();
-    if (Preferences::self()->enableDebugOutput()) {
+    if (Preferences::enableDebugOutput()) {
         qDebug() << "Graph Cleared!";
     }
 }
 
 void GraphicsScene::updateGraph()
 {
-    if (Preferences::self()->enableDebugOutput()) {
+    if (Preferences::enableDebugOutput()) {
         qDebug() << "Reloading the Graph";
     }
 
@@ -869,7 +869,7 @@ LakosEntity *addVertex(GraphicsScene *scene,
     d->vertices.insert({uid, entity});
     d->verticesVec.push_back(entity);
     d->entityLoadFlags.insert({entity->internalNode(), lvtldr::NodeLoadFlags{}});
-    if (Preferences::self()->enableDebugOutput()) {
+    if (Preferences::enableDebugOutput()) {
         qDebug() << "Setting empty flags for" << QString::fromStdString(entity->qualifiedName());
     }
     return entity;
@@ -1161,7 +1161,7 @@ void GraphicsScene::runLayoutAlgorithm()
         }
     }
 
-    auto direction = Preferences::self()->invertVerticalLevelizationLayout() ? +1 : -1;
+    auto direction = Preferences::invertVerticalLevelizationLayout() ? +1 : -1;
     std::function<void(LakosEntity *)> recursiveLevelLayout = [&](LakosEntity *e) -> void {
         auto childs = e->lakosEntities();
         for (auto *c : childs) {
@@ -1237,7 +1237,7 @@ GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
     bool success = false;
     switch (d->graphData.diagramType) {
     case lvtshr::DiagramType::NoneType:
-        if (Preferences::self()->enableDebugOutput()) {
+        if (Preferences::enableDebugOutput()) {
             qWarning() << "Database corrupted";
         }
         success = false;
@@ -1259,8 +1259,8 @@ GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
 
         lvtldr::NodeLoadFlags flags;
         if (d->graphData.fullyQualifiedName.toStdString() == node->qualifiedName()) {
-            flags.traverseClients = Preferences::self()->showClients();
-            flags.traverseProviders = Preferences::self()->showProviders();
+            flags.traverseClients = Preferences::showClients();
+            flags.traverseProviders = Preferences::showProviders();
             flags.loadChildren = true;
         }
 
@@ -1270,7 +1270,7 @@ GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
     }
 
     if (!success) {
-        if (Preferences::self()->enableDebugOutput()) {
+        if (Preferences::enableDebugOutput()) {
             qWarning() << d->graphData.fullyQualifiedName << "not found in package database";
         }
         setLoadFlags(LoadFromDbError);
@@ -1300,7 +1300,7 @@ void GraphicsScene::dumpScene(const QList<QGraphicsItem *>& items)
 
 void GraphicsScene::dumpScene(QGraphicsItem *item, int indent)
 {
-    if (!Preferences::self()->enableDebugOutput()) {
+    if (!Preferences::enableDebugOutput()) {
         return;
     }
 
@@ -1407,7 +1407,7 @@ void GraphicsScene::finalizeLayout()
 {
     const QString ourErrorMessage = fetchErrorMessage();
     if (!ourErrorMessage.isEmpty()) {
-        if (Preferences::self()->enableDebugOutput()) {
+        if (Preferences::enableDebugOutput()) {
             qDebug() << "Finalized with" << ourErrorMessage;
         }
     }
@@ -1634,7 +1634,7 @@ void GraphicsScene::connectEntitySignals(LakosEntity *entity)
 
     // Perhaps this should be a toggle?
     connect(entity, &LakosEntity::requestGraphRelayout, this, [this] {
-        if (Preferences::self()->enableDebugOutput()) {
+        if (Preferences::enableDebugOutput()) {
             qDebug() << "Running graph relayout";
         }
         reLayout();
@@ -2045,7 +2045,7 @@ LakosEntity *GraphicsScene::entityById(const std::string& uniqueId) const
 
 LakosEntity *GraphicsScene::entityByQualifiedName(const std::string& qualName) const
 {
-    const bool showDebug = Preferences::self()->enableDebugOutput();
+    const bool showDebug = Preferences::enableDebugOutput();
 
     if (d->verticesVec.empty()) {
         if (showDebug) {

@@ -134,14 +134,14 @@ LakosRelation::LakosRelation(LakosEntity *source, LakosEntity *target): d(std::m
     d->fromIntersectionItem->setVisible(false);
     d->toIntersectionItem->setVisible(false);
 
-    d->color = Preferences::self()->edgeColor();
-    d->highlightColor = Preferences::self()->highlightEdgeColor();
+    d->color = Preferences::edgeColor();
+    d->highlightColor = Preferences::highlightEdgeColor();
     connect(Preferences::self(), &Preferences::edgeColorChanged, this, [this] {
-        d->color = Preferences::self()->edgeColor();
+        d->color = Preferences::edgeColor();
         update();
     });
     connect(Preferences::self(), &Preferences::highlightEdgeColorChanged, this, [this] {
-        d->highlightColor = Preferences::self()->highlightEdgeColor();
+        d->highlightColor = Preferences::highlightEdgeColor();
         update();
     });
 }
@@ -549,7 +549,7 @@ std::string LakosRelation::legendText() const
     std::string ret = from()->name() + " to " + to()->name() + "\n";
     ret += "Type: " + relationTypeAsString() + "\n";
 
-    if (Preferences::self()->enableSceneContextMenu()) {
+    if (Preferences::enableSceneContextMenu()) {
         const std::string x1 = std::to_string(d->adjustedLine.p1().x());
         const std::string x2 = std::to_string(d->adjustedLine.p2().x());
         const std::string y1 = std::to_string(d->adjustedLine.p1().y());

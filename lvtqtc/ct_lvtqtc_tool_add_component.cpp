@@ -97,7 +97,7 @@ void ToolAddComponent::mousePressEvent(QMouseEvent *event)
     const std::string name = std::any_cast<QString>(m_nameDialog->fieldValue("name")).toStdString();
 
     // Verify if the name meets Lakosian rules
-    if (Preferences::self()->useLakosianRules()) {
+    if (Preferences::useLakosianRules()) {
         const auto result = checkNameError<LakosianComponentNameRules>(true, name, parent->name());
         if (result.has_error()) {
             Q_EMIT sendMessage(result.error().what, KMessageWidget::Error);

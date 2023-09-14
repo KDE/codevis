@@ -100,7 +100,7 @@ void ToolAddPackage::mouseReleaseEvent(QMouseEvent *event)
 
     // Verify if the names are correct / sane.
     const std::string name = std::any_cast<QString>(m_nameDialog->fieldValue("name")).toStdString();
-    if (Preferences::self()->useLakosianRules()) {
+    if (Preferences::useLakosianRules()) {
         const auto result = checkNameError<LakosianNameRules>(parent != nullptr, name, parentName);
         if (result.has_error()) {
             Q_EMIT sendMessage(result.error().what, KMessageWidget::Error);

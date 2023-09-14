@@ -53,9 +53,9 @@ ComponentEntity::ComponentEntity(lvtldr::LakosianNode *node, lvtshr::LoaderInfo 
     ComponentEntity::setText(node->name());
     truncateTitle(EllipsisTextItem::Truncate::No);
 
-    setFont(Preferences::self()->componentFont());
+    setFont(Preferences::componentFont());
     connect(Preferences::self(), &Preferences::componentFontChanged, this, [this] {
-        setFont(Preferences::self()->componentFont());
+        setFont(Preferences::componentFont());
     });
 
     connect(Preferences::self(), &Preferences::hidePackagePrefixOnComponentsChanged, this, [this] {
@@ -66,7 +66,7 @@ ComponentEntity::ComponentEntity(lvtldr::LakosianNode *node, lvtshr::LoaderInfo 
 void ComponentEntity::setText(const std::string& text)
 {
     auto newText =
-        Preferences::self()->hidePackagePrefixOnComponents() ? nodeNameWithoutParentPrefix(internalNode(), text) : text;
+        Preferences::hidePackagePrefixOnComponents() ? nodeNameWithoutParentPrefix(internalNode(), text) : text;
     LakosEntity::setText(newText);
 }
 

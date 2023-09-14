@@ -219,12 +219,12 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     ui->loadAllowedDependencies->setChecked(true);
     ui->loadAllowedDependencies->setVisible(false);
 
-    ui->ignorePattern->setText(Preferences::self()->lastIgnorePattern());
-    ui->compileCommandsFolder->setText(Preferences::self()->lastConfigureJson());
-    ui->sourceFolder->setText(Preferences::self()->lastSourceFolder());
+    ui->ignorePattern->setText(Preferences::lastIgnorePattern());
+    ui->compileCommandsFolder->setText(Preferences::lastConfigureJson());
+    ui->sourceFolder->setText(Preferences::lastSourceFolder());
     ui->showDbErrors->setVisible(false);
 
-    ui->nonLakosians->setText(getNonLakosianDirSettings(Preferences::self()->lastConfigureJson()));
+    ui->nonLakosians->setText(getNonLakosianDirSettings(Preferences::lastConfigureJson()));
 
     connect(this, &ParseCodebaseDialog::parseFinished, this, [this] {
         ui->btnSaveOutput->setEnabled(true);
@@ -240,17 +240,17 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     connect(ui->thirdPartyPkgMappingBtn, &QPushButton::clicked, this, &ParseCodebaseDialog::selectThirdPartyPkgMapping);
 
     connect(ui->ignorePattern, &QLineEdit::textChanged, this, [this] {
-        Preferences::self()->setLastIgnorePattern(ui->ignorePattern->text());
+        Preferences::setLastIgnorePattern(ui->ignorePattern->text());
     });
 
     connect(ui->compileCommandsFolder, &QLineEdit::textChanged, this, [this] {
-        Preferences::self()->setLastConfigureJson(ui->compileCommandsFolder->text());
+        Preferences::setLastConfigureJson(ui->compileCommandsFolder->text());
 
         ui->nonLakosians->setText(getNonLakosianDirSettings(ui->compileCommandsFolder->text()));
     });
 
     connect(ui->sourceFolder, &QLineEdit::textChanged, this, [this] {
-        Preferences::self()->setLastSourceFolder(ui->sourceFolder->text());
+        Preferences::setLastSourceFolder(ui->sourceFolder->text());
     });
 
     connect(ui->nonLakosians, &QLineEdit::textChanged, this, [this] {
@@ -288,7 +288,7 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     });
 
     connect(ui->btnResetIgnorePattern, &QPushButton::clicked, this, [this] {
-        ui->ignorePattern->setText(Preferences::self()->defaultLastIgnorePatternValue());
+        ui->ignorePattern->setText(Preferences::defaultLastIgnorePatternValue());
     });
 
     ui->progressBar->setMinimum(0);
@@ -682,7 +682,7 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
                                           const std::vector<std::string>& ignoreList,
                                           const std::vector<std::filesystem::path>& nonLakosianDirs)
 {
-    const bool catchCodeAnalysisOutput = Preferences::self()->enableDebugOutput();
+    const bool catchCodeAnalysisOutput = Preferences::enableDebugOutput();
 
     if (!d->tool_p) {
         d->tool_p = std::make_unique<lvtclp::Tool>(sourcePath(),

@@ -202,8 +202,8 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     changeCurrentGraphWidget(0);
 
     QObject::connect(&sharedNodeStorage, &NodeStorage::storageChanged, this, [this] {
-        d_projectFile.requestAutosave(Preferences::self()->autoSaveBackupIntervalMsecs());
-        Preferences::self()->setLastDocument(QString::fromStdString(d_projectFile.backupPath().string()));
+        d_projectFile.requestAutosave(Preferences::autoSaveBackupIntervalMsecs());
+        Preferences::setLastDocument(QString::fromStdString(d_projectFile.backupPath().string()));
         Preferences::self()->save();
     });
 
@@ -398,7 +398,7 @@ void MainWindow::closeProject()
     }
     d_status_bar->reset();
     showWelcomeScreen();
-    Preferences::self()->setLastDocument(QString());
+    Preferences::setLastDocument(QString());
 }
 
 bool MainWindow::askCloseCurrentProject()
@@ -509,7 +509,7 @@ void MainWindow::saveProject()
         return;
     }
 
-    Preferences::self()->setLastDocument(QString::fromStdString(d_projectFile.location().string()));
+    Preferences::setLastDocument(QString::fromStdString(d_projectFile.location().string()));
 }
 
 void MainWindow::saveProjectAs()
@@ -536,7 +536,7 @@ void MainWindow::saveProjectAs()
         return;
     }
 
-    Preferences::self()->setLastDocument(QString::fromStdString(d_projectFile.location().string()));
+    Preferences::setLastDocument(QString::fromStdString(d_projectFile.location().string()));
     setWindowTitle(qApp->applicationName() + " " + QString::fromStdString(d_projectFile.location().string()));
 }
 
@@ -594,7 +594,7 @@ bool MainWindow::openProjectFromPath(const QString& path)
     updateSessionPtr();
 
     const QString project = QString::fromStdString(d_projectFile.location().string());
-    Preferences::self()->setLastDocument(project);
+    Preferences::setLastDocument(project);
     setWindowTitle(qApp->applicationName() + " " + project);
 
     loadTabsFromProject();

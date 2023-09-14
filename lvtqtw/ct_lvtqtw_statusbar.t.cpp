@@ -69,8 +69,8 @@ class CodeVisStatusBarForTesting : public CodeVisStatusBar {
 
 TEST_CASE_METHOD(QTApplicationFixture, "Basic status bar workflow")
 {
-    Preferences::self()->setPanModifier(Qt::ALT);
-    Preferences::self()->setZoomModifier(Qt::CTRL);
+    Preferences::setPanModifier(Qt::ALT);
+    Preferences::setZoomModifier(Qt::CTRL);
 
     auto statusBar = CodeVisStatusBarForTesting{};
     statusBar.show();
@@ -83,8 +83,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic status bar workflow")
     REQUIRE(statusBar.currentZoomText() == "Zoom: CONTROL + Wheel");
 #endif
 
-    Preferences::self()->setPanModifier(Qt::SHIFT);
-    Preferences::self()->setZoomModifier(Qt::ALT);
+    Preferences::setPanModifier(Qt::SHIFT);
+    Preferences::setZoomModifier(Qt::ALT);
 
 #ifdef __APPLE__
     REQUIRE(statusBar.currentPanText() == "Pan Graph: Click + SHIFT");

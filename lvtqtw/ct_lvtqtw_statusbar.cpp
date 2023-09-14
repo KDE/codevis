@@ -44,14 +44,14 @@ CodeVisStatusBar::CodeVisStatusBar():
     connect(m_labelParseCodebaseWindowStatus, &QPushButton::clicked, this, &CodeVisStatusBar::openParseCodebaseWindow);
 
     connect(Preferences::self(), &Preferences::panModifierChanged, this, [this] {
-        updatePanText(Preferences::self()->panModifier());
+        updatePanText(Preferences::panModifier());
     });
     connect(Preferences::self(), &Preferences::zoomModifierChanged, this, [this] {
         updateZoomText(Preferences::zoomModifier());
     });
 
-    updatePanText(Preferences::self()->panModifier());
-    updateZoomText(Preferences::self()->zoomModifier());
+    updatePanText(Preferences::panModifier());
+    updateZoomText(Preferences::zoomModifier());
 }
 
 void CodeVisStatusBar::updatePanText(int newModifier)

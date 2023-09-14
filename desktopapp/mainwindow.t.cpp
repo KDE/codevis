@@ -40,7 +40,7 @@ using namespace Codethink::lvtldr;
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Loading Project Leads to crash")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     // We need a default tab widget to display elements on the view.
     REQUIRE(hasDefaultTabWidget());
@@ -61,7 +61,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Loading Project Leads to crash"
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Disable Tools on Lock Navigation")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     REQUIRE(isShowingWelcomePage());
     clickOn(Menubar::File::NewProject{});
@@ -78,7 +78,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Disable Tools on Lock Navigatio
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Basic application workflow")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     REQUIRE(isShowingWelcomePage());
     REQUIRE_FALSE(isShowingGraphPage());
@@ -180,7 +180,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Basic application workflow")
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edges From Packages")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     clickOn(Menubar::File::NewProject{});
     clickOn(Sidebar::ToggleApplicationMode{});
@@ -241,7 +241,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edges From Packages")
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edge From Components")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     clickOn(Menubar::File::NewProject{});
     clickOn(Sidebar::ToggleApplicationMode{});
@@ -316,7 +316,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edge From Components")
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Show Error On Add Edge Failure")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     clickOn(Menubar::File::NewProject{});
     clickOn(Sidebar::ToggleApplicationMode{});
@@ -352,8 +352,8 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Show Error On Add Edge Failure"
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Test Auto Save")
 {
     // Disable the timer for the test. Sequential auto tests do not handle QTimers well.
-    Preferences::self()->loadDefaults();
-    Preferences::self()->document()->setAutoSaveBackupIntervalMsecs(0);
+    Preferences::loadDefaults();
+    Preferences::document()->setAutoSaveBackupIntervalMsecs(0);
 
     clickOn(Menubar::File::NewProject{});
 
@@ -375,7 +375,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Test Auto Save")
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edge From Classes")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     clickOn(Menubar::File::NewProject{});
     clickOn(Sidebar::ToggleApplicationMode{});
@@ -464,7 +464,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edge From Classes")
 #ifndef _WIN32
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship After Actions")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
 
     clickOn(Menubar::File::NewProject{});
     clickOn(Sidebar::ToggleApplicationMode{});
@@ -536,7 +536,7 @@ This is a good reason to start thinking a Qt6.4 port
 
 TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Element Move")
 {
-    Preferences::self()->loadDefaults();
+    Preferences::loadDefaults();
     clickOn(Menubar::File::NewProject{});
 
     clickOn(Sidebar::ToggleApplicationMode{});

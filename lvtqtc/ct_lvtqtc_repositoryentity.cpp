@@ -34,9 +34,9 @@ RepositoryEntity::RepositoryEntity(lvtldr::LakosianNode *node, lvtshr::LoaderInf
     currentPen.setStyle(Qt::PenStyle::DashLine);
     setPen(currentPen);
 
-    setFont(Preferences::self()->pkgFont());
+    setFont(Preferences::pkgFont());
     connect(Preferences::self(), &Preferences::pkgFontChanged, this, [this] {
-        setFont(Preferences::self()->pkgFont());
+        setFont(Preferences::pkgFont());
     });
 
     connect(this, &LakosEntity::formFactorChanged, this, [this] {

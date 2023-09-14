@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     }
 
     if (parser.isSet(resetProject)) {
-        Preferences::self()->setLastDocument("");
+        Preferences::setLastDocument("");
     }
 
     Q_INIT_RESOURCE(resources);
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
         const bool isOpen = mWindow->openProjectFromPath(parser.value(inputFile));
         (void) isOpen; // NOLINT
     } else {
-        const QString lastProject = Preferences::self()->lastDocument();
+        const QString lastProject = Preferences::lastDocument();
         if (lastProject.size()) {
             const bool isOpen = mWindow->openProjectFromPath(lastProject);
             (void) isOpen; // NOLINT

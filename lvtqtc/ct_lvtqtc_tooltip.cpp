@@ -113,7 +113,7 @@ void ToolTipItem::paintEvent(QPaintEvent *ev)
 
 void ToolTipItem::mousePressEvent(QMouseEvent *ev)
 {
-    if (ev->modifiers() & Qt::Modifier(Preferences::self()->dragModifier())) {
+    if (ev->modifiers() & Qt::Modifier(Preferences::dragModifier())) {
         QLine line(mapToParent(ev->pos()), pos());
         d->movementDelta.setX(line.dx());
         d->movementDelta.setY(line.dy());

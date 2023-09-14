@@ -109,9 +109,9 @@ GraphicsView::GraphicsView(NodeStorage& nodeStorage, lvtprj::ProjectFile const& 
     });
 
     connect(Preferences::self(), &Preferences::backgroundColorChanged, this, [this] {
-        setBackgroundBrush(QBrush(Preferences::self()->backgroundColor()));
+        setBackgroundBrush(QBrush(Preferences::backgroundColor()));
     });
-    setBackgroundBrush(QBrush(Preferences::self()->backgroundColor()));
+    setBackgroundBrush(QBrush(Preferences::backgroundColor()));
 
     setCacheMode(QGraphicsView::CacheNone);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
@@ -237,7 +237,7 @@ void GraphicsView::fitRectInView(QRectF const& r)
 void GraphicsView::wheelEvent(QWheelEvent *event)
 {
     // Handle Zoom
-    auto zoomModifier = Preferences::self()->zoomModifier();
+    auto zoomModifier = Preferences::zoomModifier();
     if (event->modifiers() & zoomModifier || zoomModifier == Qt::KeyboardModifier::NoModifier) {
         if (event->angleDelta().y() > 0) {
             setZoomFactor(d->zoomFactor + 2);
@@ -321,7 +321,7 @@ void GraphicsView::zoomIntoRect(const QPoint& topLeft, const QPoint& bottomRight
 
 void GraphicsView::keyPressEvent(QKeyEvent *event)
 {
-    if (event->modifiers() & Preferences::self()->panModifier()) {
+    if (event->modifiers() & Preferences::panModifier()) {
         setDragMode(QGraphicsView::DragMode::ScrollHandDrag);
         event->accept();
         return;
@@ -333,7 +333,7 @@ void GraphicsView::keyPressEvent(QKeyEvent *event)
 void GraphicsView::keyReleaseEvent(QKeyEvent *event)
 {
     Qt::Key modifier = Qt::Key_Alt;
-    switch (Preferences::self()->panModifier()) {
+    switch (Preferences::panModifier()) {
     case Qt::AltModifier:
         modifier = Qt::Key_Alt;
         break;
@@ -357,7 +357,7 @@ void GraphicsView::keyReleaseEvent(QKeyEvent *event)
 
 void GraphicsView::mousePressEvent(QMouseEvent *event)
 {
-    if (Preferences::self()->enableDebugOutput()) {
+    if (Preferences::enableDebugOutput()) {
         qDebug() << "GraphicsView mousePressEvent";
     }
     if (event->button() == Qt::ForwardButton) {
@@ -369,8 +369,8 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-    if (event->modifiers() & Preferences::self()->panModifier()
-        || Preferences::self()->panModifier() == Qt::KeyboardModifier::NoModifier) {
+    if (event->modifiers() & Preferences::panModifier()
+        || Preferences::panModifier() == Qt::KeyboardModifier::NoModifier) {
         setDragMode(QGraphicsView::DragMode::ScrollHandDrag);
     }
 
@@ -390,7 +390,7 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
 
 void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (Preferences::self()->enableDebugOutput()) {
+    if (Preferences::enableDebugOutput()) {
         qDebug() << "GraphicsView mouseReleaseEvent";
     }
 
@@ -597,7 +597,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event)
 
     QMenu *debugMenu = nullptr;
 
-    if (Preferences::self()->enableSceneContextMenu()) {
+    if (Preferences::enableSceneContextMenu()) {
         debugMenu = new QMenu(tr("Debug tools"));
         debugMenu->setToolTipsVisible(true);
     }

@@ -87,21 +87,21 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
             &Preferences::setZoomLevel);
 
     connect(d->ui.comboPanModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
-        Preferences::self()->setPanModifier(ModifierHelpers::stringToModifier(d->ui.comboPanModifier->currentText()));
+        Preferences::setPanModifier(ModifierHelpers::stringToModifier(d->ui.comboPanModifier->currentText()));
     });
 
     connect(d->ui.showLevelNumbers, &QCheckBox::toggled, this, [this] {
-        Preferences::self()->setShowLevelNumbers(d->ui.showLevelNumbers->isChecked());
+        Preferences::setShowLevelNumbers(d->ui.showLevelNumbers->isChecked());
     });
 
     connect(d->ui.backgroundColor, &KColorButton::changed, this, [this] {
-        Preferences::self()->setBackgroundColor(d->ui.backgroundColor->color());
+        Preferences::setBackgroundColor(d->ui.backgroundColor->color());
     });
     connect(d->ui.entityBackgroundColor, &KColorButton::changed, this, [this] {
-        Preferences::self()->setEntityBackgroundColor(d->ui.entityBackgroundColor->color());
+        Preferences::setEntityBackgroundColor(d->ui.entityBackgroundColor->color());
     });
     connect(d->ui.selectedEntityBackgroundColor, &KColorButton::changed, this, [this] {
-        Preferences::self()->setSelectedEntityBackgroundColor(d->ui.selectedEntityBackgroundColor->color());
+        Preferences::setSelectedEntityBackgroundColor(d->ui.selectedEntityBackgroundColor->color());
     });
     connect(d->ui.chkSelectedEntityHasGradient,
             &QCheckBox::toggled,
@@ -109,20 +109,20 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
             &Preferences::setEnableGradientOnMainNode);
 
     connect(d->ui.edgeColor, &KColorButton::changed, this, [this] {
-        Preferences::self()->setEdgeColor(d->ui.edgeColor->color());
+        Preferences::setEdgeColor(d->ui.edgeColor->color());
     });
     connect(d->ui.highlightEdgeColor, &KColorButton::changed, this, [this] {
-        Preferences::self()->setHighlightEdgeColor(d->ui.highlightEdgeColor->color());
+        Preferences::setHighlightEdgeColor(d->ui.highlightEdgeColor->color());
     });
 
     connect(d->ui.comboZoomModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
-        Preferences::self()->setZoomModifier(ModifierHelpers::stringToModifier(d->ui.comboZoomModifier->currentText()));
+        Preferences::setZoomModifier(ModifierHelpers::stringToModifier(d->ui.comboZoomModifier->currentText()));
     });
     connect(d->ui.chkColorBlindness, &QCheckBox::toggled, Preferences::self(), &Preferences::setColorBlindMode);
     connect(d->ui.chkColorPattern, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseColorBlindFill);
 
     connect(d->ui.entityNamePos, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
-        Preferences::self()->setLakosEntityNamePos(stringToCorner(d->ui.entityNamePos->currentText()));
+        Preferences::setLakosEntityNamePos(stringToCorner(d->ui.entityNamePos->currentText()));
     });
 
     connect(d->ui.lakosianRules, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseLakosianRules);
@@ -197,56 +197,56 @@ ConfigurationDialog::~ConfigurationDialog() = default;
 
 void ConfigurationDialog::load()
 {
-    d->ui.debugContextMenu->setChecked(Preferences::self()->enableSceneContextMenu());
-    d->ui.enableDebugOutput->setChecked(Preferences::self()->enableDebugOutput());
-    d->ui.storeDebugOutput->setChecked(Preferences::self()->storeDebugOutput());
-    d->ui.showProviders->setChecked(Preferences::self()->showProviders());
-    d->ui.showClients->setChecked(Preferences::self()->showClients());
-    d->ui.isARelation->setChecked(Preferences::self()->showIsARelation());
-    d->ui.usesInTheImplementation->setChecked(Preferences::self()->showUsesInTheImplementationRelation());
-    d->ui.usesInTheInterface->setChecked(Preferences::self()->showUsesInTheInterfaceRelation());
-    d->ui.minimap->setChecked(Preferences::self()->showMinimap());
-    d->ui.toolBox->setChecked(Preferences::self()->showLegend());
-    d->ui.classLimit->setValue(Preferences::self()->classLimit());
-    d->ui.relationLimit->setValue(Preferences::self()->relationLimit());
-    d->ui.zoomLevel->setValue(Preferences::self()->zoomLevel());
+    d->ui.debugContextMenu->setChecked(Preferences::enableSceneContextMenu());
+    d->ui.enableDebugOutput->setChecked(Preferences::enableDebugOutput());
+    d->ui.storeDebugOutput->setChecked(Preferences::storeDebugOutput());
+    d->ui.showProviders->setChecked(Preferences::showProviders());
+    d->ui.showClients->setChecked(Preferences::showClients());
+    d->ui.isARelation->setChecked(Preferences::showIsARelation());
+    d->ui.usesInTheImplementation->setChecked(Preferences::showUsesInTheImplementationRelation());
+    d->ui.usesInTheInterface->setChecked(Preferences::showUsesInTheInterfaceRelation());
+    d->ui.minimap->setChecked(Preferences::showMinimap());
+    d->ui.toolBox->setChecked(Preferences::showLegend());
+    d->ui.classLimit->setValue(Preferences::classLimit());
+    d->ui.relationLimit->setValue(Preferences::relationLimit());
+    d->ui.zoomLevel->setValue(Preferences::zoomLevel());
 
-    d->ui.chkColorBlindness->setChecked(Preferences::self()->colorBlindMode());
-    d->ui.chkColorPattern->setChecked(Preferences::self()->useColorBlindFill());
-    d->ui.showLevelNumbers->setChecked(Preferences::self()->showLevelNumbers());
+    d->ui.chkColorBlindness->setChecked(Preferences::colorBlindMode());
+    d->ui.chkColorPattern->setChecked(Preferences::useColorBlindFill());
+    d->ui.showLevelNumbers->setChecked(Preferences::showLevelNumbers());
 
     d->ui.comboPanModifier->setCurrentText(
-        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::self()->panModifier())));
+        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::panModifier())));
     d->ui.comboZoomModifier->setCurrentText(
-        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::self()->zoomModifier())));
+        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::zoomModifier())));
 
-    d->ui.backgroundColor->setColor(Preferences::self()->backgroundColor());
-    d->ui.entityBackgroundColor->setColor(Preferences::self()->entityBackgroundColor());
-    d->ui.selectedEntityBackgroundColor->setColor(Preferences::self()->selectedEntityBackgroundColor());
-    d->ui.edgeColor->setColor(Preferences::self()->edgeColor());
-    d->ui.highlightEdgeColor->setColor(Preferences::self()->highlightEdgeColor());
+    d->ui.backgroundColor->setColor(Preferences::backgroundColor());
+    d->ui.entityBackgroundColor->setColor(Preferences::entityBackgroundColor());
+    d->ui.selectedEntityBackgroundColor->setColor(Preferences::selectedEntityBackgroundColor());
+    d->ui.edgeColor->setColor(Preferences::edgeColor());
+    d->ui.highlightEdgeColor->setColor(Preferences::highlightEdgeColor());
 
-    const Qt::Corner cnr = static_cast<Qt::Corner>(Preferences::self()->lakosEntityNamePos());
+    const Qt::Corner cnr = static_cast<Qt::Corner>(Preferences::lakosEntityNamePos());
     d->ui.entityNamePos->setCurrentText(cnr == Qt::TopLeftCorner          ? tr("Top Left")
                                             : cnr == Qt::TopRightCorner   ? tr("Top Right")
                                             : cnr == Qt::BottomLeftCorner ? tr("Bottom Left")
                                                                           : tr("Bottom Right"));
 
-    d->ui.pkgGroupFont->setFont(Preferences::self()->pkgGroupFont());
-    d->ui.pkgFont->setFont(Preferences::self()->pkgFont());
-    d->ui.componentFont->setFont(Preferences::self()->componentFont());
-    d->ui.classFont->setFont(Preferences::self()->classFont());
-    d->ui.structFont->setFont(Preferences::self()->structFont());
-    d->ui.enumFont->setFont(Preferences::self()->enumFont());
+    d->ui.pkgGroupFont->setFont(Preferences::pkgGroupFont());
+    d->ui.pkgFont->setFont(Preferences::pkgFont());
+    d->ui.componentFont->setFont(Preferences::componentFont());
+    d->ui.classFont->setFont(Preferences::classFont());
+    d->ui.structFont->setFont(Preferences::structFont());
+    d->ui.enumFont->setFont(Preferences::enumFont());
 
-    d->ui.autoSaveBackupIntervalMsecs->setValue(Preferences::self()->autoSaveBackupIntervalMsecs());
+    d->ui.autoSaveBackupIntervalMsecs->setValue(Preferences::autoSaveBackupIntervalMsecs());
 
-    d->ui.lakosianRules->setChecked(Preferences::self()->useLakosianRules());
-    d->ui.useDependencyTypes->setChecked(Preferences::self()->useDependencyTypes());
-    d->ui.showRedundantEdgesDefaultCheckbox->setChecked(Preferences::self()->showRedundantEdgesDefault());
-    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::self()->hidePackagePrefixOnComponents());
-    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::self()->invertHorizontalLevelizationLayout());
-    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::self()->invertVerticalLevelizationLayout());
+    d->ui.lakosianRules->setChecked(Preferences::useLakosianRules());
+    d->ui.useDependencyTypes->setChecked(Preferences::useDependencyTypes());
+    d->ui.showRedundantEdgesDefaultCheckbox->setChecked(Preferences::showRedundantEdgesDefault());
+    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::hidePackagePrefixOnComponents());
+    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::invertHorizontalLevelizationLayout());
+    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::invertVerticalLevelizationLayout());
 }
 
 void ConfigurationDialog::save()

@@ -24,48 +24,42 @@
 #define _EXPORT_AS_C extern "C"
 #endif
 
-// Forward declarations of data types
-struct PluginSetupHandler;
-struct PluginContextMenuHandler;
-struct PluginDockWidgetHandler;
-struct PluginEntityReportHandler;
-struct PluginPhysicalParserOnHeaderFoundHandler;
-struct PluginLogicalParserOnCppCommentFoundHandler;
-struct PluginParseCompletedHandler;
+#define REGISTER_HOOK(_hookName, _handlerType)                                                                         \
+    struct _handlerType;                                                                                               \
+    typedef void (*_hookName##_f)(_handlerType *);                                                                     \
+    _EXPORT_AS_C void _hookName(_handlerType *);
 
-// Available plugin hooks
 // This hook is called as soon as the application initializes, and should be used to setup plugin data structures.
-typedef void (*hookSetupPlugin_f)(PluginSetupHandler *);
-_EXPORT_AS_C void hookSetupPlugin(PluginSetupHandler *);
+REGISTER_HOOK(hookSetupPlugin, PluginSetupHandler);
 
 // This hook is called just before the application closes, and must be used to cleanup any resource the plugin acquired.
-typedef void (*hookTeardownPlugin_f)(PluginSetupHandler *);
-_EXPORT_AS_C void hookTeardownPlugin(PluginSetupHandler *);
+REGISTER_HOOK(hookTeardownPlugin, PluginSetupHandler);
 
 // Hook to control the graphics view context menu.
-typedef void (*hookGraphicsViewContextMenu_f)(PluginContextMenuHandler *);
-_EXPORT_AS_C void hookGraphicsViewContextMenu(PluginContextMenuHandler *);
+REGISTER_HOOK(hookGraphicsViewContextMenu, PluginContextMenuHandler);
 
 // Can be used to setup new dock widgets (See PluginDockWidgetHandler)
-typedef void (*hookSetupDockWidget_f)(PluginDockWidgetHandler *);
-_EXPORT_AS_C void hookSetupDockWidget(PluginDockWidgetHandler *);
+REGISTER_HOOK(hookSetupDockWidget, PluginDockWidgetHandler);
 
 // If implemented, will generate an action in the reports menu to create a HTML report.
-typedef void (*hookSetupEntityReport_f)(PluginEntityReportHandler *);
-_EXPORT_AS_C void hookSetupEntityReport(PluginEntityReportHandler *);
+REGISTER_HOOK(hookSetupEntityReport, PluginEntityReportHandler);
 
 // Called every time a header is found in the physical parser.
-typedef void (*hookPhysicalParserOnHeaderFound_f)(PluginPhysicalParserOnHeaderFoundHandler *);
-_EXPORT_AS_C void hookPhysicalParserOnHeaderFound(PluginPhysicalParserOnHeaderFoundHandler *);
+REGISTER_HOOK(hookPhysicalParserOnHeaderFound, PluginPhysicalParserOnHeaderFoundHandler);
 
 // Called every time a comment is found in the logical parser.
-typedef void (*hookLogicalParserOnCppCommentFound_f)(PluginLogicalParserOnCppCommentFoundHandler *);
-_EXPORT_AS_C void hookLogicalParserOnCppCommentFound(PluginLogicalParserOnCppCommentFoundHandler *);
+REGISTER_HOOK(hookLogicalParserOnCppCommentFound, PluginLogicalParserOnCppCommentFoundHandler);
 
 // Called after the Physical and Logical (if enabled) parsing are done.
-typedef void (*hookOnParseCompleted_f)(PluginParseCompletedHandler *);
-_EXPORT_AS_C void hookOnParseCompleted(PluginParseCompletedHandler *);
+REGISTER_HOOK(hookOnParseCompleted, PluginParseCompletedHandler);
 
+// Called when the active scene is changed in the GUI.
+REGISTER_HOOK(hookActiveSceneChanged, PluginActiveSceneChangedHandler);
+
+// Called when the main node of a given graphics scene has changed.
+REGISTER_HOOK(hookMainNodeChanged, PluginMainNodeChangedHandler);
+
+#undef REGISTER_HOOK
 #undef _EXPORT_AS_C
 
 #endif

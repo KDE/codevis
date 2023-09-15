@@ -222,6 +222,10 @@ struct GraphicsScene::Private {
 GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const& projectFile, QObject *parent):
     QGraphicsScene(parent), d(std::make_unique<GraphicsScene::Private>(nodeStorage, projectFile))
 {
+    static int last_id = 0;
+    this->setObjectName(QString::fromStdString("gs_" + std::to_string(last_id)));
+    last_id++;
+
     using Codethink::lvtmdl::CircularRelationshipsModel;
     d->circleModel = new CircularRelationshipsModel(this);
     connect(d->circleModel, &QAbstractItemModel::dataChanged, this, &GraphicsScene::highlightCyclesOnCicleModelChanged);
@@ -585,6 +589,7 @@ void GraphicsScene::setMainNode(const QString& fullyQualifiedName, lvtshr::Diagr
     updateGraph();
 
     d->circleModel->setCircularRelationships({});
+    Q_EMIT mainNodeChanged(d->mainEntity);
 }
 
 void GraphicsScene::setStrictMode(bool strict)

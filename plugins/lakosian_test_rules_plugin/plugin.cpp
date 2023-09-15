@@ -21,18 +21,27 @@
 #include <ct_lvtplg_handlersetup.h>
 
 #include <algorithm>
+#include <map>
 #include <utils.h>
 
 enum class ToggleTestEntitiesState { VISIBLE, HIDDEN };
 enum class MergeTestDependenciesOnCUT { YES, NO };
 static auto const BAD_TEST_DEPENDENCY_COLOR = Color{225, 225, 0};
 
-struct PluginData {
-    static auto constexpr ID = "LKS_TEST_RULES_PLG";
+using SceneId = std::string;
 
+struct ToggleDataState {
+    std::string mainEntityQualifiedName;
     ToggleTestEntitiesState toggleState = ToggleTestEntitiesState::VISIBLE;
     std::vector<std::string> toggledTestEntities;
     std::vector<std::tuple<std::string, std::string>> testOnlyEdges;
+};
+
+struct PluginData {
+    static auto constexpr ID = "LKS_TEST_RULES_PLG";
+
+    std::map<SceneId, ToggleDataState> toggleDataState;
+    SceneId activeSceneId;
 };
 
 template<typename Handler_t>
@@ -53,12 +62,37 @@ void hookTeardownPlugin(PluginSetupHandler *handler)
     delete data;
 }
 
+void hookActiveSceneChanged(PluginActiveSceneChangedHandler *handler)
+{
+    auto *pluginData = getPluginData(handler);
+    pluginData->activeSceneId = handler->getSceneName();
+}
+
+void hookMainNodeChanged(PluginMainNodeChangedHandler *handler)
+{
+    auto *pluginData = getPluginData(handler);
+
+    auto isSameEntitySelected = pluginData->toggleDataState[handler->getSceneName()].mainEntityQualifiedName
+        == handler->getEntity().getQualifiedName();
+    if (isSameEntitySelected) {
+        return;
+    }
+
+    pluginData->activeSceneId = handler->getSceneName();
+    pluginData->toggleDataState[pluginData->activeSceneId] = {};
+}
+
 void toggleMergeTestEntitiesHelper(PluginContextMenuActionHandler *handler,
                                    MergeTestDependenciesOnCUT keepTestEntitiesOnCUT)
 {
     auto *pluginData = getPluginData(handler);
-    if (pluginData->toggleState == ToggleTestEntitiesState::VISIBLE) {
-        pluginData->toggledTestEntities.clear();
+    auto& activeToggleDataState = pluginData->toggleDataState[pluginData->activeSceneId];
+    auto& toggleState = activeToggleDataState.toggleState;
+    auto& toggledTestEntities = activeToggleDataState.toggledTestEntities;
+    auto& testOnlyEdges = activeToggleDataState.testOnlyEdges;
+
+    if (toggleState == ToggleTestEntitiesState::VISIBLE) {
+        toggledTestEntities.clear();
         for (auto&& e : handler->getAllEntitiesInCurrentView()) {
             if (utils::string{e.getQualifiedName()}.endswith(".t")) {
                 auto& testDriver = e;
@@ -72,7 +106,7 @@ void toggleMergeTestEntitiesHelper(PluginContextMenuActionHandler *handler,
                         auto to = dependency.getQualifiedName();
 
                         if (!handler->hasEdgeByQualifiedName(from, to)) {
-                            pluginData->testOnlyEdges.emplace_back(from, to);
+                            testOnlyEdges.emplace_back(from, to);
                         }
                         if (keepTestEntitiesOnCUT == MergeTestDependenciesOnCUT::YES) {
                             auto newEdge = handler->addEdgeByQualifiedName(from, to);
@@ -84,23 +118,23 @@ void toggleMergeTestEntitiesHelper(PluginContextMenuActionHandler *handler,
                     }
                 }
 
-                pluginData->toggledTestEntities.push_back(e.getQualifiedName());
+                toggledTestEntities.push_back(e.getQualifiedName());
                 e.unloadFromScene();
             }
         }
-        pluginData->toggleState = ToggleTestEntitiesState::HIDDEN;
-    } else if (pluginData->toggleState == ToggleTestEntitiesState::HIDDEN) {
-        for (auto&& [e0, e1] : pluginData->testOnlyEdges) {
+        toggleState = ToggleTestEntitiesState::HIDDEN;
+    } else if (toggleState == ToggleTestEntitiesState::HIDDEN) {
+        for (auto&& [e0, e1] : testOnlyEdges) {
             handler->removeEdgeByQualifiedName(e0, e1);
         }
-        pluginData->testOnlyEdges.clear();
+        testOnlyEdges.clear();
 
-        for (auto&& qName : pluginData->toggledTestEntities) {
+        for (auto&& qName : toggledTestEntities) {
             handler->loadEntityByQualifiedName(qName);
         }
-        pluginData->toggledTestEntities.clear();
+        toggledTestEntities.clear();
 
-        pluginData->toggleState = ToggleTestEntitiesState::VISIBLE;
+        toggleState = ToggleTestEntitiesState::VISIBLE;
     }
 }
 

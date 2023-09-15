@@ -197,6 +197,25 @@ void PluginManager::callHooksOnParseCompleted(runQueryOnDatabase_f const& runQue
                                          PluginParseCompletedHandler{getPluginData, runQueryOnDatabase});
 }
 
+void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneName)
+{
+    auto getPluginData = [this](auto&& id) {
+        return this->getPluginData(id);
+    };
+    callAllHooks<hookActiveSceneChanged_f>("hookActiveSceneChanged",
+                                           PluginActiveSceneChangedHandler{getPluginData, getSceneName});
+}
+
+void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
+                                             mainNodeChanged_getEntity_f const& getEntity)
+{
+    auto getPluginData = [this](auto&& id) {
+        return this->getPluginData(id);
+    };
+    callAllHooks<hookMainNodeChanged_f>("hookMainNodeChanged",
+                                        PluginMainNodeChangedHandler{getPluginData, getSceneName, getEntity});
+}
+
 void *PluginManager::getPluginData(std::string const& id) const
 {
     try {

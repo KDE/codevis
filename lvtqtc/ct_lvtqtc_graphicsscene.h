@@ -191,6 +191,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     Q_SIGNAL void packageNavigateRequested(const QString& fullyQualifiedName);
     Q_SIGNAL void classNavigateRequested(const QString& fullyQualifiedName);
     Q_SIGNAL void componentNavigateRequested(const QString& fullyQualifiedName);
+    Q_SIGNAL void mainNodeChanged(Codethink::lvtqtc::LakosEntity *entity);
     Q_SIGNAL void selectedEntityChanged(Codethink::lvtqtc::LakosEntity *entity);
 
     void updateGraph();

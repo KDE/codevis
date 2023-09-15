@@ -51,6 +51,7 @@
 
 #include <ct_lvtqtc_graphicsscene.h>
 #include <ct_lvtqtc_graphicsview.h>
+#include <ct_lvtqtc_lakosentitypluginutils.h>
 #include <ct_lvtqtc_undo_manager.h>
 
 #include <ct_lvtqtd_packageviewdelegate.h>
@@ -885,6 +886,26 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     addGSConnection(&GraphicsScene::requestDisableWindow, &MainWindow::disableWindow);
     addGSConnection(&GraphicsScene::selectedEntityChanged, &MainWindow::updateFocusedEntityOnTableModels);
     addGSConnection(&GraphicsScene::createReportActionClicked, &MainWindow::createReport);
+
+    if (d_pluginManager_p) {
+        auto getSceneName = [&graphicsScene]() {
+            return graphicsScene->objectName().toStdString();
+        };
+        d_pluginManager_p->callHooksActiveSceneChanged(getSceneName);
+    }
+    addGSConnection(&GraphicsScene::mainNodeChanged, [this](LakosEntity *entity) {
+        if (d_pluginManager_p) {
+            auto *graphicsScene = qobject_cast<GraphicsScene *>(currentGraphWidget->scene());
+            auto getSceneName = [&graphicsScene]() {
+                return graphicsScene->objectName().toStdString();
+            };
+            auto getEntity = [&entity]() {
+                return createWrappedEntityFromLakosEntity(entity);
+            };
+
+            d_pluginManager_p->callHooksMainNodeChanged(getSceneName, getEntity);
+        }
+    });
 }
 
 void MainWindow::createReport(std::string const& title, std::string const& htmlContents)

@@ -103,6 +103,14 @@ class LVTPLG_EXPORT PluginManager {
     using runQueryOnDatabase_f = decltype(PluginParseCompletedHandler::runQueryOnDatabase);
     void callHooksOnParseCompleted(runQueryOnDatabase_f const& runQueryOnDatabase);
 
+    using getSceneName_f = decltype(PluginActiveSceneChangedHandler::getSceneName);
+    void callHooksActiveSceneChanged(getSceneName_f const& getSceneName);
+
+    using mainNodeChanged_getSceneName_f = decltype(PluginMainNodeChangedHandler::getSceneName);
+    using mainNodeChanged_getEntity_f = decltype(PluginMainNodeChangedHandler::getEntity);
+    void callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
+                                  mainNodeChanged_getEntity_f const& getEntity);
+
     void *getPluginData(std::string const& id) const;
 
     void registerPluginQObject(std::string const& id, QObject *object);

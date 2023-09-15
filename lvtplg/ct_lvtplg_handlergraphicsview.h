@@ -34,4 +34,15 @@ struct PluginGraphicsViewHandler {
         getEdgeByQualifiedName;
 };
 
+struct PluginActiveSceneChangedHandler {
+    std::function<void *(std::string const& id)> const getPluginData;
+    std::function<std::string()> const getSceneName;
+};
+
+struct PluginMainNodeChangedHandler {
+    std::function<void *(std::string const& id)> const getPluginData;
+    std::function<std::string()> const getSceneName;
+    std::function<Entity()> const getEntity;
+};
+
 #endif // DIAGRAM_SERVER_CT_LVTPLG_HANDLERPLUGINGRAPHICSVIEW_H

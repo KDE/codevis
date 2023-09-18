@@ -40,7 +40,13 @@ apt-get update && apt-get install \
     libsqlite3-dev \
     sqlite3 \
     catch2 \
-    extra-cmake-modules
+    extra-cmake-modules \
+    libclang-dev \
+    libquazip1-qt5-1-dev \
+    libqt5svg5-dev \
+    libkf5config-dev \
+    libkf5texteditor-dev \
+    python3-dev \
 ```
 
 Build and test the project

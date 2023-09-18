@@ -2457,7 +2457,7 @@ void GraphicsScene::removeEdge(LakosEntity& fromEntity, LakosEntity& toEntity)
         d->relationVec.erase(std::remove(std::begin(d->relationVec), std::end(d->relationVec), rel),
                              std::end(d->relationVec));
 
-        delete rel;
+        rel->deleteLater();
     }
 
     fromEntity.getTopLevelParent()->calculateEdgeVisibility();

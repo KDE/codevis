@@ -82,6 +82,68 @@ void hookMainNodeChanged(PluginMainNodeChangedHandler *handler)
     pluginData->toggleDataState[pluginData->activeSceneId] = {};
 }
 
+void handleVisibleCase(PluginContextMenuActionHandler *handler, MergeTestDependenciesOnCUT keepTestEntitiesOnCUT)
+{
+    auto *pluginData = getPluginData(handler);
+    auto& activeToggleDataState = pluginData->toggleDataState[pluginData->activeSceneId];
+    auto& toggleState = activeToggleDataState.toggleState;
+    auto& toggledTestEntities = activeToggleDataState.toggledTestEntities;
+    auto& testOnlyEdges = activeToggleDataState.testOnlyEdges;
+
+    toggledTestEntities.clear();
+    for (auto&& e : handler->getAllEntitiesInCurrentView()) {
+        if (!utils::string{e.getQualifiedName()}.endswith(".t")) {
+            continue;
+        }
+        auto& testDriver = e;
+
+        // Create test-only dependencies coming from the component
+        auto component = handler->getEntityByQualifiedName(utils::string{testDriver.getQualifiedName()}.split('.')[0]);
+        if (component) {
+            for (auto&& dependency : testDriver.getDependencies()) {
+                auto from = component->getQualifiedName();
+                auto to = dependency.getQualifiedName();
+
+                if (!handler->hasEdgeByQualifiedName(from, to)) {
+                    testOnlyEdges.emplace_back(from, to);
+                }
+                if (keepTestEntitiesOnCUT == MergeTestDependenciesOnCUT::YES) {
+                    auto newEdge = handler->addEdgeByQualifiedName(from, to);
+                    if (newEdge) {
+                        newEdge->setColor(BAD_TEST_DEPENDENCY_COLOR);
+                        newEdge->setStyle(EdgeStyle::DotLine);
+                    }
+                }
+            }
+        }
+
+        toggledTestEntities.push_back(e.getQualifiedName());
+        e.unloadFromScene();
+    }
+    toggleState = ToggleTestEntitiesState::HIDDEN;
+}
+
+void handleHiddenCase(PluginContextMenuActionHandler *handler)
+{
+    auto *pluginData = getPluginData(handler);
+    auto& activeToggleDataState = pluginData->toggleDataState[pluginData->activeSceneId];
+    auto& toggleState = activeToggleDataState.toggleState;
+    auto& toggledTestEntities = activeToggleDataState.toggledTestEntities;
+    auto& testOnlyEdges = activeToggleDataState.testOnlyEdges;
+
+    for (auto&& [e0, e1] : testOnlyEdges) {
+        handler->removeEdgeByQualifiedName(e0, e1);
+    }
+    testOnlyEdges.clear();
+
+    for (auto&& qName : toggledTestEntities) {
+        handler->loadEntityByQualifiedName(qName);
+    }
+    toggledTestEntities.clear();
+
+    toggleState = ToggleTestEntitiesState::VISIBLE;
+}
+
 void toggleMergeTestEntitiesHelper(PluginContextMenuActionHandler *handler,
                                    MergeTestDependenciesOnCUT keepTestEntitiesOnCUT)
 {
@@ -91,50 +153,13 @@ void toggleMergeTestEntitiesHelper(PluginContextMenuActionHandler *handler,
     auto& toggledTestEntities = activeToggleDataState.toggledTestEntities;
     auto& testOnlyEdges = activeToggleDataState.testOnlyEdges;
 
-    if (toggleState == ToggleTestEntitiesState::VISIBLE) {
-        toggledTestEntities.clear();
-        for (auto&& e : handler->getAllEntitiesInCurrentView()) {
-            if (utils::string{e.getQualifiedName()}.endswith(".t")) {
-                auto& testDriver = e;
-
-                // Create test-only dependencies coming from the component
-                auto component =
-                    handler->getEntityByQualifiedName(utils::string{testDriver.getQualifiedName()}.split('.')[0]);
-                if (component) {
-                    for (auto&& dependency : testDriver.getDependencies()) {
-                        auto from = component->getQualifiedName();
-                        auto to = dependency.getQualifiedName();
-
-                        if (!handler->hasEdgeByQualifiedName(from, to)) {
-                            testOnlyEdges.emplace_back(from, to);
-                        }
-                        if (keepTestEntitiesOnCUT == MergeTestDependenciesOnCUT::YES) {
-                            auto newEdge = handler->addEdgeByQualifiedName(from, to);
-                            if (newEdge) {
-                                newEdge->setColor(BAD_TEST_DEPENDENCY_COLOR);
-                                newEdge->setStyle(EdgeStyle::DotLine);
-                            }
-                        }
-                    }
-                }
-
-                toggledTestEntities.push_back(e.getQualifiedName());
-                e.unloadFromScene();
-            }
-        }
-        toggleState = ToggleTestEntitiesState::HIDDEN;
-    } else if (toggleState == ToggleTestEntitiesState::HIDDEN) {
-        for (auto&& [e0, e1] : testOnlyEdges) {
-            handler->removeEdgeByQualifiedName(e0, e1);
-        }
-        testOnlyEdges.clear();
-
-        for (auto&& qName : toggledTestEntities) {
-            handler->loadEntityByQualifiedName(qName);
-        }
-        toggledTestEntities.clear();
-
-        toggleState = ToggleTestEntitiesState::VISIBLE;
+    switch (toggleState) {
+    case ToggleTestEntitiesState::VISIBLE:
+        handleVisibleCase(handler, keepTestEntitiesOnCUT);
+        break;
+    case ToggleTestEntitiesState::HIDDEN:
+        handleHiddenCase(handler);
+        break;
     }
 }
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component type="desktop">
-  <id>org.kde.kate.desktop</id>
+  <id>org.kde.codevis.desktop</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>Apache</project_license>
+  <project_license>Apache-2.0</project_license>
   <name>Codevis</name>
   <summary>Large Codebase Analyzer</summary>
   <description>
@@ -22,7 +22,7 @@
     </description>
   <url type="homepage">https://invent.kde.org/sdk/codevis/</url>
   <url type="bugtracker">https://bugs.kde.org/enter_bug.cgi?format=guided&amp;product=codevis</url>
-  <url type="help">https://docs.kde.org/?application=codevis</url>
+  <url type="help">https://discuss.kde.org/c/help/6</url>
   <url type="donation">https://www.kde.org/community/donations/?app=codevis&amp;source=appdata</url>
   <screenshots>
     <screenshot type="default">

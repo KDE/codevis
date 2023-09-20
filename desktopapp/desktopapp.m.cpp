@@ -73,7 +73,9 @@ int main(int argc, char *argv[])
     aboutData.setDesktopFileName("org.kde.codevis");
 
     aboutData.addAuthor(i18n("Tomaz Canabrava"), i18n("Developer"), QStringLiteral("tcanabrava@kde.org"));
-    aboutData.addAuthor(i18n("Tarcisio Fischer"), i18n("Developer"), QStringLiteral("tarcisio.fisher@codethink.co.uk"));
+    aboutData.addAuthor(i18n("Tarcisio Fischer"),
+                        i18n("Developer"),
+                        QStringLiteral("tarcisio.fischer@codethink.co.uk"));
     aboutData.addAuthor(i18n("Richard Dale"), i18n("Developer"), QStringLiteral("richard.dale@codethink.co.uk"));
     aboutData.addAuthor(i18n("Tom Eccles"), i18n("Developer"));
     aboutData.addAuthor(i18n("Poppy Singleton"), i18n("Developer"));

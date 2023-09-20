@@ -1,0 +1,15 @@
+[Desktop Entry]
+GenericName=Code Architecture Vizualizer
+Name=Codevis
+MimeType=application/x-codevis-project;
+Comment=Code Architecture Vizualizer
+Exec=codevis_desktop
+StartupNotify=true
+X-KDE-HasTempFileOption=true
+Icon=codevis
+X-DocPath=codevis/index.html
+Type=Application
+InitialPreference=9
+Categories=Qt;KDE;Utility;Development;
+Keywords=text;txt;editor;programming;programmer;development;developer;code;
+StartupWMClass=codevis

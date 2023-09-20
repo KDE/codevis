@@ -115,6 +115,8 @@ install(
   DESTINATION ${KDE_INSTALL_METAINFODIR}
 )
 
+install(FILES org.kde.codevis_desktop.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
 
 set(DEPLOYED_PLUGINS

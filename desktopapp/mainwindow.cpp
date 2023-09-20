@@ -1271,6 +1271,7 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
     }
 
     updateSessionPtr();
+    d_projectFile.setSourceCodePath(d_parseCodebaseDialog_p->sourcePath());
 
     using namespace Codethink::lvtldr;
     auto result = loadAllowedDependenciesFromDepFile(sharedNodeStorage, d_projectFile.sourceCodePath());

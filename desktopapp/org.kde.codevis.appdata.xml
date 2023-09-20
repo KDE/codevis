@@ -19,7 +19,7 @@
       <li>Architectural linters (not just code linters)</li>
       <li>DBus support</li>
     </ul>
-    </description>
+  </description>
   <url type="homepage">https://invent.kde.org/sdk/codevis/</url>
   <url type="bugtracker">https://bugs.kde.org/enter_bug.cgi?format=guided&amp;product=codevis</url>
   <url type="help">https://discuss.kde.org/c/help/6</url>

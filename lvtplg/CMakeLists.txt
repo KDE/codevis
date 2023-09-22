@@ -8,7 +8,6 @@ AddTargetLibrary(
     ct_lvtplg_sharedlibrarydispatcher.cpp
     ct_lvtplg_pythonlibrarydispatcher.cpp
   QT_HEADERS
-    ct_lvtplg_basicpluginhooks.h
     ct_lvtplg_handlercontextmenuaction.h
     ct_lvtplg_handlercodeanalysis.h
     ct_lvtplg_handlersetup.h
@@ -26,6 +25,7 @@ AddTargetLibrary(
 target_include_directories(lvtplg
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/../thirdparty/
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>/plugin-headers/
 )
 
 find_program(CLANG_FORMAT NAMES
@@ -39,33 +39,24 @@ find_program(CLANG_FORMAT NAMES
   clang-format-16
   clang-format-17)
 
-# Todo: Fix this and automatically generate the hooks file on the build folder.
-#
-# add_custom_command(
-#    PRE_BUILD
-#    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lvtplg/generate_plugin_hooks.py ${CMAKE_SOURCE_DIR}/lvtplg/
-#    COMMAND ${CLANG_FORMAT} -i ${CMAKE_SOURCE_DIR}/lvtplg/ct_lvtplg_basicpluginhooks.h
-#    DEPENDS
-#        ${CMAKE_SOURCE_DIR}/lvtplg/generate_plugin_hooks.py
-#    OUTPUT
-#        ${CMAKE_SOURCE_DIR}/lvtplg/ct_lvtplg_basicpluginhooks.h
-#)
-
-function(export_plugin_header FILENAME)
-    MESSAGE("[lvtplg] Adding custom command for plugin header '${FILENAME}'")
-    add_custom_command(
-            TARGET lvtplg POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_SOURCE_DIR}/lvtplg/${FILENAME}
-                ${CMAKE_BINARY_DIR}/plugin-headers/${FILENAME}
-            DEPENDS
-                ${CMAKE_SOURCE_DIR}/lvtplg/${FILENAME}
-    )
-endfunction()
-
-export_plugin_header(ct_lvtplg_basicpluginhooks.h)
-export_plugin_header(ct_lvtplg_handlersetup.h)
-export_plugin_header(ct_lvtplg_handlercontextmenuaction.h)
+set(PLUGIN_HEADERS_DIR ${CMAKE_BINARY_DIR}/plugin-headers)
+file(GLOB lvtclp_handler_headers ${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_handler*.h)
+add_custom_command(
+    OUTPUT ${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PLUGIN_HEADERS_DIR}/
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py ${PLUGIN_HEADERS_DIR}/
+    COMMAND ${CLANG_FORMAT} -i ${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h
+    COMMAND ${CMAKE_COMMAND} -E copy ${lvtclp_handler_headers} ${PLUGIN_HEADERS_DIR}/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_plugindatatypes.h ${PLUGIN_HEADERS_DIR}/
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py
+    COMMENT "[lvtplg] Populating plugin-headers folder..."
+    VERBATIM
+)
+add_custom_target(
+    generate_lvtclp_plugin_headers ALL
+    DEPENDS "${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h"
+)
+add_dependencies(lvtplg generate_lvtclp_plugin_headers)
 
 if (COMPILE_TESTS)
     add_subdirectory(testplugins)

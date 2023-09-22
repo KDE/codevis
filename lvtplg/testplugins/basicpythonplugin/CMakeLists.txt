@@ -24,3 +24,4 @@ add_custom_target(
     basicpythonplugin ALL
     DEPENDS ${copiedFiles}
 )
+add_dependencies(basicpythonplugin generate_lvtclp_plugin_headers)

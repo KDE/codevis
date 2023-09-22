@@ -18,3 +18,4 @@ set_property(TARGET basicplugin PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_custom_command(TARGET basicplugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/README.md README.md
 )
+add_dependencies(basicplugin generate_lvtclp_plugin_headers)

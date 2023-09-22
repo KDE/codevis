@@ -30,3 +30,5 @@ add_custom_target(
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/README.md
 )
 add_dependencies(${PLUGIN_NAME} ${PLUGIN_NAME}_extra_files)
+
+add_dependencies(${PLUGIN_NAME} generate_lvtclp_plugin_headers)

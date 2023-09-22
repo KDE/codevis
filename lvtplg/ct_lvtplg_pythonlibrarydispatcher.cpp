@@ -21,13 +21,35 @@
 
 namespace Codethink::lvtplg {
 
-const std::string PythonLibraryDispatcher::pluginDataId = "private::pythonLibData";
+template<typename T>
+auto pyRegisterPluginData(T const& self, std::string const& id, py::object pyObject)
+{
+    auto *rawPtr = static_cast<void *>(pyObject.ptr());
+    Py_XINCREF(rawPtr);
+    return self.registerPluginData(id, rawPtr);
+}
 
+template<typename T>
+auto pyGetPluginData(T const& self, std::string const& id)
+{
+    auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
+    return py::reinterpret_borrow<py::object>(rawPtr);
+}
+
+template<typename T>
+auto pyUnregisterPluginData(T const& self, std::string const& id)
+{
+    auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
+    Py_XDECREF(rawPtr);
+    return self.unregisterPluginData(id);
+}
 }
 
 // NOLINTBEGIN
 PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
 {
+    using namespace Codethink::lvtplg;
+
     m.doc() = "Module containing entities exposed to python for code generation scripts";
 
     py::enum_<EntityType>(m, "EntityType")
@@ -55,32 +77,15 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
     {
         using T = PluginSetupHandler;
         py::class_<T>(m, "PluginSetupHandler")
-            .def("registerPluginData",
-                 [](T const& self, std::string const& id, py::object pyObject) {
-                     auto *rawPtr = static_cast<void *>(pyObject.ptr());
-                     Py_XINCREF(rawPtr);
-                     self.registerPluginData(id, rawPtr);
-                 })
-            .def("getPluginData",
-                 [](T const& self, std::string const& id) {
-                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
-                     return py::reinterpret_borrow<py::object>(rawPtr);
-                 })
-            .def("unregisterPluginData", [](T const& self, std::string const& id) {
-                auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
-                Py_XDECREF(rawPtr);
-                self.unregisterPluginData(id);
-            });
+            .def("registerPluginData", &pyRegisterPluginData<T>)
+            .def("getPluginData", &pyGetPluginData<T>)
+            .def("unregisterPluginData", &pyUnregisterPluginData<T>);
     }
 
     {
         using T = PluginContextMenuHandler;
         py::class_<T>(m, "PluginContextMenuHandler")
-            .def("getPluginData",
-                 [](T const& self, std::string const& id) {
-                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
-                     return py::reinterpret_borrow<py::object>(rawPtr);
-                 })
+            .def("getPluginData", &pyGetPluginData<T>)
             .def_readonly("getAllEntitiesInCurrentView", &T::getAllEntitiesInCurrentView)
             .def_readonly("getEntityByQualifiedName", &T::getEntityByQualifiedName)
             .def_readonly("registerContextMenu", &T::registerContextMenu);
@@ -89,11 +94,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
     {
         using T = PluginContextMenuActionHandler;
         py::class_<T>(m, "PluginContextMenuActionHandler")
-            .def("getPluginData",
-                 [](T const& self, std::string const& id) {
-                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
-                     return py::reinterpret_borrow<py::object>(rawPtr);
-                 })
+            .def("getPluginData", &pyGetPluginData<T>)
             .def_readonly("getAllEntitiesInCurrentView", &T::getAllEntitiesInCurrentView)
             .def_readonly("getEntityByQualifiedName", &T::getEntityByQualifiedName);
     }
@@ -101,11 +102,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
     {
         using T = PluginDockWidgetHandler;
         py::class_<T>(m, "PluginDockWidgetHandler")
-            .def("getPluginData",
-                 [](T const& self, std::string const& id) {
-                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
-                     return py::reinterpret_borrow<py::object>(rawPtr);
-                 })
+            .def("getPluginData", &pyGetPluginData<T>)
             .def_readonly("createNewDock", &T::createNewDock)
             .def("addDockWdgTextField",
                  [](T const& self, std::string const& dockId, std::string const& title, py::object dataModel) {
@@ -116,11 +113,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
     {
         using T = PluginEntityReportHandler;
         py::class_<T>(m, "PluginEntityReportHandler")
-            .def("getPluginData",
-                 [](T const& self, std::string const& id) {
-                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
-                     return py::reinterpret_borrow<py::object>(rawPtr);
-                 })
+            .def("getPluginData", &pyGetPluginData<T>)
             .def_readonly("getEntity", &T::getEntity)
             .def_readonly("addReport", &T::addReport);
     }
@@ -128,11 +121,7 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
     {
         using T = PluginEntityReportActionHandler;
         py::class_<T>(m, "PluginEntityReportActionHandler")
-            .def("getPluginData",
-                 [](T const& self, std::string const& id) {
-                     auto *rawPtr = static_cast<PyObject *>(self.getPluginData(id));
-                     return py::reinterpret_borrow<py::object>(rawPtr);
-                 })
+            .def("getPluginData", &pyGetPluginData<T>)
             .def_readonly("getEntity", &T::getEntity)
             .def_readonly("setReportContents", &T::setReportContents);
     }

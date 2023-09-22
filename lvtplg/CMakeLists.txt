@@ -58,6 +58,20 @@ add_custom_target(
 )
 add_dependencies(lvtplg generate_lvtclp_plugin_headers)
 
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_hookbindings.inc.cpp
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_python_hook_bindings.py ${CMAKE_BINARY_DIR}/lvtplg/
+    COMMAND ${CLANG_FORMAT} -i ${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_hookbindings.inc.cpp
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/generate_python_hook_bindings.py
+    COMMENT "[lvtplg] Generating python hook bindings..."
+    VERBATIM
+)
+add_custom_target(
+    generate_lvtclp_pyhook_bindings ALL
+    DEPENDS "${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_hookbindings.inc.cpp"
+)
+add_dependencies(lvtplg generate_lvtclp_pyhook_bindings)
+
 if (COMPILE_TESTS)
     add_subdirectory(testplugins)
 

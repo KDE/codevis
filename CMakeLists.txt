@@ -115,6 +115,8 @@ if (BUILD_DESKTOP_APP)
         TextEditor
         XmlGui
         I18n
+        OPTIONAL_COMPONENTS
+        DocTools
     )
     if (USE_QT_WEBENGINE)
         find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS WebEngineWidgets)
@@ -292,6 +294,7 @@ if (BUILD_DESKTOP_APP)
         DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
+    add_subdirectory(doc)
     add_subdirectory(lvtmdl)
     add_subdirectory(lvtclr)
     add_subdirectory(lvtqtc)
@@ -325,3 +328,4 @@ install(
   DESTINATION
     ${KDE_INSTALL_DATAROOTDIR}/codevis/database-spec
 )
+

@@ -1,0 +1,123 @@
+<?xml version="1.0" ?>
+<!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.5-Based Variant V1.1//EN"
+"dtd/kdedbx45.dtd" [
+  <!ENTITY gdb "<acronym>GDB</acronym>">
+  <!ENTITY codevis "<acronym>codevis</acronym>">
+  <!ENTITY kparts "<acronym>KParts</acronym>">
+
+  <!ENTITY Tomaz.Canabrava '<personname><firstname>Tomaz</firstname><surname>Canabrava</surname></personname>'>
+  <!ENTITY Tomaz.Canabrava.mail '<email>tcanabrava@kde.org</email>'>
+  <!ENTITY Tarcisio.Fischer '<personname><firstname>Tarcisio</firstname><surname>Fischer</surname></personname>'>
+  <!ENTITY Tarcisio.Fischer.mail '<email>tarcisio.fischer@codethink.co.uk</email>'>
+  <!ENTITY underApache "Apache 2.0 License">
+
+  <!-- If we want more chapters, we copy the configuring one, and adapt. -->
+  <!ENTITY configuring-chapter SYSTEM "configuring.docbook">
+  <!ENTITY % addindex "IGNORE">
+  <!ENTITY % English "INCLUDE"><!-- change language only here -->
+]>
+
+<book id="codevis" lang="&language;">
+<title>The &codevis; Handbook</title>
+
+<bookinfo>
+  <authorgroup>
+    <author>&Tomaz.Canabrava; &Tomaz.Canabrava.mail;</author>
+    <!-- TRANS:ROLES_OF_TRANSLATORS -->
+  </authorgroup>
+  <copyright>
+    <year>2023</year>
+    <holder>&Tomaz.Canabrava;</holder>
+  </copyright>
+  <date>2023-10-22</date>
+  <releaseinfo>Applications 24.00</releaseinfo>
+  <abstract>
+    <para>&codevis; is a Large Scale Software visualizer by &kde;.</para>
+    <para>This handbook documents &codevis; Version 24.00</para>
+  </abstract>
+  <keywordset>
+    <keyword>KDE</keyword>
+    <keyword>kdebase</keyword>
+    <keyword>Codevis</keyword>
+    <keyword>text</keyword>
+    <keyword>editor</keyword>
+    <keyword>programmer</keyword>
+    <keyword>programming</keyword>
+    <keyword>projects</keyword>
+    <keyword>MDI</keyword>
+    <keyword>Multi</keyword>
+    <keyword>Document</keyword>
+    <keyword>Interface</keyword>
+    <keyword>terminal</keyword>
+    <keyword>console</keyword>
+  </keywordset>
+</bookinfo>
+
+<chapter id="introduction">
+  <title>Introduction</title>
+
+  <para>
+  Welcome to &codevis;, a programmer's best friend &kde;.
+  Some of &codevis;'s many features includes software architecture visualization,
+  manipulation, code generation from diagrams, diagrams generation from source code,
+  plugins, static analysis, visual static analysis and much more. 
+  </para>
+
+  <para>
+  But &codevis; is more than an architecture helper. Its ability to open
+  several files at once makes it ideal for visualizing different architectures at once,
+  and experimenting. Many architectural issues were found and fixed on &codevis; itself by
+  analyzing it's source code.
+  </para>
+
+  <para>
+    <mediaobject>
+      <imageobject>
+        <imagedata format="PNG" fileref="images/codevis.png"/>
+      </imageobject>
+      <caption>
+        <para>Editing this manual...</para>
+      </caption>
+    </mediaobject>
+  </para>
+
+</chapter>
+
+&configuring-chapter;
+
+<chapter id="credits">
+  <title>Credits and License</title>
+  <para>
+  &codevis;. Program copyright 2023 by the &codevis; developer team.
+  </para>
+
+  <variablelist>
+    <title>The &codevis; team:</title>
+    <varlistentry>
+      <term>&Tomaz.Canabrava; &Tomaz.Canabrava.mail;</term>
+      <listitem>
+        <para>Developer</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>&Tarcisio.Fischer; &Tarcisio.Fischer.mail;</term>
+      <listitem>
+        <para>Developer</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  <para>Documentation copyright 2023 &Tomaz.Canabrava;
+  &Tomaz.Canabrava.mail;</para>
+</chapter>
+</book>
+
+<!--
+Local Variables:
+mode: sgml
+sgml-namecase-general: t
+sgml-namecase-entity: nil
+sgml-general-insert-case: lower
+sgml-minimize-attributes: nil
+sgml-omittag: nil
+End:
+-->

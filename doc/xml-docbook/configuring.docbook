@@ -1,0 +1,52 @@
+<chapter id="configuring-codevis">
+    <chapterinfo>
+        <authorgroup>
+            <author>&Anders.Lund; &Anders.Lund.mail;</author>
+            <!-- TRANS:ROLES_OF_TRANSLATORS -->
+        </authorgroup>
+    </chapterinfo>
+<title>Configuring &codevis;</title>
+
+<sect1 id="configuring-overview">
+    <title>Overview</title>
+<para>
+    <indexterm>
+        <primary>configure</primary>
+        <secondary>settings</secondary>
+        <tertiary>preferences</tertiary>
+    </indexterm>
+    <anchor id="find"/>
+    <anchor id="find-again"/>
+    <!-- <anchor id="print"/> -->
+    <anchor id="replace"/>
+    <!-- <anchor id="save"/> -->
+    <anchor id="undo"/>
+    <anchor id="redo"/>
+    
+    &codevis; offers several means of tweaking the application to behave as desired.
+    The most important ones are:
+</para>
+
+<variablelist>
+    <varlistentry>
+        <term id="configure">The Configuration Dialog</term>
+        <listitem>
+            <para>
+                The main configuration tool, allowing you to configure the &codevis; application,
+                the editor component and the usage of plugins.
+            </para>
+        </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term id="settings">The <guimenu>Settings</guimenu> Menu</term>
+        <listitem>
+            <para>
+                Allows you to change often used settings, and to
+                launch the configuration dialogs.
+            </para>
+        </listitem>
+    </varlistentry>
+</variablelist>
+</sect1>
+
+</chapter>

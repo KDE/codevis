@@ -1,0 +1,84 @@
+<?xml version="1.0" ?>
+<!DOCTYPE refentry PUBLIC "-//KDE//DTD DocBook XML V4.5-Based Variant V1.1//EN" "dtd/kdedbx45.dtd" [
+  <!ENTITY codevis "<acronym>codevis</acronym>">
+  <!ENTITY Tomaz.Canabrava '<personname><firstname>Tomaz</firstname><surname>Canabrava</surname></personname>'>
+  <!ENTITY Tomaz.Canabrava.mail '<email>tcanabrava@kde.org</email>'>
+  <!ENTITY Tarcisio.Fischer '<personname><firstname>Tarcisio</firstname><surname>Fischer</surname></personname>'>
+  <!ENTITY Tarcisio.Fischer.mail '<email>tarcisio.fischer@codethink.co.uk</email>'>
+  <!ENTITY underApache "Apache 2.0 License">
+  <!ENTITY % English "INCLUDE">
+]>
+
+<refentry lang="&language;">
+<refentryinfo>
+    <title>&codevis; User's Manual</title>
+    <author>&Tomaz.Canabrava; &Tomaz.Canabrava.mail;</author>
+    <date>2024-00-00</date>
+    <releaseinfo>KDE Gear 24.00</releaseinfo>
+    <productname>KDE Gear</productname>
+</refentryinfo>
+
+<refmeta>
+<refentrytitle><command>codevis_desktop</command></refentrytitle>
+<manvolnum>1</manvolnum>
+</refmeta>
+
+<refnamediv>
+<refname><command>codevis_desktop</command></refname>
+<refpurpose>Large Scale Software Architectural Visualization by &kde;</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+    <cmdsynopsis>
+        <!-- add a list of command line arguments here. -->
+        <command>codevis_desktop</command>
+        <group choice="opt"><option>--help</option></group>
+    </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+<title>Description</title>
+<para>&codevis; is the &kde; Large Scale Software Architectural analysis tool. </para>
+<para>
+  Some of &codevis;'s many features includes software architecture visualization,
+  manipulation, code generation from diagrams, diagrams generation from source code,
+  plugins, static analysis, visual static analysis and much more. 
+</para>
+
+<para>
+  But &codevis; is more than an architecture helper. Its ability to open
+  several files at once makes it ideal for visualizing different architectures at once,
+  and experimenting. Many architectural issues were found and fixed on &codevis; itself by
+  analyzing it's source code.
+</para>
+
+</refsect1>
+
+<refsect1>
+    <title>Options</title>
+    <variablelist>
+        <!-- Add more entities here with longer explanations -->
+        <varlistentry>
+            <term><option>--help</option></term>
+            <listitem><para>Shows the help and exits</para></listitem>
+        </varlistentry>
+    </variablelist>
+</refsect1>
+
+<refsect1>
+<title>See Also</title>
+
+<simplelist><member>More detailed user documentation is available from <ulink
+url="help:/codevis">help:/codevis</ulink>
+(either enter this &URL; into a web-browser;, or run
+<userinput><command>khelpcenter</command>
+<parameter>help:/codevis</parameter></userinput>).</member>
+<member>kf5options(7)</member>
+<member>qt5options(7)</member>
+<member>There is also further information available at the <ulink
+url="https://invent.kde.org/sdk/codevis/">&codevis; website</ulink>.
+</member>
+</simplelist>
+</refsect1>
+
+</refentry>

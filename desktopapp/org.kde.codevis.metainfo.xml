@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component type="desktop">
-  <id>org.kde.codevis.desktop</id>
+  <id>org.kde.codevis</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>Apache-2.0</project_license>
   <name>Codevis</name>
@@ -32,7 +32,7 @@
   </screenshots>
   <project_group>KDE</project_group>
   <provides>
-    <binary>codevis</binary>
+    <binary>codevis_desktop</binary>
   </provides>
   <!-- No Windows Store Yet.
   <custom>

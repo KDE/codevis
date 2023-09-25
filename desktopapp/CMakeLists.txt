@@ -111,11 +111,11 @@ install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUI5DIR}/codevis)
 
 install(
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.appdata.xml
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml
   DESTINATION ${KDE_INSTALL_METAINFODIR}
 )
 
-install(FILES org.kde.codevis_desktop.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
 
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
 

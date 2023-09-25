@@ -92,35 +92,17 @@ void PluginManager::reloadPlugin(const QString& pluginFolder)
 void PluginManager::callHooksSetupPlugin()
 {
     callAllHooks<hookSetupPlugin_f>("hookSetupPlugin",
-                                    PluginSetupHandler{/* registerPluginData */
-                                                       [this](std::string const& id, void *data) {
-                                                           pluginData[id] = data;
-                                                       },
-                                                       /* getPluginData */
-                                                       [this](std::string const& id) {
-                                                           return pluginData.at(id);
-                                                       },
-                                                       /* unregisterPluginData */
-                                                       [this](std::string const& id) {
-                                                           pluginData.erase(id);
-                                                       }});
+                                    PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
+                                                       std::bind_front(&PluginManager::getPluginData, this),
+                                                       std::bind_front(&PluginManager::unregisterPluginData, this)});
 }
 
 void PluginManager::callHooksTeardownPlugin()
 {
     callAllHooks<hookTeardownPlugin_f>("hookTeardownPlugin",
-                                       PluginSetupHandler{/* registerPluginData */
-                                                          [this](std::string const& id, void *data) {
-                                                              pluginData[id] = data;
-                                                          },
-                                                          /* getPluginData */
-                                                          [this](std::string const& id) {
-                                                              return pluginData.at(id);
-                                                          },
-                                                          /* unregisterPluginData */
-                                                          [this](std::string const& id) {
-                                                              pluginData.erase(id);
-                                                          }});
+                                       PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
+                                                          std::bind_front(&PluginManager::getPluginData, this),
+                                                          std::bind_front(&PluginManager::unregisterPluginData, this)});
 }
 
 void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& getAllEntitiesInCurrentView,
@@ -128,48 +110,43 @@ void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& ge
                                          getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
                                          registerContextMenu_f const& registerContextMenu)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
-    callAllHooks<hookGraphicsViewContextMenu_f>("hookGraphicsViewContextMenu",
-                                                PluginContextMenuHandler{getPluginData,
-                                                                         getAllEntitiesInCurrentView,
-                                                                         getEntityByQualifiedName,
-                                                                         registerContextMenu,
-                                                                         getEdgeByQualifiedName});
+    callAllHooks<hookGraphicsViewContextMenu_f>(
+        "hookGraphicsViewContextMenu",
+        PluginContextMenuHandler{std::bind_front(&PluginManager::getPluginData, this),
+                                 getAllEntitiesInCurrentView,
+                                 getEntityByQualifiedName,
+                                 registerContextMenu,
+                                 getEdgeByQualifiedName});
 }
 
 void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPluginDock,
                                              addDockWdgTextField_f const& addDockWdgTextField,
                                              addTree_f const& addTree)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
-    callAllHooks<hookSetupDockWidget_f>(
-        "hookSetupDockWidget",
-        PluginDockWidgetHandler{getPluginData, createPluginDock, addDockWdgTextField, addTree});
+    callAllHooks<hookSetupDockWidget_f>("hookSetupDockWidget",
+                                        PluginDockWidgetHandler{std::bind_front(&PluginManager::getPluginData, this),
+                                                                createPluginDock,
+                                                                addDockWdgTextField,
+                                                                addTree});
 }
 
 void PluginManager::callHooksSetupEntityReport(getEntity_f const& getEntity, addReport_f const& addReport)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
-    callAllHooks<hookSetupEntityReport_f>("hookSetupEntityReport",
-                                          PluginEntityReportHandler{getPluginData, getEntity, addReport});
+    callAllHooks<hookSetupEntityReport_f>(
+        "hookSetupEntityReport",
+        PluginEntityReportHandler{std::bind_front(&PluginManager::getPluginData, this), getEntity, addReport});
 }
 
 void PluginManager::callHooksPhysicalParserOnHeaderFound(getSourceFile_f const& getSourceFile,
                                                          getIncludedFile_f const& getIncludedFile,
                                                          getLineNo_f const& getLineNo)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
     callAllHooks<hookPhysicalParserOnHeaderFound_f>(
         "hookPhysicalParserOnHeaderFound",
-        PluginPhysicalParserOnHeaderFoundHandler{getPluginData, getSourceFile, getIncludedFile, getLineNo});
+        PluginPhysicalParserOnHeaderFoundHandler{std::bind_front(&PluginManager::getPluginData, this),
+                                                 getSourceFile,
+                                                 getIncludedFile,
+                                                 getLineNo});
 }
 
 void PluginManager::callHooksPluginLogicalParserOnCppCommentFoundHandler(getFilename_f const& getFilename,
@@ -177,49 +154,51 @@ void PluginManager::callHooksPluginLogicalParserOnCppCommentFoundHandler(getFile
                                                                          getStartLine_f const& getStartLine,
                                                                          getEndLine_f const& getEndLine)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
-    callAllHooks<hookLogicalParserOnCppCommentFound_f>("hookLogicalParserOnCppCommentFound",
-                                                       PluginLogicalParserOnCppCommentFoundHandler{getPluginData,
-                                                                                                   getFilename,
-                                                                                                   getBriefText,
-                                                                                                   getStartLine,
-                                                                                                   getEndLine});
+    callAllHooks<hookLogicalParserOnCppCommentFound_f>(
+        "hookLogicalParserOnCppCommentFound",
+        PluginLogicalParserOnCppCommentFoundHandler{std::bind_front(&PluginManager::getPluginData, this),
+                                                    getFilename,
+                                                    getBriefText,
+                                                    getStartLine,
+                                                    getEndLine});
 }
 
 void PluginManager::callHooksOnParseCompleted(runQueryOnDatabase_f const& runQueryOnDatabase)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
-    callAllHooks<hookOnParseCompleted_f>("hookOnParseCompleted",
-                                         PluginParseCompletedHandler{getPluginData, runQueryOnDatabase});
+    callAllHooks<hookOnParseCompleted_f>(
+        "hookOnParseCompleted",
+        PluginParseCompletedHandler{std::bind_front(&PluginManager::getPluginData, this), runQueryOnDatabase});
 }
 
 void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneName)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
-    callAllHooks<hookActiveSceneChanged_f>("hookActiveSceneChanged",
-                                           PluginActiveSceneChangedHandler{getPluginData, getSceneName});
+    callAllHooks<hookActiveSceneChanged_f>(
+        "hookActiveSceneChanged",
+        PluginActiveSceneChangedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName});
 }
 
 void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
                                              mainNodeChanged_getEntity_f const& getEntity)
 {
-    auto getPluginData = [this](auto&& id) {
-        return this->getPluginData(id);
-    };
-    callAllHooks<hookMainNodeChanged_f>("hookMainNodeChanged",
-                                        PluginMainNodeChangedHandler{getPluginData, getSceneName, getEntity});
+    callAllHooks<hookMainNodeChanged_f>(
+        "hookMainNodeChanged",
+        PluginMainNodeChangedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName, getEntity});
+}
+
+void PluginManager::registerPluginData(std::string const& id, void *data)
+{
+    this->pluginData[id] = data;
+}
+
+void PluginManager::unregisterPluginData(std::string const& id)
+{
+    this->pluginData.erase(id);
 }
 
 void *PluginManager::getPluginData(std::string const& id) const
 {
     try {
-        return pluginData.at(id);
+        return this->pluginData.at(id);
     } catch (std::out_of_range const&) {
         return nullptr;
     }
@@ -227,12 +206,12 @@ void *PluginManager::getPluginData(std::string const& id) const
 
 void PluginManager::registerPluginQObject(std::string const& id, QObject *object)
 {
-    pluginQObjects[id] = object;
+    this->pluginQObjects[id] = object;
 }
 
 QObject *PluginManager::getPluginQObject(std::string const& id) const
 {
-    return pluginQObjects.at(id);
+    return this->pluginQObjects.at(id);
 }
 
 } // namespace Codethink::lvtplg

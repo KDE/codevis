@@ -111,6 +111,8 @@ class LVTPLG_EXPORT PluginManager {
     void callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
                                   mainNodeChanged_getEntity_f const& getEntity);
 
+    void registerPluginData(std::string const& id, void *data);
+    void unregisterPluginData(std::string const& id);
     void *getPluginData(std::string const& id) const;
 
     void registerPluginQObject(std::string const& id, QObject *object);

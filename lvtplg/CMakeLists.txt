@@ -42,14 +42,16 @@ find_program(CLANG_FORMAT NAMES
 set(PLUGIN_HEADERS_DIR ${CMAKE_BINARY_DIR}/plugin-headers)
 file(GLOB lvtclp_handler_headers ${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_handler*.h)
 add_custom_command(
-    OUTPUT ${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h
+    OUTPUT
+        "${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h"
+        "${PLUGIN_HEADERS_DIR}/ct_lvtplg_plugindatatypes.h"
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PLUGIN_HEADERS_DIR}/
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py ${PLUGIN_HEADERS_DIR}/
     COMMAND ${CLANG_FORMAT} -i ${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h
     COMMAND ${CMAKE_COMMAND} -E copy ${lvtclp_handler_headers} ${PLUGIN_HEADERS_DIR}/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_plugindatatypes.h ${PLUGIN_HEADERS_DIR}/
     DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py
+        "${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_plugindatatypes.h"
         ${lvtclp_handler_headers}
     COMMENT "[lvtplg] Populating plugin-headers folder..."

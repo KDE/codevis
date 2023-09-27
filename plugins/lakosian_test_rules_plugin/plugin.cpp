@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <map>
+#include <unordered_set>
 #include <utils.h>
 
 enum class ToggleTestEntitiesState { VISIBLE, HIDDEN };
@@ -175,7 +176,7 @@ void toggleMergeTestEntities(PluginContextMenuActionHandler *handler)
 
 void paintBadTestComponents(PluginContextMenuActionHandler *handler)
 {
-    for (auto&& e : handler->getAllEntitiesInCurrentView()) {
+    for (auto const& e : handler->getAllEntitiesInCurrentView()) {
         if (!utils::string{e.getQualifiedName()}.endswith(".t")) {
             continue;
         }
@@ -189,7 +190,7 @@ void paintBadTestComponents(PluginContextMenuActionHandler *handler)
 
         // CUT (Component-Under-Test)
         auto& cut = *component;
-        for (auto&& dependency : testDriver.getDependencies()) {
+        for (auto const& dependency : testDriver.getDependencies()) {
             // It is ok for the test driver to depend on the CUT
             if (dependency.getName() == cut.getName()) {
                 continue;
@@ -213,9 +214,75 @@ void paintBadTestComponents(PluginContextMenuActionHandler *handler)
     }
 }
 
+void ignoreTestOnlyDependenciesPkgLvl(PluginContextMenuActionHandler *handler)
+{
+    auto getPkgId = [handler](Entity const& pkg) -> std::optional<long long> {
+        auto result = handler->runQueryOnDatabase("SELECT id FROM source_package WHERE qualified_name = \""
+                                                  + pkg.getQualifiedName() + "\"");
+        if (!result.empty() && !result[0].empty() && result[0][0].has_value()) {
+            return std::any_cast<int>(result[0][0].value());
+        }
+        return std::nullopt;
+    };
+
+    for (auto const& e : handler->getAllEntitiesInCurrentView()) {
+        if (e.getType() != EntityType::Package) {
+            continue;
+        }
+
+        auto& srcPkg = e;
+        auto maybeSrcPkgId = getPkgId(srcPkg);
+        if (!maybeSrcPkgId) {
+            continue;
+        }
+        auto srcPkgId = *maybeSrcPkgId;
+        for (auto const& trgPkg : srcPkg.getDependencies()) {
+            // There is a package-level dependency between srcPkg and trgPkg. The code below finds out if it is a
+            // test-only dependency (meaning, only *.t packages on srcPkg depends on a package on trgPkg).
+            // Test-only dependencies will then be removed at package level (for visualization only).
+            auto maybeTrgPkgId = getPkgId(trgPkg);
+            if (!maybeTrgPkgId) {
+                continue;
+            }
+            auto trgPkgId = *maybeTrgPkgId;
+            auto query = "SELECT COUNT(*)\n"
+                "\tFROM source_component c0\n"
+                "\tJOIN source_component c1\n"
+                "\tINNER JOIN dependencies pkg_d ON pkg_d.source_id = c0.package_id AND pkg_d.target_id = c1.package_id\n"
+                "\tINNER JOIN component_relation cmp_d ON cmp_d.source_id = c0.id AND cmp_d.target_id = c1.id\n"
+                "\tWHERE 1\n"
+                "\tAND c0.name NOT LIKE \"%.t\""
+                "\tAND pkg_d.source_id = " + std::to_string(srcPkgId) + "\n"
+                "\tAND pkg_d.target_id = " + std::to_string(trgPkgId) + "\n";
+            auto result = handler->runQueryOnDatabase(query);
+            if (!result.empty() && !result[0].empty() && result[0][0].has_value()) {
+                auto nNonTestDependencies = std::stoi(std::any_cast<std::string>(result[0][0].value()));
+                if (nNonTestDependencies == 0) {
+                    // There are only test dependencies between packages.
+                    handler->removeEdgeByQualifiedName(srcPkg.getQualifiedName(), trgPkg.getQualifiedName());
+                }
+            }
+        }
+    }
+}
+
+enum class ContextMenuType { ComponentScene, PackageScene };
+
 void hookGraphicsViewContextMenu(PluginContextMenuHandler *handler)
 {
-    handler->registerContextMenu("Toggle test entities", &toggleTestEntities);
-    handler->registerContextMenu("Toggle merge test entities with their components", &toggleMergeTestEntities);
-    handler->registerContextMenu("Mark invalid test dependencies", &paintBadTestComponents);
+    auto ctxMenuType = ContextMenuType::PackageScene;
+    for (auto const& e : handler->getAllEntitiesInCurrentView()) {
+        if (e.getType() == EntityType::Component) {
+            ctxMenuType = ContextMenuType::ComponentScene;
+            break;
+        }
+    }
+
+    if (ctxMenuType == ContextMenuType::PackageScene) {
+        handler->registerContextMenu("Ignore test only dependencies", &ignoreTestOnlyDependenciesPkgLvl);
+    } else {
+        handler->registerContextMenu("Toggle test entities", &toggleTestEntities);
+        handler->registerContextMenu("Toggle merge test entities with their components", &toggleMergeTestEntities);
+        handler->registerContextMenu("Mark invalid test dependencies", &paintBadTestComponents);
+    }
 }

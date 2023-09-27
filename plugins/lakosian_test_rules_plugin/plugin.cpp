@@ -245,15 +245,19 @@ void ignoreTestOnlyDependenciesPkgLvl(PluginContextMenuActionHandler *handler)
                 continue;
             }
             auto trgPkgId = *maybeTrgPkgId;
-            auto query = "SELECT COUNT(*)\n"
-                "\tFROM source_component c0\n"
-                "\tJOIN source_component c1\n"
-                "\tINNER JOIN dependencies pkg_d ON pkg_d.source_id = c0.package_id AND pkg_d.target_id = c1.package_id\n"
-                "\tINNER JOIN component_relation cmp_d ON cmp_d.source_id = c0.id AND cmp_d.target_id = c1.id\n"
-                "\tWHERE 1\n"
-                "\tAND c0.name NOT LIKE \"%.t\""
-                "\tAND pkg_d.source_id = " + std::to_string(srcPkgId) + "\n"
-                "\tAND pkg_d.target_id = " + std::to_string(trgPkgId) + "\n";
+            auto query = R"(
+    SELECT COUNT(*)
+    FROM source_component c0
+    JOIN source_component c1
+    INNER JOIN dependencies pkg_d ON pkg_d.source_id = c0.package_id AND pkg_d.target_id = c1.package_id
+    INNER JOIN component_relation cmp_d ON cmp_d.source_id = c0.id AND cmp_d.target_id = c1.id
+    WHERE 1
+    AND c0.name NOT LIKE "%.t"
+    AND pkg_d.source_id = ")"
+                + std::to_string(srcPkgId) + R"("
+    AND pkg_d.target_id = ")"
+                + std::to_string(trgPkgId) + R"("
+)";
             auto result = handler->runQueryOnDatabase(query);
             if (!result.empty() && !result[0].empty() && result[0][0].has_value()) {
                 auto nNonTestDependencies = std::stoi(std::any_cast<std::string>(result[0][0].value()));

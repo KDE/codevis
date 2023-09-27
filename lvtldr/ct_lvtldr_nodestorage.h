@@ -20,11 +20,12 @@
 #ifndef INCLUDED_CT_LVTLDR_NODESTORAGE
 #define INCLUDED_CT_LVTLDR_NODESTORAGE
 
-//@PURPOSE: In-Memory API for serialization / desserialization.
+//@PURPOSE: In-Memory API for serialization / deserialization.
 //
 //@CLASSES:
 //  lvtldr::NodeStorage
 
+#include <ct_lvtldr_sociutils.h>
 #include <ct_lvtshr_uniqueid.h>
 #include <lvtldr_export.h>
 
@@ -130,6 +131,8 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
     // Append-only store of LakosianNodes with fast lookup
 
   private:
+    using DatabaseHandlerType = SociDatabaseHandler;
+
     // TYPES
     struct Private;
 
@@ -195,7 +198,7 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
 
     void clear();
 
-    soci::session& getSociSession() const;
+    std::invoke_result_t<decltype(&DatabaseHandlerType::getSession), DatabaseHandlerType> getSession();
 
     // Signals
     Q_SIGNAL void storageCleared();

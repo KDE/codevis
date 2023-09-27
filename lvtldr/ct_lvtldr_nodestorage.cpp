@@ -24,7 +24,6 @@
 #include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtldr_packagenode.h>
 #include <ct_lvtldr_repositorynode.h>
-#include <ct_lvtldr_sociutils.h>
 #include <ct_lvtldr_typenode.h>
 
 #include <ct_lvtshr_stringhelpers.h>
@@ -54,7 +53,7 @@ NodeStorage::~NodeStorage() noexcept = default;
 
 void NodeStorage::setDatabaseSourcePath(std::string const& path)
 {
-    d->dbHandler = std::make_unique<SociDatabaseHandler>(path);
+    d->dbHandler = std::make_unique<DatabaseHandlerType>(path);
     clear();
     preloadHighLevelComponents();
 }
@@ -728,11 +727,6 @@ void NodeStorage::clear()
     d->nodes.clear();
 }
 
-soci::session& NodeStorage::getSociSession() const
-{
-    return dynamic_cast<SociDatabaseHandler *>(d->dbHandler.get())->getSociSession();
-}
-
 template<typename LDR_TYPE>
 auto getFieldsByQualifiedName(DatabaseHandler& dbHandler, const std::string& qualifiedName)
 {
@@ -822,4 +816,9 @@ void NodeStorage::updateAndNotifyNodeRenameV2(LakosianNode *node)
     d->dbHandler->updateFields(LDR_TYPE::from(node)->getFields());
     Q_EMIT nodeNameChanged(node);
     Q_EMIT storageChanged();
+}
+
+std::invoke_result_t<decltype(&NodeStorage::getSession), NodeStorage> NodeStorage::getSession()
+{
+    return dynamic_cast<DatabaseHandlerType *>(d->dbHandler.get())->getSession();
 }

@@ -379,7 +379,7 @@ class SociDatabaseHandler : public DatabaseHandler {
         tr.commit();
     }
 
-    soci::session& getSociSession()
+    soci::session& getSession()
     {
         return d_db;
     }

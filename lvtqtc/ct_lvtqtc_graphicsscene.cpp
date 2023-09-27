@@ -1899,7 +1899,7 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
                     return PluginManagerQtUtils::createPluginTreeWidgetHandler(pm, id, this);
                 };
                 auto runQueryOnDatabase = [this](std::string const& dbQuery) -> std::vector<std::vector<RawDBData>> {
-                    return lvtmdb::SociHelper::runSingleQuery(d->nodeStorage.getSociSession(), dbQuery);
+                    return lvtmdb::SociHelper::runSingleQuery(d->nodeStorage.getSession(), dbQuery);
                 };
                 auto handler = PluginContextMenuActionHandler{getPluginData,
                                                               getAllEntitiesInCurrentView,

@@ -48,13 +48,18 @@ add_custom_command(
     COMMAND ${CLANG_FORMAT} -i ${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h
     COMMAND ${CMAKE_COMMAND} -E copy ${lvtclp_handler_headers} ${PLUGIN_HEADERS_DIR}/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_plugindatatypes.h ${PLUGIN_HEADERS_DIR}/
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py
+    DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py
+        "${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_plugindatatypes.h"
+        ${lvtclp_handler_headers}
     COMMENT "[lvtplg] Populating plugin-headers folder..."
     VERBATIM
 )
 add_custom_target(
     generate_lvtclp_plugin_headers ALL
-    DEPENDS "${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h"
+    DEPENDS
+        "${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h"
+        "${PLUGIN_HEADERS_DIR}/ct_lvtplg_plugindatatypes.h"
 )
 add_dependencies(lvtplg generate_lvtclp_plugin_headers)
 

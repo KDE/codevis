@@ -53,6 +53,13 @@ struct Entity {
      * Warning: The Entity instance becomes invalid after method this is called, and must *not* be used.
      */
     std::function<void()> const unloadFromScene;
+
+    /**
+     * Will return all the qualified names from all children from the database. Not only those loaded in the scene.
+     */
+    std::function<std::vector<std::string>()> const getDbChildrenQualifiedNames;
+
+    std::function<std::optional<Entity>()> const getParent;
 };
 
 struct Edge {

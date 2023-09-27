@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtqtc_lakosentitypluginutils.h>
 #include <ct_lvtqtc_lakosrelation.h>
 
@@ -53,8 +54,8 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
     };
     auto getDependencies = [e]() {
         auto dependencies = std::vector<Entity>{};
-        for (auto&& c : e->edgesCollection()) {
-            for (auto&& r : c->relations()) {
+        for (auto const& c : e->edgesCollection()) {
+            for (auto const& r : c->relations()) {
                 dependencies.push_back(createWrappedEntityFromLakosEntity(r->to()));
             }
         }
@@ -63,7 +64,29 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
     auto unloadFromScene = [e]() {
         Q_EMIT e->unloadThis();
     };
-    return Entity{getName, getQualifiedName, getType, setColor, addHoverInfo, getDependencies, unloadFromScene};
+    auto getDbChildrenQualifiedNames = [e]() {
+        auto childrenQNames = std::vector<std::string>{};
+        for (auto const& c : e->internalNode()->children()) {
+            childrenQNames.emplace_back(c->qualifiedName());
+        }
+        return childrenQNames;
+    };
+    auto getParent = [e]() -> std::optional<Entity> {
+        auto parent = dynamic_cast<LakosEntity *>(e->parentItem());
+        if (!parent) {
+            return std::nullopt;
+        }
+        return createWrappedEntityFromLakosEntity(parent);
+    };
+    return Entity{getName,
+                  getQualifiedName,
+                  getType,
+                  setColor,
+                  addHoverInfo,
+                  getDependencies,
+                  unloadFromScene,
+                  getDbChildrenQualifiedNames,
+                  getParent};
 }
 
 Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to)

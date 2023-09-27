@@ -20,7 +20,9 @@
 #ifndef DIAGRAM_SERVER_CT_LVTPLG_PLUGINDATATYPES_H
 #define DIAGRAM_SERVER_CT_LVTPLG_PLUGINDATATYPES_H
 
+#include <any>
 #include <functional>
+#include <optional>
 #include <string>
 
 struct Color {
@@ -33,6 +35,10 @@ struct Color {
 enum class EdgeStyle { SolidLine, DashLine, DotLine, DashDotLine, DashDotDotLine };
 
 enum class EntityType { Unknown, PackageGroup, Package, Component };
+
+using RawDBData = std::optional<std::any>;
+using RawDBCols = std::vector<RawDBData>;
+using RawDBRows = std::vector<RawDBCols>;
 
 struct Entity {
     std::function<std::string()> const getName;

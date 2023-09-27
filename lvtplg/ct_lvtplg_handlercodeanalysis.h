@@ -20,6 +20,8 @@
 #ifndef DIAGRAM_SERVER_CT_LVTPLG_PLUGINCODEANALYSISHANDLER_H
 #define DIAGRAM_SERVER_CT_LVTPLG_PLUGINCODEANALYSISHANDLER_H
 
+#include <ct_lvtplg_plugindatatypes.h>
+
 #include <any>
 #include <functional>
 #include <optional>
@@ -50,9 +52,6 @@ struct PluginLogicalParserOnCppCommentFoundHandler {
     std::function<unsigned()> const getEndLine;
 };
 
-using RawDBData = std::optional<std::any>;
-using RawDBCols = std::vector<RawDBData>;
-using RawDBRows = std::vector<RawDBCols>;
 struct PluginParseCompletedHandler {
     /**
      * Returns the plugin data previously registered with `PluginSetupHandler::registerPluginData`.

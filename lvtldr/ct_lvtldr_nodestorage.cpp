@@ -728,6 +728,11 @@ void NodeStorage::clear()
     d->nodes.clear();
 }
 
+soci::session& NodeStorage::getSociSession() const
+{
+    return dynamic_cast<SociDatabaseHandler *>(d->dbHandler.get())->getSociSession();
+}
+
 template<typename LDR_TYPE>
 auto getFieldsByQualifiedName(DatabaseHandler& dbHandler, const std::string& qualifiedName)
 {

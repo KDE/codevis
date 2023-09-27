@@ -32,6 +32,7 @@
 
 #include <any>
 #include <memory>
+#include <soci/soci.h>
 #include <vector>
 
 #include <result/result.hpp>
@@ -193,6 +194,8 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
     [[nodiscard]] std::vector<LakosianNode *> getTopLevelPackages();
 
     void clear();
+
+    soci::session& getSociSession() const;
 
     // Signals
     Q_SIGNAL void storageCleared();

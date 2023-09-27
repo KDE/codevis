@@ -50,6 +50,7 @@
 #include <ct_lvtldr_packagenode.h>
 #include <ct_lvtldr_physicalloader.h>
 #include <ct_lvtldr_typenode.h>
+#include <ct_lvtmdb_soci_helper.h>
 
 #include <ct_lvtshr_functional.h>
 #include <ct_lvtshr_stringhelpers.h>
@@ -1897,6 +1898,9 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
                     auto *pm = &d->pluginManager->get();
                     return PluginManagerQtUtils::createPluginTreeWidgetHandler(pm, id, this);
                 };
+                auto runQueryOnDatabase = [this](std::string const& dbQuery) -> std::vector<std::vector<RawDBData>> {
+                    return lvtmdb::SociHelper::runSingleQuery(d->nodeStorage.getSociSession(), dbQuery);
+                };
                 auto handler = PluginContextMenuActionHandler{getPluginData,
                                                               getAllEntitiesInCurrentView,
                                                               getEntityByQualifiedName,
@@ -1905,7 +1909,8 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
                                                               loadEntityByQualifiedName,
                                                               addEdgeByQualifiedName,
                                                               removeEdgeByQualifiedName,
-                                                              hasEdgeByQualifiedName};
+                                                              hasEdgeByQualifiedName,
+                                                              runQueryOnDatabase};
                 userAction(&handler);
             });
         };

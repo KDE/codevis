@@ -379,6 +379,11 @@ class SociDatabaseHandler : public DatabaseHandler {
         tr.commit();
     }
 
+    soci::session& getSociSession()
+    {
+        return d_db;
+    }
+
   private:
     template<typename T>
     RepositoryNodeFields getRepositoryFields(std::string const& uniqueKeyColumnName, T const& keyValue)

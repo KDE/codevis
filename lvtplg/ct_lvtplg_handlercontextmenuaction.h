@@ -112,6 +112,8 @@ struct PluginContextMenuActionHandler {
      */
     std::function<bool(std::string const& fromQualifiedName, std::string const& toQualifiedName)>
         hasEdgeByQualifiedName;
+
+    std::function<RawDBRows(std::string const& query)> const runQueryOnDatabase;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_PLUGINCONTEXTMENUACTIONHANDLER_H

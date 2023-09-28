@@ -25,6 +25,11 @@ add_executable(codevis_create_prj_from_db
 target_link_libraries(codevis_create_prj_from_db
     Codethink::lvtprj
     Codethink::lvtldr
+    ${SQLite3_LIBRARIES}
+)
+target_include_directories(codevis_create_prj_from_db
+    PRIVATE
+    ${SQLite3_INCLUDE_DIRS}
 )
 
 if (COMPILE_TESTS)

@@ -72,7 +72,7 @@ def accept(path):
         if f'/{pkgName}/' in path:
             return True
     for fileName in FILE_LIST:
-        if fileName in path:
+        if f'/{fileName}' in path:
             return True
     return False
 

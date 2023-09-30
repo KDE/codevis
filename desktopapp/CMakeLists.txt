@@ -108,7 +108,7 @@ target_link_libraries(
 )
 
 install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUI5DIR}/codevis)
+install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUIDIR}/codevis)
 
 install(
   FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml

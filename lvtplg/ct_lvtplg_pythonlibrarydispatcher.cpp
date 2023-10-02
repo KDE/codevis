@@ -167,8 +167,13 @@ std::unique_ptr<ILibraryDispatcher> PythonLibraryDispatcher::loadSinglePlugin(QD
     try {
         pyLib->pyModule = py::module_::import(pluginName.toStdString().c_str());
     } catch (py::error_already_set const& e) {
-        // Could not load python module - Cleanup sys path and early return.
-        pySys.attr("path").attr("append")(pluginDir.path());
+        // Setting the sys.attr can also cause another throw.
+        try {
+            // Could not load python module - Cleanup sys path and early return.
+            pySys.attr("path").attr("append")(pluginDir.path());
+        } catch (std::exception& e) {
+            std::cout << "Invalid plugin" << e.what() << "\n";
+        }
         return nullptr;
     }
 

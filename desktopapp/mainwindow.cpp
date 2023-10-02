@@ -868,9 +868,9 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     auto addGWdgConnection = [this](auto signal, auto slot) {
         connect(currentGraphWidget, signal, this, slot, Qt::UniqueConnection);
     };
-    addGWdgConnection(&GraphicsView::graphLoadStarted, &MainWindow::graphLoadStarted);
-    addGWdgConnection(&GraphicsView::graphLoadFinished, &MainWindow::graphLoadFinished);
-    addGWdgConnection(&GraphicsView::errorMessage, &MainWindow::showErrorMessage);
+    addGWdgConnection(&Codethink::lvtqtc::GraphicsView::graphLoadStarted, &MainWindow::graphLoadStarted);
+    addGWdgConnection(&Codethink::lvtqtc::GraphicsView::graphLoadFinished, &MainWindow::graphLoadFinished);
+    addGWdgConnection(&Codethink::lvtqtc::GraphicsView::errorMessage, &MainWindow::showErrorMessage);
 
     // connect everything related to the new graph scene and the window
     auto *graphicsScene = qobject_cast<GraphicsScene *>(currentGraphWidget->scene());
@@ -880,12 +880,13 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     auto addGSConnection = [this, &graphicsScene](auto signal, auto slot) {
         connect(graphicsScene, signal, this, slot, Qt::UniqueConnection);
     };
-    addGSConnection(&GraphicsScene::errorMessage, &MainWindow::showErrorMessage);
-    addGSConnection(&GraphicsScene::graphLoadProgressUpdate, &MainWindow::graphLoadProgress);
-    addGSConnection(&GraphicsScene::requestEnableWindow, &MainWindow::enableWindow);
-    addGSConnection(&GraphicsScene::requestDisableWindow, &MainWindow::disableWindow);
-    addGSConnection(&GraphicsScene::selectedEntityChanged, &MainWindow::updateFocusedEntityOnTableModels);
-    addGSConnection(&GraphicsScene::createReportActionClicked, &MainWindow::createReport);
+    addGSConnection(&Codethink::lvtqtc::GraphicsScene::errorMessage, &MainWindow::showErrorMessage);
+    addGSConnection(&Codethink::lvtqtc::GraphicsScene::graphLoadProgressUpdate, &MainWindow::graphLoadProgress);
+    addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestEnableWindow, &MainWindow::enableWindow);
+    addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestDisableWindow, &MainWindow::disableWindow);
+    addGSConnection(&Codethink::lvtqtc::GraphicsScene::selectedEntityChanged,
+                    &MainWindow::updateFocusedEntityOnTableModels);
+    addGSConnection(&Codethink::lvtqtc::GraphicsScene::createReportActionClicked, &MainWindow::createReport);
 
     if (d_pluginManager_p) {
         auto getSceneName = [&graphicsScene]() {

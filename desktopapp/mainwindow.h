@@ -220,6 +220,8 @@ class MainWindow : public KXmlGuiWindow {
 
     Q_SLOT void updateFocusedEntityOnTableModels(Codethink::lvtqtc::LakosEntity *entity);
 
+    Q_SLOT void graphicsSceneMainNodeChanged(Codethink::lvtqtc::LakosEntity *entity);
+
     void createReport(std::string const& title, std::string const& htmlContents);
 
     WrappedUiMainWindow ui;

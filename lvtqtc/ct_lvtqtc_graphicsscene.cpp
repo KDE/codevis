@@ -1889,6 +1889,20 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         };
         using ctxMenuAction_f = PluginContextMenuHandler::ctxMenuAction_f;
         auto registerContextMenu = [=, this, &menu](std::string const& title, ctxMenuAction_f const& userAction) {
+            // make a copy of all the actions we currently have so we can
+            // iterate through it without having problems.
+            const auto currentActions = menu.actions();
+
+            // Remove pre-existing actions from scripts.
+            for (QAction *act : currentActions) {
+                if (act->text() == QString::fromStdString(title)) {
+                    errorMessage(
+                        "Two or more of your plugins declares\n"
+                        "the same context menu, This is not supported.");
+                    return;
+                }
+            }
+
             auto *action = menu.addAction(QString::fromStdString(title));
             connect(action, &QAction::triggered, this, [=, this]() {
                 auto getPluginData = [this](auto&& id) {

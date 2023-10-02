@@ -227,12 +227,14 @@ void PluginEditor::create(const QString& pluginName)
     }
 
     QFile markdownFile(pluginPath.path() + QStringLiteral("/README.md"));
-    markdownFile.open(QIODevice::ReadWrite);
+    markdownFile.open(QIODevice::WriteOnly);
+    markdownFile.close();
 
-    QFile pluginFile(pluginPath.path() + QStringLiteral("/") + pluginName + QStringLiteral(".py"));
-    pluginFile.open(QIODevice::ReadWrite);
+    QFile pluginFile(pluginPath.path() + QStringLiteral("/") + internalPluginName + QStringLiteral(".py"));
+    pluginFile.open(QIODevice::WriteOnly);
+    pluginFile.close();
 
-    loadByName(pluginName);
+    loadByName(internalPluginName);
 }
 
 void PluginEditor::save()

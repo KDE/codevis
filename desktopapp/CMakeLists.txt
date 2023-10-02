@@ -83,6 +83,8 @@ target_link_libraries(
     KF${KF_MAJOR_VERSION}::CoreAddons
     KF${KF_MAJOR_VERSION}::I18n
     KF${KF_MAJOR_VERSION}::Notifications
+    KF${KF_MAJOR_VERSION}::NewStuffCore
+    KF${KF_MAJOR_VERSION}::NewStuffWidgets
 
     Codethink::lvtmdl
     Codethink::lvtprj
@@ -110,6 +112,7 @@ target_link_libraries(
 
 install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUIDIR}/codevis)
+install( FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
 
 install(
   FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml

@@ -33,6 +33,8 @@
 #include <QToolBar>
 #include <QToolButton>
 
+#include <KNSWidgets/Button>
+
 #include <ct_lvtplg_pluginmanager.h>
 
 using namespace Codethink::lvtqtw;
@@ -52,6 +54,7 @@ struct PluginEditor::Private {
     QAction *savePlugin = nullptr;
     QAction *reloadPlugin = nullptr;
     QAction *closePlugin = nullptr;
+    KNSWidgets::Button *getNewButton = nullptr;
 
     lvtplg::PluginManager *pluginManager = nullptr;
 
@@ -104,8 +107,17 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
     d->reloadPlugin->setIcon(QIcon::fromTheme("system-run"));
     connect(d->reloadPlugin, &QAction::triggered, this, &PluginEditor::reloadPlugin);
 
+    d->getNewButton = new KNSWidgets::Button(this);
+    d->getNewButton->setConfigFile(QStringLiteral("codevis.knsrc"));
+    d->getNewButton->setText("Download Scripts");
+    connect(d->getNewButton,
+            &KNSWidgets::Button::dialogFinished,
+            this,
+            &Codethink::lvtqtw::PluginEditor::getNewScriptFinished);
+
     auto *toolBar = new QToolBar(this);
     toolBar->addActions({d->newPlugin, d->openFile, d->savePlugin, d->closePlugin, d->reloadPlugin});
+    toolBar->addWidget(d->getNewButton);
 
     d->documentViews->addTab(d->viewReadme, QStringLiteral("README.md"));
     d->documentViews->addTab(d->viewPlugin, QString());
@@ -123,6 +135,41 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 }
 
 PluginEditor::~PluginEditor() = default;
+
+#if KNEWSTUFF_VERSION >= QT_VERSION_CHECK(5, 91, 0)
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+void PluginEditor::getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries)
+#else
+#undef KNSCore
+void PluginEditor::getNewScriptFinished(const QList<KNSCore::EntryInternal>& changedEntries)
+#define KNSCore KNS3
+#endif
+#else
+void PluginEditor::getNewScriptFinished(const KNSCore::Entry::List& changedEntries)
+#endif
+{
+    for (auto& entry : qAsConst(changedEntries)) {
+        switch (entry.status()) {
+        case KNSCore::Entry::Installed:
+            for (const QString& file : entry.installedFiles()) {
+                qDebug() << file << "Installed";
+            }
+            break;
+        case KNSCore::Entry::Deleted:
+            for (const auto& file : entry.uninstalledFiles()) {
+                qDebug() << file << "deleted";
+            }
+            break;
+        case KNSCore::Entry::Invalid:
+        case KNSCore::Entry::Installing:
+        case KNSCore::Entry::Downloadable:
+        case KNSCore::Entry::Updateable:
+        case KNSCore::Entry::Updating:
+            // Not interesting.
+            break;
+        }
+    }
+}
 
 QDir PluginEditor::basePluginPath()
 {

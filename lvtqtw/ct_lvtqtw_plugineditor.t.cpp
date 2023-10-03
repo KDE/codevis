@@ -17,7 +17,6 @@
 // limitations under the License.
 */
 
-#include <catch2/catch.hpp>
 #include <ct_lvtqtc_graphicsview.h>
 #include <ct_lvtqtc_testing_utils.h>
 

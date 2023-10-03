@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include <catch2/catch.hpp>
 #include <ct_lvtqtc_graphicsview.h>
 #include <ct_lvtqtc_testing_utils.h>
 
@@ -51,7 +52,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
                      });
 
     editor->create("test");
-    editor->save();
+    auto res = editor->save();
+    REQUIRE_FALSE(res.has_error());
     editor->reloadPlugin();
     editor->close();
 
@@ -62,7 +64,9 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
     editor->setPluginManager(&manager);
 
     editor->create("test2");
-    editor->save();
+    res = editor->save();
+    REQUIRE_FALSE(res.has_error());
+
     editor->reloadPlugin();
     editor->close();
 

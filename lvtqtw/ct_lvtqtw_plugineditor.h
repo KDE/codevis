@@ -28,6 +28,8 @@
 #include <lvtqtw_export.h>
 #include <result/result.hpp>
 
+#include <result/result.hpp>
+
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
 #include <KNSCore/Entry>
 #else
@@ -47,11 +49,20 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     PluginEditor(QWidget *parent = 0);
     ~PluginEditor();
 
+    enum class e_Errors {
+        Error,
+    };
+
+    struct Error {
+        e_Errors errNr;
+        std::string errStr;
+    };
+
     Q_SIGNAL void execute(const QString& plugin);
     Q_SIGNAL void sendErrorMsg(const QString& err);
 
     void setPluginManager(lvtplg::PluginManager *manager);
-    void save();
+    cpp::result<void, Error> save();
     void close();
     void loadByName(const QString& pluginName);
     void load();

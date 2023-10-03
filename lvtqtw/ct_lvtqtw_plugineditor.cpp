@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "result/result.hpp"
 #include <ct_lvtqtw_plugineditor.h>
 
 #include <KMessageBox>
@@ -148,7 +149,7 @@ void PluginEditor::getNewScriptFinished(const QList<KNSCore::EntryInternal>& cha
 void PluginEditor::getNewScriptFinished(const KNSCore::Entry::List& changedEntries)
 #endif
 {
-    for (auto& entry : qAsConst(changedEntries)) {
+    for (const auto& entry : qAsConst(changedEntries)) {
         switch (entry.status()) {
         case KNSCore::Entry::Installed:
             for (const QString& file : entry.installedFiles()) {
@@ -194,7 +195,12 @@ void PluginEditor::reloadPlugin()
         return;
     }
 
-    save();
+    auto res = save();
+    if (res.has_error()) {
+        // no need to try to reload anything that has errors.
+        return;
+    }
+
     d->pluginManager->reloadPlugin(d->currentPluginFolder);
 }
 
@@ -284,15 +290,29 @@ void PluginEditor::create(const QString& pluginName)
     loadByName(internalPluginName);
 }
 
-void PluginEditor::save()
+cpp::result<void, PluginEditor::Error> PluginEditor::save()
 {
     if (!d->pluginManager) {
         sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
-        return;
+        return cpp::fail(
+            Error{e_Errors::Error,
+                  QStringLiteral("%1 was build without plugin support.").arg(qApp->applicationName()).toStdString()});
     }
 
-    d->docPlugin->save();
-    d->docReadme->save();
+    if (!d->docPlugin->url().isEmpty()) {
+        if (!d->docPlugin->save()) {
+            sendErrorMsg(tr("Error saving plugin."));
+            return cpp::fail(Error{e_Errors::Error, "Error saving plugin"});
+        }
+    }
+    if (!d->docReadme->url().isEmpty()) {
+        if (!d->docReadme->save()) {
+            sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
+            return cpp::fail(Error{e_Errors::Error, "Error saving plugin"});
+        }
+    }
+
+    return {};
 }
 
 void PluginEditor::load()

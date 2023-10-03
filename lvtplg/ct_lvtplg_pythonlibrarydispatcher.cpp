@@ -170,7 +170,7 @@ std::unique_ptr<ILibraryDispatcher> PythonLibraryDispatcher::loadSinglePlugin(QD
         // Setting the sys.attr can also cause another throw.
         try {
             // Could not load python module - Cleanup sys path and early return.
-            pySys.attr("path").attr("append")(pluginDir.path());
+            pySys.attr("path").attr("remove")(pluginDir.path());
         } catch (std::exception& e) {
             std::cout << "Invalid plugin" << e.what() << "\n";
         }

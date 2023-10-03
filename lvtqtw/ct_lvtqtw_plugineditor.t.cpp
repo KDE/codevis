@@ -53,7 +53,9 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
 
     editor->create("test");
     auto res = editor->save();
-    REQUIRE_FALSE(res.has_error());
+
+    // Error required because here the dialog has no plugin manager.
+    REQUIRE(res.has_error());
     editor->reloadPlugin();
     editor->close();
 
@@ -65,6 +67,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
 
     editor->create("test2");
     res = editor->save();
+    // And here it should pass because we do have a plugin manager.
     REQUIRE_FALSE(res.has_error());
 
     editor->reloadPlugin();

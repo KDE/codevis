@@ -100,6 +100,7 @@ void AlgorithmTransitiveReduction::reset()
     d_hasError = false;
     d_redundantEdgesByNode.clear();
     d_redundantEdges.clear();
+    d_redundantEdgesCache.clear();
 }
 
 void AlgorithmTransitiveReduction::run()

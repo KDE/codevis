@@ -695,6 +695,7 @@ void GraphicsScene::relayout()
         return;
     }
 
+    searchTransitiveRelations();
     runLayoutAlgorithm();
     for (LakosEntity *entity : d->verticesVec) {
         entity->enableLayoutUpdates();
@@ -2464,6 +2465,9 @@ void GraphicsScene::removeEdge(LakosEntity& fromEntity, LakosEntity& toEntity)
 
         rel->deleteLater();
     }
+
+    // Invalidate transitive reduction caches
+    d->transitiveReductionAlg->reset();
 
     fromEntity.getTopLevelParent()->calculateEdgeVisibility();
     fromEntity.recursiveEdgeRelayout();

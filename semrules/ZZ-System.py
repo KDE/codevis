@@ -67,12 +67,13 @@ FILE_LIST = [
     'memory.h',
 ]
 
+
 def accept(path):
     for pkgName in PKG_LIST:
         if f'/{pkgName}/' in path:
             return True
     for fileName in FILE_LIST:
-        if f'/{fileName}' in path:
+        if path.endswith(f'/{fileName}'):
             return True
     return False
 
@@ -81,4 +82,3 @@ def process(path, addPkg):
     pkgName = "SystemLibraries"
     addPkg(pkgName, None, None, None)
     return pkgName
-

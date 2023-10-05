@@ -180,7 +180,8 @@ void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneNa
 void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
                                              mainNodeChanged_getEntity_f const& getEntity,
                                              mainNodeChanged_getVisibleEntities_f const& getVisibleEntities,
-                                             mainNodeChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName)
+                                             mainNodeChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
+                                             mainNodeChanged_getProjectData_f const& getProjectData)
 {
     callAllHooks<hookMainNodeChanged_f>(
         "hookMainNodeChanged",
@@ -188,7 +189,8 @@ void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f cons
                                      getSceneName,
                                      getEntity,
                                      getVisibleEntities,
-                                     getEdgeByQualifiedName});
+                                     getEdgeByQualifiedName,
+                                     getProjectData});
 }
 
 void PluginManager::registerPluginData(std::string const& id, void *data)

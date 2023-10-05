@@ -80,6 +80,8 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
 
     py::class_<Edge>(m, "Edge").def_readonly("setColor", &Edge::setColor).def_readonly("setStyle", &Edge::setStyle);
 
+    py::class_<ProjectData>(m, "ProjectData").def_readonly("getSourceCodePath", &ProjectData::getSourceCodePath);
+
     {
         using T = PluginSetupHandler;
         py::class_<T>(m, "PluginSetupHandler")
@@ -138,7 +140,8 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
             .def("getPluginData", &pyGetPluginData<T>)
             .def_readonly("getEntity", &T::getEntity)
             .def_readonly("getVisibleEntities", &T::getVisibleEntities)
-            .def_readonly("getEdgeByQualifiedName", &T::getEdgeByQualifiedName);
+            .def_readonly("getEdgeByQualifiedName", &T::getEdgeByQualifiedName)
+            .def_readonly("getProjectData", &T::getProjectData);
     }
 }
 // NOLINTEND

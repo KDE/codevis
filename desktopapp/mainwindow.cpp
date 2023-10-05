@@ -935,7 +935,18 @@ void MainWindow::graphicsSceneMainNodeChanged(Codethink::lvtqtc::LakosEntity *en
         return createWrappedEdgeFromLakosEntity(fromEntity, toEntity);
     };
 
-    d_pluginManager_p->callHooksMainNodeChanged(getSceneName, getEntity, getVisibleEntities, getEdgeByQualifiedName);
+    auto getProjectData = [this]() {
+        auto getSourceCodePath = [this]() {
+            return this->d_projectFile.sourceCodePath().string();
+        };
+        return ProjectData{getSourceCodePath};
+    };
+
+    d_pluginManager_p->callHooksMainNodeChanged(getSceneName,
+                                                getEntity,
+                                                getVisibleEntities,
+                                                getEdgeByQualifiedName,
+                                                getProjectData);
 }
 
 void MainWindow::createReport(std::string const& title, std::string const& htmlContents)

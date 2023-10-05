@@ -67,4 +67,8 @@ struct Edge {
     std::function<void(EdgeStyle style)> const setStyle;
 };
 
+struct ProjectData {
+    std::function<std::string()> const getSourceCodePath;
+};
+
 #endif

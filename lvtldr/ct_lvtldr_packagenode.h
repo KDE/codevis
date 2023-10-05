@@ -77,9 +77,6 @@ class LVTLDR_EXPORT PackageNode : public LakosianNode {
     void removeChildPackage(PackageNode *child);
     void addConcreteDependency(PackageNode *other);
     void removeConcreteDependency(PackageNode *other);
-    void addAllowedDependency(PackageNode *other);
-    void removeAllowedDependency(PackageNode *other);
-    [[nodiscard]] bool hasAllowedDependency(LakosianNode *other);
     [[nodiscard]] bool hasConcreteDependency(LakosianNode *other);
     [[nodiscard]] lvtshr::DiagramType type() const override;
     [[nodiscard]] bool isPackageGroup() override;

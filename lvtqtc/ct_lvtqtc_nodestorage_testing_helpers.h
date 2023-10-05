@@ -100,46 +100,22 @@ struct ScopedComponentEntity {
 };
 
 struct ScopedPackageDependency {
-    using Constraint = Codethink::lvtqtc::PackageDependency::PackageDependencyConstraint;
-    using DepType = Codethink::lvtldr::PhysicalDependencyType;
-
     ScopedPackageDependency(Codethink::lvtldr::NodeStorage& ns,
                             Codethink::lvtqtc::LakosEntity& source,
-                            Codethink::lvtqtc::LakosEntity& target,
-                            Codethink::lvtqtc::PackageDependency::PackageDependencyConstraint c):
-        d_ns(ns), d_depType(c)
+                            Codethink::lvtqtc::LakosEntity& target):
+        d_ns(ns)
     {
-        if (static_cast<bool>(d_depType & Constraint::ConcreteDependency)) {
-            auto result =
-                ns.addPhysicalDependency(source.internalNode(), target.internalNode(), DepType::ConcreteDependency);
-            if (result.has_error()) {
-                FAIL("Error adding dependency: code " + std::to_string(static_cast<int>(result.error().kind)));
-            }
-        }
-        if (static_cast<bool>(d_depType & Constraint::AllowedDependency)) {
-            auto result =
-                ns.addPhysicalDependency(source.internalNode(), target.internalNode(), DepType::AllowedDependency);
-            if (result.has_error()) {
-                FAIL("Error adding dependency: code " + std::to_string(static_cast<int>(result.error().kind)));
-            }
+        auto result = ns.addPhysicalDependency(source.internalNode(), target.internalNode());
+        if (result.has_error()) {
+            FAIL("Error adding dependency: code " + std::to_string(static_cast<int>(result.error().kind)));
         }
         d_value = std::make_unique<Codethink::lvtqtc::PackageDependency>(&source, &target);
     }
 
     ~ScopedPackageDependency()
     {
-        if (static_cast<bool>(d_depType & Constraint::ConcreteDependency)) {
-            d_ns.removePhysicalDependency(d_value->from()->internalNode(),
-                                          d_value->to()->internalNode(),
-                                          DepType::ConcreteDependency)
-                .expect("");
-        }
-        if (static_cast<bool>(d_depType & Constraint::AllowedDependency)) {
-            d_ns.removePhysicalDependency(d_value->from()->internalNode(),
-                                          d_value->to()->internalNode(),
-                                          DepType::AllowedDependency)
-                .expect("");
-        }
+        d_ns.removePhysicalDependency(d_value->from()->internalNode(), d_value->to()->internalNode())
+            .expect("Unexpected error removing physical dependency");
     }
 
     inline Codethink::lvtqtc::PackageDependency& value()
@@ -150,7 +126,6 @@ struct ScopedPackageDependency {
   private:
     Codethink::lvtldr::NodeStorage& d_ns;
     std::unique_ptr<Codethink::lvtqtc::PackageDependency> d_value;
-    Codethink::lvtqtc::PackageDependency::PackageDependencyConstraint d_depType;
 };
 
 #endif

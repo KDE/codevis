@@ -42,7 +42,6 @@ struct PackageNodeFields {
     std::vector<RecordNumberType> childComponentsIds;
     std::vector<RecordNumberType> providerIds;
     std::vector<RecordNumberType> clientIds;
-    std::vector<RecordNumberType> allowedDependenciesIds;
 };
 
 } // namespace Codethink::lvtldr

@@ -23,8 +23,6 @@ V0.6:
 - Show Level number on the visualization tree
 - Fix *many* subtle bugs on the interface pointed out at the last in person
     demonstration
-- Allowed Dependencies: If the project has a .dep file, it takes that in
-    consideration during parse.
 - Text on the graphical view only has ellipsis if in collapsed mode
 - New Menu "View" that allows you to show / hide Docked Widgets
 - Allow to Unload Graphical Elements from the View

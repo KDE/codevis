@@ -124,8 +124,6 @@ struct ErrorReparentEntity {
     Kind kind;
 };
 
-enum class PhysicalDependencyType { ConcreteDependency, AllowedDependency };
-
 class LVTLDR_EXPORT NodeStorage : public QObject {
     Q_OBJECT
     // Append-only store of LakosianNodes with fast lookup
@@ -174,15 +172,11 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
 
     cpp::result<void, ErrorRemoveLogicalEntity> removeLogicalEntity(LakosianNode *node);
 
-    [[nodiscard]] cpp::result<void, ErrorAddPhysicalDependency>
-    addPhysicalDependency(LakosianNode *source,
-                          LakosianNode *target,
-                          PhysicalDependencyType type = PhysicalDependencyType::ConcreteDependency);
+    [[nodiscard]] cpp::result<void, ErrorAddPhysicalDependency> addPhysicalDependency(LakosianNode *source,
+                                                                                      LakosianNode *target);
 
-    [[nodiscard]] cpp::result<void, ErrorRemovePhysicalDependency>
-    removePhysicalDependency(LakosianNode *source,
-                             LakosianNode *target,
-                             PhysicalDependencyType type = PhysicalDependencyType::ConcreteDependency);
+    [[nodiscard]] cpp::result<void, ErrorRemovePhysicalDependency> removePhysicalDependency(LakosianNode *source,
+                                                                                            LakosianNode *target);
 
     [[nodiscard]] cpp::result<void, ErrorAddLogicalRelation>
     addLogicalRelation(TypeNode *source, TypeNode *target, lvtshr::LakosRelationType type);
@@ -206,7 +200,7 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
     Q_SIGNAL void nodeAdded(LakosianNode *, std::any);
     Q_SIGNAL void nodeRemoved(LakosianNode *);
     Q_SIGNAL void nodeNameChanged(LakosianNode *);
-    Q_SIGNAL void physicalDependencyAdded(LakosianNode *, LakosianNode *, PhysicalDependencyType);
+    Q_SIGNAL void physicalDependencyAdded(LakosianNode *, LakosianNode *);
     Q_SIGNAL void physicalDependencyRemoved(LakosianNode *, LakosianNode *);
     Q_SIGNAL void logicalRelationAdded(LakosianNode *, LakosianNode *, lvtshr::LakosRelationType type);
     Q_SIGNAL void logicalRelationRemoved(LakosianNode *, LakosianNode *, lvtshr::LakosRelationType type);

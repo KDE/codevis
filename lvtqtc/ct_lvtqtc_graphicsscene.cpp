@@ -337,24 +337,14 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
     QObject::connect(&d->nodeStorage,
                      &NodeStorage::physicalDependencyAdded,
                      this,
-                     [this](LakosianNode *source, LakosianNode *target, PhysicalDependencyType type) {
+                     [this](LakosianNode *source, LakosianNode *target) {
                          auto *fromEntity = findLakosEntityFromUid(source->uid());
                          auto *toEntity = findLakosEntityFromUid(target->uid());
                          if (!fromEntity || !toEntity) {
                              // This Graphics Scene doesn't have such entities to update
                              return;
                          }
-                         switch (type) {
-                         case PhysicalDependencyType::ConcreteDependency: {
-                             addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::PackageDependency);
-                             break;
-                         }
-                         case PhysicalDependencyType::AllowedDependency: {
-                             addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::AllowedDependency);
-                             break;
-                         }
-                         }
-
+                         addEdgeBetween(fromEntity, toEntity, lvtshr::LakosRelationType::PackageDependency);
                          fromEntity->getTopLevelParent()->calculateEdgeVisibility();
                          fromEntity->recursiveEdgeRelayout();
                      });
@@ -966,12 +956,6 @@ LakosRelation *GraphicsScene::addPackageDependencyRelation(LakosEntity *source, 
     assert(target && target->instanceType() != lvtshr::DiagramType::ClassType);
 
     if (source->hasRelationshipWith(target)) {
-        auto ec = source->getRelationshipWith(target);
-        for (auto *r : ec->relations()) {
-            auto *pkgRelation = dynamic_cast<PackageDependency *>(r);
-            assert(pkgRelation);
-            pkgRelation->updateFlavor();
-        }
         return nullptr;
     }
 
@@ -987,29 +971,6 @@ LakosRelation *GraphicsScene::addPackageDependencyRelation(LakosEntity *source, 
     }
 
     return addRelation(new PackageDependency(source, target));
-}
-
-LakosRelation *GraphicsScene::addAllowedPackageDependencyRelation(LakosEntity *source, LakosEntity *target)
-{
-    assert(source && source->instanceType() != lvtshr::DiagramType::ClassType);
-    assert(target && target->instanceType() != lvtshr::DiagramType::ClassType);
-
-    if (source->hasRelationshipWith(target)) {
-        auto ec = source->getRelationshipWith(target);
-        for (auto *r : ec->relations()) {
-            auto *pkgRelation = dynamic_cast<PackageDependency *>(r);
-            assert(pkgRelation);
-            pkgRelation->updateFlavor();
-        }
-        return nullptr;
-    }
-
-    auto *r = addRelation(new PackageDependency(source, target));
-    if (r) {
-        addItem(r);
-        r->show();
-    }
-    return r;
 }
 
 LakosEntity *GraphicsScene::outermostParent(LakosEntity *a, LakosEntity *b)
@@ -2260,9 +2221,6 @@ void GraphicsScene::addEdgeBetween(LakosEntity *fromEntity, LakosEntity *toEntit
     // Package groups, packages and components
     case lvtshr::PackageDependency:
         relation = addPackageDependencyRelation(fromEntity, toEntity);
-        break;
-    case lvtshr::AllowedDependency:
-        relation = addAllowedPackageDependencyRelation(fromEntity, toEntity);
         break;
     // Logical entities
     case lvtshr::IsA:

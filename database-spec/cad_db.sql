@@ -316,14 +316,6 @@ CREATE INDEX IF NOT EXISTS "uses_in_the_interface_source_id" ON "uses_in_the_int
 CREATE INDEX IF NOT EXISTS "variable_declaration_qualified_name" ON "variable_declaration" (
 	"qualified_name"
 );
-CREATE TABLE IF NOT EXISTS "allowed_relationships" (
-    "id"	integer,
-    "target_id"	bigint,
-    "source_id"	bigint,
-    PRIMARY KEY("id" AUTOINCREMENT),
-    CONSTRAINT "fk_allowed_relationships_target" FOREIGN KEY("target_id") REFERENCES "source_package"("id") deferrable initially deferred,
-    CONSTRAINT "fk_allowed_relationships_source" FOREIGN KEY("source_id") REFERENCES "source_package"("id") deferrable initially deferred
-);
 CREATE TABLE IF NOT EXISTS "cad_notes" (
     "id"	integer,
     "version"	integer NOT NULL,

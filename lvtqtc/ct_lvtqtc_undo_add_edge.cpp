@@ -87,13 +87,9 @@ void removeRelationship(std::unique_ptr<UndoAddEdge::Private>& d)
 {
     auto [from, to] = findNodes(d->nodeStorage, d->fromQualifiedName, d->toQualifiedName);
 
-    auto isPhysicalDependency = d->relationType == LakosRelationType::PackageDependency
-        || d->relationType == LakosRelationType::AllowedDependency;
+    auto isPhysicalDependency = d->relationType == LakosRelationType::PackageDependency;
     if (isPhysicalDependency) {
-        auto depType = d->relationType == LakosRelationType::PackageDependency
-            ? PhysicalDependencyType::ConcreteDependency
-            : PhysicalDependencyType::AllowedDependency;
-        d->nodeStorage.removePhysicalDependency(from, to, depType).expect("");
+        d->nodeStorage.removePhysicalDependency(from, to).expect("");
     }
 
     auto isLogicalRelation = d->relationType == LakosRelationType::IsA
@@ -110,13 +106,9 @@ void addRelationship(std::unique_ptr<UndoAddEdge::Private>& d)
 {
     auto [from, to] = findNodes(d->nodeStorage, d->fromQualifiedName, d->toQualifiedName);
 
-    auto isPhysicalDependency = d->relationType == LakosRelationType::PackageDependency
-        || d->relationType == LakosRelationType::AllowedDependency;
+    auto isPhysicalDependency = d->relationType == LakosRelationType::PackageDependency;
     if (isPhysicalDependency) {
-        auto depType = d->relationType == LakosRelationType::PackageDependency
-            ? PhysicalDependencyType::ConcreteDependency
-            : PhysicalDependencyType::AllowedDependency;
-        d->nodeStorage.addPhysicalDependency(from, to, depType).expect("Unexpected undo/redo action");
+        d->nodeStorage.addPhysicalDependency(from, to).expect("Unexpected undo/redo action");
     }
 
     auto isLogicalRelation = d->relationType == LakosRelationType::IsA

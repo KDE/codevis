@@ -28,8 +28,6 @@
 
 namespace Codethink::lvtqtc {
 
-class PackageDependencyTestFriendAdapter;
-
 /*! \class PackageDependency package_dependency.cpp package_dependency.h
  *  \brief Represents and draws a PackageDependency LakosRelation
  *
@@ -37,14 +35,6 @@ class PackageDependencyTestFriendAdapter;
  */
 class LVTQTC_EXPORT PackageDependency : public LakosRelation {
   public:
-    friend class PackageDependencyTestFriendAdapter;
-    enum class PackageDependencyConstraint : int {
-        Unknown = 0x00,
-        AllowedDependency = 0x01,
-        ConcreteDependency = 0x02,
-        ConcreteAndAllowed = AllowedDependency | ConcreteDependency
-    };
-
     /*! \brief Constructs an PackageDependency relation
      *
      * The source vertex is where the arrow goes
@@ -57,40 +47,9 @@ class LVTQTC_EXPORT PackageDependency : public LakosRelation {
     [[nodiscard]] lvtshr::LakosRelationType relationType() const override;
     [[nodiscard]] std::string relationTypeAsString() const override;
 
-    void updateFlavor();
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-
   protected:
-    enum class PackageDependencyFlavor {
-        Unknown,
-        ConcreteDependency,
-        TestOnlyConcreteDependency,
-        AllowedDependency,
-        InvalidDesignDependency
-    };
-    friend constexpr PackageDependencyConstraint operator&(PackageDependencyConstraint x,
-                                                           PackageDependencyConstraint y);
-    friend constexpr PackageDependencyConstraint operator|(PackageDependencyConstraint x,
-                                                           PackageDependencyConstraint y);
-
-    void setFlavor(PackageDependencyFlavor newFlavor);
     [[nodiscard]] QColor hoverColor() const override;
-
-  private:
-    PackageDependencyFlavor d_flavor = PackageDependencyFlavor::Unknown;
 };
-
-inline constexpr PackageDependency::PackageDependencyConstraint
-operator&(PackageDependency::PackageDependencyConstraint x, PackageDependency::PackageDependencyConstraint y)
-{
-    return static_cast<PackageDependency::PackageDependencyConstraint>(static_cast<int>(x) & static_cast<int>(y));
-}
-
-inline constexpr PackageDependency::PackageDependencyConstraint
-operator|(PackageDependency::PackageDependencyConstraint x, PackageDependency::PackageDependencyConstraint y)
-{
-    return static_cast<PackageDependency::PackageDependencyConstraint>(static_cast<int>(x) | static_cast<int>(y));
-}
 
 } // end namespace Codethink::lvtqtc
 

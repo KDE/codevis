@@ -26,10 +26,6 @@
         <entry name="lastDocument" type="String">
             <label>Last document opened</label>
         </entry>
-        <entry name="useDependencyTypes" type="Bool">
-            <label>Use dependency types on the document</label>
-            <default>true</default>
-        </entry>
         <entry name="useLakosianRules" type="Bool">
             <label>Use a strict set of rules for large C++ codebases</label>
             <default>false</default>

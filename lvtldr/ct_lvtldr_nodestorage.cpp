@@ -331,8 +331,8 @@ cpp::result<void, ErrorRemoveLogicalEntity> NodeStorage::removeLogicalEntity(Lak
     return {};
 }
 
-cpp::result<void, ErrorAddPhysicalDependency>
-NodeStorage::addPhysicalDependency(LakosianNode *source, LakosianNode *target, PhysicalDependencyType type)
+cpp::result<void, ErrorAddPhysicalDependency> NodeStorage::addPhysicalDependency(LakosianNode *source,
+                                                                                 LakosianNode *target)
 {
     using Kind = ErrorAddPhysicalDependency::Kind;
 
@@ -345,25 +345,8 @@ NodeStorage::addPhysicalDependency(LakosianNode *source, LakosianNode *target, P
     if (source == target) {
         return cpp::fail(ErrorAddPhysicalDependency{Kind::SelfRelation});
     }
-    if (source->type() == DiagramType::ComponentType || target->type() == DiagramType::ComponentType) {
-        if (type == PhysicalDependencyType::AllowedDependency) {
-            // There's no such thing as "allowed dependency" between components.
-            return cpp::fail(ErrorAddPhysicalDependency{Kind::InvalidType});
-        }
-    } else {
-        auto *sourcePackage = dynamic_cast<PackageNode *>(source);
-        auto *targetPackage = dynamic_cast<PackageNode *>(target);
-        if (type == PhysicalDependencyType::AllowedDependency) {
-            if (sourcePackage->hasAllowedDependency(targetPackage)) {
-                return cpp::fail(ErrorAddPhysicalDependency{Kind::DependencyAlreadyExists});
-            }
-        }
-
-        if (type == PhysicalDependencyType::ConcreteDependency) {
-            if (sourcePackage->hasConcreteDependency(targetPackage)) {
-                return cpp::fail(ErrorAddPhysicalDependency{Kind::DependencyAlreadyExists});
-            }
-        }
+    if (source->hasProvider(target)) {
+        return cpp::fail(ErrorAddPhysicalDependency{Kind::DependencyAlreadyExists});
     }
 
     auto isPkgGrp = [](auto *e) {
@@ -387,16 +370,7 @@ NodeStorage::addPhysicalDependency(LakosianNode *source, LakosianNode *target, P
             return cpp::fail(ErrorAddPhysicalDependency{Kind::HierarchyLevelMismatch});
         }
 
-        switch (type) {
-        case PhysicalDependencyType::ConcreteDependency: {
-            dynamic_cast<PackageNode *>(source)->addConcreteDependency(dynamic_cast<PackageNode *>(target));
-            break;
-        }
-        case PhysicalDependencyType::AllowedDependency: {
-            dynamic_cast<PackageNode *>(source)->addAllowedDependency(dynamic_cast<PackageNode *>(target));
-            break;
-        }
-        }
+        dynamic_cast<PackageNode *>(source)->addConcreteDependency(dynamic_cast<PackageNode *>(target));
     } else if (isPkg(source)) {
         if (!isPkg(target)) {
             // A package cannot depend on an entity from a different level
@@ -407,16 +381,7 @@ NodeStorage::addPhysicalDependency(LakosianNode *source, LakosianNode *target, P
             return cpp::fail(ErrorAddPhysicalDependency{Kind::MissingParentDependency});
         }
 
-        switch (type) {
-        case PhysicalDependencyType::ConcreteDependency: {
-            dynamic_cast<PackageNode *>(source)->addConcreteDependency(dynamic_cast<PackageNode *>(target));
-            break;
-        }
-        case PhysicalDependencyType::AllowedDependency: {
-            dynamic_cast<PackageNode *>(source)->addAllowedDependency(dynamic_cast<PackageNode *>(target));
-            break;
-        }
-        }
+        dynamic_cast<PackageNode *>(source)->addConcreteDependency(dynamic_cast<PackageNode *>(target));
     } else if (isComponent(source)) {
         if (!isComponent(target)) {
             // Components can only depend on other components
@@ -454,13 +419,13 @@ NodeStorage::addPhysicalDependency(LakosianNode *source, LakosianNode *target, P
     source->invalidateProviders();
     target->invalidateClients();
 
-    Q_EMIT physicalDependencyAdded(source, target, type);
+    Q_EMIT physicalDependencyAdded(source, target);
     Q_EMIT storageChanged();
     return {};
 }
 
-cpp::result<void, ErrorRemovePhysicalDependency>
-NodeStorage::removePhysicalDependency(LakosianNode *source, LakosianNode *target, PhysicalDependencyType type)
+cpp::result<void, ErrorRemovePhysicalDependency> NodeStorage::removePhysicalDependency(LakosianNode *source,
+                                                                                       LakosianNode *target)
 {
     using Kind = ErrorRemovePhysicalDependency::Kind;
 
@@ -473,11 +438,7 @@ NodeStorage::removePhysicalDependency(LakosianNode *source, LakosianNode *target
         return e->type() == DiagramType::PackageType && e->parent() == nullptr;
     };
     if (isPkgGrp(source)) {
-        if (type == PhysicalDependencyType::ConcreteDependency) {
-            dynamic_cast<PackageNode *>(source)->removeConcreteDependency(dynamic_cast<PackageNode *>(target));
-        } else if (type == PhysicalDependencyType::AllowedDependency) {
-            dynamic_cast<PackageNode *>(source)->removeAllowedDependency(dynamic_cast<PackageNode *>(target));
-        }
+        dynamic_cast<PackageNode *>(source)->removeConcreteDependency(dynamic_cast<PackageNode *>(target));
     }
 
     // Package
@@ -485,11 +446,7 @@ NodeStorage::removePhysicalDependency(LakosianNode *source, LakosianNode *target
         return e->type() == DiagramType::PackageType && e->parent() != nullptr;
     };
     if (isPkg(source)) {
-        if (type == PhysicalDependencyType::ConcreteDependency) {
-            dynamic_cast<PackageNode *>(source)->removeConcreteDependency(dynamic_cast<PackageNode *>(target));
-        } else if (type == PhysicalDependencyType::AllowedDependency) {
-            dynamic_cast<PackageNode *>(source)->removeAllowedDependency(dynamic_cast<PackageNode *>(target));
-        }
+        dynamic_cast<PackageNode *>(source)->removeConcreteDependency(dynamic_cast<PackageNode *>(target));
     }
 
     // Component

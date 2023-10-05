@@ -263,16 +263,6 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QCheckBox" name="loadAllowedDependencies">
-             <property name="toolTip">
-              <string>Search for .dep files and load all allowed dependencies from them.</string>
-             </property>
-             <property name="text">
-              <string>Load allowed dependencies from .dep files</string>
-             </property>
-            </widget>
-           </item>
           </layout>
          </item>
          <item>

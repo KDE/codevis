@@ -182,7 +182,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     LakosRelation *addUsesInTheInterfaceRelation(LakosEntity *source, LakosEntity *target) override;
     LakosRelation *addUsesInTheImplementationRelation(LakosEntity *source, LakosEntity *target) override;
     LakosRelation *addPackageDependencyRelation(LakosEntity *source, LakosEntity *target) override;
-    LakosRelation *addAllowedPackageDependencyRelation(LakosEntity *source, LakosEntity *target) override;
 
     void connectEntitySignals(LakosEntity *entity);
 

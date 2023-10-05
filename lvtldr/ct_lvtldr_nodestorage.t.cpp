@@ -449,49 +449,18 @@ TEST_CASE("Add dependency relationship")
     REQUIRE((r.has_error() && r.error().kind == Kind::InvalidType));
     REQUIRE_FALSE(x->hasProvider(y));
 
-    // There's no such thing as an "allowed dependency" between two components. Only between packages
-    REQUIRE(baa->hasProvider(aaa));
-    nodeStorage.removePhysicalDependency(baa, aaa).expect("");
-    REQUIRE_FALSE(baa->hasProvider(aaa));
-    r = nodeStorage.addPhysicalDependency(baa, aaa, PhysicalDependencyType::AllowedDependency);
-    REQUIRE(r.has_error());
-    REQUIRE(r.error().kind == Kind::InvalidType);
-
-    // Check Allowed and Concrete dependency workflow
-    nodeStorage.removePhysicalDependency(ba, aa).expect("");
-    REQUIRE_FALSE(ba->hasProvider(aa));
-    r = nodeStorage.addPhysicalDependency(ba, aa, PhysicalDependencyType::AllowedDependency);
-    REQUIRE_FALSE(r.has_error());
-    REQUIRE(ba->hasProvider(aa));
-    REQUIRE(dynamic_cast<PackageNode *>(ba)->hasAllowedDependency(aa));
-    REQUIRE_FALSE(dynamic_cast<PackageNode *>(ba)->hasConcreteDependency(aa));
-    r = nodeStorage.addPhysicalDependency(ba, aa, PhysicalDependencyType::ConcreteDependency);
-    REQUIRE_FALSE(r.has_error());
-    REQUIRE(ba->hasProvider(aa));
-    REQUIRE(dynamic_cast<PackageNode *>(ba)->hasAllowedDependency(aa));
-    REQUIRE(dynamic_cast<PackageNode *>(ba)->hasConcreteDependency(aa));
-    nodeStorage.removePhysicalDependency(ba, aa, PhysicalDependencyType::AllowedDependency).expect("");
-    // Still have Concrete dependency
-    REQUIRE(ba->hasProvider(aa));
-    REQUIRE_FALSE(dynamic_cast<PackageNode *>(ba)->hasAllowedDependency(aa));
-    REQUIRE(dynamic_cast<PackageNode *>(ba)->hasConcreteDependency(aa));
-    nodeStorage.removePhysicalDependency(ba, aa, PhysicalDependencyType::ConcreteDependency).expect("");
-    REQUIRE_FALSE(ba->hasProvider(aa));
-    REQUIRE_FALSE(dynamic_cast<PackageNode *>(ba)->hasAllowedDependency(aa));
-    REQUIRE_FALSE(dynamic_cast<PackageNode *>(ba)->hasConcreteDependency(aa));
-
     // It is ok for a package group to depend on a standalone package
     REQUIRE_FALSE(a->hasProvider(sln));
-    nodeStorage.addPhysicalDependency(a, sln, PhysicalDependencyType::ConcreteDependency).expect("");
+    nodeStorage.addPhysicalDependency(a, sln).expect("");
     REQUIRE(a->hasProvider(sln));
-    nodeStorage.removePhysicalDependency(a, sln, PhysicalDependencyType::ConcreteDependency).expect("");
+    nodeStorage.removePhysicalDependency(a, sln).expect("");
     REQUIRE_FALSE(a->hasProvider(sln));
 
     // It is ok for a standalone package to depend on package groups
     REQUIRE_FALSE(sln->hasProvider(a));
-    nodeStorage.addPhysicalDependency(sln, a, PhysicalDependencyType::ConcreteDependency).expect("");
+    nodeStorage.addPhysicalDependency(sln, a).expect("");
     REQUIRE(sln->hasProvider(a));
-    nodeStorage.removePhysicalDependency(sln, a, PhysicalDependencyType::ConcreteDependency).expect("");
+    nodeStorage.removePhysicalDependency(sln, a).expect("");
     REQUIRE_FALSE(sln->hasProvider(a));
 }
 

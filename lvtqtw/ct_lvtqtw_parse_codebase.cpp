@@ -216,8 +216,6 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     ui->refreshDb->setVisible(false);
     ui->updateDb->setVisible(false);
     ui->updateDb->setChecked(true);
-    ui->loadAllowedDependencies->setChecked(true);
-    ui->loadAllowedDependencies->setVisible(false);
 
     ui->ignorePattern->setText(Preferences::lastIgnorePattern());
     ui->compileCommandsFolder->setText(Preferences::lastConfigureJson());
@@ -940,11 +938,6 @@ void ParseCodebaseDialog::receivedMessage(const QString& message, long threadId)
     }
     TextView *textView = d->threadIdToWidget[threadId];
     textView->appendText(message);
-}
-
-bool ParseCodebaseDialog::isLoadAllowedDependenciesChecked() const
-{
-    return ui->loadAllowedDependencies->isChecked();
 }
 
 std::filesystem::path ParseCodebaseDialog::buildPath() const

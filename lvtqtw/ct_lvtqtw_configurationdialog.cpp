@@ -126,7 +126,6 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
     });
 
     connect(d->ui.lakosianRules, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseLakosianRules);
-    connect(d->ui.useDependencyTypes, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseDependencyTypes);
     connect(d->ui.showRedundantEdgesDefaultCheckbox,
             &QCheckBox::toggled,
             Preferences::self(),
@@ -242,7 +241,6 @@ void ConfigurationDialog::load()
     d->ui.autoSaveBackupIntervalMsecs->setValue(Preferences::autoSaveBackupIntervalMsecs());
 
     d->ui.lakosianRules->setChecked(Preferences::useLakosianRules());
-    d->ui.useDependencyTypes->setChecked(Preferences::useDependencyTypes());
     d->ui.showRedundantEdgesDefaultCheckbox->setChecked(Preferences::showRedundantEdgesDefault());
     d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::hidePackagePrefixOnComponents());
     d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::invertHorizontalLevelizationLayout());

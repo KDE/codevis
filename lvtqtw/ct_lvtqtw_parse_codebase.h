@@ -66,8 +66,6 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
 
     Q_SLOT void updateDatabase();
 
-    bool isLoadAllowedDependenciesChecked() const;
-
     void setPluginManager(lvtplg::PluginManager& pluginManager);
 
   protected:

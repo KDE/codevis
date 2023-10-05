@@ -33,7 +33,6 @@ enum LakosRelationType {
     UsesInNameOnly = 0x4, /*!< The Uses-In-Name-Only relation */
     UsesInTheImplementation = 0x8, /*!< The Uses-In-The-Implementation relation */
     UsesInTheInterface = 0x10, /*!< The Uses-In-The-Interface relation */
-    AllowedDependency = 0x14, /*!< A dependency is allowed between entities, but may not be present */
     None = 0,
 };
 

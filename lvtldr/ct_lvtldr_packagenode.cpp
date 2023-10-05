@@ -89,35 +89,6 @@ void PackageNode::removeChildPackage(PackageNode *child)
     v.erase(std::remove(v.begin(), v.end(), child->id()), v.end());
 }
 
-void PackageNode::addAllowedDependency(PackageNode *other)
-{
-    d_fields.allowedDependenciesIds.emplace_back(other->id());
-    d_dbHandler->get().addAllowedDependency(d_fields.id, other->id());
-}
-
-void PackageNode::removeAllowedDependency(PackageNode *other)
-{
-    {
-        auto& v = d_fields.providerIds;
-        v.erase(std::remove(v.begin(), v.end(), other->id()), v.end());
-    }
-    {
-        auto& v = other->d_fields.clientIds;
-        v.erase(std::remove(v.begin(), v.end(), other->id()), v.end());
-    }
-    {
-        auto& v = d_fields.allowedDependenciesIds;
-        v.erase(std::remove(v.begin(), v.end(), other->id()), v.end());
-    }
-    d_dbHandler->get().removeAllowedDependency(d_fields.id, other->id());
-}
-
-bool PackageNode::hasAllowedDependency(LakosianNode *other)
-{
-    auto& v = d_fields.allowedDependenciesIds;
-    return std::find(v.begin(), v.end(), other->id()) != v.end();
-}
-
 void PackageNode::addConcreteDependency(PackageNode *other)
 {
     d_fields.providerIds.emplace_back(other->id());
@@ -372,11 +343,6 @@ void PackageNode::loadProviders()
             LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
             d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, node});
         }
-
-        for (auto&& id : d_fields.allowedDependenciesIds) {
-            LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
-            d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, node});
-        }
     } else {
         // package group
         for (auto&& id : d_fields.providerIds) {
@@ -396,11 +362,6 @@ void PackageNode::loadProviders()
                 }
                 d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, providerPkgGroup});
             }
-        }
-
-        for (auto&& id : d_fields.allowedDependenciesIds) {
-            LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
-            d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, node});
         }
     }
 }

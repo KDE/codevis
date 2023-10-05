@@ -599,13 +599,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="useDependencyTypes">
-           <property name="text">
-            <string>Enable dependency types (Such as allowed dependencies)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLabel" name="label_5">
            <property name="text">
             <string>This setting makes the software strict on what kind of architecture it generates, following the book &quot;Large Scale C++ Development&quot; ideas. If you don't have the book, you can read a resume of the rules on the BDE Coding Standard. The tool will help you when mistakes are made.</string>

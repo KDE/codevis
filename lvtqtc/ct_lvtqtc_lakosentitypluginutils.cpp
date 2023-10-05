@@ -38,6 +38,9 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
         case lvtshr::DiagramType::ComponentType:
             return EntityType::Component;
         case lvtshr::DiagramType::PackageType:
+            if (e->internalNode()->isPackageGroup()) {
+                return EntityType::PackageGroup;
+            }
             return EntityType::Package;
         case lvtshr::DiagramType::RepositoryType:
             return EntityType::Unknown;

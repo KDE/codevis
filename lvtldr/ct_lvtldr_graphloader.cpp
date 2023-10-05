@@ -225,9 +225,6 @@ void GraphLoader::load(const LoaderEdge& edge)
     case lvtshr::PackageDependency:
         d->graph->addPackageDependencyRelation(source, target);
         break;
-    case lvtshr::AllowedDependency:
-        d->graph->addAllowedPackageDependencyRelation(source, target);
-        break;
     case lvtshr::UsesInTheImplementation:
         d->graph->addUsesInTheImplementationRelation(source, target);
         break;

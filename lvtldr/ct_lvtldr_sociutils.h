@@ -258,20 +258,6 @@ class SociDatabaseHandler : public DatabaseHandler {
         tr.commit();
     }
 
-    void addAllowedDependency(RecordNumberType idFrom, RecordNumberType idTo) override
-    {
-        soci::transaction tr(d_db);
-        d_db << "insert into allowed_relationships (source_id, target_id) values (" << idFrom << ", " << idTo << ")";
-        tr.commit();
-    }
-
-    void removeAllowedDependency(RecordNumberType idFrom, RecordNumberType idTo) override
-    {
-        soci::transaction tr(d_db);
-        d_db << "delete from allowed_relationships where source_id = " << idFrom << " and target_id = " << idTo;
-        tr.commit();
-    }
-
     void addComponentDependency(RecordNumberType idFrom, RecordNumberType idTo) override
     {
         soci::transaction tr(d_db);
@@ -599,18 +585,6 @@ class SociDatabaseHandler : public DatabaseHandler {
                 (d_db.prepare << "select source_id from dependencies where target_id = :k", soci::use(dao.id));
             for (auto&& i : rs) {
                 dao.clientIds.emplace_back(i);
-            }
-        }
-        {
-            try {
-                soci::rowset<RecordNumberType> rs =
-                    (d_db.prepare << "select target_id from allowed_relationships where source_id = :k",
-                     soci::use(dao.id));
-                for (auto&& i : rs) {
-                    dao.allowedDependenciesIds.emplace_back(i);
-                }
-            } catch (std::runtime_error&) {
-                // Ignore if table doesn't exist.
             }
         }
 

@@ -43,7 +43,6 @@
 #include <ct_lvtmdl_usesintheimpltablemodel.h>
 #include <ct_lvtmdl_usesintheinterfacetablemodel.h>
 
-#include <ct_lvtldr_alloweddependencyloader.h>
 #include <ct_lvtldr_nodestorage.h>
 #include <ct_lvtldr_packagenode.h>
 

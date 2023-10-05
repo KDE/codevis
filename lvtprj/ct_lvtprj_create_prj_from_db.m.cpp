@@ -17,7 +17,6 @@
 // limitations under the License.
 */
 
-#include <ct_lvtldr_alloweddependencyloader.h>
 #include <ct_lvtldr_nodestorage.h>
 #include <ct_lvtprj_projectfile.h>
 
@@ -109,27 +108,6 @@ int main(int argc, char **argv)
 
     projectFile.saveAs(args.output, ProjectFile::BackupFileBehavior::Keep)
         .expect("Unexpected error saving the file to disk");
-
-    if (!args.sourcePath.empty()) {
-        auto sharedNodeStorage = NodeStorage{};
-        sharedNodeStorage.setDatabaseSourcePath(projectFile.cadDatabasePath().string());
-
-        projectFile.setSourceCodePath(args.sourcePath);
-        auto result = loadAllowedDependenciesFromDepFile(sharedNodeStorage, projectFile.sourceCodePath());
-        if (result.has_error()) {
-            switch (result.error().kind) {
-            case ErrorLoadAllowedDependencies::Kind::AllowedDependencyFileCouldNotBeOpen:
-                std::cout << "Warning: Allowed dependencies file could not be open at '" << args.sourcePath.string()
-                          << "'\n";
-                break;
-            case ErrorLoadAllowedDependencies::Kind::UnexpectedErrorAddingPhysicalDependency:
-                std::cout << "Warning: Unexpected error creating allowed dependencies for the project\n";
-                break;
-            }
-        }
-        projectFile.saveAs(args.output, ProjectFile::BackupFileBehavior::Keep)
-            .expect("Failed to persist allowed dependencies in project file");
-    }
 
     return EXIT_SUCCESS;
 }

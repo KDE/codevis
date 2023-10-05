@@ -14,7 +14,6 @@ AddTargetLibrary(
         ct_lvtldr_repositorynode.cpp
         ct_lvtldr_typenode.cpp
         ct_lvtldr_igraphloader.cpp
-        ct_lvtldr_alloweddependencyloader.cpp
     HEADERS
         ct_lvtldr_componentnode.h
         ct_lvtldr_componentnodefields.h
@@ -29,7 +28,6 @@ AddTargetLibrary(
         ct_lvtldr_sociutils.h
         ct_lvtldr_typenode.h
         ct_lvtldr_igraphloader.h
-        ct_lvtldr_alloweddependencyloader.h
     QT_HEADERS
         ct_lvtldr_nodestorage.h
         ct_lvtldr_lakosiannode.h
@@ -109,16 +107,4 @@ if (COMPILE_TESTS)
         ${SQLite3_INCLUDE_DIRS}
     )
     add_test(NAME test_ct_lvtldr_nodestorage COMMAND test_ct_lvtldr_nodestorage)
-
-    add_executable(test_ct_lvtldr_alloweddependencyloader
-        ct_lvtldr_nodestoragetestutils.h
-        ct_lvtldr_alloweddependencyloader.t.cpp)
-    target_link_libraries(test_ct_lvtldr_alloweddependencyloader
-        Codethink::lvtldr
-        Codethink::lvttst
-        Codethink::lvttst_tmpdir
-        Codethink::lvtmdb
-        ${SYSTEM_EXTRA_LIBRARIES}
-    )
-    add_test(NAME test_ct_lvtldr_alloweddependencyloader COMMAND test_ct_lvtldr_alloweddependencyloader)
 endif()

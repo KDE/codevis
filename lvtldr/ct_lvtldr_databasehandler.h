@@ -66,9 +66,6 @@ class DatabaseHandler {
     virtual void addConcreteDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;
     virtual void removeConcreteDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;
 
-    virtual void addAllowedDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;
-    virtual void removeAllowedDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;
-
     virtual void addComponentDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;
     virtual void removeComponentDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;
 

@@ -104,48 +104,31 @@ bool ToolAddPhysicalDependency::run(LakosEntity *fromItem, LakosEntity *toItem)
     }
 
     if (needsParentDependencies) {
-        auto hierarchy = calculateHierarchy(fromItem, toItem);
         auto *macro = new QUndoCommand("Multiple Add Edges");
-        auto forceAddPhysicalDep =
-            [&](auto const& iFrom, auto const& iTo, auto const& pair, PhysicalDependencyType type) {
-                auto ret = d->nodeStorage.addPhysicalDependency(iFrom, iTo, type);
-                (void) ret;
-                assert(!ret.has_error());
-                new UndoAddEdge(pair.first->qualifiedName(),
-                                pair.second->qualifiedName(),
-                                type == PhysicalDependencyType::AllowedDependency
-                                    ? lvtshr::LakosRelationType::AllowedDependency
-                                    : lvtshr::LakosRelationType::PackageDependency,
-                                QtcUtil::UndoActionType::e_Add,
-                                d->nodeStorage,
-                                macro);
-            };
-
-        for (const auto& pair : hierarchy) {
-            const auto& iFrom = pair.first->internalNode();
-            const auto& iTo = pair.second->internalNode();
-            forceAddPhysicalDep(iFrom, iTo, pair, PhysicalDependencyType::AllowedDependency);
-        }
-
-        // try to add the edge again, now that the parents are ok.
-        {
-            auto result = d->nodeStorage.addPhysicalDependency(fromItem->internalNode(), toItem->internalNode());
-            (void) result;
-            assert(!result.has_error());
-            new UndoAddEdge(fromItem->qualifiedName(),
-                            toItem->qualifiedName(),
+        auto forceAddPhysicalDep = [&](auto const& iFrom, auto const& iTo, auto const& pair) {
+            // Ignore any errors while FORCING the dependencies
+            (void) d->nodeStorage.addPhysicalDependency(iFrom, iTo);
+            new UndoAddEdge(pair.first->qualifiedName(),
+                            pair.second->qualifiedName(),
                             lvtshr::LakosRelationType::PackageDependency,
                             QtcUtil::UndoActionType::e_Add,
                             d->nodeStorage,
                             macro);
-        }
+        };
 
+        auto hierarchy = calculateHierarchy(fromItem, toItem);
         for (const auto& pair : hierarchy) {
             const auto& iFrom = pair.first->internalNode();
             const auto& iTo = pair.second->internalNode();
-            forceAddPhysicalDep(iFrom, iTo, pair, PhysicalDependencyType::ConcreteDependency);
+            forceAddPhysicalDep(iFrom, iTo, pair);
         }
-
+        d->nodeStorage.addPhysicalDependency(fromItem->internalNode(), toItem->internalNode()).expect("");
+        new UndoAddEdge(fromItem->qualifiedName(),
+                        toItem->qualifiedName(),
+                        lvtshr::LakosRelationType::PackageDependency,
+                        QtcUtil::UndoActionType::e_Add,
+                        d->nodeStorage,
+                        macro);
         Q_EMIT undoCommandCreated(macro);
     } else {
         // TODO: This should be a Group because of the parent edges.

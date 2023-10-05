@@ -135,9 +135,6 @@ class LVTLDR_EXPORT IGraphLoader {
     // new Edge is created. An EdgeDescriptor to the Edge is
     // returned
 
-    virtual lvtqtc::LakosRelation *addAllowedPackageDependencyRelation(lvtqtc::LakosEntity *source,
-                                                                       lvtqtc::LakosEntity *target) = 0;
-
     virtual NodeLoadFlags loadFlagsFor(LakosianNode *node) const = 0;
 };
 

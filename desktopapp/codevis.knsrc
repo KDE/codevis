@@ -1,6 +1,6 @@
 [KNewStuff3]
 ProvidersUrl=https://autoconfig.kde.org/ocs/providers.xml
-Categories=codevis
-TargetDir=Codevis
+Categories=Codevis
+TargetDir=codevis/plugins
 Uncompress=archive
 RemoveDeadEntries=true

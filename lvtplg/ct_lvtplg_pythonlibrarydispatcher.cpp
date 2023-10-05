@@ -72,7 +72,13 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
         .def_readonly("getQualifiedName", &Entity::getQualifiedName)
         .def_readonly("getType", &Entity::getType)
         .def_readonly("setColor", &Entity::setColor)
-        .def_readonly("addHoverInfo", &Entity::addHoverInfo);
+        .def_readonly("addHoverInfo", &Entity::addHoverInfo)
+        .def_readonly("getDependencies", &Entity::getDependencies)
+        .def_readonly("unloadFromScene", &Entity::unloadFromScene)
+        .def_readonly("getDbChildrenQualifiedNames", &Entity::getDbChildrenQualifiedNames)
+        .def_readonly("getParent", &Entity::getParent);
+
+    py::class_<Edge>(m, "Edge").def_readonly("setColor", &Edge::setColor).def_readonly("setStyle", &Edge::setStyle);
 
     {
         using T = PluginSetupHandler;
@@ -124,6 +130,15 @@ PYBIND11_EMBEDDED_MODULE(pyLksPlugin, m)
             .def("getPluginData", &pyGetPluginData<T>)
             .def_readonly("getEntity", &T::getEntity)
             .def_readonly("setReportContents", &T::setReportContents);
+    }
+
+    {
+        using T = PluginMainNodeChangedHandler;
+        py::class_<T>(m, "PluginMainNodeChangedHandler")
+            .def("getPluginData", &pyGetPluginData<T>)
+            .def_readonly("getEntity", &T::getEntity)
+            .def_readonly("getVisibleEntities", &T::getVisibleEntities)
+            .def_readonly("getEdgeByQualifiedName", &T::getEdgeByQualifiedName);
     }
 }
 // NOLINTEND

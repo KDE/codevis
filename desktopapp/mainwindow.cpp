@@ -914,7 +914,28 @@ void MainWindow::graphicsSceneMainNodeChanged(Codethink::lvtqtc::LakosEntity *en
         return createWrappedEntityFromLakosEntity(entity);
     };
 
-    d_pluginManager_p->callHooksMainNodeChanged(getSceneName, getEntity);
+    auto getVisibleEntities = [&graphicsScene]() {
+        auto entities = std::vector<Entity>{};
+        for (auto&& e : graphicsScene->allEntities()) {
+            entities.push_back(createWrappedEntityFromLakosEntity(e));
+        }
+        return entities;
+    };
+
+    auto getEdgeByQualifiedName = [graphicsScene](std::string const& fromQualifiedName,
+                                                  std::string const& toQualifiedName) -> std::optional<Edge> {
+        auto *fromEntity = graphicsScene->entityByQualifiedName(fromQualifiedName);
+        if (!fromEntity) {
+            return std::nullopt;
+        }
+        auto *toEntity = graphicsScene->entityByQualifiedName(toQualifiedName);
+        if (!toEntity) {
+            return std::nullopt;
+        }
+        return createWrappedEdgeFromLakosEntity(fromEntity, toEntity);
+    };
+
+    d_pluginManager_p->callHooksMainNodeChanged(getSceneName, getEntity, getVisibleEntities, getEdgeByQualifiedName);
 }
 
 void MainWindow::createReport(std::string const& title, std::string const& htmlContents)
@@ -1281,20 +1302,6 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
 
     updateSessionPtr();
     d_projectFile.setSourceCodePath(d_parseCodebaseDialog_p->sourcePath());
-
-    using namespace Codethink::lvtldr;
-    auto result = loadAllowedDependenciesFromDepFile(sharedNodeStorage, d_projectFile.sourceCodePath());
-    if (result.has_error()) {
-        switch (result.error().kind) {
-        case ErrorLoadAllowedDependencies::Kind::AllowedDependencyFileCouldNotBeOpen:
-            showWarningMessage(tr("Warning: Allowed dependencies file could not be open at '%1'")
-                                   .arg(QString::fromStdString(d_projectFile.sourceCodePath().string())));
-            break;
-        case ErrorLoadAllowedDependencies::Kind::UnexpectedErrorAddingPhysicalDependency:
-            showErrorMessage(tr("Unexpected error creating allowed dependencies (Could not add physical dependency)."));
-            break;
-        }
-    }
 }
 
 void MainWindow::updateSessionPtr()

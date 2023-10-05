@@ -43,6 +43,9 @@ struct PluginMainNodeChangedHandler {
     std::function<void *(std::string const& id)> const getPluginData;
     std::function<std::string()> const getSceneName;
     std::function<Entity()> const getEntity;
+    std::function<std::vector<Entity>()> const getVisibleEntities;
+    std::function<std::optional<Edge>(std::string const& fromQualifiedName, std::string const& toQualifiedName)> const
+        getEdgeByQualifiedName;
 };
 
 #endif // DIAGRAM_SERVER_CT_LVTPLG_HANDLERPLUGINGRAPHICSVIEW_H

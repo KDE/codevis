@@ -178,11 +178,17 @@ void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneNa
 }
 
 void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
-                                             mainNodeChanged_getEntity_f const& getEntity)
+                                             mainNodeChanged_getEntity_f const& getEntity,
+                                             mainNodeChanged_getVisibleEntities_f const& getVisibleEntities,
+                                             mainNodeChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName)
 {
     callAllHooks<hookMainNodeChanged_f>(
         "hookMainNodeChanged",
-        PluginMainNodeChangedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName, getEntity});
+        PluginMainNodeChangedHandler{std::bind_front(&PluginManager::getPluginData, this),
+                                     getSceneName,
+                                     getEntity,
+                                     getVisibleEntities,
+                                     getEdgeByQualifiedName});
 }
 
 void PluginManager::registerPluginData(std::string const& id, void *data)

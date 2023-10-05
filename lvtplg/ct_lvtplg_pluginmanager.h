@@ -108,8 +108,12 @@ class LVTPLG_EXPORT PluginManager {
 
     using mainNodeChanged_getSceneName_f = decltype(PluginMainNodeChangedHandler::getSceneName);
     using mainNodeChanged_getEntity_f = decltype(PluginMainNodeChangedHandler::getEntity);
+    using mainNodeChanged_getVisibleEntities_f = decltype(PluginMainNodeChangedHandler::getVisibleEntities);
+    using mainNodeChanged_getEdgeByQualifiedName_f = decltype(PluginMainNodeChangedHandler::getEdgeByQualifiedName);
     void callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
-                                  mainNodeChanged_getEntity_f const& getEntity);
+                                  mainNodeChanged_getEntity_f const& getEntity,
+                                  mainNodeChanged_getVisibleEntities_f const& getVisibleEntities,
+                                  mainNodeChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName);
 
     void registerPluginData(std::string const& id, void *data);
     void unregisterPluginData(std::string const& id);

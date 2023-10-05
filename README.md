@@ -2,7 +2,7 @@
 
 ![Codevis](doc/images/mainwindow.png)
 
-[![build status](https://gitlab.com/CodethinkLabs/codevis/codevis/badges/main/pipeline.svg)](https://gitlab.com/CodethinkLabs/codevis/codevis/-/pipelines/?ref=main)
+[![build status](https://invent.kde.org/sdk/codevis/badges/master/pipeline.svg)](https://invent.kde.org/sdk/codevis/-/pipelines/?ref=master)
 
 Codevis is an analysis and visualization tool designed to assist in code maintenance for C++ codebases.
 

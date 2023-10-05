@@ -120,6 +120,7 @@ install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
 
 set(DEPLOYED_PLUGINS
+    allowed_dependencies_plugin
     code_coverage_plugin
     cycle_detection_plugin
     lakosian_test_rules_plugin

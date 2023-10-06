@@ -53,6 +53,7 @@ AddTargetLibrary(
 
     LIBRARIES
         ${SYSTEM_EXTRA_LIBRARIES}
+        KF${KF_MAJOR_VERSION}::KCMUtils
         KF${KF_MAJOR_VERSION}::WidgetsAddons
         KF${KF_MAJOR_VERSION}::TextEditor
         Codethink::lvtmdl

@@ -707,6 +707,11 @@ void MainWindow::openPreferences()
     if (!m_confDialog_p) {
         m_confDialog_p = new Codethink::lvtqtw::ConfigurationDialog(this);
     }
+
+    if (d_pluginManager_p) {
+        m_confDialog_p->updatePluginInformation(*d_pluginManager_p);
+    }
+
     m_confDialog_p->show();
 }
 

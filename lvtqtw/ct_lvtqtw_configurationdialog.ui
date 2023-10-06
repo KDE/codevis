@@ -60,6 +60,11 @@
          <string>Mouse</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Plugins</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
@@ -456,7 +461,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="KFontRequester" name="pkgGroupFont" native="true"/>
+              <widget class="KFontRequester" name="pkgGroupFont"/>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_11">
@@ -466,7 +471,7 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="KFontRequester" name="pkgFont" native="true"/>
+              <widget class="KFontRequester" name="pkgFont"/>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_12">
@@ -476,7 +481,7 @@
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="KFontRequester" name="componentFont" native="true"/>
+              <widget class="KFontRequester" name="componentFont"/>
              </item>
              <item row="3" column="0">
               <widget class="QLabel" name="label_13">
@@ -486,7 +491,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="KFontRequester" name="classFont" native="true"/>
+              <widget class="KFontRequester" name="classFont"/>
              </item>
              <item row="4" column="0">
               <widget class="QLabel" name="label_14">
@@ -496,7 +501,7 @@
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="KFontRequester" name="structFont" native="true"/>
+              <widget class="KFontRequester" name="structFont"/>
              </item>
              <item row="5" column="0">
               <widget class="QLabel" name="label_15">
@@ -506,7 +511,7 @@
               </widget>
              </item>
              <item row="5" column="1">
-              <widget class="KFontRequester" name="enumFont" native="true"/>
+              <widget class="KFontRequester" name="enumFont"/>
              </item>
             </layout>
            </widget>
@@ -649,6 +654,10 @@
            </property>
           </spacer>
          </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pluginsPage">
+        <layout class="QVBoxLayout" name="pluginsPageLayout">
         </layout>
        </widget>
       </widget>

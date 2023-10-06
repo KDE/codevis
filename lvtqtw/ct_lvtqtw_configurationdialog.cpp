@@ -29,12 +29,14 @@
 #include <QDialogButtonBox>
 #include <QPushButton>
 
+#include <KPluginWidget>
 #include <cassert>
 
 namespace Codethink::lvtqtw {
 
 struct ConfigurationDialog::Private {
     Ui::ConfigurationDialog ui;
+    KPluginWidget *pluginWidget;
 };
 
 namespace {
@@ -51,6 +53,11 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
     QDialog(parent), d(std::make_unique<ConfigurationDialog::Private>())
 {
     d->ui.setupUi(this);
+    this->setWindowTitle("Configure Software");
+
+    d->pluginWidget = new KPluginWidget(this);
+    d->ui.pluginsPageLayout->addWidget(d->pluginWidget);
+
     populateMouseTabOptions();
     load();
 
@@ -182,6 +189,9 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
             if (text == tr("Mouse")) {
                 return d->ui.mousePage;
             }
+            if (text == tr("Plugins")) {
+                return d->ui.pluginsPage;
+            }
             // Default for unknown pages
             return d->ui.colorsPage;
         }();
@@ -193,6 +203,28 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
 }
 
 ConfigurationDialog::~ConfigurationDialog() = default;
+
+void ConfigurationDialog::updatePluginInformation(lvtplg::PluginManager& pluginManager)
+{
+    auto plugins = QVector<KPluginMetaData>{};
+    QString categoryLabel = "Codevis Plugins";
+    for (auto const& metadataFile : pluginManager.getPluginsMetadataFilePaths()) {
+        plugins.push_back(KPluginMetaData{QString::fromStdString(metadataFile),
+                                          KPluginMetaData::KPluginMetaDataOption::AllowEmptyMetaData});
+    }
+
+    d->pluginWidget->clear();
+    d->pluginWidget->addPlugins(plugins, categoryLabel);
+    connect(d->pluginWidget,
+            &KPluginWidget::pluginEnabledChanged,
+            [&pluginManager](const QString& pluginId, bool enabled) {
+                auto plugin = pluginManager.getPluginById(pluginId.toStdString());
+                if (!plugin) {
+                    return;
+                }
+                plugin->get().setEnabled(enabled);
+            });
+}
 
 void ConfigurationDialog::load()
 {

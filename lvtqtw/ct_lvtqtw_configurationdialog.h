@@ -20,6 +20,7 @@
 #ifndef DEFINED_CT_LVTQTW_CONFIGURATIONDIALOG_H
 #define DEFINED_CT_LVTQTW_CONFIGURATIONDIALOG_H
 
+#include <lvtplg/ct_lvtplg_pluginmanager.h>
 #include <lvtqtw_export.h>
 
 #include <QDialog>
@@ -40,6 +41,7 @@ class LVTQTW_EXPORT ConfigurationDialog : public QDialog {
     static void save();
     void restoreDefaults();
     void changeCurrentWidgetByString(QString const& text);
+    void updatePluginInformation(lvtplg::PluginManager& pluginManager);
 
   private:
     void populateMouseTabOptions();

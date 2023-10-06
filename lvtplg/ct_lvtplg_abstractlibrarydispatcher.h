@@ -59,7 +59,7 @@ class AbstractLibraryDispatcher {
 
     virtual std::string metadataFilePath()
     {
-        return std::filesystem::path{this->fileName()}.parent_path() / "metadata.json";
+        return (std::filesystem::path{this->fileName()}.parent_path() / "metadata.json").string();
     }
 
     virtual void setEnabled(bool enabled)
@@ -86,8 +86,7 @@ class AbstractLibraryDispatcher {
   protected:
     KPluginMetaData metadata()
     {
-        return KPluginMetaData{QString::fromStdString(this->metadataFilePath()),
-                               KPluginMetaData::KPluginMetaDataOption::AllowEmptyMetaData};
+        return KPluginMetaData::fromJsonFile(QString::fromStdString(this->metadataFilePath()));
     }
 };
 

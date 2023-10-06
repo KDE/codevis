@@ -39,8 +39,8 @@ TEST_CASE("Plugin manager")
     pm.loadPlugins(QDir{QString::fromStdString(pluginsPath)});
 
     // Make sure all plugins are enabled for this test
-    pm.getPluginById("basic_cpp_plugin")->get().setEnabled(true);
-    pm.getPluginById("basic_py_plugin")->get().setEnabled(true);
+    pm.getPluginById(CPP_TEST_PLUGIN_ID)->get().setEnabled(true);
+    pm.getPluginById(PY_TEST_PLUGIN_ID)->get().setEnabled(true);
 
     REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) == nullptr);
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
@@ -57,29 +57,22 @@ TEST_CASE("Plugin manager")
 
     // Make sure it doesn't crashes reloading the plugin.'
     pm.reloadPlugin(basicPythonPluginPath);
-}
 
-TEST_CASE("Disable plugins")
-{
-    auto const pluginsPath = std::string{TEST_PLG_PATH};
-
-    auto pm = PluginManager{};
-    pm.loadPlugins(QDir{QString::fromStdString(pluginsPath)});
-    REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) == nullptr);
-    REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
-
-    pm.getPluginById("basic_cpp_plugin")->get().setEnabled(false);
-    pm.getPluginById("basic_py_plugin")->get().setEnabled(true);
-
+    // Check workflow with disabled plugin
+    pm.getPluginById(CPP_TEST_PLUGIN_ID)->get().setEnabled(false);
+    pm.getPluginById(PY_TEST_PLUGIN_ID)->get().setEnabled(true);
     pm.callHooksSetupPlugin();
-    // Not set because the plugin is disabled
     REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) == nullptr);
-    // Set, since the plugin is enabled
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) != nullptr);
-
     pm.callHooksTeardownPlugin();
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
 
-    pm.getPluginById("basic_cpp_plugin")->get().setEnabled(true);
-    pm.getPluginById("basic_py_plugin")->get().setEnabled(true);
+    pm.getPluginById(CPP_TEST_PLUGIN_ID)->get().setEnabled(true);
+    pm.getPluginById(PY_TEST_PLUGIN_ID)->get().setEnabled(true);
+    pm.callHooksSetupPlugin();
+    REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) != nullptr);
+    REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) != nullptr);
+    pm.callHooksTeardownPlugin();
+    REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) == nullptr);
+    REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
 }

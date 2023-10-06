@@ -44,6 +44,7 @@ TEST_CASE("Python dispatcher")
     REQUIRE_FALSE(PythonLibraryDispatcher::isValidPlugin(plgDirAsQDir));
     (void) pluginDir.createTextFile("myplugin.py", PLUGIN_CONTENTS);
     (void) pluginDir.createTextFile("README.md", "");
+    (void) pluginDir.createTextFile("metadata.json", "");
     REQUIRE(PythonLibraryDispatcher::isValidPlugin(plgDirAsQDir));
     auto pluginLib = PythonLibraryDispatcher::loadSinglePlugin(plgDirAsQDir);
     {

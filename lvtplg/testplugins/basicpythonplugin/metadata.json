@@ -1,0 +1,14 @@
+{
+  "KPlugin": {
+     "Name": "basic py plugin",
+     "Description": "none",
+     "Icon": "none",
+     "Authors": [ { "Name": "Tarcisio Fischer", "Email": "tarcisiofischer@kde.org" } ],
+     "Category": "Codevis Plugins",
+     "EnabledByDefault": true,
+     "License": "Apache-2.0",
+     "Id": "basic_py_plugin",
+     "Version": "1.0",
+     "Website": "https://invent.kde.org/sdk/codevis"
+  }
+}

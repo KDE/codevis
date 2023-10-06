@@ -20,6 +20,7 @@
 #ifndef DIAGRAM_SERVER_CT_LVTPLG_PYTHONLIBRARYDISPATCHER_H
 #define DIAGRAM_SERVER_CT_LVTPLG_PYTHONLIBRARYDISPATCHER_H
 
+#include <ct_lvtplg_abstractlibrarydispatcher.h>
 #include <ct_lvtplg_basicpluginhooks.h>
 #include <ct_lvtplg_handlercodeanalysis.h>
 #include <ct_lvtplg_handlercontextmenuaction.h>
@@ -28,7 +29,6 @@
 #include <ct_lvtplg_handlergraphicsview.h>
 #include <ct_lvtplg_handlersetup.h>
 #include <ct_lvtplg_handlertreewidget.h>
-#include <ct_lvtplg_librarydispatcherinterface.h>
 
 #include <lvtplg_export.h>
 
@@ -55,9 +55,9 @@ namespace py = pybind11;
 
 namespace Codethink::lvtplg {
 
-class LVTPLG_EXPORT PythonLibraryDispatcher : public ILibraryDispatcher {
+class LVTPLG_EXPORT PythonLibraryDispatcher : public AbstractLibraryDispatcher {
   public:
-    class PyResolveContext : public ILibraryDispatcher::ResolveContext {
+    class PyResolveContext : public AbstractLibraryDispatcher::ResolveContext {
       public:
         PyResolveContext(py::module_& pyModule, std::string const& functionName);
         PyResolveContext(PyResolveContext&) = delete;
@@ -76,7 +76,7 @@ class LVTPLG_EXPORT PythonLibraryDispatcher : public ILibraryDispatcher {
     void reload() override;
 
     static bool isValidPlugin(QDir const& pluginDir);
-    static std::unique_ptr<ILibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);
+    static std::unique_ptr<AbstractLibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);
     static bool reloadSinglePlugin(QDir const& pluginDir);
 
   private:

@@ -1,0 +1,14 @@
+ {
+  "KPlugin": {
+     "Name": "Cycle detection plugins",
+     "Description": "Searches for cycles in the entities",
+     "Icon": "none",
+     "Authors": [ { "Name": "Tarcisio Fischer", "Email": "tarcisiofischer@kde.org" } ],
+     "Category": "Codevis Plugins",
+     "EnabledByDefault": true,
+     "License": "Apache-2.0",
+     "Id": "cycle_detection_plugin",
+     "Version": "1.0",
+     "Website": "https://invent.kde.org/sdk/codevis"
+  }
+}

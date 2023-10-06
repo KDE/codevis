@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     contents.append('py::module_ *PythonLibraryDispatcher::PyResolveContext::activeModule = nullptr;')
     contents.append('PythonLibraryDispatcher::PyResolveContext::PyResolveContext(py::module_& module, const std::string& hookName)')
-    contents.append(' : ILibraryDispatcher::ResolveContext(nullptr)')
+    contents.append(' : AbstractLibraryDispatcher::ResolveContext(nullptr)')
     contents.append('{')
     contents.append('    PythonLibraryDispatcher::PyResolveContext::activeModule = &module;')
     contents.append('    if (py::hasattr(module, hookName.c_str())) {')

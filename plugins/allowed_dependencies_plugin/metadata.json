@@ -1,0 +1,14 @@
+ {
+  "KPlugin": {
+     "Name": "Allowed dependencies plugin",
+     "Description": "Reads .dep and .mem files in a project to check for allowed dependencies.",
+     "Icon": "none",
+     "Authors": [ { "Name": "Tarcisio Fischer", "Email": "tarcisiofischer@kde.org" } ],
+     "Category": "Codevis Plugins",
+     "EnabledByDefault": true,
+     "License": "Apache-2.0",
+     "Id": "allowed_dependencies_plugin",
+     "Version": "1.0",
+     "Website": "https://invent.kde.org/sdk/codevis"
+  }
+}

@@ -28,6 +28,7 @@
 #endif
 #include <ct_lvtplg_sharedlibrarydispatcher.h>
 
+#include <KPluginMetaData>
 #include <QCoreApplication>
 
 namespace Codethink::lvtplg {
@@ -62,14 +63,14 @@ void PluginManager::loadPlugins(std::optional<QDir> preferredPath)
     }
 
     qDebug() << "Loaded plugins:";
-    for (auto&& p : this->libraries) {
+    for (auto const& [_, p] : this->libraries) {
         qDebug() << "+ " << QString::fromStdString(p->fileName());
     }
 }
 
 void PluginManager::reloadPlugin(const QString& pluginFolder)
 {
-    for (auto&& p : this->libraries) {
+    for (auto const& [_, p] : this->libraries) {
         QString loadedLibrary = QString::fromStdString(p->fileName());
 
         if (loadedLibrary.startsWith(pluginFolder)) {
@@ -87,6 +88,24 @@ void PluginManager::reloadPlugin(const QString& pluginFolder)
 #ifdef ENABLE_PYTHON_PLUGINS
     tryInstallPlugin<PythonLibraryDispatcher>(pluginPath.absoluteFilePath());
 #endif
+}
+
+std::vector<std::string> PluginManager::getPluginsMetadataFilePaths() const
+{
+    auto metadataFilePaths = std::vector<std::string>{};
+    for (auto const& [_, lib] : this->libraries) {
+        metadataFilePaths.push_back(lib->metadataFilePath());
+    }
+    return metadataFilePaths;
+}
+
+std::optional<std::reference_wrapper<AbstractLibraryDispatcher>>
+PluginManager::getPluginById(std::string const& id) const
+{
+    if (!this->libraries.contains(id)) {
+        return std::nullopt;
+    }
+    return *this->libraries.at(id);
 }
 
 void PluginManager::callHooksSetupPlugin()

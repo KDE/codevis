@@ -8,16 +8,17 @@ AddTargetLibrary(
     ct_lvtplg_sharedlibrarydispatcher.cpp
     ct_lvtplg_pythonlibrarydispatcher.cpp
   QT_HEADERS
+    ct_lvtplg_abstractlibrarydispatcher.h
     ct_lvtplg_handlercontextmenuaction.h
     ct_lvtplg_handlercodeanalysis.h
     ct_lvtplg_handlersetup.h
     ct_lvtplg_pluginmanager.h
     ct_lvtplg_sharedlibrarydispatcher.h
     ct_lvtplg_pythonlibrarydispatcher.h
-    ct_lvtplg_librarydispatcherinterface.h
   LIBRARIES
     ${SYSTEM_EXTRA_LIBRARIES}
     Codethink::lvtshr
+    KF${KF_MAJOR_VERSION}::NewStuffCore
     Qt::Core
     Python::Python
 )

@@ -4,6 +4,7 @@ project(basicpythonplugin)
 
 set(PLUGIN_FILES
     README.md
+    metadata.json
     basicpythonplugin.py
 )
 

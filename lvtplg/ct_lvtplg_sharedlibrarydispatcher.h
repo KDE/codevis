@@ -20,7 +20,7 @@
 #ifndef DIAGRAM_SERVER_CT_LVTPLG_SHAREDLIBRARYDISPATCHER_H
 #define DIAGRAM_SERVER_CT_LVTPLG_SHAREDLIBRARYDISPATCHER_H
 
-#include <ct_lvtplg_librarydispatcherinterface.h>
+#include <ct_lvtplg_abstractlibrarydispatcher.h>
 
 #include <QDir>
 #include <QLibrary>
@@ -31,7 +31,7 @@
 
 namespace Codethink::lvtplg {
 
-class SharedLibraryDispatcher : public ILibraryDispatcher {
+class SharedLibraryDispatcher : public AbstractLibraryDispatcher {
   public:
     static constexpr auto name = "SharedLib";
     static const std::string pluginDataId;
@@ -42,7 +42,7 @@ class SharedLibraryDispatcher : public ILibraryDispatcher {
     std::string fileName() override;
 
     static bool isValidPlugin(QDir const& pluginDir);
-    static std::unique_ptr<ILibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);
+    static std::unique_ptr<AbstractLibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);
 
   private:
     QLibrary library;

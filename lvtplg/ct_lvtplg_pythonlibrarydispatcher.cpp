@@ -156,7 +156,8 @@ PythonLibraryDispatcher::PyResolveContext::~PyResolveContext()
     PythonLibraryDispatcher::PyResolveContext::activeModule = nullptr;
 }
 
-std::unique_ptr<ILibraryDispatcher::ResolveContext> PythonLibraryDispatcher::resolve(std::string const& functionName)
+std::unique_ptr<AbstractLibraryDispatcher::ResolveContext>
+PythonLibraryDispatcher::resolve(std::string const& functionName)
 {
     return std::make_unique<PyResolveContext>(this->pyModule, functionName);
 }
@@ -170,10 +171,10 @@ std::string PythonLibraryDispatcher::fileName()
 bool PythonLibraryDispatcher::isValidPlugin(QDir const& pluginDir)
 {
     auto pluginName = pluginDir.dirName();
-    return (pluginDir.exists("README.md") && pluginDir.exists(pluginName + ".py"));
+    return (pluginDir.exists("metadata.json") && pluginDir.exists("README.md") && pluginDir.exists(pluginName + ".py"));
 }
 
-std::unique_ptr<ILibraryDispatcher> PythonLibraryDispatcher::loadSinglePlugin(QDir const& pluginDir)
+std::unique_ptr<AbstractLibraryDispatcher> PythonLibraryDispatcher::loadSinglePlugin(QDir const& pluginDir)
 {
     py::gil_scoped_acquire _;
 

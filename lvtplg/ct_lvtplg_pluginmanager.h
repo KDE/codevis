@@ -22,13 +22,13 @@
 
 #include <lvtplg_export.h>
 
+#include <ct_lvtplg_abstractlibrarydispatcher.h>
 #include <ct_lvtplg_basicpluginhooks.h>
 #include <ct_lvtplg_handlercodeanalysis.h>
 #include <ct_lvtplg_handlercontextmenuaction.h>
 #include <ct_lvtplg_handlerdockwidget.h>
 #include <ct_lvtplg_handlerentityreport.h>
 #include <ct_lvtplg_handlersetup.h>
-#include <ct_lvtplg_librarydispatcherinterface.h>
 #include <ct_lvtplg_pythonlibrarydispatcher.h>
 
 #include <QDebug>
@@ -58,6 +58,8 @@ class LVTPLG_EXPORT PluginManager {
     PluginManager operator=(PluginManager const&) = delete;
     PluginManager operator=(PluginManager&) = delete;
     void loadPlugins(std::optional<QDir> preferredPath = std::nullopt);
+    std::vector<std::string> getPluginsMetadataFilePaths() const;
+    std::optional<std::reference_wrapper<AbstractLibraryDispatcher>> getPluginById(std::string const& id) const;
 
     void reloadPlugin(const QString& pluginfolder);
 
@@ -128,7 +130,12 @@ class LVTPLG_EXPORT PluginManager {
     template<typename HookFunctionType, typename HandlerType>
     void callAllHooks(std::string&& hookName, HandlerType&& handler)
     {
-        for (auto&& pluginLib : libraries) {
+        QDebug dbg(QtDebugMsg);
+        for (auto const& [_, pluginLib] : libraries) {
+            if (!pluginLib->isEnabled()) {
+                continue;
+            }
+
             auto resolveContext = pluginLib->resolve(hookName);
             if (resolveContext->hook) {
                 reinterpret_cast<HookFunctionType>(resolveContext->hook)(&handler);
@@ -153,7 +160,8 @@ class LVTPLG_EXPORT PluginManager {
             return;
         }
 
-        libraries.push_back(std::move(lib));
+        auto id = lib->pluginId();
+        libraries[id] = std::move(lib);
         dbg << "Plugin successfully loaded!";
     }
 
@@ -174,7 +182,7 @@ class LVTPLG_EXPORT PluginManager {
     py::scoped_interpreter py;
     py::gil_scoped_release defaultReleaseGIL;
 #endif
-    std::vector<std::unique_ptr<ILibraryDispatcher>> libraries;
+    std::unordered_map<std::string, std::unique_ptr<AbstractLibraryDispatcher>> libraries;
     std::map<std::string, void *> pluginData;
     std::unordered_map<std::string, QObject *> pluginQObjects;
 };

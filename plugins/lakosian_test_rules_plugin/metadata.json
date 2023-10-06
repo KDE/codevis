@@ -1,0 +1,14 @@
+ {
+  "KPlugin": {
+     "Name": "Lakosian test rules plugin",
+     "Description": "Checks if test files follow rules described on John Lakos' books",
+     "Icon": "none",
+     "Authors": [ { "Name": "Tarcisio Fischer", "Email": "tarcisiofischer@kde.org" } ],
+     "Category": "Codevis Plugins",
+     "EnabledByDefault": true,
+     "License": "Apache-2.0",
+     "Id": "lakosian_test_rules_plugin",
+     "Version": "1.0",
+     "Website": "https://invent.kde.org/sdk/codevis"
+  }
+}

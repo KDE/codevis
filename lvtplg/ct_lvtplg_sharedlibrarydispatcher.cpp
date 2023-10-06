@@ -28,9 +28,10 @@ SharedLibraryDispatcher::SharedLibraryDispatcher(QString const& fileName): libra
 {
 }
 
-std::unique_ptr<ILibraryDispatcher::ResolveContext> SharedLibraryDispatcher::resolve(std::string const& functionName)
+std::unique_ptr<AbstractLibraryDispatcher::ResolveContext>
+SharedLibraryDispatcher::resolve(std::string const& functionName)
 {
-    return std::make_unique<ILibraryDispatcher::ResolveContext>(library.resolve(functionName.c_str()));
+    return std::make_unique<AbstractLibraryDispatcher::ResolveContext>(library.resolve(functionName.c_str()));
 }
 
 std::string SharedLibraryDispatcher::fileName()
@@ -52,10 +53,11 @@ bool SharedLibraryDispatcher::isValidPlugin(QDir const& pluginDir)
 #else
     auto so_ext = QString{".so"};
 #endif
-    return (pluginDir.exists("README.md") && pluginDir.exists(pluginName + so_ext));
+    return (pluginDir.exists("metadata.json") && pluginDir.exists("README.md")
+            && pluginDir.exists(pluginName + so_ext));
 }
 
-std::unique_ptr<ILibraryDispatcher> SharedLibraryDispatcher::loadSinglePlugin(QDir const& pluginDir)
+std::unique_ptr<AbstractLibraryDispatcher> SharedLibraryDispatcher::loadSinglePlugin(QDir const& pluginDir)
 {
     auto pluginName = pluginDir.dirName();
     auto pluginSharedObjectBasename = pluginDir.path() + "/" + pluginName;

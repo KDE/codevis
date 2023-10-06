@@ -147,6 +147,12 @@ foreach(TARGET_PLG ${DEPLOYED_PLUGINS})
     set(TARGET_PATH "${CMAKE_CURRENT_BINARY_DIR}/lks-plugins/${TARGET_PLG}")
     file(MAKE_DIRECTORY ${TARGET_PATH})
     add_plugin_file(
+        "${SOURCE_PATH}/metadata.json"
+        "${TARGET_PATH}/metadata.json"
+        PLUGIN_FILES
+        REQUIRED
+    )
+    add_plugin_file(
         "${SOURCE_PATH}/README.md"
         "${TARGET_PATH}/README.md"
         PLUGIN_FILES

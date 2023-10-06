@@ -20,14 +20,18 @@ target_link_libraries(${PLUGIN_NAME} Qt::Core)
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/README.md
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/metadata.json
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/README.md ${CMAKE_CURRENT_BINARY_DIR}/README.md
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/metadata.json ${CMAKE_CURRENT_BINARY_DIR}/metadata.json
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-    COMMENT "[${PLUGIN_NAME}] Copying README.md file..."
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/metadata.json
+    COMMENT "[${PLUGIN_NAME}] Copying README and metadata files..."
     VERBATIM
 )
 add_custom_target(
-        ${PLUGIN_NAME}_extra_files ALL
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/README.md
+    ${PLUGIN_NAME}_extra_files ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/README.md
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/metadata.json
 )
 add_dependencies(${PLUGIN_NAME} ${PLUGIN_NAME}_extra_files)
 

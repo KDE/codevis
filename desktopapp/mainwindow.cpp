@@ -370,7 +370,6 @@ void MainWindow::setProjectWidgetsEnabled(bool enabled)
     actionCollection()->action("file_save_as")->setEnabled(enabled);
     actionCollection()->action("file_save")->setEnabled(enabled);
     actionCollection()->action("edit_find")->setEnabled(enabled);
-    actionCollection()->action("options_configure")->setEnabled(enabled);
     actionCollection()->action("toggle_split_view")->setEnabled(enabled);
 }
 

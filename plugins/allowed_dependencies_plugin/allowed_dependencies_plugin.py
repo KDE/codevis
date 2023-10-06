@@ -3,20 +3,30 @@ import os
 
 
 def hookMainNodeChanged(handler):
-    SOURCE_PATH = handler.getProjectData().getSourceCodePath()
+    source_path = handler.getProjectData().getSourceCodePath()
 
-    for e in handler.getVisibleEntities():
-        if e.getType() == plg.EntityType.Package:
-            prefix = f"{SOURCE_PATH}/groups/{e.getParent().getName()}"
-            filename = f"{prefix}/{e.getName()}/package/{e.getName()}.dep"
-            if not os.path.isfile(filename):
-                continue
+    for entity in handler.getVisibleEntities():
+        if entity.getType() != plg.EntityType.Package:
+            continue
 
-            with open(filename, 'r') as f:
-                allowed_dependencies = [d.strip() for d in f.readlines()]
-                for dependency in e.getDependencies():
-                    edge = handler.getEdgeByQualifiedName(e.getQualifiedName(), dependency.getQualifiedName())
-                    if dependency.getName() in allowed_dependencies:
-                        edge.setColor(plg.Color(10, 10, 200))
-                    else:
-                        edge.setColor(plg.Color(200, 40, 40))
+        parent = entity.getParent()
+        if not parent:
+            continue
+
+        prefix = f"{source_path}/groups/{parent.getName()}"
+        depfile = f"{prefix}/{entity.getName()}/package/{entity.getName()}.dep"
+        if not os.path.isfile(depfile):
+            continue
+        with open(depfile, 'r') as f:
+            allowed_dependencies = [d.strip() for d in f.readlines()]
+
+        repaintEdgesGivenAllowedDependencies(handler, entity, allowed_dependencies)
+
+
+def repaintEdgesGivenAllowedDependencies(handler, entity, allowed_dependencies):
+    for dependency in entity.getDependencies():
+        edge = handler.getEdgeByQualifiedName(entity.getQualifiedName(), dependency.getQualifiedName())
+        if dependency.getName() in allowed_dependencies:
+            edge.setColor(plg.Color(10, 10, 200))
+        else:
+            edge.setColor(plg.Color(200, 40, 40))

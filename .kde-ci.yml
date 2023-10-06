@@ -5,6 +5,7 @@ Dependencies:
 - 'on': ['Linux/Qt6', 'FreeBSD/Qt6', 'Windows/Qt6', 'macOS/Qt6']
   'require':
     'frameworks/extra-cmake-modules': '@latest-kf6'
+    'frameworks/kcmutils': '@latest-kf6'
     'frameworks/kdoctools': '@latest-kf6'
     'frameworks/ki18n': '@latest-kf6'
     'frameworks/kiconthemes': '@latest-kf6'
@@ -16,6 +17,7 @@ Dependencies:
 - 'on': ['Linux/Qt5', 'FreeBSD/Qt5', 'Windows/Qt5', 'macOS/Qt5']
   'require':
     'frameworks/extra-cmake-modules': '@stable'
+    'frameworks/kcmutils': '@stable'
     'frameworks/kdoctools': '@stable'
     'frameworks/ki18n': '@stable'
     'frameworks/kiconthemes': '@stable'

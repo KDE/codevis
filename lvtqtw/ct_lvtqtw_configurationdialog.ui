@@ -353,7 +353,7 @@
            </widget>
            <widget class="QWidget" name="DefaultValues">
             <attribute name="title">
-             <string>Defaullt Values</string>
+             <string>Default Values</string>
             </attribute>
             <layout class="QFormLayout" name="formLayout_3">
              <item row="0" column="0">

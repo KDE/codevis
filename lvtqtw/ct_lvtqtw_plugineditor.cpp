@@ -140,16 +140,19 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
 PluginEditor::~PluginEditor() = default;
 
-#if KNEWSTUFF_VERSION >= QT_VERSION_CHECK(5, 91, 0)
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
 void PluginEditor::getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries)
 #else
-void PluginEditor::getNewScriptFinished(const QList<KNSCore::EntryInternal>& changedEntries)
-#endif
-#else
-void PluginEditor::getNewScriptFinished(const KNSCore::Entry::List& changedEntries)
+void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries)
 #endif
 {
+// Error build on Qt5 - the definitions of
+// KNSCore changed and things got messy.
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#undef KNSCore
+#define KNSCore KNS3
+#endif
+
     bool installed = false;
     // Our plugins are gzipped, and the installedFiles returns with `/*` in the end to denote
     // multiple files. we need to chop that off when we want to install it.

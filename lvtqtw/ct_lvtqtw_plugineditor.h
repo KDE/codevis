@@ -69,15 +69,12 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     void create(const QString& pluginName = QString());
     void reloadPlugin();
 
-#if KNEWSTUFF_VERSION >= QT_VERSION_CHECK(5, 91, 0)
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
     void getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries);
 #else
-    void getNewScriptFinished(const QList<KNSCore::EntryInternal>& changedEntries);
+    void getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries);
 #endif
-#else
-    void getNewScriptFinished(const KNS3::Entry::List& changedEntries);
-#endif
+
     // Used for testing purposes. defaults to ~/lks-plugins
     void setBasePluginPath(const QString& path);
     QDir basePluginPath();

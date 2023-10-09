@@ -30,6 +30,7 @@
 #include <QBoxLayout>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QStandardPaths>
 #include <QTabWidget>
 #include <QToolBar>
 #include <QToolButton>
@@ -37,6 +38,8 @@
 #include <KNSWidgets/Button>
 
 #include <ct_lvtplg_pluginmanager.h>
+#include <kmessagebox.h>
+#include <kstandardguiitem.h>
 
 using namespace Codethink::lvtqtw;
 
@@ -147,17 +150,28 @@ void PluginEditor::getNewScriptFinished(const QList<KNSCore::EntryInternal>& cha
 void PluginEditor::getNewScriptFinished(const KNSCore::Entry::List& changedEntries)
 #endif
 {
+    bool installed = false;
+    // Our plugins are gzipped, and the installedFiles returns with `/*` in the end to denote
+    // multiple files. we need to chop that off when we want to install it.
+    QList<QString> installedPlugins;
     for (const auto& entry : qAsConst(changedEntries)) {
         switch (entry.status()) {
-        case KNSCore::Entry::Installed:
-            for (const QString& file : entry.installedFiles()) {
-                qDebug() << file << "Installed";
+        case KNSCore::Entry::Installed: {
+            if (entry.installedFiles().count() == 0) {
+                continue;
             }
-            break;
+
+            QString filename = entry.installedFiles()[0];
+            // remove /* from the string.
+            installedPlugins.append(filename.chopped(2));
+
+            installed = true;
+        } break;
         case KNSCore::Entry::Deleted:
-            for (const auto& file : entry.uninstalledFiles()) {
-                qDebug() << file << "deleted";
-            }
+            KMessageBox::information(
+                this,
+                tr("Codevis doesn't support hot reloading of plugins, Save your work and restart the application."),
+                tr("Restart Required"));
             break;
         case KNSCore::Entry::Invalid:
         case KNSCore::Entry::Installing:
@@ -166,6 +180,13 @@ void PluginEditor::getNewScriptFinished(const KNSCore::Entry::List& changedEntri
         case KNSCore::Entry::Updating:
             // Not interesting.
             break;
+        }
+    }
+
+    // Refresh the plugins installed by GetNewStuff
+    if (installed) {
+        for (const auto& installedPlugin : installedPlugins) {
+            d->pluginManager->reloadPlugin(installedPlugin);
         }
     }
 }

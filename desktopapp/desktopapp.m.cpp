@@ -154,8 +154,13 @@ int main(int argc, char *argv[])
     Codethink::lvtmdl::DebugModel debugModel;
     qInstallMessageHandler(Codethink::lvtmdl::DebugModel::debugMessageHandler);
 
+    auto pluginSearchPaths = Preferences::pluginSearchPaths();
+
+    // Path of plugins installed by GetNewStuff.
+    pluginSearchPaths.append(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/plugins");
+
     auto pluginManager = Codethink::lvtplg::PluginManager{};
-    pluginManager.loadPlugins();
+    pluginManager.loadPlugins(pluginSearchPaths);
     pluginManager.callHooksSetupPlugin();
 
     auto sharedNodeStorage = Codethink::lvtldr::NodeStorage{};

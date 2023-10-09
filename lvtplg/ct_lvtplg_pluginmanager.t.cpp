@@ -26,7 +26,6 @@
 #include <test-project-paths.h>
 
 using namespace Codethink::lvtplg;
-namespace py = pybind11;
 
 auto constexpr CPP_TEST_PLUGIN_ID = "cppTestPlugin";
 auto constexpr PY_TEST_PLUGIN_ID = "pyTestPlugin";
@@ -36,7 +35,7 @@ TEST_CASE("Plugin manager")
     auto const pluginsPath = std::string{TEST_PLG_PATH};
 
     auto pm = PluginManager{};
-    pm.loadPlugins(QDir{QString::fromStdString(pluginsPath)});
+    pm.loadPlugins({QString::fromStdString(pluginsPath)});
 
     // Make sure all plugins are enabled for this test
     pm.getPluginById(CPP_TEST_PLUGIN_ID)->get().setEnabled(true);

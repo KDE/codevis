@@ -33,17 +33,11 @@
 
 namespace Codethink::lvtplg {
 
-void PluginManager::loadPlugins(std::optional<QDir> preferredPath)
+void PluginManager::loadPlugins(QList<QString> searchPaths)
 {
-    auto homePath = QDir(QDir::homePath() + "/lks-plugins");
-    auto appPath = QDir(QCoreApplication::applicationDirPath() + "/lks-plugins");
+    for (auto pluginsStr : searchPaths) {
+        QDir pluginsPath(pluginsStr);
 
-    auto searchPaths = std::vector<QDir>{homePath, appPath};
-    if (preferredPath) {
-        searchPaths.insert(searchPaths.begin(), *preferredPath);
-    }
-
-    for (auto pluginsPath : searchPaths) {
         qDebug() << "Loading plugins from " << pluginsPath.path() << "...";
         if (!pluginsPath.exists() || !pluginsPath.isReadable()) {
             qDebug() << "Couldn't find any plugin on path " << pluginsPath.path();

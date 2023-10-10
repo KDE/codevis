@@ -241,8 +241,6 @@ class MainWindow : public KXmlGuiWindow {
     Codethink::lvtqtc::GraphicsView *currentGraphWidget = nullptr;
     Codethink::lvtqtw::TabWidget *currentGraphTab = nullptr;
 
-    Codethink::lvtqtw::ConfigurationDialog *m_confDialog_p = nullptr;
-
     Codethink::lvtqtw::CodeVisStatusBar *d_status_bar;
     QString m_currentQualifiedName;
 

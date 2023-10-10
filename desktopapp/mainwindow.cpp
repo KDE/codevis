@@ -705,20 +705,17 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
 void MainWindow::openPreferences()
 {
-    if (!m_confDialog_p) {
-        m_confDialog_p = new Codethink::lvtqtw::ConfigurationDialog(d_pluginManager_p, this);
-    }
-
-    m_confDialog_p->show();
+    Codethink::lvtqtw::ConfigurationDialog confDialog(d_pluginManager_p, this);
+    confDialog.exec();
 }
 
 void MainWindow::openPreferencesAt(std::optional<QString> preferredPage)
 {
-    openPreferences();
-
+    Codethink::lvtqtw::ConfigurationDialog confDialog(d_pluginManager_p, this);
     if (preferredPage) {
-        m_confDialog_p->changeCurrentWidgetByString(*preferredPage);
+        confDialog.changeCurrentWidgetByString(*preferredPage);
     }
+    confDialog.exec();
 }
 
 void MainWindow::closeCurrentTab()

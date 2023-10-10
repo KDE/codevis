@@ -44,15 +44,11 @@ InputDialog::InputDialog(const QString& title, QWidget *parent):
     setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
 
     d->mainLayout = new QFormLayout();
-    setLayout(d->mainLayout);
     setWindowTitle(title);
 
     d->buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(d->buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(d->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
-
-    adjustSize();
-    setFixedSize(size());
 }
 
 InputDialog::~InputDialog() = default;
@@ -119,6 +115,10 @@ void InputDialog::finish()
     assert(!d->finishedBuild && "finish() called twice");
     d->mainLayout->addWidget(d->buttonBox);
     d->finishedBuild = true;
+
+    setLayout(d->mainLayout);
+    adjustSize();
+    setFixedSize(size());
 }
 
 void InputDialog::registerField(const QByteArray& fieldId, const QString& labelText, QWidget *widget)

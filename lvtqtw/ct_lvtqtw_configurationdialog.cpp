@@ -346,7 +346,7 @@ void ConfigurationDialog::populateMouseTabOptions()
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
 void ConfigurationDialog::getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries)
 #else
-void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries)
+void ConfigurationDialog::getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries)
 #endif
 {
 // Error build on Qt5 - the definitions of

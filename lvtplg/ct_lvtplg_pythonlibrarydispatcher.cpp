@@ -206,6 +206,7 @@ void PythonLibraryDispatcher::reload()
     pyModule.reload();
 }
 
+// This method assumes the plugin has already been cleaned up (e.g.: hookTeardown has been called)
 void PythonLibraryDispatcher::unload()
 {
     py::gil_scoped_acquire _;

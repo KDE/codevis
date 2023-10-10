@@ -18,7 +18,7 @@
 */
 
 // own
-#include "ct_lvtplg_pluginmanager.h"
+#include <ct_lvtplg_pluginmanager.h>
 #include <ct_lvtqtw_configurationdialog.h>
 
 #include <ct_lvtprj_projectfile.h>

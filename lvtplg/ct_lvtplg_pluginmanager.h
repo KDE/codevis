@@ -146,7 +146,7 @@ class LVTPLG_EXPORT PluginManager {
     template<typename DispatcherType>
     void tryInstallPlugin(QString const& pluginDir)
     {
-        // Todo: This should check if the plugin is already loaded before attempting
+        // TODO: This should check if the plugin is already loaded before attempting
         // to load it (because of knewstuff).
         QDebug dbg(QtDebugMsg);
 

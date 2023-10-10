@@ -33,9 +33,9 @@
 
 namespace Codethink::lvtplg {
 
-void PluginManager::loadPlugins(QList<QString> searchPaths)
+void PluginManager::loadPlugins(const QList<QString>& searchPaths)
 {
-    for (auto pluginsStr : searchPaths) {
+    for (const auto& pluginsStr : searchPaths) {
         QDir pluginsPath(pluginsStr);
 
         qDebug() << "Loading plugins from " << pluginsPath.path() << "...";
@@ -46,9 +46,9 @@ void PluginManager::loadPlugins(QList<QString> searchPaths)
 
         pluginsPath.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
         pluginsPath.setSorting(QDir::Name);
-        auto entryInfoList = pluginsPath.entryInfoList();
+        const auto entryInfoList = pluginsPath.entryInfoList();
         for (auto const& fileInfo : qAsConst(entryInfoList)) {
-            auto pluginDir = fileInfo.absoluteFilePath();
+            const auto pluginDir = fileInfo.absoluteFilePath();
             tryInstallPlugin<SharedLibraryDispatcher>(pluginDir);
 #ifdef ENABLE_PYTHON_PLUGINS
             tryInstallPlugin<PythonLibraryDispatcher>(pluginDir);
@@ -65,7 +65,7 @@ void PluginManager::loadPlugins(QList<QString> searchPaths)
 void PluginManager::reloadPlugin(const QString& pluginFolder)
 {
     for (auto const& [_, p] : this->libraries) {
-        QString loadedLibrary = QString::fromStdString(p->fileName());
+        const QString loadedLibrary = QString::fromStdString(p->fileName());
 
         if (loadedLibrary.startsWith(pluginFolder)) {
             p->reload();

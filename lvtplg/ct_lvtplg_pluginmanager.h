@@ -57,7 +57,7 @@ class LVTPLG_EXPORT PluginManager {
     PluginManager(PluginManager&&) = delete;
     PluginManager operator=(PluginManager const&) = delete;
     PluginManager operator=(PluginManager&) = delete;
-    void loadPlugins(QList<QString> paths);
+    void loadPlugins(const QList<QString>& paths);
     std::vector<std::string> getPluginsMetadataFilePaths() const;
     std::optional<std::reference_wrapper<AbstractLibraryDispatcher>> getPluginById(std::string const& id) const;
 

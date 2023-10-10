@@ -128,59 +128,6 @@ class LVTPLG_EXPORT PluginManager {
     QObject *getPluginQObject(std::string const& id) const;
 
   private:
-    template<typename HookFunctionType, typename HandlerType>
-    void callAllHooks(std::string&& hookName, HandlerType&& handler)
-    {
-        QDebug dbg(QtDebugMsg);
-        for (auto const& [_, pluginLib] : libraries) {
-            if (!pluginLib->isEnabled()) {
-                continue;
-            }
-
-            auto resolveContext = pluginLib->resolve(hookName);
-            if (resolveContext->hook) {
-                reinterpret_cast<HookFunctionType>(resolveContext->hook)(&handler);
-            }
-        }
-    }
-
-    template<typename DispatcherType>
-    void tryInstallPlugin(QString const& pluginDir)
-    {
-        // TODO: This should check if the plugin is already loaded before attempting
-        // to load it (because of knewstuff).
-        QDebug dbg(QtDebugMsg);
-
-        dbg << "(" << DispatcherType::name << "): Trying to install plugin " << pluginDir << "... ";
-        if (!DispatcherType::isValidPlugin(pluginDir)) {
-            dbg << "Invalid plugin.";
-            return;
-        }
-
-        auto lib = DispatcherType::loadSinglePlugin(pluginDir);
-        if (!lib) {
-            dbg << "Could not load *valid* plugin: " << pluginDir;
-            return;
-        }
-
-        auto id = lib->pluginId();
-        libraries[id] = std::move(lib);
-        dbg << "Plugin successfully loaded!";
-    }
-
-    template<typename DispatcherType>
-    void tryReloadPlugin(QString const& pluginDir)
-    {
-        QDebug dbg(QtDebugMsg);
-
-        dbg << "(" << DispatcherType::name << "): Trying to reload plugin " << pluginDir << "... ";
-        const bool res = DispatcherType::reloadSinglePlugin(pluginDir);
-        if (!res) {
-            dbg << "Could not load *valid* plugin: " << pluginDir;
-            return;
-        }
-    }
-
 #ifdef ENABLE_PYTHON_PLUGINS
     py::scoped_interpreter py;
     py::gil_scoped_release defaultReleaseGIL;

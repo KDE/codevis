@@ -31,6 +31,78 @@
 #include <KPluginMetaData>
 #include <QCoreApplication>
 
+template<typename HookFunctionType, typename HandlerType>
+void callSingleHook(std::string&& hookName,
+                    HandlerType&& handler,
+                    Codethink::lvtplg::AbstractLibraryDispatcher *library)
+{
+    if (!library->isEnabled()) {
+        return;
+    }
+
+    auto resolveContext = library->resolve(hookName);
+    if (resolveContext->hook) {
+        reinterpret_cast<HookFunctionType>(resolveContext->hook)(&handler);
+    }
+}
+
+template<typename HookFunctionType, typename HandlerType>
+void callAllHooks(
+    std::string&& hookName,
+    HandlerType&& handler,
+    std::unordered_map<std::string, std::unique_ptr<Codethink::lvtplg::AbstractLibraryDispatcher>>& libraries)
+{
+    QDebug dbg(QtDebugMsg);
+    for (auto const& [_, pluginLib] : libraries) {
+        if (!pluginLib->isEnabled()) {
+            continue;
+        }
+
+        callSingleHook<HookFunctionType, HandlerType>(std::move(hookName), std::move(handler), pluginLib.get());
+    }
+}
+
+template<typename DispatcherType>
+void tryInstallPlugin(
+    QString const& pluginDir,
+    std::unordered_map<std::string, std::unique_ptr<Codethink::lvtplg::AbstractLibraryDispatcher>>& libraries)
+{
+    // TODO: This should check if the plugin is already loaded before attempting
+    // to load it (because of knewstuff).
+    QDebug dbg(QtDebugMsg);
+
+    dbg << "(" << DispatcherType::name << "): Trying to install plugin " << pluginDir << "... ";
+    if (!DispatcherType::isValidPlugin(pluginDir)) {
+        dbg << "Invalid plugin.";
+        return;
+    }
+
+    auto lib = DispatcherType::loadSinglePlugin(pluginDir);
+    if (!lib) {
+        dbg << "Could not load *valid* plugin: " << pluginDir;
+        return;
+    }
+
+    auto id = lib->pluginId();
+    libraries[id] = std::move(lib);
+    dbg << "Plugin successfully loaded!";
+}
+
+template<typename DispatcherType>
+void tryReloadPlugin(
+    QString const& pluginDir,
+    std::unordered_map<std::string, std::unique_ptr<Codethink::lvtplg::AbstractLibraryDispatcher>>& libraries)
+{
+    QDebug dbg(QtDebugMsg);
+
+    dbg << "(" << DispatcherType::name << "): Trying to reload plugin " << pluginDir << "... ";
+    const bool res = DispatcherType::reloadSinglePlugin(pluginDir);
+    if (!res) {
+        dbg << "Could not load *valid* plugin: " << pluginDir;
+        return;
+    }
+}
+
 namespace Codethink::lvtplg {
 
 void PluginManager::loadPlugins(const QList<QString>& searchPaths)
@@ -49,9 +121,9 @@ void PluginManager::loadPlugins(const QList<QString>& searchPaths)
         const auto entryInfoList = pluginsPath.entryInfoList();
         for (auto const& fileInfo : qAsConst(entryInfoList)) {
             const auto pluginDir = fileInfo.absoluteFilePath();
-            tryInstallPlugin<SharedLibraryDispatcher>(pluginDir);
+            tryInstallPlugin<SharedLibraryDispatcher>(pluginDir, libraries);
 #ifdef ENABLE_PYTHON_PLUGINS
-            tryInstallPlugin<PythonLibraryDispatcher>(pluginDir);
+            tryInstallPlugin<PythonLibraryDispatcher>(pluginDir, libraries);
 #endif
         }
     }
@@ -78,9 +150,9 @@ void PluginManager::reloadPlugin(const QString& pluginFolder)
         return;
     }
 
-    tryInstallPlugin<SharedLibraryDispatcher>(pluginPath.absoluteFilePath());
+    tryInstallPlugin<SharedLibraryDispatcher>(pluginPath.absoluteFilePath(), libraries);
 #ifdef ENABLE_PYTHON_PLUGINS
-    tryInstallPlugin<PythonLibraryDispatcher>(pluginPath.absoluteFilePath());
+    tryInstallPlugin<PythonLibraryDispatcher>(pluginPath.absoluteFilePath(), libraries);
 #endif
 }
 
@@ -90,6 +162,11 @@ void PluginManager::removePlugin(const QString& pluginFolder)
         const QString loadedLibrary = QString::fromStdString(p->fileName());
 
         if (loadedLibrary.startsWith(pluginFolder)) {
+            auto handler = PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
+                                              std::bind_front(&PluginManager::getPluginData, this),
+                                              std::bind_front(&PluginManager::unregisterPluginData, this)};
+
+            callSingleHook<hookTeardownPlugin_f>("hookTeardownPlugin", handler, p.get());
             p->unload();
             this->libraries.erase(key);
             return;
@@ -120,7 +197,8 @@ void PluginManager::callHooksSetupPlugin()
     callAllHooks<hookSetupPlugin_f>("hookSetupPlugin",
                                     PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
                                                        std::bind_front(&PluginManager::getPluginData, this),
-                                                       std::bind_front(&PluginManager::unregisterPluginData, this)});
+                                                       std::bind_front(&PluginManager::unregisterPluginData, this)},
+                                    libraries);
 }
 
 void PluginManager::callHooksTeardownPlugin()
@@ -128,7 +206,8 @@ void PluginManager::callHooksTeardownPlugin()
     callAllHooks<hookTeardownPlugin_f>("hookTeardownPlugin",
                                        PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
                                                           std::bind_front(&PluginManager::getPluginData, this),
-                                                          std::bind_front(&PluginManager::unregisterPluginData, this)});
+                                                          std::bind_front(&PluginManager::unregisterPluginData, this)},
+                                       libraries);
 }
 
 void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& getAllEntitiesInCurrentView,
@@ -142,7 +221,8 @@ void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& ge
                                  getAllEntitiesInCurrentView,
                                  getEntityByQualifiedName,
                                  registerContextMenu,
-                                 getEdgeByQualifiedName});
+                                 getEdgeByQualifiedName},
+        libraries);
 }
 
 void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPluginDock,
@@ -153,14 +233,16 @@ void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPlu
                                         PluginDockWidgetHandler{std::bind_front(&PluginManager::getPluginData, this),
                                                                 createPluginDock,
                                                                 addDockWdgTextField,
-                                                                addTree});
+                                                                addTree},
+                                        libraries);
 }
 
 void PluginManager::callHooksSetupEntityReport(getEntity_f const& getEntity, addReport_f const& addReport)
 {
     callAllHooks<hookSetupEntityReport_f>(
         "hookSetupEntityReport",
-        PluginEntityReportHandler{std::bind_front(&PluginManager::getPluginData, this), getEntity, addReport});
+        PluginEntityReportHandler{std::bind_front(&PluginManager::getPluginData, this), getEntity, addReport},
+        libraries);
 }
 
 void PluginManager::callHooksPhysicalParserOnHeaderFound(getSourceFile_f const& getSourceFile,
@@ -172,7 +254,8 @@ void PluginManager::callHooksPhysicalParserOnHeaderFound(getSourceFile_f const& 
         PluginPhysicalParserOnHeaderFoundHandler{std::bind_front(&PluginManager::getPluginData, this),
                                                  getSourceFile,
                                                  getIncludedFile,
-                                                 getLineNo});
+                                                 getLineNo},
+        libraries);
 }
 
 void PluginManager::callHooksPluginLogicalParserOnCppCommentFoundHandler(getFilename_f const& getFilename,
@@ -186,21 +269,24 @@ void PluginManager::callHooksPluginLogicalParserOnCppCommentFoundHandler(getFile
                                                     getFilename,
                                                     getBriefText,
                                                     getStartLine,
-                                                    getEndLine});
+                                                    getEndLine},
+        libraries);
 }
 
 void PluginManager::callHooksOnParseCompleted(runQueryOnDatabase_f const& runQueryOnDatabase)
 {
     callAllHooks<hookOnParseCompleted_f>(
         "hookOnParseCompleted",
-        PluginParseCompletedHandler{std::bind_front(&PluginManager::getPluginData, this), runQueryOnDatabase});
+        PluginParseCompletedHandler{std::bind_front(&PluginManager::getPluginData, this), runQueryOnDatabase},
+        libraries);
 }
 
 void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneName)
 {
     callAllHooks<hookActiveSceneChanged_f>(
         "hookActiveSceneChanged",
-        PluginActiveSceneChangedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName});
+        PluginActiveSceneChangedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName},
+        libraries);
 }
 
 void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
@@ -216,7 +302,8 @@ void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f cons
                                      getEntity,
                                      getVisibleEntities,
                                      getEdgeByQualifiedName,
-                                     getProjectData});
+                                     getProjectData},
+        libraries);
 }
 
 void PluginManager::registerPluginData(std::string const& id, void *data)

@@ -75,3 +75,21 @@ TEST_CASE("Plugin manager")
     REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) == nullptr);
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
 }
+
+TEST_CASE("Unload plugin")
+{
+    auto const pluginsPath = std::string{TEST_PLG_PATH};
+    auto pm = PluginManager{};
+    pm.loadPlugins({QString::fromStdString(pluginsPath)});
+
+    // TODO: Unload C++ plugins
+    // pm.getPluginById(CPP_TEST_PLUGIN_ID)->get().setEnabled(true);
+    pm.getPluginById(PY_TEST_PLUGIN_ID)->get().setEnabled(true);
+    pm.callHooksSetupPlugin();
+    REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) != nullptr);
+
+    const QString basicPythonPluginPath =
+        QString::fromStdString(pluginsPath) + QDir::separator() + QStringLiteral("basicpythonplugin");
+    pm.removePlugin(basicPythonPluginPath);
+    REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
+}

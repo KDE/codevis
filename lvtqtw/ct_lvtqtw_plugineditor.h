@@ -30,13 +30,6 @@
 
 #include <result/result.hpp>
 
-#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-#include <KNSCore/Entry>
-#else
-#include <KNS3/Entry>
-#include <KNSCore/EntryInternal>
-#endif
-
 namespace Codethink::lvtplg {
 class PluginManager;
 }
@@ -68,12 +61,6 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     void load();
     void create(const QString& pluginName = QString());
     void reloadPlugin();
-
-#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-    void getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries);
-#else
-    void getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries);
-#endif
 
     // Used for testing purposes. defaults to ~/lks-plugins
     void setBasePluginPath(const QString& path);

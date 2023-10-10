@@ -21,14 +21,12 @@
 #include <result/result.hpp>
 
 // KDE
+#include <KMessageBox>
+#include <KNSWidgets/Button>
+#include <KStandardGuiItem>
 #include <KTextEditor/Document>
 #include <KTextEditor/Editor>
 #include <KTextEditor/View>
-
-#include <KNSWidgets/Button>
-
-#include <KMessageBox>
-#include <KStandardGuiItem>
 
 // Qt
 #include <QApplication>
@@ -60,7 +58,6 @@ struct PluginEditor::Private {
     QAction *savePlugin = nullptr;
     QAction *reloadPlugin = nullptr;
     QAction *closePlugin = nullptr;
-    KNSWidgets::Button *getNewButton = nullptr;
 
     lvtplg::PluginManager *pluginManager = nullptr;
 
@@ -113,17 +110,8 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
     d->reloadPlugin->setIcon(QIcon::fromTheme("system-run"));
     connect(d->reloadPlugin, &QAction::triggered, this, &PluginEditor::reloadPlugin);
 
-    d->getNewButton = new KNSWidgets::Button(this);
-    d->getNewButton->setConfigFile(QStringLiteral("codevis.knsrc"));
-    d->getNewButton->setText("Download Scripts");
-    connect(d->getNewButton,
-            &KNSWidgets::Button::dialogFinished,
-            this,
-            &Codethink::lvtqtw::PluginEditor::getNewScriptFinished);
-
     auto *toolBar = new QToolBar(this);
     toolBar->addActions({d->newPlugin, d->openFile, d->savePlugin, d->closePlugin, d->reloadPlugin});
-    toolBar->addWidget(d->getNewButton);
 
     d->documentViews->addTab(d->viewReadme, QStringLiteral("README.md"));
     d->documentViews->addTab(d->viewPlugin, QString());
@@ -141,60 +129,6 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 }
 
 PluginEditor::~PluginEditor() = default;
-
-#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-void PluginEditor::getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries)
-#else
-void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries)
-#endif
-{
-// Error build on Qt5 - the definitions of
-// KNSCore changed and things got messy.
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#undef KNSCore
-#define KNSCore KNS3
-#endif
-
-    bool installed = false;
-    // Our plugins are gzipped, and the installedFiles returns with `/*` in the end to denote
-    // multiple files. we need to chop that off when we want to install it.
-    QList<QString> installedPlugins;
-    for (const auto& entry : qAsConst(changedEntries)) {
-        switch (entry.status()) {
-        case KNSCore::Entry::Installed: {
-            if (entry.installedFiles().count() == 0) {
-                continue;
-            }
-
-            QString filename = entry.installedFiles()[0];
-            // remove /* from the string.
-            installedPlugins.append(filename.chopped(2));
-
-            installed = true;
-        } break;
-        case KNSCore::Entry::Deleted:
-            KMessageBox::information(
-                this,
-                tr("Codevis doesn't support hot reloading of plugins, Save your work and restart the application."),
-                tr("Restart Required"));
-            break;
-        case KNSCore::Entry::Invalid:
-        case KNSCore::Entry::Installing:
-        case KNSCore::Entry::Downloadable:
-        case KNSCore::Entry::Updateable:
-        case KNSCore::Entry::Updating:
-            // Not interesting.
-            break;
-        }
-    }
-
-    // Refresh the plugins installed by GetNewStuff
-    if (installed) {
-        for (const auto& installedPlugin : installedPlugins) {
-            d->pluginManager->reloadPlugin(installedPlugin);
-        }
-    }
-}
 
 QDir PluginEditor::basePluginPath()
 {

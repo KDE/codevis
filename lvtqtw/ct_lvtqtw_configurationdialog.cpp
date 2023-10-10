@@ -385,7 +385,7 @@ void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& chan
 
             QString filename = entry.uninstalledFiles()[0];
             // remove /* from the string.
-            installedPlugins.append(filename.chopped(2));
+            removedPlugins.append(filename.chopped(2));
 
             removed = true;
         }
@@ -406,8 +406,8 @@ void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& chan
         }
     }
     if (removed) {
-        for (const auto& installedPlugin : installedPlugins) {
-            d->pluginManager->removePlugin(installedPlugin);
+        for (const auto& uninstalledFile : removedPlugins) {
+            d->pluginManager->removePlugin(uninstalledFile);
         }
     }
 

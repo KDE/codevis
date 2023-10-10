@@ -39,7 +39,14 @@ std::string SharedLibraryDispatcher::fileName()
     return library.fileName().toStdString();
 }
 
+// TODO: Implement Shared Library Reload
 void SharedLibraryDispatcher::reload()
+{
+    qWarning() << "Shared Library Reload: Not implemented yet";
+}
+
+// TODO: Implement Shared Library Unload
+void SharedLibraryDispatcher::unload()
 {
     qWarning() << "Shared Library Reload: Not implemented yet";
 }

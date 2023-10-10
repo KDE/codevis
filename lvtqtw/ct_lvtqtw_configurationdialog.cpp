@@ -357,9 +357,11 @@ void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& chan
 #endif
 
     bool installed = false;
+    bool removed = false;
     // Our plugins are gzipped, and the installedFiles returns with `/*` in the end to denote
     // multiple files. we need to chop that off when we want to install it.
     QList<QString> installedPlugins;
+    QList<QString> removedPlugins;
     for (const auto& entry : qAsConst(changedEntries)) {
         switch (entry.status()) {
         case KNSCore::Entry::Installed: {
@@ -373,12 +375,20 @@ void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& chan
 
             installed = true;
         } break;
-        case KNSCore::Entry::Deleted:
-            KMessageBox::information(
-                this,
-                tr("Codevis doesn't support hot reloading of plugins, Save your work and restart the application."),
-                tr("Restart Required"));
-            break;
+        case KNSCore::Entry::Deleted: {
+            for (const auto& file : entry.uninstalledFiles()) {
+                std::cout << file.toStdString() << "\n";
+            }
+            if (entry.uninstalledFiles().count() == 0) {
+                continue;
+            }
+
+            QString filename = entry.uninstalledFiles()[0];
+            // remove /* from the string.
+            installedPlugins.append(filename.chopped(2));
+
+            removed = true;
+        }
         case KNSCore::Entry::Invalid:
         case KNSCore::Entry::Installing:
         case KNSCore::Entry::Downloadable:
@@ -395,5 +405,12 @@ void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& chan
             d->pluginManager->reloadPlugin(installedPlugin);
         }
     }
+    if (removed) {
+        for (const auto& installedPlugin : installedPlugins) {
+            d->pluginManager->removePlugin(installedPlugin);
+        }
+    }
+
+    updatePluginInformation();
 }
 } // namespace Codethink::lvtqtw

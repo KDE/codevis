@@ -47,6 +47,7 @@ class AbstractLibraryDispatcher {
         functionPointer hook = nullptr;
     };
 
+    virtual void unload() = 0;
     virtual void reload() = 0;
     virtual ~AbstractLibraryDispatcher() = 0;
     virtual std::unique_ptr<ResolveContext> resolve(std::string const& functionName) = 0;

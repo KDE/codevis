@@ -178,13 +178,14 @@ std::unique_ptr<AbstractLibraryDispatcher> PythonLibraryDispatcher::loadSinglePl
 {
     py::gil_scoped_acquire _;
 
-    auto pluginName = pluginDir.dirName();
+    auto pluginName = pluginDir.dirName().toStdString();
     auto pyLib = std::make_unique<PythonLibraryDispatcher>();
 
     auto pySys = py::module_::import("sys");
     pySys.attr("path").attr("append")(pluginDir.path().toStdString());
     try {
-        pyLib->pyModule = py::module_::import(pluginName.toStdString().c_str());
+        pyLib->pyModule = py::module_::import(pluginName.c_str());
+        pyLib->pluginFolder = pluginDir.path().toStdString();
     } catch (py::error_already_set const& e) {
         // Setting the sys.attr can also cause another throw.
         try {
@@ -203,6 +204,18 @@ void PythonLibraryDispatcher::reload()
 {
     py::gil_scoped_acquire _;
     pyModule.reload();
+}
+
+void PythonLibraryDispatcher::unload()
+{
+    py::gil_scoped_acquire _;
+
+    try {
+        auto pySys = py::module_::import("sys");
+        pySys.attr("path").attr("remove")(pluginFolder.c_str());
+    } catch (std::exception& e) {
+        std::cout << "Error unloading python plugin";
+    }
 }
 
 } // namespace Codethink::lvtplg

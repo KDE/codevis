@@ -38,6 +38,7 @@ class SharedLibraryDispatcher : public AbstractLibraryDispatcher {
 
     SharedLibraryDispatcher(QString const& fileName);
     void reload() override;
+    void unload() override;
     std::unique_ptr<ResolveContext> resolve(std::string const& functionName) override;
     std::string fileName() override;
 

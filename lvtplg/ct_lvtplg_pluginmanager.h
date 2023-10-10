@@ -62,6 +62,7 @@ class LVTPLG_EXPORT PluginManager {
     std::optional<std::reference_wrapper<AbstractLibraryDispatcher>> getPluginById(std::string const& id) const;
 
     void reloadPlugin(const QString& pluginfolder);
+    void removePlugin(const QString& pluginFolder);
 
     void callHooksSetupPlugin();
     void callHooksTeardownPlugin();

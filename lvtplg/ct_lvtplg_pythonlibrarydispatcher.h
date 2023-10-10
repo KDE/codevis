@@ -74,6 +74,7 @@ class LVTPLG_EXPORT PythonLibraryDispatcher : public AbstractLibraryDispatcher {
     std::unique_ptr<ResolveContext> resolve(std::string const& functionName) override;
     std::string fileName() override;
     void reload() override;
+    void unload() override;
 
     static bool isValidPlugin(QDir const& pluginDir);
     static std::unique_ptr<AbstractLibraryDispatcher> loadSinglePlugin(QDir const& pluginDir);
@@ -81,6 +82,7 @@ class LVTPLG_EXPORT PythonLibraryDispatcher : public AbstractLibraryDispatcher {
 
   private:
     py::module_ pyModule;
+    std::string pluginFolder;
 };
 
 } // namespace Codethink::lvtplg

@@ -84,6 +84,19 @@ void PluginManager::reloadPlugin(const QString& pluginFolder)
 #endif
 }
 
+void PluginManager::removePlugin(const QString& pluginFolder)
+{
+    for (auto const& [key, p] : this->libraries) {
+        const QString loadedLibrary = QString::fromStdString(p->fileName());
+
+        if (loadedLibrary.startsWith(pluginFolder)) {
+            p->unload();
+            this->libraries.erase(key);
+            return;
+        }
+    }
+}
+
 std::vector<std::string> PluginManager::getPluginsMetadataFilePaths() const
 {
     auto metadataFilePaths = std::vector<std::string>{};

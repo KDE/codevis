@@ -116,6 +116,7 @@ if (BUILD_DESKTOP_APP)
         XmlGui
         NewStuffCore
         NewStuff
+        Notifications
         KCMUtils
         I18n
         OPTIONAL_COMPONENTS

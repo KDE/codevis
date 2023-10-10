@@ -82,6 +82,7 @@ target_link_libraries(
     KF${KF_MAJOR_VERSION}::XmlGui
     KF${KF_MAJOR_VERSION}::CoreAddons
     KF${KF_MAJOR_VERSION}::I18n
+    KF${KF_MAJOR_VERSION}::Notifications
 
     Codethink::lvtmdl
     Codethink::lvtprj
@@ -116,6 +117,7 @@ install(
 )
 
 install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+install(FILES codevis.notifyrc  DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
 
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
 

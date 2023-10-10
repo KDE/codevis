@@ -1,0 +1,29 @@
+[Global]
+IconName=codevis
+Name=Codevis
+Comment=Code Architecture Visualizer
+DesktopEntry=org.kde.codevis
+
+[Context/Parser]
+Name=Parser
+Comment=The name of the group for Code Parser
+
+[Context/GraphicAlgorithms]
+Name=Graphics Algorithms
+Comment=The name of the group for GraphicAlgorithms
+
+[Context/CodeGeneration]
+Name=Code Generation
+Comment=The name of the group for Code Parser
+
+[Event/parserFinished]
+Name=Code Parser Finished
+Comment=Code Parser Finished
+Contexts=parser
+Action=Sound|Popup
+
+[Event/codeGenerationFinished]
+Name=Code Generation Finished
+Comment=Code Generation Finished
+Contexts=CodeGeneration
+Action=Sound|Popup

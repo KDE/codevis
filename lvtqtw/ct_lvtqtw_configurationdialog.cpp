@@ -17,25 +17,34 @@
 // limitations under the License.
 */
 
+// own
+#include "ct_lvtplg_pluginmanager.h"
 #include <ct_lvtqtw_configurationdialog.h>
-#include <ct_lvtqtw_modifierhelpers.h>
-#include <ui_ct_lvtqtw_configurationdialog.h>
 
 #include <ct_lvtprj_projectfile.h>
+#include <ct_lvtqtw_modifierhelpers.h>
 
+// autogen
 #include <preferences.h>
+#include <ui_ct_lvtqtw_configurationdialog.h>
 
+// Qt
 #include <QDebug>
 #include <QDialogButtonBox>
 #include <QPushButton>
 
+// KDE
+#include <KMessageBox>
 #include <KPluginWidget>
+
+// std
 #include <cassert>
 
 namespace Codethink::lvtqtw {
 
 struct ConfigurationDialog::Private {
     Ui::ConfigurationDialog ui;
+    Codethink::lvtplg::PluginManager *pluginManager;
 };
 
 namespace {
@@ -48,14 +57,22 @@ Qt::Corner stringToCorner(const QString& txt)
 }
 } // namespace
 
-ConfigurationDialog::ConfigurationDialog(QWidget *parent):
+ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, QWidget *parent):
     QDialog(parent), d(std::make_unique<ConfigurationDialog::Private>())
 {
     d->ui.setupUi(this);
-    this->setWindowTitle("Configure Software");
+    d->pluginManager = pluginManager;
+    d->ui.getNewPlugins->setConfigFile(QStringLiteral("codevis.knsrc"));
+
+    setWindowTitle("Configure Software");
 
     populateMouseTabOptions();
     load();
+
+    connect(d->ui.getNewPlugins,
+            &KNSWidgets::Button::dialogFinished,
+            this,
+            &Codethink::lvtqtw::ConfigurationDialog::getNewScriptFinished);
 
     connect(d->ui.debugContextMenu, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableSceneContextMenu);
     connect(d->ui.enableDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableDebugOutput);
@@ -200,11 +217,16 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
 
 ConfigurationDialog::~ConfigurationDialog() = default;
 
-void ConfigurationDialog::updatePluginInformation(lvtplg::PluginManager& pluginManager)
+void ConfigurationDialog::showEvent(QShowEvent *ev)
+{
+    updatePluginInformation();
+}
+
+void ConfigurationDialog::updatePluginInformation()
 {
     auto plugins = QVector<KPluginMetaData>{};
     QString categoryLabel = "Codevis Plugins";
-    for (auto const& metadataFile : pluginManager.getPluginsMetadataFilePaths()) {
+    for (auto const& metadataFile : d->pluginManager->getPluginsMetadataFilePaths()) {
         plugins.push_back(KPluginMetaData::fromJsonFile(QString::fromStdString(metadataFile)));
     }
 
@@ -212,8 +234,9 @@ void ConfigurationDialog::updatePluginInformation(lvtplg::PluginManager& pluginM
     d->ui.pluginWidget->addPlugins(plugins, categoryLabel);
     connect(d->ui.pluginWidget,
             &KPluginWidget::pluginEnabledChanged,
-            [&pluginManager](const QString& pluginId, bool enabled) {
-                auto plugin = pluginManager.getPluginById(pluginId.toStdString());
+            this,
+            [this](const QString& pluginId, bool enabled) {
+                auto plugin = d->pluginManager->getPluginById(pluginId.toStdString());
                 if (!plugin) {
                     return;
                 }
@@ -320,4 +343,57 @@ void ConfigurationDialog::populateMouseTabOptions()
     }
 }
 
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+void ConfigurationDialog::getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries)
+#else
+void PluginEditor::getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries)
+#endif
+{
+// Error build on Qt5 - the definitions of
+// KNSCore changed and things got messy.
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#undef KNSCore
+#define KNSCore KNS3
+#endif
+
+    bool installed = false;
+    // Our plugins are gzipped, and the installedFiles returns with `/*` in the end to denote
+    // multiple files. we need to chop that off when we want to install it.
+    QList<QString> installedPlugins;
+    for (const auto& entry : qAsConst(changedEntries)) {
+        switch (entry.status()) {
+        case KNSCore::Entry::Installed: {
+            if (entry.installedFiles().count() == 0) {
+                continue;
+            }
+
+            QString filename = entry.installedFiles()[0];
+            // remove /* from the string.
+            installedPlugins.append(filename.chopped(2));
+
+            installed = true;
+        } break;
+        case KNSCore::Entry::Deleted:
+            KMessageBox::information(
+                this,
+                tr("Codevis doesn't support hot reloading of plugins, Save your work and restart the application."),
+                tr("Restart Required"));
+            break;
+        case KNSCore::Entry::Invalid:
+        case KNSCore::Entry::Installing:
+        case KNSCore::Entry::Downloadable:
+        case KNSCore::Entry::Updateable:
+        case KNSCore::Entry::Updating:
+            // Not interesting.
+            break;
+        }
+    }
+
+    // Refresh the plugins installed by GetNewStuff
+    if (installed) {
+        for (const auto& installedPlugin : installedPlugins) {
+            d->pluginManager->reloadPlugin(installedPlugin);
+        }
+    }
+}
 } // namespace Codethink::lvtqtw

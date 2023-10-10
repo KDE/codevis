@@ -27,6 +27,13 @@
 
 #include <memory>
 
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+#include <KNSCore/Entry>
+#else
+#include <KNS3/Entry>
+#include <KNSCore/EntryInternal>
+#endif
+
 class QWidget;
 
 namespace Codethink::lvtqtw {
@@ -34,14 +41,23 @@ namespace Codethink::lvtqtw {
 class LVTQTW_EXPORT ConfigurationDialog : public QDialog {
     Q_OBJECT
   public:
-    explicit ConfigurationDialog(QWidget *parent);
+    explicit ConfigurationDialog(lvtplg::PluginManager *pluginManager, QWidget *parent);
     ~ConfigurationDialog() override;
 
     void load();
     static void save();
     void restoreDefaults();
     void changeCurrentWidgetByString(QString const& text);
-    void updatePluginInformation(lvtplg::PluginManager& pluginManager);
+    void updatePluginInformation();
+
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+    void getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries);
+#else
+    void getNewScriptFinished(const KNSCore::EntryInternal::List& changedEntries);
+#endif
+
+  protected:
+    void showEvent(QShowEvent *ev) override;
 
   private:
     void populateMouseTabOptions();

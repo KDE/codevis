@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtplg_pluginmanager.h"
 #include <ct_lvtqtw_configurationdialog.h>
 #include <ct_lvtqtw_modifierhelpers.h>
 #include <ct_lvttst_fixture_qt.h>
@@ -31,9 +32,11 @@ using namespace Codethink::lvtqtw;
 
 TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 {
+    Codethink::lvtplg::PluginManager manager;
+
     SECTION("Test load function")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         REQUIRE_NOTHROW(configDialog.load());
     }
 
@@ -44,13 +47,13 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test restoreDefaults function")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         REQUIRE_NOTHROW(configDialog.restoreDefaults());
     }
 
     SECTION("Test changeCurrentWidgetByString function")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *listWidget = configDialog.findChild<QListWidget *>("listWidget");
         REQUIRE_NOTHROW(configDialog.changeCurrentWidgetByString("Test Sample"));
 
@@ -66,7 +69,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test entityNamePos ")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
+
         auto *entityNamePos = configDialog.findChild<QComboBox *>("entityNamePos");
         for (int i = 0; i < entityNamePos->count(); i++) {
             REQUIRE_NOTHROW(entityNamePos->setCurrentIndex(i));
@@ -75,7 +79,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test comboPanModifier")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *comboPanModifier = configDialog.findChild<QComboBox *>("comboPanModifier");
         REQUIRE_NOTHROW(comboPanModifier->setCurrentIndex(0));
         REQUIRE_NOTHROW(comboPanModifier->setCurrentIndex(comboPanModifier->count() - 1));
@@ -83,7 +87,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test showLevelNumbers")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *showLevelNumbers = configDialog.findChild<QCheckBox *>("showLevelNumbers");
         REQUIRE_NOTHROW(showLevelNumbers->setCheckState(Qt::Checked));
         REQUIRE_NOTHROW(showLevelNumbers->setCheckState(Qt::Unchecked));
@@ -91,7 +95,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test backgroundColor")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *backgroundColor = configDialog.findChild<KColorButton *>("backgroundColor");
         REQUIRE_NOTHROW(backgroundColor->setColor(Qt::red));
         REQUIRE_NOTHROW(backgroundColor->setColor(Qt::blue));
@@ -99,14 +103,14 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test entityBackgroundColor")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *entityBackgroundColor = configDialog.findChild<KColorButton *>("entityBackgroundColor");
         REQUIRE_NOTHROW(entityBackgroundColor->setColor(Qt::red));
         REQUIRE_NOTHROW(entityBackgroundColor->setColor(Qt::blue));
     }
     SECTION("Test selectedEntityBackgroundColor")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *selectedEntityBackgroundColor = configDialog.findChild<KColorButton *>("selectedEntityBackgroundColor");
         REQUIRE_NOTHROW(selectedEntityBackgroundColor->setColor(Qt::red));
         REQUIRE_NOTHROW(selectedEntityBackgroundColor->setColor(Qt::blue));
@@ -114,7 +118,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test chkSelectedEntityHasGradient")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *chkSelectedEntityHasGradient = configDialog.findChild<QCheckBox *>("chkSelectedEntityHasGradient");
         REQUIRE_NOTHROW(chkSelectedEntityHasGradient->setCheckState(Qt::Checked));
         REQUIRE_NOTHROW(chkSelectedEntityHasGradient->setCheckState(Qt::Unchecked));
@@ -122,14 +126,14 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test edgeColor")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *edgeColor = configDialog.findChild<KColorButton *>("edgeColor");
         REQUIRE_NOTHROW(edgeColor->setColor(Qt::red));
         REQUIRE_NOTHROW(edgeColor->setColor(Qt::blue));
     }
     SECTION("Test highlightEdgeColor")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *highlightEdgeColor = configDialog.findChild<KColorButton *>("highlightEdgeColor");
         REQUIRE_NOTHROW(highlightEdgeColor->setColor(Qt::red));
         REQUIRE_NOTHROW(highlightEdgeColor->setColor(Qt::blue));
@@ -137,7 +141,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
     SECTION("Test comboZoomModifier")
     {
-        ConfigurationDialog configDialog(nullptr);
+        ConfigurationDialog configDialog(&manager, nullptr);
         auto *comboZoomModifier = configDialog.findChild<QComboBox *>("comboZoomModifier");
         REQUIRE_NOTHROW(comboZoomModifier->setCurrentIndex(0));
         REQUIRE_NOTHROW(comboZoomModifier->setCurrentIndex(comboZoomModifier->count() - 1));
@@ -146,7 +150,9 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
 
 TEST_CASE_METHOD(QTApplicationFixture, "Test ConfigurationDialog class Functionality")
 {
-    ConfigurationDialog configDialog(nullptr);
+    Codethink::lvtplg::PluginManager manager;
+    ConfigurationDialog configDialog(&manager, nullptr);
+
     auto *toolBox = configDialog.findChild<QCheckBox *>("toolBox");
     REQUIRE(toolBox != nullptr);
     SECTION("Test load function")

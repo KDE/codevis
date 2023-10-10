@@ -17,15 +17,20 @@
 // limitations under the License.
 */
 
-#include "result/result.hpp"
 #include <ct_lvtqtw_plugineditor.h>
+#include <result/result.hpp>
 
-#include <KMessageBox>
-
+// KDE
 #include <KTextEditor/Document>
 #include <KTextEditor/Editor>
 #include <KTextEditor/View>
 
+#include <KNSWidgets/Button>
+
+#include <KMessageBox>
+#include <KStandardGuiItem>
+
+// Qt
 #include <QApplication>
 #include <QBoxLayout>
 #include <QFileDialog>
@@ -35,11 +40,8 @@
 #include <QToolBar>
 #include <QToolButton>
 
-#include <KNSWidgets/Button>
-
+// Own
 #include <ct_lvtplg_pluginmanager.h>
-#include <kmessagebox.h>
-#include <kstandardguiitem.h>
 
 using namespace Codethink::lvtqtw;
 

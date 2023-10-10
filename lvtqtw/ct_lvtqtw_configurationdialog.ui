@@ -70,7 +70,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="colorsPage">
         <layout class="QFormLayout" name="formLayout_4">
@@ -657,9 +657,40 @@
         </layout>
        </widget>
        <widget class="QWidget" name="pluginsPage">
-        <layout class="QVBoxLayout" name="pluginsPageLayout">
+        <layout class="QVBoxLayout" name="verticalLayout_9">
          <item>
-          <widget class="KPluginWidget" name="pluginWidget" native="true"/>
+          <widget class="KPluginWidget" name="pluginWidget" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="KNSWidgets::Button" name="getNewPlugins">
+             <property name="text">
+              <string>Get New Plugins</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
@@ -695,6 +726,11 @@
    <extends>QWidget</extends>
    <header location="global">KPluginWidget</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KNSWidgets::Button</class>
+   <extends>QPushButton</extends>
+   <header location="global">KNSWidgets/Button</header>
   </customwidget>
  </customwidgets>
  <resources/>

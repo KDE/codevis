@@ -461,7 +461,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="KFontRequester" name="pkgGroupFont"/>
+              <widget class="KFontRequester" name="pkgGroupFont" native="true"/>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_11">
@@ -471,7 +471,7 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="KFontRequester" name="pkgFont"/>
+              <widget class="KFontRequester" name="pkgFont" native="true"/>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_12">
@@ -481,7 +481,7 @@
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="KFontRequester" name="componentFont"/>
+              <widget class="KFontRequester" name="componentFont" native="true"/>
              </item>
              <item row="3" column="0">
               <widget class="QLabel" name="label_13">
@@ -491,7 +491,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="KFontRequester" name="classFont"/>
+              <widget class="KFontRequester" name="classFont" native="true"/>
              </item>
              <item row="4" column="0">
               <widget class="QLabel" name="label_14">
@@ -501,7 +501,7 @@
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="KFontRequester" name="structFont"/>
+              <widget class="KFontRequester" name="structFont" native="true"/>
              </item>
              <item row="5" column="0">
               <widget class="QLabel" name="label_15">
@@ -511,7 +511,7 @@
               </widget>
              </item>
              <item row="5" column="1">
-              <widget class="KFontRequester" name="enumFont"/>
+              <widget class="KFontRequester" name="enumFont" native="true"/>
              </item>
             </layout>
            </widget>

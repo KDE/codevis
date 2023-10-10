@@ -718,10 +718,7 @@ void MainWindow::openPreferences()
 
 void MainWindow::openPreferencesAt(std::optional<QString> preferredPage)
 {
-    if (!m_confDialog_p) {
-        m_confDialog_p = new Codethink::lvtqtw::ConfigurationDialog(this);
-    }
-    m_confDialog_p->show();
+    openPreferences();
 
     if (preferredPage) {
         m_confDialog_p->changeCurrentWidgetByString(*preferredPage);

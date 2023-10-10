@@ -36,7 +36,6 @@ namespace Codethink::lvtqtw {
 
 struct ConfigurationDialog::Private {
     Ui::ConfigurationDialog ui;
-    KPluginWidget *pluginWidget;
 };
 
 namespace {
@@ -54,9 +53,6 @@ ConfigurationDialog::ConfigurationDialog(QWidget *parent):
 {
     d->ui.setupUi(this);
     this->setWindowTitle("Configure Software");
-
-    d->pluginWidget = new KPluginWidget(this);
-    d->ui.pluginsPageLayout->addWidget(d->pluginWidget);
 
     populateMouseTabOptions();
     load();
@@ -212,9 +208,9 @@ void ConfigurationDialog::updatePluginInformation(lvtplg::PluginManager& pluginM
         plugins.push_back(KPluginMetaData::fromJsonFile(QString::fromStdString(metadataFile)));
     }
 
-    d->pluginWidget->clear();
-    d->pluginWidget->addPlugins(plugins, categoryLabel);
-    connect(d->pluginWidget,
+    d->ui.pluginWidget->clear();
+    d->ui.pluginWidget->addPlugins(plugins, categoryLabel);
+    connect(d->ui.pluginWidget,
             &KPluginWidget::pluginEnabledChanged,
             [&pluginManager](const QString& pluginId, bool enabled) {
                 auto plugin = pluginManager.getPluginById(pluginId.toStdString());

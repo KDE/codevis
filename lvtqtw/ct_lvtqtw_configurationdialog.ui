@@ -658,6 +658,9 @@
        </widget>
        <widget class="QWidget" name="pluginsPage">
         <layout class="QVBoxLayout" name="pluginsPageLayout">
+         <item>
+          <widget class="KPluginWidget" name="pluginWidget" native="true"/>
+         </item>
         </layout>
        </widget>
       </widget>
@@ -686,6 +689,12 @@
    <class>KFontRequester</class>
    <extends>QWidget</extends>
    <header>kfontrequester.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KPluginWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">KPluginWidget</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

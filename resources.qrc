@@ -55,6 +55,12 @@
     <qresource prefix="/html">
         <file>news.html</file>
     </qresource>
+    <qresource prefix="/python_templates">
+        <file alias="LICENSE">plugins/python_template_plugin/LICENSE</file>
+        <file alias="METADATA">plugins/python_template_plugin/metadata.json</file>
+        <file alias="PLUGIN">plugins/python_template_plugin/plugin.py</file>
+        <file alias="README">plugins/python_template_plugin/README.md</file>
+    </qresource>
     <qresource prefix="/md">
         <file alias="codebase_gen_doc">doc/dialog_codebase_generation.md</file>
         <file alias="about">doc/about.md</file>

@@ -50,6 +50,12 @@ struct PluginEditor::Private {
     KTextEditor::Document *docPlugin = nullptr;
     KTextEditor::View *viewPlugin = nullptr;
 
+    KTextEditor::Document *docLicense = nullptr;
+    KTextEditor::View *viewLicense = nullptr;
+
+    KTextEditor::Document *docMetadata = nullptr;
+    KTextEditor::View *viewMetadata = nullptr;
+
     QTabWidget *documentViews = nullptr;
 
     // Those QActions will probably move to something else when we use KXmlGui
@@ -77,16 +83,21 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
         abort();
     }
 
-    d->docReadme = editor->createDocument(this);
-    d->viewReadme = d->docReadme->createView(d->documentViews);
-    d->docPlugin = editor->createDocument(this);
-    d->viewPlugin = d->docPlugin->createView(d->documentViews);
+    using RangeType = std::initializer_list<std::pair<KTextEditor::Document **, KTextEditor::View **>>;
+    const auto elements = RangeType{{&d->docReadme, &d->viewReadme},
+                                    {&d->docPlugin, &d->viewPlugin},
+                                    {&d->docLicense, &d->viewLicense},
+                                    {&d->docMetadata, &d->viewMetadata}};
+
+    for (const auto& [doc, view] : elements) {
+        (*doc) = editor->createDocument(this);
+        (*view) = (*doc)->createView(d->documentViews);
+        (*view)->setContextMenu((*view)->defaultContextMenu());
+    }
 
     d->docReadme->setHighlightingMode("Markdown");
     d->docPlugin->setHighlightingMode("Python");
-
-    d->viewReadme->setContextMenu(d->viewReadme->defaultContextMenu());
-    d->viewPlugin->setContextMenu(d->viewPlugin->defaultContextMenu());
+    d->docMetadata->setHighlightingMode("json");
 
     d->openFile = new QAction(tr("Open Python Plugin"));
     d->openFile->setIcon(QIcon::fromTheme("document-open"));
@@ -112,6 +123,8 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
     toolBar->addActions({d->newPlugin, d->openFile, d->savePlugin, d->closePlugin, d->reloadPlugin});
 
     d->documentViews->addTab(d->viewReadme, QStringLiteral("README.md"));
+    d->documentViews->addTab(d->viewLicense, QStringLiteral("LICENSE"));
+    d->documentViews->addTab(d->viewMetadata, QStringLiteral("metadata.json"));
     d->documentViews->addTab(d->viewPlugin, QString());
 
     auto *l = new QBoxLayout(QBoxLayout::TopToBottom);
@@ -233,21 +246,24 @@ void PluginEditor::createPythonPlugin(const QString& pluginDir)
     }
 
     const QString internalPluginName = absPluginPath.split(QDir::separator()).last();
-    QFile markdownFile(absPluginPath + QDir::separator() + QStringLiteral("README.md"));
-    if (!markdownFile.open(QIODevice::WriteOnly)) {
-        sendErrorMsg(tr("Error creating markdown file"));
-        qDebug() << "Error creating markdown file, aborting plugin creation.";
+    if (!QFile::copy(":/python_templates/LICENSE", absPluginPath + QDir::separator() + QStringLiteral("LICENSE"))) {
+        qDebug() << "Error creating the LICENSE file";
         return;
     }
-    markdownFile.close();
-
-    QFile pluginFile(absPluginPath + QDir::separator() + internalPluginName + QStringLiteral(".py"));
-    if (!pluginFile.open(QIODevice::WriteOnly)) {
-        sendErrorMsg(tr("Error creating markdown file"));
-        qDebug() << "Error creating markdown file, aborting plugin creation.";
+    if (!QFile::copy(":/python_templates/METADATA",
+                     absPluginPath + QDir::separator() + QStringLiteral("metadata.json"))) {
+        qDebug() << "Error creating the METADATA file";
         return;
     }
-    pluginFile.close();
+    if (!QFile::copy(":/python_templates/PLUGIN",
+                     absPluginPath + QDir::separator() + absPluginPath.split("/").last() + QStringLiteral(".py"))) {
+        qDebug() << "Error creating the PLUGIN file";
+        return;
+    }
+    if (!QFile::copy(":/python_templates/README", absPluginPath + QDir::separator() + QStringLiteral("README.md"))) {
+        qDebug() << "Error creating the README file";
+        return;
+    }
 
     qDebug() << "Plugin files created successfully, loading the plugin";
     loadByPath(pluginDir);
@@ -262,15 +278,13 @@ cpp::result<void, PluginEditor::Error> PluginEditor::save()
                   QStringLiteral("%1 was build without plugin support.").arg(qApp->applicationName()).toStdString()});
     }
 
-    if (!d->docPlugin->url().isEmpty()) {
-        if (!d->docPlugin->save()) {
-            sendErrorMsg(tr("Error saving plugin."));
-            return cpp::fail(Error{e_Errors::Error, "Error saving plugin"});
+    for (auto *doc : {d->docPlugin, d->docLicense, d->docMetadata, d->docReadme}) {
+        if (doc->url().isEmpty()) {
+            continue;
         }
-    }
-    if (!d->docReadme->url().isEmpty()) {
-        if (!d->docReadme->save()) {
-            sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
+        if (!doc->save()) {
+            sendErrorMsg(tr("Error saving plugin."));
+            std::cout << "Error saving " << doc->url().toString().toStdString() << "\n";
             return cpp::fail(Error{e_Errors::Error, "Error saving plugin"});
         }
     }
@@ -305,6 +319,8 @@ void PluginEditor::loadByPath(const QString& pluginPath)
     }
 
     QFileInfo readmeInfo(pluginPath, QStringLiteral("README.md"));
+    QFileInfo licenseInfo(pluginPath, QStringLiteral("LICENSE"));
+    QFileInfo metadataInfo(pluginPath, QStringLiteral("metadata.json"));
     QFileInfo pluginInfo(pluginPath, pluginPath.split(QDir::separator()).last() + QStringLiteral(".py"));
 
     const QString errMsg = tr("Missing required file: %1");
@@ -320,11 +336,15 @@ void PluginEditor::loadByPath(const QString& pluginPath)
         return;
     }
 
-    qDebug() << "Opened sucessfully";
     d->docReadme->openUrl(QUrl::fromLocalFile(readmeInfo.absoluteFilePath()));
     d->docPlugin->openUrl(QUrl::fromLocalFile(pluginInfo.absoluteFilePath()));
-    d->documentViews->setTabText(1, pluginInfo.fileName());
+    d->docLicense->openUrl(QUrl::fromLocalFile(metadataInfo.absoluteFilePath()));
+    d->docMetadata->openUrl(QUrl::fromLocalFile(pluginInfo.absoluteFilePath()));
+
+    d->documentViews->setTabText(3, pluginInfo.fileName());
 
     d->documentViews->setEnabled(true);
     d->currentPluginFolder = pluginPath;
+
+    qDebug() << "Opened sucessfully";
 }

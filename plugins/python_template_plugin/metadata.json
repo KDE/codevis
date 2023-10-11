@@ -1,0 +1,14 @@
+{
+  "KPlugin": {
+     "Name": "PLUGIN NAME",
+     "Description": "PLUGIN DESCRIPTION",
+     "Icon": "none",
+     "Authors": [ { "Name": "YOUR NAME", "Email": "YOUR EMAIL" } ],
+     "Category": "Codevis Plugins",
+     "EnabledByDefault": true,
+     "License": "Apache-2.0",
+     "Id": "SOME_UNIQUE_PLUGIN_ID",
+     "Version": "1.0",
+     "Website": "https://www.this_plugin_website.com"
+  }
+}

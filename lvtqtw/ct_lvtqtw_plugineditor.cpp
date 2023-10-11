@@ -245,24 +245,28 @@ void PluginEditor::createPythonPlugin(const QString& pluginDir)
         return;
     }
 
-    const QString internalPluginName = absPluginPath.split(QDir::separator()).last();
-    if (!QFile::copy(":/python_templates/LICENSE", absPluginPath + QDir::separator() + QStringLiteral("LICENSE"))) {
-        qDebug() << "Error creating the LICENSE file";
-        return;
-    }
-    if (!QFile::copy(":/python_templates/METADATA",
-                     absPluginPath + QDir::separator() + QStringLiteral("metadata.json"))) {
-        qDebug() << "Error creating the METADATA file";
-        return;
-    }
-    if (!QFile::copy(":/python_templates/PLUGIN",
-                     absPluginPath + QDir::separator() + absPluginPath.split("/").last() + QStringLiteral(".py"))) {
-        qDebug() << "Error creating the PLUGIN file";
-        return;
-    }
-    if (!QFile::copy(":/python_templates/README", absPluginPath + QDir::separator() + QStringLiteral("README.md"))) {
-        qDebug() << "Error creating the README file";
-        return;
+    const auto files = std::initializer_list<std::pair<QString, QString>>{
+        {QStringLiteral("LICENSE"), QStringLiteral("LICENSE")},
+        {QStringLiteral("METADATA"), QStringLiteral("metadata.json")},
+        {QStringLiteral("PLUGIN"), absPluginPath.split("/").last() + QStringLiteral(".py")},
+        {QStringLiteral("README"), QStringLiteral("README.md")},
+    };
+
+    for (const auto& [qrc, local] : files) {
+        if (!QFile::copy(QStringLiteral(":/python_templates/%1").arg(qrc), absPluginPath + QDir::separator() + local)) {
+            qDebug() << "Error creating the README file";
+            return;
+        }
+
+        QFile localFile(absPluginPath + QDir::separator() + local);
+        if (!localFile.exists()) {
+            qDebug() << "File does not exists on disk";
+        }
+
+        if (!localFile.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner)) {
+            qDebug() << "Error setting file permissions";
+            return;
+        }
     }
 
     qDebug() << "Plugin files created successfully, loading the plugin";

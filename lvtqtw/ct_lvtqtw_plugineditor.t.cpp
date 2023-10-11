@@ -67,6 +67,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
     editor->createPythonPlugin(tempDir.path() + QDir::separator() + "test2");
     res = editor->save();
     // And here it should pass because we do have a plugin manager.
+    std::cout << res.error().errStr << "\n";
     REQUIRE_FALSE(res.has_error());
 
     editor->reloadPlugin();

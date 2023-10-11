@@ -31,6 +31,7 @@
 #include <KPluginMetaData>
 #include <QCoreApplication>
 
+namespace {
 template<typename HookFunctionType, typename HandlerType>
 void callSingleHook(std::string&& hookName,
                     HandlerType&& handler,
@@ -103,6 +104,17 @@ void tryReloadPlugin(
     }
 }
 
+void loadSinglePlugin(
+    const QString& pluginDir,
+    std::unordered_map<std::string, std::unique_ptr<Codethink::lvtplg::AbstractLibraryDispatcher>>& libraries)
+{
+    tryInstallPlugin<Codethink::lvtplg::SharedLibraryDispatcher>(pluginDir, libraries);
+#ifdef ENABLE_PYTHON_PLUGINS
+    tryInstallPlugin<Codethink::lvtplg::PythonLibraryDispatcher>(pluginDir, libraries);
+#endif
+}
+
+} // namespace
 namespace Codethink::lvtplg {
 
 void PluginManager::loadPlugins(const QList<QString>& searchPaths)
@@ -121,10 +133,7 @@ void PluginManager::loadPlugins(const QList<QString>& searchPaths)
         const auto entryInfoList = pluginsPath.entryInfoList();
         for (auto const& fileInfo : qAsConst(entryInfoList)) {
             const auto pluginDir = fileInfo.absoluteFilePath();
-            tryInstallPlugin<SharedLibraryDispatcher>(pluginDir, libraries);
-#ifdef ENABLE_PYTHON_PLUGINS
-            tryInstallPlugin<PythonLibraryDispatcher>(pluginDir, libraries);
-#endif
+            loadSinglePlugin(pluginDir, libraries);
         }
     }
 
@@ -140,7 +149,8 @@ void PluginManager::reloadPlugin(const QString& pluginFolder)
         const QString loadedLibrary = QString::fromStdString(p->fileName());
 
         if (loadedLibrary.startsWith(pluginFolder)) {
-            p->reload();
+            removePlugin(pluginFolder);
+            loadSinglePlugin(pluginFolder, libraries);
             return;
         }
     }

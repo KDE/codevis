@@ -50,7 +50,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
                          numErrorMessages += 1;
                      });
 
-    editor->create("test");
+    editor->createPythonPlugin(tempDir.path() + QDir::separator() + "test");
     auto res = editor->save();
 
     // Error required because here the dialog has no plugin manager.
@@ -64,7 +64,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Test Plugin Editor without Manager")
     Codethink::lvtplg::PluginManager manager;
     editor->setPluginManager(&manager);
 
-    editor->create("test2");
+    editor->createPythonPlugin(tempDir.path() + QDir::separator() + "test2");
     res = editor->save();
     // And here it should pass because we do have a plugin manager.
     REQUIRE_FALSE(res.has_error());

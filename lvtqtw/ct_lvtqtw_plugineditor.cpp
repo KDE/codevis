@@ -94,9 +94,7 @@ PluginEditor::PluginEditor(QWidget *parent): QWidget(parent), d(std::make_unique
 
     d->newPlugin = new QAction(tr("New Plugin"));
     d->newPlugin->setIcon(QIcon::fromTheme("document-new"));
-    connect(d->newPlugin, &QAction::triggered, this, [this] {
-        create();
-    });
+    connect(d->newPlugin, &QAction::triggered, this, &PluginEditor::requestCreatePythonPlugin);
 
     d->savePlugin = new QAction(tr("Save plugin"));
     d->savePlugin->setIcon(QIcon::fromTheme("document-save"));
@@ -133,6 +131,16 @@ PluginEditor::~PluginEditor() = default;
 QDir PluginEditor::basePluginPath()
 {
     return d->basePluginPath;
+}
+
+void PluginEditor::requestCreatePythonPlugin()
+{
+    const QString newPluginPath = QFileDialog::getExistingDirectory();
+    if (newPluginPath.isEmpty()) {
+        return;
+    }
+
+    createPythonPlugin(newPluginPath);
 }
 
 void PluginEditor::setBasePluginPath(const QString& path)
@@ -195,57 +203,54 @@ void PluginEditor::close()
     d->documentViews->setEnabled(false);
 }
 
-void PluginEditor::create(const QString& pluginName)
+void PluginEditor::createPythonPlugin(const QString& pluginDir)
 {
     if (!d->pluginManager) {
         sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
+        qDebug() << QStringLiteral("%1 was build without plugin support.").arg(qApp->applicationName());
         return;
     }
-
-    const QString internalPluginName = pluginName.isEmpty()
-        ? QInputDialog::getText(this, tr("Create a new Python Plugin"), tr("Plugin Name:"))
-        : pluginName;
 
     // User canceled.
-    if (internalPluginName.isEmpty()) {
+    if (pluginDir.isEmpty()) {
         return;
     }
 
-    QDir pluginPath(basePluginPath().path() + QStringLiteral("/") + internalPluginName);
-    QFileInfo pluginPathInfo(pluginPath.path());
-    if (pluginPathInfo.exists()) {
-        auto firstAction = KGuiItem(tr("Open Existing"));
-        auto secondAction = KGuiItem(tr("Create New"));
-
-        const bool openExsting = KMessageBox::questionTwoActions(this,
-                                                                 tr("Plugin has changed, Save it?"),
-                                                                 tr("Save plugins?"),
-                                                                 firstAction,
-                                                                 secondAction)
-            == KMessageBox::ButtonCode::PrimaryAction;
-        if (openExsting) {
-            loadByName(internalPluginName);
-            return;
-        }
-
-        pluginPath.removeRecursively();
+    QDir pluginPath(pluginDir);
+    if (!pluginPath.isEmpty()) {
+        sendErrorMsg(tr("Please select an empty folder for the new python plugin"));
+        qDebug() << "Please select an empty folder for the new python plugin";
+        return;
     }
+
+    const QString absPluginPath = pluginPath.absolutePath();
 
     const bool success = pluginPath.mkpath(pluginPath.path());
     if (!success) {
         sendErrorMsg(tr("Error creating the Plugin folder"));
+        qDebug() << "Error creating the Plugin folder";
         return;
     }
 
-    QFile markdownFile(pluginPath.path() + QStringLiteral("/README.md"));
-    markdownFile.open(QIODevice::WriteOnly);
+    const QString internalPluginName = absPluginPath.split(QDir::separator()).last();
+    QFile markdownFile(absPluginPath + QDir::separator() + QStringLiteral("README.md"));
+    if (!markdownFile.open(QIODevice::WriteOnly)) {
+        sendErrorMsg(tr("Error creating markdown file"));
+        qDebug() << "Error creating markdown file, aborting plugin creation.";
+        return;
+    }
     markdownFile.close();
 
-    QFile pluginFile(pluginPath.path() + QStringLiteral("/") + internalPluginName + QStringLiteral(".py"));
-    pluginFile.open(QIODevice::WriteOnly);
+    QFile pluginFile(absPluginPath + QDir::separator() + internalPluginName + QStringLiteral(".py"));
+    if (!pluginFile.open(QIODevice::WriteOnly)) {
+        sendErrorMsg(tr("Error creating markdown file"));
+        qDebug() << "Error creating markdown file, aborting plugin creation.";
+        return;
+    }
     pluginFile.close();
 
-    loadByName(internalPluginName);
+    qDebug() << "Plugin files created successfully, loading the plugin";
+    loadByPath(pluginDir);
 }
 
 cpp::result<void, PluginEditor::Error> PluginEditor::save()
@@ -284,41 +289,42 @@ void PluginEditor::load()
 
     // User clicked "cancel", not an error.
     if (fName.isEmpty()) {
+        qDebug() << "Error name is empty";
         return;
     }
 
-    const QString pluginName = fName.split(QDir::separator()).last();
-    loadByName(pluginName);
+    const QString pluginPath = fName.split(QDir::separator()).last();
+    loadByPath(pluginPath);
 }
 
-void PluginEditor::loadByName(const QString& pluginName)
+void PluginEditor::loadByPath(const QString& pluginPath)
 {
     if (!d->pluginManager) {
         sendErrorMsg(tr("%1 was build without plugin support.").arg(qApp->applicationName()));
         return;
     }
 
-    const QString thisPluginPath = basePluginPath().path() + QStringLiteral("/") + pluginName;
-
-    QFileInfo readmeInfo(thisPluginPath, QStringLiteral("README.md"));
-    QFileInfo pluginInfo(thisPluginPath, pluginName + QStringLiteral(".py"));
+    QFileInfo readmeInfo(pluginPath, QStringLiteral("README.md"));
+    QFileInfo pluginInfo(pluginPath, pluginPath.split(QDir::separator()).last() + QStringLiteral(".py"));
 
     const QString errMsg = tr("Missing required file: %1");
     if (!readmeInfo.exists()) {
+        qDebug() << pluginPath << readmeInfo.absoluteFilePath() << "Error 1";
         sendErrorMsg(errMsg.arg(QStringLiteral("README.md")));
         return;
     }
 
     if (!pluginInfo.exists()) {
-        sendErrorMsg(errMsg.arg(pluginName + QStringLiteral(".py")));
+        qDebug() << pluginInfo.absoluteFilePath() << "Error 2";
+        sendErrorMsg(errMsg.arg(pluginInfo.fileName()));
         return;
     }
 
-    d->docReadme->openUrl(QUrl::fromLocalFile(thisPluginPath + QStringLiteral("/README.md")));
-    d->docPlugin->openUrl(
-        QUrl::fromLocalFile(thisPluginPath + QStringLiteral("/") + pluginName + QStringLiteral(".py")));
-    d->documentViews->setTabText(1, pluginName + QStringLiteral(".py"));
+    qDebug() << "Opened sucessfully";
+    d->docReadme->openUrl(QUrl::fromLocalFile(readmeInfo.absoluteFilePath()));
+    d->docPlugin->openUrl(QUrl::fromLocalFile(pluginInfo.absoluteFilePath()));
+    d->documentViews->setTabText(1, pluginInfo.fileName());
 
     d->documentViews->setEnabled(true);
-    d->currentPluginFolder = thisPluginPath;
+    d->currentPluginFolder = pluginPath;
 }

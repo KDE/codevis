@@ -57,14 +57,18 @@ class LVTQTW_EXPORT PluginEditor : public QWidget {
     void setPluginManager(lvtplg::PluginManager *manager);
     cpp::result<void, Error> save();
     void close();
-    void loadByName(const QString& pluginName);
+    void loadByPath(const QString& pluginPath);
     void load();
-    void create(const QString& pluginName = QString());
     void reloadPlugin();
 
     // Used for testing purposes. defaults to ~/lks-plugins
     void setBasePluginPath(const QString& path);
     QDir basePluginPath();
+
+    void requestCreatePythonPlugin();
+
+    // TODO: Move this to lvtplg
+    void createPythonPlugin(const QString& pluginPath);
 
   private:
     struct Private;

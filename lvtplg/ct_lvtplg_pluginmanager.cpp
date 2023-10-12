@@ -33,7 +33,7 @@
 
 namespace {
 template<typename HookFunctionType, typename HandlerType>
-void callSingleHook(std::string&& hookName,
+void callSingleHook(const std::string& hookName,
                     HandlerType&& handler,
                     Codethink::lvtplg::AbstractLibraryDispatcher *library)
 {
@@ -49,7 +49,7 @@ void callSingleHook(std::string&& hookName,
 
 template<typename HookFunctionType, typename HandlerType>
 void callAllHooks(
-    std::string&& hookName,
+    const std::string& hookName,
     HandlerType&& handler,
     std::unordered_map<std::string, std::unique_ptr<Codethink::lvtplg::AbstractLibraryDispatcher>>& libraries)
 {
@@ -59,7 +59,7 @@ void callAllHooks(
             continue;
         }
 
-        callSingleHook<HookFunctionType, HandlerType>(std::move(hookName), std::move(handler), pluginLib.get());
+        callSingleHook<HookFunctionType, HandlerType>(hookName, std::forward<HandlerType>(handler), pluginLib.get());
     }
 }
 

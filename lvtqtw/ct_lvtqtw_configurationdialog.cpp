@@ -376,9 +376,6 @@ void ConfigurationDialog::getNewScriptFinished(const KNSCore::EntryInternal::Lis
             installed = true;
         } break;
         case KNSCore::Entry::Deleted: {
-            for (const auto& file : entry.uninstalledFiles()) {
-                std::cout << file.toStdString() << "\n";
-            }
             if (entry.uninstalledFiles().count() == 0) {
                 continue;
             }

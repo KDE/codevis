@@ -100,15 +100,13 @@ set(SOCI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/soci)
 find_package(Qt${QT_MAJOR_VERSION}Core ${QT_MIN_VERSION} CONFIG REQUIRED)
 if (QT_MAJOR_VERSION STREQUAL "6")
     find_package(Qt6Core5Compat)
-    find_package(QuaZip-Qt6 REQUIRED)
-else()
-    find_package(QuaZip-Qt5 REQUIRED)
 endif()
 message("Found ${QT_MAJOR_VERSION}")
 
 if (BUILD_DESKTOP_APP)
     find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)
     find_package(KF${KF_MAJOR_VERSION} ${KF5_DEP_VERSION} REQUIRED COMPONENTS
+        Archive
         Config
         CoreAddons
         WidgetsAddons

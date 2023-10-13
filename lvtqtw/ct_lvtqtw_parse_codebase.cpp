@@ -27,6 +27,8 @@
 
 #include <ui_ct_lvtqtw_parse_codebase.h>
 
+#include <KZip>
+
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -42,7 +44,6 @@
 #include <QThread>
 #include <QVariant>
 
-#include <JlCompress.h>
 #include <preferences.h>
 #include <soci/soci.h>
 
@@ -51,6 +52,32 @@ using namespace Codethink::lvtqtw;
 namespace {
 constexpr const char *COMPILE_COMMANDS = "compile_commands.json";
 constexpr const char *NON_LAKOSIAN_DIRS_SETTING = "non_lakosian_dirs";
+
+bool compressFiles(QFileInfo const& saveTo, QList<QFileInfo> const& files)
+{
+    if (!QDir{}.exists(saveTo.absolutePath()) && !QDir{}.mkdir(saveTo.absolutePath())) {
+        qDebug() << "[compressFiles] Could not prepare path to save.";
+        return false;
+    }
+
+    auto zipFile = KZip(saveTo.absoluteFilePath());
+    if (!zipFile.open(QIODevice::WriteOnly)) {
+        qDebug() << "[compressFiles] Could not open file to compress:" << saveTo;
+        qDebug() << zipFile.errorString();
+        return false;
+    }
+
+    for (auto const& fileToCompress : qAsConst(files)) {
+        auto r = zipFile.addLocalFile(fileToCompress.path(), "");
+        if (!r) {
+            qDebug() << "[compressFiles] Could not add files to project:" << fileToCompress;
+            qDebug() << zipFile.errorString();
+            return false;
+        }
+    }
+
+    return true;
+}
 
 QString createSysinfoFileAt(const QString& lPath, const QString& ignorePattern)
 {
@@ -517,10 +544,9 @@ void ParseCodebaseDialog::saveOutput()
     const QString sysInfoFile = createSysinfoFileAt(lPath, ui->ignorePattern->text());
     const QString compileCommandsFile = lPath + QDir::separator() + COMPILE_COMMANDS;
 
-    QStringList textFiles;
-    textFiles.append(compileCommandsFile);
-    textFiles.append(sysInfoFile);
-
+    QList<QFileInfo> textFiles;
+    textFiles.append(QFileInfo{compileCommandsFile});
+    textFiles.append(QFileInfo{sysInfoFile});
     for (int i = 0; i < ui->tabWidget->count(); i++) {
         auto *textEdit = qobject_cast<TextView *>(ui->tabWidget->widget(i));
         QString saveFilePath = ui->tabWidget->tabText(i);
@@ -528,21 +554,23 @@ void ParseCodebaseDialog::saveOutput()
         saveFilePath.append(".txt");
         saveFilePath = lPath + QDir::separator() + saveFilePath;
         textEdit->saveFileTo(saveFilePath);
-        textFiles += saveFilePath;
+        textFiles.append(QFileInfo{saveFilePath});
     }
 
-    const QString filename = directory.toLocalFile() + QDir::separator() + "codevis_dump_"
-        + QString::number(QDateTime::currentDateTime().toMSecsSinceEpoch()) + ".zip";
+    const QFileInfo outputFile =
+        QFileInfo{directory.toLocalFile() + QDir::separator() + "codevis_dump_"
+                  + QString::number(QDateTime::currentDateTime().toMSecsSinceEpoch()) + ".zip"};
 
-    const bool result = JlCompress::compressFiles(filename, textFiles);
-    if (result) {
-        QMessageBox::information(this, tr("Export Debug File"), tr("File saved successfully at \n%1").arg(filename));
+    if (compressFiles(outputFile, textFiles)) {
+        QMessageBox::information(this,
+                                 tr("Export Debug File"),
+                                 tr("File saved successfully at \n%1").arg(outputFile.fileName()));
     } else {
         QMessageBox::critical(this, tr("Export Debug File"), tr("Error exporting the build data."));
     }
 
     for (const auto& textFile : qAsConst(textFiles)) {
-        std::filesystem::remove(textFile.toStdString());
+        std::filesystem::remove(textFile.absoluteFilePath().toStdString());
     }
 }
 

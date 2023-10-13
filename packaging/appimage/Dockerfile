@@ -26,7 +26,6 @@ RUN apt-get update && apt-get -qq install \
     lcov \
     libclang-14-dev \
     libqt5core5a \
-    libquazip5-dev \
     libsqlite3-dev \
     llvm-14-dev \
     moreutils \
@@ -38,7 +37,6 @@ RUN apt-get update && apt-get -qq install \
     sqlite3
 
 FROM base as dependencies
-ENV QuaZip5_DIR=/usr/share/quazip
 
 FROM dependencies as build-pre
 
@@ -121,7 +119,6 @@ RUN apt-get update && apt-get -qq install \
     git \
     libclang-14-dev \
     libqt5core5a \
-    libquazip5-dev \
     libsqlite3-dev \
     llvm-14-dev \
     python-jinja2 \
@@ -133,7 +130,6 @@ RUN apt-get update && apt-get -qq install \
     shellcheck \
     sqlite3
 
-ENV QuaZip5_DIR=/usr/share/quazip
 # we installed new clang for the clang c++ parser libraries, as we have it, we
 # may as well build with a modern compiler
 ENV CXX=/usr/bin/clang++-14
@@ -159,7 +155,6 @@ ENV OUTDIR=/tmp/package
 ENV EXTERNAL_SO_DEPENDENCIES=/tmp/externaldeps
 RUN scripts/packaging/build-package.sh --no-deploy
 RUN mkdir -p "${EXTERNAL_SO_DEPENDENCIES}" \
-    && cp "/root/diagram-server/build/lvt/thirdparty/libquazip.so" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/x86_64-linux-gnu/libQt5Core.so.5" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/llvm-14/lib/libclang-cpp.so.14" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/llvm-14/lib/libLLVM-14.so.1" "${EXTERNAL_SO_DEPENDENCIES}" \

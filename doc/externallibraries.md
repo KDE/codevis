@@ -16,7 +16,5 @@
     * www.python.org
 * Qt 5.15.4
     * www.qt.io
-* Quazip 0.7.3
-    * https://github.com/stachenov/quazip
 * Configuration-Parser master
     * https://github.com/tcanabrava/configuration-parser

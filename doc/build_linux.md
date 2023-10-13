@@ -42,7 +42,6 @@ apt-get update && apt-get install \
     catch2 \
     extra-cmake-modules \
     libclang-dev \
-    libquazip1-qt5-1-dev \
     libqt5svg5-dev \
     libkf5config-dev \
     libkf5texteditor-dev \

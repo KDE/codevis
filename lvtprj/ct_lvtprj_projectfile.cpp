@@ -19,6 +19,9 @@
 
 #include <ct_lvtmdb_soci_writer.h>
 #include <ct_lvtprj_projectfile.h>
+#include <ct_lvtshr_stringhelpers.h>
+
+#include <KZip>
 
 // Std
 #include <algorithm>
@@ -28,16 +31,12 @@
 
 // Qt, Json
 #include <QCoreApplication>
+#include <QDir>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
 #include <QTimer>
-
-#include <ct_lvtshr_stringhelpers.h>
-
-// Compressing library, depends on Qt.
-#include <JlCompress.h>
 
 using namespace Codethink::lvtprj;
 namespace fs = std::filesystem;
@@ -49,6 +48,42 @@ constexpr std::string_view METADATA = "metadata.json";
 constexpr std::string_view LEFT_PANEL_HISTORY = "left_panel";
 constexpr std::string_view RIGHT_PANEL_HISTORY = "right_panel";
 constexpr std::string_view BOOKMARKS_FOLDER = "bookmarks";
+
+bool compressDir(QFileInfo const& saveTo, QDir const& dirToCompress)
+{
+    if (!QDir{}.exists(saveTo.absolutePath()) && !QDir{}.mkdir(saveTo.absolutePath())) {
+        qDebug() << "[compressDir] Could not prepare path to save.";
+        return false;
+    }
+
+    auto zipFile = KZip(saveTo.absoluteFilePath());
+    if (!zipFile.open(QIODevice::WriteOnly)) {
+        qDebug() << "[compressDir] Could not open file to compress:" << saveTo;
+        qDebug() << zipFile.errorString();
+        return false;
+    }
+
+    auto r = zipFile.addLocalDirectory(dirToCompress.path(), "");
+    if (!r) {
+        qDebug() << "[compressDir] Could not add files to project:" << dirToCompress;
+        qDebug() << zipFile.errorString();
+        return false;
+    }
+
+    return true;
+}
+
+bool extractDir(QFileInfo const& projectFile, QDir const& openLocation)
+{
+    auto zipFile = KZip(projectFile.absoluteFilePath());
+    if (!zipFile.open(QIODevice::ReadOnly)) {
+        qDebug() << "[compressDir] Could not open file to read contents:" << projectFile;
+        qDebug() << zipFile.errorString();
+        return false;
+    }
+    const KArchiveDirectory *dir = zipFile.directory();
+    return dir->copyTo(openLocation.path());
+}
 
 // return a random string, for the unique project folder in $temp.
 [[nodiscard]] std::string random_string(size_t length)
@@ -275,9 +310,9 @@ auto ProjectFile::open(const std::filesystem::path& path) -> cpp::result<void, P
     }
 
     d->openLocation = tmpFolder.value();
-    const auto projectFile = QString::fromStdString(filePath);
-    QStringList extractedFiles = JlCompress::extractDir(projectFile, QString::fromStdString(d->openLocation.string()));
-    if (extractedFiles.empty()) {
+    const auto projectFile = QFileInfo{QString::fromStdString(filePath)};
+    const auto openLocation = QDir{QString::fromStdString(d->openLocation.string())};
+    if (!extractDir(projectFile, openLocation)) {
         return cpp::fail(ProjectFileError{"Failed to extract project contents"});
     }
 
@@ -291,10 +326,7 @@ auto ProjectFile::open(const std::filesystem::path& path) -> cpp::result<void, P
 auto ProjectFile::saveAs(const fs::path& path, BackupFileBehavior behavior) -> cpp::result<void, ProjectFileError>
 {
     fs::path projectPath = path;
-
-    // std::string lacks .endsWith - cpp20 fixes this but we are on 17.
-    const QString tmp = QString::fromStdString(projectPath.string());
-    if (!tmp.endsWith(".lks")) {
+    if (!projectPath.string().ends_with(".lks")) {
         projectPath += ".lks";
     }
 
@@ -320,9 +352,10 @@ auto ProjectFile::saveAs(const fs::path& path, BackupFileBehavior behavior) -> c
     }
 
     // save new file.
-    const auto saveWhat = QString::fromStdString(d->openLocation.string());
-    const auto saveTo = QString::fromStdString(projectPath.string());
-    if (!JlCompress::compressDir(saveTo, saveWhat)) {
+    const auto saveWhat = QDir{QString::fromStdString(d->openLocation.string())};
+    const auto saveTo = QFileInfo{QString::fromStdString(projectPath.string())};
+    if (!compressDir(saveTo, saveWhat)) {
+        qDebug() << "Failed to generate project file";
         return cpp::fail(ProjectFileError{"Failed to generate project file"});
     }
 

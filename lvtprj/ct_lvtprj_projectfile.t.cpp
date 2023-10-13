@@ -35,30 +35,32 @@ TEST_CASE("Project Management")
 
     Codethink::lvtprj::ProjectFile file;
 
-    CHECK(file.isOpen() == false);
+    REQUIRE(file.isOpen() == false);
 
     auto err = file.createEmpty();
-    CHECK(!err.has_error());
-    CHECK(file.isOpen() == true);
+    REQUIRE(!err.has_error());
+    REQUIRE(file.isOpen() == true);
 
     file.setProjectName("CodeVis");
     file.setProjectInformation("Sligthly longer line of information");
     file.setSourceCodePath("/some/path/src/");
 
-    CHECK(file.location() == "");
+    REQUIRE(file.location() == "");
 
     // Open location uses a random directory name, I can't check for equality.
-    CHECK(file.openLocation().empty() == false);
+    REQUIRE(file.openLocation().empty() == false);
 
-    CHECK(file.projectName() == "CodeVis");
-    CHECK(file.projectInformation() == "Sligthly longer line of information");
-    CHECK(file.sourceCodePath() == "/some/path/src/");
+    REQUIRE(file.projectName() == "CodeVis");
+    REQUIRE(file.projectInformation() == "Sligthly longer line of information");
+    REQUIRE(file.sourceCodePath() == "/some/path/src/");
 
     err = file.saveAs(project_path, Codethink::lvtprj::ProjectFile::BackupFileBehavior::Discard);
+    if (err.has_error()) {
+        FAIL("Unexpected error: " << err.error().errorMessage);
+    }
     REQUIRE(err.has_value());
-
-    CHECK(!err.has_error());
-    CHECK(file.location() == project_path);
+    REQUIRE(!err.has_error());
+    REQUIRE(file.location() == project_path);
 
     Codethink::lvtprj::ProjectFile project2;
     err = project2.open(project_path);
@@ -67,19 +69,22 @@ TEST_CASE("Project Management")
     }
 
     // check that the information of both projects is the same.
-    CHECK(project2.projectName() == file.projectName());
-    CHECK(project2.projectInformation() == file.projectInformation());
-    CHECK(project2.location() == file.location());
+    REQUIRE(project2.projectName() == file.projectName());
+    REQUIRE(project2.projectInformation() == file.projectInformation());
+    REQUIRE(project2.location() == file.location());
 
     // those needs to be different since there are two instances of the same project open.
-    CHECK(project2.openLocation() != file.openLocation());
+    REQUIRE(project2.openLocation() != file.openLocation());
 
     fs::path project_path_without_suffix = fs::temp_directory_path() / "ct_lvt_testprojects" / "testproject";
     err = file.saveAs(project_path_without_suffix, Codethink::lvtprj::ProjectFile::BackupFileBehavior::Discard);
-    CHECK(!err.has_error());
+    if (err.has_error()) {
+        FAIL("Unexpected error: " << err.error().errorMessage);
+    }
+    REQUIRE(!err.has_error());
 
     QString locationWithoutSuffix = QString::fromStdString(file.location().string());
-    CHECK(locationWithoutSuffix.endsWith(".lks"));
+    REQUIRE(locationWithoutSuffix.endsWith(".lks"));
 
     // cleanup
     try {

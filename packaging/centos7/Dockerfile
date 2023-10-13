@@ -176,7 +176,6 @@ ENV OUTDIR=/tmp/package
 ENV EXTERNAL_SO_DEPENDENCIES=/tmp/externaldeps
 RUN yum -y install python-jinja2 \
     && mkdir -p "${EXTERNAL_SO_DEPENDENCIES}" \
-    && cp "/codevis/build/diagram-server/thirdparty/libquazip.so" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/usr/lib/libQt5Core.so.5" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/lib/libLLVM-15.so" "${EXTERNAL_SO_DEPENDENCIES}" \
     && cp "/lib/libclang-cpp.so.15" "${EXTERNAL_SO_DEPENDENCIES}" \

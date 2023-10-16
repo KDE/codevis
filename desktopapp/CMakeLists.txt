@@ -78,6 +78,7 @@ add_library(codevis_lib STATIC
 target_link_libraries(
     codevis_lib
 
+    KF${KF_MAJOR_VERSION}::Crash
     KF${KF_MAJOR_VERSION}::WidgetsAddons
     KF${KF_MAJOR_VERSION}::XmlGui
     KF${KF_MAJOR_VERSION}::CoreAddons

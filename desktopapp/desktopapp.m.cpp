@@ -27,6 +27,7 @@
 #include <QStyleFactory>
 
 #include <KAboutData>
+#include <KCrash>
 #include <KLocalizedString>
 
 #include <mainwindow.h>
@@ -55,6 +56,7 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication app(argc, argv);
+    KCrash::initialize();
 
     // setup translation string domain for the i18n calls
     KLocalizedString::setApplicationDomain("codevis");

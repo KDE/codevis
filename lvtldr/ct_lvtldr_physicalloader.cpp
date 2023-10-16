@@ -132,11 +132,10 @@ void PhysicalLoader::setExtDeps(bool extDeps)
     d->extDeps = extDeps;
 }
 
-cpp::result<void, GraphLoadError> PhysicalLoader::loadV2(LakosianNode *node, lvtldr::NodeLoadFlags flags)
+cpp::result<void, GraphLoadError> PhysicalLoader::load(LakosianNode *node, lvtldr::NodeLoadFlags flags)
 {
-    // Differently from the first version, each call to loadV2() will not clean the previous graph
-    // this will be used as a cache during the scene visualization. When the user selects a *completely* new graph
-    // then, we clean the view.
+    // Each call to load() will *not* clean the previous graph - this will be used as a cache during the scene
+    // visualization. When the user selects a *completely* new graph then, we clean the view.
 
     if (!node) {
         return cpp::fail(GraphLoadError{"Trying to load a null node"});

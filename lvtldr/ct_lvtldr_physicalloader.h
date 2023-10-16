@@ -100,7 +100,7 @@ class LVTLDR_EXPORT PhysicalLoader {
     // loaded
 
     bool isNodeFullyLoaded(LakosianNode *node, lvtldr::NodeLoadFlags flags) const;
-    cpp::result<void, GraphLoadError> loadV2(LakosianNode *node, lvtldr::NodeLoadFlags flags);
+    cpp::result<void, GraphLoadError> load(LakosianNode *node, lvtldr::NodeLoadFlags flags);
     // Load the graph from the code database
 };
 

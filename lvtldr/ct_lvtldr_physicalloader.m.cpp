@@ -168,7 +168,7 @@ int main(int argc, char **argv)
     loader.setMainNode(node);
     loader.setExtDeps(args.extDeps);
 
-    if (!loader.loadV2(node, lvtldr::NodeLoadFlags{})) {
+    if (!loader.load(node, lvtldr::NodeLoadFlags{})) {
         return EXIT_FAILURE;
     }
 

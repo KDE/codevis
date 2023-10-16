@@ -1233,7 +1233,7 @@ GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
         }
 
         d->physicalLoader.clear();
-        success = d->physicalLoader.loadV2(node, flags).has_value();
+        success = d->physicalLoader.load(node, flags).has_value();
         break;
     }
 
@@ -1752,7 +1752,7 @@ void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)
     auto *node = entity->internalNode();
     auto flags = d->entityLoadFlags[node];
 
-    bool success = d->physicalLoader.loadV2(node, flags).has_value();
+    bool success = d->physicalLoader.load(node, flags).has_value();
     if (!success) {
         return;
     }

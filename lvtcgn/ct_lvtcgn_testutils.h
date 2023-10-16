@@ -20,7 +20,6 @@
 #ifndef CT_LVTCGN_TESTUTILS_H_INCLUDED
 #define CT_LVTCGN_TESTUTILS_H_INCLUDED
 
-#include <ct_lvtcgn_generatecode.h>
 #include <memory>
 #include <unordered_map>
 #include <utility>

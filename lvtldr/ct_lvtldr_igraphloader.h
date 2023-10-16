@@ -52,7 +52,9 @@ struct NodeLoadFlags {
 
     // for packages
     bool traverseProviders = false;
+    bool traverseProvidersOnlyLocal = false;
     bool traverseClients = false;
+    bool traverseClientsOnlyLocal = false;
 
     // for logical entities
     bool loadIsARelationships = false;

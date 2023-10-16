@@ -1572,20 +1572,22 @@ void GraphicsScene::connectEntitySignals(LakosEntity *entity)
         view->fitAllInView();
     });
 
-    connect(entity, &LakosEntity::loadClients, this, [entity, this] {
+    connect(entity, &LakosEntity::loadClients, this, [entity, this](bool onlyLocal) {
         auto *node = entity->internalNode();
 
         auto& flags = d->entityLoadFlags[node];
         flags.traverseClients = true;
+        flags.traverseClientsOnlyLocal = onlyLocal;
 
         finalizeEntityPartialLoad(entity);
     });
 
-    connect(entity, &LakosEntity::loadProviders, this, [entity, this] {
+    connect(entity, &LakosEntity::loadProviders, this, [entity, this](bool onlyLocal) {
         auto *node = entity->internalNode();
 
         auto& flags = d->entityLoadFlags[node];
         flags.traverseProviders = true;
+        flags.traverseProvidersOnlyLocal = onlyLocal;
 
         finalizeEntityPartialLoad(entity);
     });

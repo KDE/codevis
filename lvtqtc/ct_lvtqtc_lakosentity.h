@@ -351,11 +351,13 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     Q_SIGNAL void loadChildren();
     // Request that the children of this entity are loaded
 
-    Q_SIGNAL void loadClients();
+    Q_SIGNAL void loadClients(bool onlyLocal = false);
     // load entities that are clients for this entity.
+    // If `onlyLocal` is true, only load clients from the same package.
 
-    Q_SIGNAL void loadProviders();
+    Q_SIGNAL void loadProviders(bool onlyLocal = false);
     // Load entities that are providers for this entity.
+    // If `onlyLocal` is true, only load clients from the same package.
 
     Q_SIGNAL void unloadThis();
     Q_SIGNAL void unloadChildren();

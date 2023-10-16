@@ -230,14 +230,24 @@ void PhysicalLoader::visitVertex(LakosianNode *node, const unsigned distance, lv
     // load dependencies
     if (flags.traverseProviders) {
         for (const LakosianEdge& edge : node->providers()) {
-            auto visitFlags = d->graphLoader->loadFlagsFor(edge.other());
+            auto *other = edge.other();
+            if (flags.traverseProvidersOnlyLocal && other->parent() != node->parent()) {
+                continue;
+            }
+
+            auto visitFlags = d->graphLoader->loadFlagsFor(other);
             visitVertex(edge.other(), distance + 1, visitFlags);
         }
     }
 
     if (flags.traverseClients) {
         for (const LakosianEdge& edge : node->clients()) {
-            auto visitFlags = d->graphLoader->loadFlagsFor(edge.other());
+            auto *other = edge.other();
+            if (flags.traverseClientsOnlyLocal && other->parent() != node->parent()) {
+                continue;
+            }
+
+            auto visitFlags = d->graphLoader->loadFlagsFor(other);
             visitVertex(edge.other(), distance + 1, visitFlags);
         }
     }

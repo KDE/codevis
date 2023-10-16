@@ -706,19 +706,33 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
 
     if (!isEditMode && d->loaderInfo.isValid()) {
         auto *loadClientsAction = new QAction();
-        loadClientsAction->setText(tr("Load clients"));
+        loadClientsAction->setText(tr("Load all clients"));
         connect(loadClientsAction, &QAction::triggered, this, [this] {
-            Q_EMIT loadClients();
+            Q_EMIT loadClients(/*onlyLocal=*/false);
+        });
+
+        auto *loadLocalClientsAction = new QAction();
+        loadLocalClientsAction->setText(tr("Load local clients"));
+        connect(loadLocalClientsAction, &QAction::triggered, this, [this] {
+            Q_EMIT loadClients(/*onlyLocal=*/true);
         });
 
         auto *loadProvidersAction = new QAction();
-        loadProvidersAction->setText(tr("Load providers"));
+        loadProvidersAction->setText(tr("Load all providers"));
         connect(loadProvidersAction, &QAction::triggered, this, [this] {
-            Q_EMIT loadProviders();
+            Q_EMIT loadProviders(/*onlyLocal=*/false);
+        });
+
+        auto *loadLocalProvidersAction = new QAction();
+        loadLocalProvidersAction->setText(tr("Load local providers"));
+        connect(loadLocalProvidersAction, &QAction::triggered, this, [this] {
+            Q_EMIT loadProviders(/*onlyLocal=*/true);
         });
 
         retValues.append(loadProvidersAction);
+        retValues.append(loadLocalProvidersAction);
         retValues.append(loadClientsAction);
+        retValues.append(loadLocalClientsAction);
     }
 
     if (!d->isMainNode) {

@@ -137,7 +137,7 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
                 dlg.exec();
 
                 const auto text = std::any_cast<QString>(dlg.fieldValue("name"));
-                Q_EMIT requestSaveBookmark(text, idx);
+                saveBookmark(text, idx, Codethink::lvtprj::ProjectFile::Bookmark);
             });
         } else {
             auto *action = menu.addAction(tr("Remove bookmark"));
@@ -264,6 +264,31 @@ void TabWidget::setUndoManager(lvtqtc::UndoManager *undoManager)
     }
 }
 
+void TabWidget::saveBookmark(const QString& title, int idx, ProjectFile::BookmarkType type)
+{
+    auto *tabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(widget(idx));
+    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
+    auto jsonObj = scene->toJson();
+
+    QJsonObject mainObj{{"scene", jsonObj},
+                        {"tabname", title},
+                        {"id", title},
+                        {"zoom_level", tabElement->graphicsView()->zoomFactor()}};
+
+    const cpp::result<void, ProjectFileError> ret = d->projectFile.saveBookmark(QJsonDocument(mainObj), type);
+
+    if (ret.has_error()) {
+        Q_EMIT errorMessage(tr("Error saving bookmark."));
+    }
+}
+
+void TabWidget::saveTabsOnProject(ProjectFile::BookmarkType type)
+{
+    for (int i = 0; i < count(); i++) {
+        saveBookmark(tabText(i), i, type);
+    }
+}
+
 void TabWidget::loadBookmark(const QJsonDocument& doc)
 {
     QJsonObject obj = doc.object();
@@ -274,6 +299,8 @@ void TabWidget::loadBookmark(const QJsonDocument& doc)
 
     auto *scene = qobject_cast<GraphicsScene *>(graphicsView()->scene());
     scene->fromJson(obj["scene"].toObject());
+
+    graphicsView()->setZoomFactor(obj["zoom_factor"].toInt());
 }
 
 } // end namespace Codethink::lvtqtw

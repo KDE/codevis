@@ -470,26 +470,12 @@ QString MainWindow::requestProjectName()
     return projectName;
 }
 
-void MainWindow::saveTabsOnProject(int idx, ProjectFile::BookmarkType type)
+void MainWindow::saveTabsOnProject()
 {
-    if (ui.mainSplitter->count() <= idx) {
-        return;
-    }
-
-    auto *tabWidget = qobject_cast<Codethink::lvtqtw::TabWidget *>(ui.mainSplitter->widget(idx));
-
-    for (int i = 0; i < tabWidget->count(); i++) {
-        auto *tabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(tabWidget->widget(i));
-        auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
-        auto jsonObj = scene->toJson();
-
-        QJsonObject mainObj{{"scene", jsonObj}, {"tabname", tabWidget->tabText(i)}, {"id", QString::number(i)}};
-
-        const cpp::result<void, ProjectFileError> ret = d_projectFile.saveBookmark(QJsonDocument(mainObj), type);
-        if (ret.has_error()) {
-            showMessage(tr("Error saving tab history."), KMessageWidget::MessageType::Error);
-        }
-    }
+    auto *tabWidget = qobject_cast<Codethink::lvtqtw::TabWidget *>(ui.mainSplitter->widget(0));
+    tabWidget->saveTabsOnProject(ProjectFile::BookmarkType::LeftPane);
+    tabWidget = qobject_cast<Codethink::lvtqtw::TabWidget *>(ui.mainSplitter->widget(1));
+    tabWidget->saveTabsOnProject(ProjectFile::BookmarkType::RightPane);
 }
 
 void MainWindow::saveProject()
@@ -500,8 +486,7 @@ void MainWindow::saveProject()
     }
 
     d_projectFile.prepareSave();
-    saveTabsOnProject(0, ProjectFile::BookmarkType::LeftPane);
-    saveTabsOnProject(1, ProjectFile::BookmarkType::RightPane);
+    saveTabsOnProject();
 
     cpp::result<void, Codethink::lvtprj::ProjectFileError> saved = d_projectFile.save();
     if (saved.has_error()) {
@@ -525,8 +510,7 @@ void MainWindow::saveProjectAs()
     }
 
     d_projectFile.prepareSave();
-    saveTabsOnProject(0, ProjectFile::BookmarkType::LeftPane);
-    saveTabsOnProject(1, ProjectFile::BookmarkType::RightPane);
+    saveTabsOnProject();
 
     cpp::result<void, Codethink::lvtprj::ProjectFileError> saved =
         d_projectFile.saveAs(saveProjectPath.toStdString(),
@@ -1029,34 +1013,7 @@ void MainWindow::currentGraphSplitChanged(Codethink::lvtqtw::TabWidget *tabWidge
     currentGraphTab = tabWidget;
     connect(tabWidget, &QTabWidget::currentChanged, this, &MainWindow::changeCurrentGraphWidget);
     connect(tabWidget, &Codethink::lvtqtw::TabWidget::currentTabTextChanged, this, &MainWindow::focusedGraphChanged);
-    connect(tabWidget,
-            &Codethink::lvtqtw::TabWidget::requestSaveBookmark,
-            this,
-            &MainWindow::saveBookmark,
-            Qt::UniqueConnection);
     changeCurrentGraphWidget(tabWidget->currentIndex());
-}
-
-void MainWindow::saveBookmark(const QString& title, int idx)
-{
-    auto *tabWidget = qobject_cast<Codethink::lvtqtw::TabWidget *>(sender());
-    if (!tabWidget) {
-        qDebug() << "Error, bookmark without tab widget";
-        return;
-    }
-
-    auto *tabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(tabWidget->widget(idx));
-    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
-    auto jsonObj = scene->toJson();
-
-    QJsonObject mainObj{{"scene", jsonObj}, {"tabname", title}, {"id", title}};
-
-    const cpp::result<void, ProjectFileError> ret =
-        d_projectFile.saveBookmark(QJsonDocument(mainObj), Codethink::lvtprj::ProjectFile::Bookmark);
-
-    if (ret.has_error()) {
-        showMessage(tr("Error saving bookmark."), KMessageWidget::MessageType::Error);
-    }
 }
 
 void MainWindow::graphLoadStarted()

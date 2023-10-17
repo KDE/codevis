@@ -26,6 +26,7 @@
 #include <ct_lvtmdl_modelhelpers.h>
 #include <ct_lvtplg_pluginmanager.h>
 
+#include <ct_lvtprj_projectfile.h>
 #include <ct_lvtshr_graphenums.h>
 
 #include <QTabWidget>
@@ -92,11 +93,14 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
     void setUndoManager(lvtqtc::UndoManager *undoManager);
 
     Q_SIGNAL void currentTabTextChanged(const QString& name, lvtshr::DiagramType type);
+    Q_SIGNAL void errorMessage(const QString& errorMessage);
     // triggered when we set the text of the current tab.
 
-    Q_SIGNAL void requestSaveBookmark(const QString& name, int idx);
-
+    void saveBookmark(const QString& name, int idx, Codethink::lvtprj::ProjectFile::BookmarkType type);
     void loadBookmark(const QJsonDocument& doc);
+
+    // Called when the application closes or when the user clicks on save.
+    void saveTabsOnProject(Codethink::lvtprj::ProjectFile::BookmarkType type);
 
   private:
     // Forbid using addTab and insertTab, this should work with Graphs Only.

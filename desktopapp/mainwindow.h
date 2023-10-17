@@ -118,7 +118,7 @@ class MainWindow : public KXmlGuiWindow {
     virtual QString requestProjectName();
 
   private:
-    void saveTabsOnProject(int idx, Codethink::lvtprj::ProjectFile::BookmarkType type);
+    void saveTabsOnProject();
     void loadTabsFromProject();
 
     void openGenerateDatabase();
@@ -168,7 +168,6 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void triggerUndo();
     Q_SLOT void triggerRedo();
 
-    Q_SLOT void saveBookmark(const QString& title, int idx);
     Q_SLOT void bookmarksChanged();
 
     Q_SLOT void generateDatabaseReadyForUpdate();

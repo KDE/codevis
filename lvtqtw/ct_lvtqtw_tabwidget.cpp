@@ -143,7 +143,12 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
             auto *action = menu.addAction(tr("Remove bookmark"));
             connect(action, &QAction::triggered, this, [this, idx] {
                 setTabIcon(idx, QIcon());
-                d->projectFile.removeBookmark(tabText(idx));
+
+                // QWidgets sometimes adds a `&` to denote mnemonic,
+                // remove it.
+                auto text = tabText(idx);
+                text.remove(QLatin1Char('&'));
+                d->projectFile.removeBookmark(text);
             });
         }
         menu.exec(tabBar()->mapToGlobal(pos));

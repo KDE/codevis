@@ -473,9 +473,14 @@ QString MainWindow::requestProjectName()
 void MainWindow::saveTabsOnProject()
 {
     auto *tabWidget = qobject_cast<Codethink::lvtqtw::TabWidget *>(ui.mainSplitter->widget(0));
-    tabWidget->saveTabsOnProject(ProjectFile::BookmarkType::LeftPane);
+    if (tabWidget) {
+        tabWidget->saveTabsOnProject(ProjectFile::BookmarkType::LeftPane);
+    }
+
     tabWidget = qobject_cast<Codethink::lvtqtw::TabWidget *>(ui.mainSplitter->widget(1));
-    tabWidget->saveTabsOnProject(ProjectFile::BookmarkType::RightPane);
+    if (tabWidget) {
+        tabWidget->saveTabsOnProject(ProjectFile::BookmarkType::RightPane);
+    }
 }
 
 void MainWindow::saveProject()

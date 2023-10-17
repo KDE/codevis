@@ -300,7 +300,7 @@ void TabWidget::loadBookmark(const QJsonDocument& doc)
     auto *scene = qobject_cast<GraphicsScene *>(graphicsView()->scene());
     scene->fromJson(obj["scene"].toObject());
 
-    graphicsView()->setZoomFactor(obj["zoom_factor"].toInt());
+    graphicsView()->setZoomFactor(obj["zoom_level"].toInt());
 }
 
 } // end namespace Codethink::lvtqtw

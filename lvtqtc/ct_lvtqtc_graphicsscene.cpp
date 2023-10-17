@@ -2264,9 +2264,10 @@ QJsonObject GraphicsScene::toJson() const
         }
     }
 
+    const auto mainEntityName = d->mainEntity ? d->mainEntity->qualifiedName() : std::string{};
     return {{"elements", array},
             {"transitive_visibility", d->showTransitive},
-            {"main_entity", QString::fromStdString(d->mainEntity->qualifiedName())}};
+            {"main_entity", QString::fromStdString(mainEntityName)}};
 }
 
 void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)

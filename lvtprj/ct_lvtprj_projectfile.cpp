@@ -613,9 +613,14 @@ void ProjectFile::removeBookmark(const QString& name)
     const auto folderPath = QString::fromStdString((d->openLocation / BOOKMARKS_FOLDER).string());
     QFile bookmark(folderPath + QDir::separator() + name + ".json");
     if (!bookmark.exists()) {
-        qDebug() << "Json document doesn't exists";
+        qDebug() << "Json document doesn't exists" << bookmark.fileName();
+        return;
     }
-    bookmark.remove();
+
+    if (!bookmark.remove()) {
+        qDebug() << "Couldn't remove bookmark";
+        return;
+    }
     setDirty();
 
     Q_EMIT bookmarksChanged();

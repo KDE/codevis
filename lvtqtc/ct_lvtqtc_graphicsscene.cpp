@@ -2307,9 +2307,6 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
     edgesContainersLayout();
     // This method seems not to do what it says that it does. should we remove it?
 
-    reLayout();
-    // Probably we don't need this. I'm just being safe.
-
     Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Done);
 }
 

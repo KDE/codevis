@@ -19,6 +19,7 @@ as a means of displaying logical and physical entities.
 
 - [Quick Start](#quick-start)
 - [Building](#building)
+- [How to create plugins](doc/plugins.md)
 - [Contributions](#contributions)
 - [License](#license)
 - [Code of Conduct](#code-of-conduct)

@@ -2264,7 +2264,7 @@ QJsonObject GraphicsScene::toJson() const
         }
     }
 
-    return {{"elements", array}};
+    return {{"elements", array}, {"transitive_visibility", d->showTransitive}};
 }
 
 void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)
@@ -2295,19 +2295,27 @@ void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)
 void GraphicsScene::fromJson(const QJsonObject& doc)
 {
     clearGraph();
-
     const auto elements = doc["elements"].toArray();
 
     for (const auto& element : elements) {
         recursiveJsonToLakosEntity(this, element);
     }
 
-    // TODO: Do we need to trigger a relayout or just update the edges?
-    // All the elements have pos set already.
-    edgesContainersLayout();
-    // This method seems not to do what it says that it does. should we remove it?
-
     Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Done);
+
+    // Invalidate transitive reduction caches
+    d->transitiveReductionAlg->reset();
+    searchTransitiveRelations();
+
+    // Calculate Default Visibility of edges
+    for (auto entity : d->verticesVec) {
+        if (!entity->parentItem()) {
+            entity->calculateEdgeVisibility();
+        }
+    }
+
+    const auto show_transitive = doc["transitive_visibility"].toBool();
+    toggleTransitiveRelationVisibility(show_transitive);
 }
 
 void GraphicsScene::highlightCyclesOnCicleModelChanged(const QModelIndex& _, const QModelIndex& index)

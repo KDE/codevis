@@ -47,9 +47,9 @@ if __name__ == "__main__":
 
     contents.append('// Available plugin hooks')
     for hook_info in HOOKS:
-        contents.append(f'// {hook_info.docs}')
-        contents.append(f'typedef {hook_info.return_type} (*hook{hook_info.name}_f)({hook_info.handler} *);')
-        contents.append(f'_EXPORT_AS_C {hook_info.return_type} hook{hook_info.name}({hook_info.handler} *);')
+        contents.append(f'// {hook_info.comments}')
+        contents.append(f'typedef void (*hook{hook_info.name}_f)({hook_info.handler} *);')
+        contents.append(f'_EXPORT_AS_C void hook{hook_info.name}({hook_info.handler} *);')
         contents.append('')
     contents.append('')
 

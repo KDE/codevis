@@ -2264,7 +2264,9 @@ QJsonObject GraphicsScene::toJson() const
         }
     }
 
-    return {{"elements", array}, {"transitive_visibility", d->showTransitive}};
+    return {{"elements", array},
+            {"transitive_visibility", d->showTransitive},
+            {"main_entity", QString::fromStdString(d->mainEntity->qualifiedName())}};
 }
 
 void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)
@@ -2316,6 +2318,11 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
 
     const auto show_transitive = doc["transitive_visibility"].toBool();
     toggleTransitiveRelationVisibility(show_transitive);
+
+    auto *mainEntity = entityByQualifiedName(doc["main_entity"].toString().toStdString());
+    if (mainEntity) {
+        setMainEntity(mainEntity);
+    }
 }
 
 void GraphicsScene::highlightCyclesOnCicleModelChanged(const QModelIndex& _, const QModelIndex& index)

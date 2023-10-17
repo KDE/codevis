@@ -120,25 +120,6 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
     setDocumentMode(true);
     openNewGraphTab();
 
-    connect(this, &QTabWidget::tabBarDoubleClicked, this, [this](int index) {
-        // Can't rename a tab that's a bookmark, we use the name as bookmark name.
-        if (!tabIcon(index).isNull()) {
-            return;
-        }
-
-        if (index == -1) {
-            return;
-        }
-
-        InputDialog dlg;
-        dlg.addTextField("name", tr("Tab Name:"));
-        dlg.finish();
-        dlg.exec();
-
-        const auto res = std::any_cast<QString>(dlg.fieldValue("name"));
-        setTabText(index, res);
-    });
-
     tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tabBar(), &QWidget::customContextMenuRequested, this, [this](const QPoint& pos) {
         const auto idx = tabBar()->tabAt(pos);

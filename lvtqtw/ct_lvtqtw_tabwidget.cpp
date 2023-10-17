@@ -280,6 +280,8 @@ void TabWidget::saveBookmark(const QString& title, int idx, ProjectFile::Bookmar
     if (ret.has_error()) {
         Q_EMIT errorMessage(tr("Error saving bookmark."));
     }
+
+    setTabText(idx, title);
 }
 
 void TabWidget::saveTabsOnProject(ProjectFile::BookmarkType type)

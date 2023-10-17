@@ -27,6 +27,7 @@
     </Menu >
     <Menu name="bookmarks">
         <text>Bookmarks</text>
+        <ActionList name="bookmark_actionlist" />
     </Menu >
     <Menu name="view">
         <text>View</text>

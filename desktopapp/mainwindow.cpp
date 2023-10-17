@@ -1053,8 +1053,9 @@ void MainWindow::saveBookmark(const QString& title, int idx)
 
     const cpp::result<void, ProjectFileError> ret =
         d_projectFile.saveBookmark(QJsonDocument(mainObj), Codethink::lvtprj::ProjectFile::Bookmark);
+
     if (ret.has_error()) {
-        showMessage(tr("Error saving tab history."), KMessageWidget::MessageType::Error);
+        showMessage(tr("Error saving bookmark."), KMessageWidget::MessageType::Error);
     }
 }
 
@@ -1418,20 +1419,19 @@ void MainWindow::requestMenuNamespaceView(const QModelIndex& idx, const QPoint& 
 
 void MainWindow::bookmarksChanged()
 {
-    auto menuBookmarks = menuBar()->findChild<QMenu *>("bookmarks");
-    if (!menuBookmarks) {
-        menuBookmarks = menuBar()->addMenu("Bookmarks");
-    }
-    menuBookmarks->clear();
-
-    const auto bookmarks = d_projectFile.bookmarks();
-    for (const auto& bookmark : bookmarks) {
-        auto *bookmarkAction = menuBookmarks->addAction(bookmark);
+    QList<QAction *> actions;
+    for (const auto& bookmark : d_projectFile.bookmarks()) {
+        auto *bookmarkAction = new QAction(bookmark);
         connect(bookmarkAction, &QAction::triggered, this, [this, bookmark] {
             QJsonDocument doc = d_projectFile.getBookmark(bookmark);
             currentGraphTab->loadBookmark(doc);
         });
+
+        actions.append(bookmarkAction);
     }
+
+    unplugActionList("bookmark_actionlist");
+    plugActionList("bookmark_actionlist", actions);
 }
 
 void MainWindow::updateFocusedEntityOnTableModels(LakosEntity *entity)

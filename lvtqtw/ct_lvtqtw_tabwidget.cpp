@@ -33,6 +33,7 @@
 
 #include <ct_lvtqtc_inputdialog.h>
 
+#include <QDialog>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMenu>
@@ -134,7 +135,10 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
                 InputDialog dlg;
                 dlg.addTextField("name", tr("Bookmark Name:"));
                 dlg.finish();
-                dlg.exec();
+                auto res = dlg.exec();
+                if (res == QDialog::DialogCode::Rejected) {
+                    return;
+                }
 
                 const auto text = std::any_cast<QString>(dlg.fieldValue("name"));
                 saveBookmark(text, idx, Codethink::lvtprj::ProjectFile::Bookmark);

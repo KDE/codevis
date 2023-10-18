@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtprj_projectfile.h"
 #include <ct_lvtqtc_testing_utils.h>
 
 #include <ct_lvtclr_colormanagement.h>
@@ -28,6 +29,9 @@
 #include <ct_lvtqtw_tabwidget.h>
 #include <ct_lvttst_tmpdir.h>
 
+#include <thread>
+
+#include <QJsonDocument>
 #include <catch2-local-includes.h>
 
 using namespace Codethink::lvtqtc;
@@ -83,4 +87,30 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic tab widget workflow")
     REQUIRE(tab.count() == 3);
     REQUIRE(tab.currentIndex() == 2);
     REQUIRE(tab.tabText(tab.currentIndex()) == "aaa");
+}
+
+TEST_CASE_METHOD(QTApplicationFixture, "Basic Bookmark Workflow")
+{
+    auto tmpDir = TmpDir{"basic_tab_test"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    (void) nodeStorage.addPackage("aaa", "aaa", nullptr);
+    (void) nodeStorage.addPackage("bbb", "bbb", nullptr);
+
+    auto colorManagement = std::make_shared<ColorManagement>(false);
+    auto projectFile = ProjectFileForTesting{};
+    auto tab = TabWidget{nodeStorage, projectFile, colorManagement};
+
+    tab.show();
+
+    tab.setCurrentGraphTab(TabWidget::GraphInfo{"aaa", NodeType::e_Package});
+    tab.saveBookmark("Bookmark1", 0, Codethink::lvtprj::ProjectFile::Bookmark);
+    REQUIRE(tab.tabText(0) == "Bookmark1");
+
+    tab.closeTab(0);
+    REQUIRE(tab.tabText(0) == "Unnamed 0");
+
+    tab.loadBookmark(projectFile.getBookmark("Bookmark1"));
+    REQUIRE(tab.tabText(0) == "Bookmark1");
 }

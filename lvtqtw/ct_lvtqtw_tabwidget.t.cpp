@@ -17,7 +17,7 @@
 // limitations under the License.
 */
 
-#include "ct_lvtprj_projectfile.h"
+#include <ct_lvtprj_projectfile.h>
 #include <ct_lvtqtc_testing_utils.h>
 
 #include <ct_lvtclr_colormanagement.h>
@@ -28,8 +28,6 @@
 #include <ct_lvtldr_nodestoragetestutils.h>
 #include <ct_lvtqtw_tabwidget.h>
 #include <ct_lvttst_tmpdir.h>
-
-#include <thread>
 
 #include <QJsonDocument>
 #include <catch2-local-includes.h>

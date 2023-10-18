@@ -22,7 +22,7 @@
 
 #include <lvtqtc_export.h>
 
-#include <ct_lvtplg_handlertreewidget.h>
+#include <ct_lvtplg_basicpluginhandlers.h>
 #include <ct_lvtplg_pluginmanager.h>
 #include <ct_lvtqtc_graphicsscene.h>
 

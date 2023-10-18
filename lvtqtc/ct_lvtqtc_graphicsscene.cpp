@@ -1850,9 +1850,9 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
             }
             return fromEntity->hasRelationshipWith(toEntity);
         };
-        using ctxMenuAction_f = PluginContextMenuHandler::ctxMenuAction_f;
+        using ctxMenuAction_f = std::function<void(PluginContextMenuActionHandler *)>;
         auto registerContextMenu = [=, this, &menu](std::string const& title, ctxMenuAction_f const& userAction) {
-            // make a copy of all the actions we currently have so we can
+            // make a copy of all the actions we currently have, so we can
             // iterate through it without having problems.
             const auto currentActions = menu.actions();
 

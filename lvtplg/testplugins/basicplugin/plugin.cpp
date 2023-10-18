@@ -15,8 +15,8 @@
 // limitations under the License.
 */
 
+#include <ct_lvtplg_basicpluginhandlers.h>
 #include <ct_lvtplg_basicpluginhooks.h>
-#include <ct_lvtplg_handlersetup.h>
 
 auto constexpr PLUGIN_ID = "cppTestPlugin";
 

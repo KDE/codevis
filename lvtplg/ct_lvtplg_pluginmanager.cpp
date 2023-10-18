@@ -17,11 +17,8 @@
 // limitations under the License.
 */
 
+#include <ct_lvtplg_basicpluginhandlers.h>
 #include <ct_lvtplg_basicpluginhooks.h>
-#include <ct_lvtplg_handlercontextmenuaction.h>
-#include <ct_lvtplg_handlerdockwidget.h>
-#include <ct_lvtplg_handlerentityreport.h>
-#include <ct_lvtplg_handlersetup.h>
 #include <ct_lvtplg_pluginmanager.h>
 #ifdef ENABLE_PYTHON_PLUGINS
 #include <ct_lvtplg_pythonlibrarydispatcher.h>

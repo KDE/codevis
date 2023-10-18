@@ -21,14 +21,8 @@
 #define DIAGRAM_SERVER_CT_LVTPLG_PYTHONLIBRARYDISPATCHER_H
 
 #include <ct_lvtplg_abstractlibrarydispatcher.h>
+#include <ct_lvtplg_basicpluginhandlers.h>
 #include <ct_lvtplg_basicpluginhooks.h>
-#include <ct_lvtplg_handlercodeanalysis.h>
-#include <ct_lvtplg_handlercontextmenuaction.h>
-#include <ct_lvtplg_handlerdockwidget.h>
-#include <ct_lvtplg_handlerentityreport.h>
-#include <ct_lvtplg_handlergraphicsview.h>
-#include <ct_lvtplg_handlersetup.h>
-#include <ct_lvtplg_handlertreewidget.h>
 
 #include <lvtplg_export.h>
 

@@ -38,7 +38,8 @@ PluginTreeItemHandler PluginManagerQtUtils::createPluginTreeItemHandler(
         item->appendRow(child);
         return createPluginTreeItemHandler(pm, treeView, treeModel, child, gs);
     };
-    auto addOnClickAction = [pm, treeView, treeModel, item, gs](PluginTreeItemHandler::onClickItemAction_f const& f) {
+    auto addOnClickAction = [pm, treeView, treeModel, item, gs](
+                                std::function<void(PluginTreeItemClickedActionHandler * selectedItem)> const& f) {
         QObject::connect(treeView,
                          &QTreeView::clicked,
                          treeView,

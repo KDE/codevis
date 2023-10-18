@@ -15,10 +15,8 @@
 // limitations under the License.
 */
 
+#include <ct_lvtplg_basicpluginhandlers.h>
 #include <ct_lvtplg_basicpluginhooks.h>
-#include <ct_lvtplg_handlercontextmenuaction.h>
-#include <ct_lvtplg_handlerdockwidget.h>
-#include <ct_lvtplg_handlersetup.h>
 
 #include <string>
 #include <vector>

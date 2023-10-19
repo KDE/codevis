@@ -21,7 +21,7 @@
 #
 set(SOCI_CORE_DEPENDENCIES
   Threads
-  Boost)
+)
 
 set(SOCI_BACKENDS_DB_DEPENDENCIES
   MySQL

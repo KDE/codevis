@@ -269,12 +269,6 @@ add_subdirectory(lvtshr)
 add_subdirectory(lvttst)
 
 if (BUILD_DESKTOP_APP)
-    if (WIN32)
-        set(CONFIGURATION_SRCS preferences.cpp preferences.h)
-        qt_wrap_cpp(CONFIGURATION_SRCS preferences.h)
-    else()
-    endif()
-
     kconfig_add_kcfg_files(CONFIGURATION_SRCS GENERATE_MOC preferences.kcfgc)
     add_library(lakospreferences SHARED ${CONFIGURATION_SRCS})
     add_library(Codethink::lakospreferences ALIAS lakospreferences)

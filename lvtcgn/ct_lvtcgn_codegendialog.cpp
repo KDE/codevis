@@ -26,6 +26,7 @@
 #include <QStyledItemDelegate>
 #include <QWidget>
 #include <filesystem>
+#include <kwidgetsaddons_version.h>
 #include <memory>
 
 namespace Codethink::lvtcgn::gui {
@@ -168,7 +169,14 @@ void CodeGenerationDialog::Detail::handleOutputDirEmpty(Ui::CodeGenerationDialog
 
 void CodeGenerationDialog::Detail::showErrorMessage(Ui::CodeGenerationDialogUi& ui, QString const& message)
 {
+#if KWIDGETSADDONS_VERSION >= QT_VERSION_CHECK(5, 100, 0)
     ui.topMessageWidget->clearActions();
+#else
+    const auto ourActions = ui.topMessageWidget->actions();
+    for (auto *action : ourActions) {
+        ui.topMessageWidget->removeAction(action);
+    }
+#endif
     ui.topMessageWidget->setText(message);
     ui.topMessageWidget->animatedShow();
 }

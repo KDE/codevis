@@ -27,6 +27,7 @@
 #include <KTextEditor/Document>
 #include <KTextEditor/Editor>
 #include <KTextEditor/View>
+#include <kwidgetsaddons_version.h>
 
 // Qt
 #include <QApplication>
@@ -196,6 +197,7 @@ void PluginEditor::close()
     }
 
     if (d->docPlugin->isModified() || d->docReadme->isModified()) {
+#if KWIDGETSADDONS_VERSION >= QT_VERSION_CHECK(5, 100, 0)
         auto saveAction = KGuiItem(tr("Save Plugins"));
         auto discardAction = KGuiItem(tr("Discard Changes"));
 
@@ -210,6 +212,10 @@ void PluginEditor::close()
             d->docPlugin->save();
             d->docReadme->save();
         }
+#else
+        d->docPlugin->save();
+        d->docReadme->save();
+#endif
     }
     d->docPlugin->closeUrl();
     d->docReadme->closeUrl();

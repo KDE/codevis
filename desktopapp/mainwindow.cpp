@@ -83,6 +83,7 @@
 #include <KLocalizedString>
 #include <KNotification>
 #include <KStandardAction>
+#include <kwidgetsaddons_version.h>
 
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(LogWindow)
@@ -1035,7 +1036,15 @@ void MainWindow::graphLoadStarted()
     assert(!d_graphLoadRunning);
     d_graphLoadRunning = true;
 
+#if KWIDGETSADDONS_VERSION >= QT_VERSION_CHECK(5, 100, 0)
     ui.topMessageWidget->clearActions();
+#else
+    const auto ourActions = ui.topMessageWidget->actions();
+    for (auto *action : ourActions) {
+        ui.topMessageWidget->removeAction(action);
+    }
+#endif
+
     ui.topMessageWidget->animatedHide();
 }
 

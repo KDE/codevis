@@ -11,17 +11,17 @@ struct string {
     {
     }
 
-    [[nodiscard]] constexpr bool contains(std::string const& s) const noexcept
+    [[nodiscard]] bool contains(std::string const& s) const noexcept
     {
         return _s.find(s) != std::string::npos;
     }
 
-    [[nodiscard]] constexpr bool startswith(std::string const& s) const noexcept
+    [[nodiscard]] bool startswith(std::string const& s) const noexcept
     {
         return _s.find(s) == 0;
     }
 
-    [[nodiscard]] constexpr bool endswith(std::string const& s) const noexcept
+    [[nodiscard]] bool endswith(std::string const& s) const noexcept
     {
         return _s.find(s) == _s.size() - s.size();
     }

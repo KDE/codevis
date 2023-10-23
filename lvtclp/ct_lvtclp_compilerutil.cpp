@@ -175,7 +175,6 @@ std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler
         result += output;
     }
 
-    std::cout << "Result of the search: \n" << result;
     // The pclose() function shall close a stream that was opened by popen(), wait for the command to terminate, and
     // return the termination status of the process that was running the command language interpreter. However, if a
     // call caused the termination status to be unavailable to pclose(), then pclose() shall return -1 with errno set

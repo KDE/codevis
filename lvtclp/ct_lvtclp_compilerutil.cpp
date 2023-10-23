@@ -60,7 +60,7 @@ std::optional<std::string> runCompiler(const std::string& compiler)
 
     auto constexpr READ_SIZE = 4096;
     char output[READ_SIZE];
-    std::string result = "";
+    std::string result;
     while (fgets(output, READ_SIZE, fp) != nullptr) {
         result += output;
     }

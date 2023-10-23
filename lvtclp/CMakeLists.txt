@@ -152,6 +152,12 @@ if (COMPILE_TESTS)
     )
 
     add_lvtclp_test(
+        NAME test_ct_lvtclp_compilerutil
+        SOURCES
+            ct_lvtclp_compilerutil.t.cpp
+    )
+
+    add_lvtclp_test(
         NAME test_ct_lvtclp_sourcefile
         SOURCES
             ct_lvtclp_testsourcefile.t.cpp

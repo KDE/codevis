@@ -41,49 +41,9 @@ std::string trimLeadingSpaces(const std::string& str)
     return str.substr(loc);
 }
 
-std::optional<std::string> runCompiler(const std::string& compiler)
-// attempt to run something like
-//      compiler -E -v - </dev/null 1>/dev/null 2>out
-// if compiler isn't in path, return {}
-// if compiler doesn't return EXIT_SUCCESS, return {}
-// otherwise return the contents of stderr
-{
-#ifndef CT_SCANBUILD
-    // The popen() function shall execute the command specified by the string command. It shall create a pipe between
-    // the calling program and the executed command, and shall return a pointer to a stream that can be used to either
-    // read from or write to the pipe.
-    // https://pubs.opengroup.org/onlinepubs/009696699/functions/popen.html
-    auto fp = popen("g++ -E -v -x c++ - </dev/null 2>&1", "r");
-    if (fp == nullptr) {
-        return {};
-    }
-
-    auto constexpr READ_SIZE = 4096;
-    char output[READ_SIZE];
-    std::string result;
-    while (fgets(output, READ_SIZE, fp) != nullptr) {
-        result += output;
-    }
-
-    // The pclose() function shall close a stream that was opened by popen(), wait for the command to terminate, and
-    // return the termination status of the process that was running the command language interpreter. However, if a
-    // call caused the termination status to be unavailable to pclose(), then pclose() shall return -1 with errno set
-    // to [ECHILD] to report this situation.
-    // https://pubs.opengroup.org/onlinepubs/009696699/functions/pclose.html
-    auto status = pclose(fp);
-    if (status != 0) {
-        return {};
-    }
-
-    return result;
-#else
-    return {};
-#endif // !CT_SCANBUILD
-}
-
 std::optional<std::vector<std::string>> tryCompiler(const std::string& compiler)
 {
-    std::optional<std::string> compilerOut = runCompiler(compiler);
+    std::optional<std::string> compilerOut = Codethink::lvtclp::CompilerUtil::runCompiler(compiler);
     if (!compilerOut) {
         return {};
     }
@@ -190,6 +150,45 @@ std::vector<std::string> CompilerUtil::findSystemIncludes()
 #endif
     return {};
 }
+
+#ifdef __linux__
+std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler)
+// attempt to run something like
+//      compiler -E -v - </dev/null 1>/dev/null 2>out
+// if compiler isn't in path, return {}
+// if compiler doesn't return EXIT_SUCCESS, return {}
+// otherwise return the contents of stderr
+{
+    // The popen() function shall execute the command specified by the string command. It shall create a pipe between
+    // the calling program and the executed command, and shall return a pointer to a stream that can be used to either
+    // read from or write to the pipe.
+    // https://pubs.opengroup.org/onlinepubs/009696699/functions/popen.html
+    auto fp = popen("g++ -E -v -x c++ - </dev/null 2>&1", "r");
+    if (fp == nullptr) {
+        return {};
+    }
+
+    auto constexpr READ_SIZE = 4096;
+    char output[READ_SIZE];
+    std::string result;
+    while (fgets(output, READ_SIZE, fp) != nullptr) {
+        result += output;
+    }
+
+    std::cout << "Result of the search: \n" << result;
+    // The pclose() function shall close a stream that was opened by popen(), wait for the command to terminate, and
+    // return the termination status of the process that was running the command language interpreter. However, if a
+    // call caused the termination status to be unavailable to pclose(), then pclose() shall return -1 with errno set
+    // to [ECHILD] to report this situation.
+    // https://pubs.opengroup.org/onlinepubs/009696699/functions/pclose.html
+    auto status = pclose(fp);
+    if (status != 0) {
+        return {};
+    }
+
+    return result;
+}
+#endif
 
 std::optional<std::string> CompilerUtil::findBundledHeaders(bool silent)
 {

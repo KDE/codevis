@@ -21,11 +21,14 @@
 #include <ct_lvtclr_colormanagement.h>
 #include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtldr_nodestoragetestutils.h>
+#include <ct_lvtqtc_graphicsscene.h>
+#include <ct_lvtqtc_lakosentity.h>
 #include <ct_lvtqtc_testing_utils.h>
 #include <ct_lvtqtc_tool_add_physical_dependency.h>
 #include <ct_lvttst_fixture_qt.h>
 #include <ct_lvttst_tmpdir.h>
 
+#include <QTest>
 #include <memory>
 
 using namespace Codethink::lvtqtc;
@@ -52,7 +55,14 @@ TEST_CASE_METHOD(QTApplicationFixture, "Add dependency")
 
     GraphicsViewWrapperForTesting gv{nodeStorage};
     //: TODO: Update this call:
-    // gv.updatePackageGraph(QString::fromStdString(aa->qualifiedName()));
+    auto *scene = dynamic_cast<GraphicsScene *>(gv.scene());
+    scene->loadEntityByQualifiedName(QString::fromStdString(aab->qualifiedName()), QPoint(10, 10));
+    scene->loadEntityByQualifiedName(QString::fromStdString(aaa->qualifiedName()), QPoint(100, 100));
+    scene->enableLayoutUpdates();
+
+    scene->runLayoutAlgorithm();
+    scene->reLayout();
+
     gv.show();
 
     auto tool = ToolAddPhysicalDependency{&gv, nodeStorage};
@@ -69,11 +79,17 @@ TEST_CASE_METHOD(QTApplicationFixture, "Add dependency")
     REQUIRE_FALSE(mousePressAt(tool, {0, 0}));
     REQUIRE(lastMessage.empty());
 
+    REQUIRE_FALSE(mousePressAt(tool, {0, 0}));
+    REQUIRE(lastMessage.empty());
+
     // Basic tool usage
     tool.activate();
+    REQUIRE(lastMessage == "Select the source Element");
+
     REQUIRE_FALSE(aaa->hasProvider(aab));
     mousePressAt(tool, gv.getEntityPosition(aaa->uid()));
     mouseReleaseAt(tool, gv.getEntityPosition(aaa->uid()));
+
     REQUIRE(lastMessage == "Source element: <strong>aaa</strong>, Select the target Element");
 
     mousePressAt(tool, gv.getEntityPosition(aab->uid()));

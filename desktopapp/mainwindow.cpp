@@ -183,10 +183,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     ui.packagesTree->setFocus();
 
-    ui.graphLoadProgress->setVisible(false);
-    ui.graphLoadProgress->setMinimum(static_cast<int>(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress::Start));
-    ui.graphLoadProgress->setMaximum(static_cast<int>(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress::Done));
-
     // Always open with the welcome page on. When the welcomePage triggers a signal, or a
     // signal happens, we hide it.
     showWelcomeScreen();
@@ -868,7 +864,6 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
         connect(graphicsScene, signal, this, slot, Qt::UniqueConnection);
     };
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::errorMessage, &MainWindow::showErrorMessage);
-    addGSConnection(&Codethink::lvtqtc::GraphicsScene::graphLoadProgressUpdate, &MainWindow::graphLoadProgress);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestEnableWindow, &MainWindow::enableWindow);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestDisableWindow, &MainWindow::disableWindow);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::selectedEntityChanged,
@@ -1057,79 +1052,6 @@ void MainWindow::graphLoadFinished()
     enableWindow();
 
     Q_EMIT databaseIdle();
-}
-
-QString MainWindow::progressDesc(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress progress)
-{
-    using Progress = Codethink::lvtqtc::GraphicsScene::GraphLoadProgress;
-
-    switch (progress) {
-    case Progress::Start:
-        // No description
-        break;
-    case Progress::CheckCache:
-        return tr("Checking layout cache");
-    case Progress::CdbLoad:
-        return tr("Loading from code database");
-    case Progress::QtEventLoop:
-        return tr("Adding vertices");
-    case Progress::VertexLayout:
-        return tr("Laying out vertices");
-    case Progress::PannelCollapse:
-        return tr("Initialising container state");
-    case Progress::FixRelations:
-        return tr("Adjusting relation parents");
-    case Progress::EdgesContainersLayout:
-        return tr("Laying out edges and containers");
-    case Progress::TransitiveReduction:
-        return tr("Removing uneeded edges.");
-    case Progress::Done:
-        // no description
-        break;
-    }
-    return {};
-}
-
-void MainWindow::graphLoadProgress(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress progress)
-{
-    using Progress = Codethink::lvtqtc::GraphicsScene::GraphLoadProgress;
-    Progress last;
-
-    QString format = progressDesc(progress);
-
-    switch (progress) {
-    case Progress::Start:
-        d_graphProgressTimer.start();
-        d_graphProgressPartialTimer.start();
-        // No description
-        break;
-    case Progress::Done:
-        ui.graphLoadProgress->setVisible(false);
-        qDebug() << "Graph load took" << d_graphProgressTimer.elapsed() << "ms";
-        break;
-    default:
-        // no special handling
-        break;
-    }
-
-    if (progress != Progress::Start) {
-        assert(progress != Progress::Start);
-        int iLast = static_cast<int>(progress) - 1;
-        last = static_cast<Progress>(iLast);
-        qDebug() << progressDesc(last) << "took" << d_graphProgressPartialTimer.restart() << "ms";
-    }
-
-    if (!format.isEmpty()) {
-        qDebug() << "progress bar updated to" << format;
-
-        format += ' ';
-    }
-    format += "%p%";
-
-    ui.graphLoadProgress->setValue(static_cast<int>(progress));
-    ui.graphLoadProgress->setFormat(format);
-
-    ui.graphLoadProgress->setVisible(progress != Progress::Done);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *ev)

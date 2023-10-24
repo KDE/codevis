@@ -472,27 +472,6 @@ void GraphicsScene::clearGraph()
     }
 }
 
-void GraphicsScene::relayout()
-{
-    if (d->flags == Running) {
-        Q_EMIT refuseToLoad("TODO: Remove this call");
-        return;
-    }
-
-    setLoadFlags(Running);
-    Q_EMIT graphLoadStarted();
-
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Start);
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-
-    searchTransitiveRelations();
-    runLayoutAlgorithm();
-    for (LakosEntity *entity : d->verticesVec) {
-        entity->enableLayoutUpdates();
-    }
-    layoutDone();
-}
-
 namespace {
 
 template<typename EntityType>
@@ -1037,38 +1016,15 @@ void GraphicsScene::fixRelationsParentRelationship()
     });
 }
 
-void GraphicsScene::fixRelations()
+void GraphicsScene::enableLayoutUpdates()
 {
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::FixRelations);
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-
-    fixRelationsParentRelationship();
-}
-
-void GraphicsScene::edgesContainersLayout()
-{
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::EdgesContainersLayout);
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-
-    // tell all entities that we are done loading the scene and they should run
-    // their layout stuff
     for (LakosEntity *entity : d->verticesVec) {
         entity->enableLayoutUpdates();
     }
 }
 
-void GraphicsScene::transitiveReduction()
-{
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::TransitiveReduction);
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-    searchTransitiveRelations();
-}
-
 void GraphicsScene::layoutDone()
 {
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Done);
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-    Q_EMIT graphLoadFinished();
     reLayout();
 }
 
@@ -1245,9 +1201,7 @@ void GraphicsScene::loadEntity(lvtshr::UniqueId uuid, UnloadDepth depth)
 
         d->transitiveReductionAlg->reset();
         searchTransitiveRelations();
-        Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::VertexLayout);
         reLayout();
-        Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Done);
     }
 }
 
@@ -1269,7 +1223,6 @@ void GraphicsScene::unloadEntity(lvtshr::UniqueId uuid, UnloadDepth depth)
     d->transitiveReductionAlg->reset();
     searchTransitiveRelations();
     reLayout();
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Done);
 }
 
 void GraphicsScene::unloadEntity(LakosEntity *entity)
@@ -1359,12 +1312,10 @@ void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)
         vertice->enableLayoutUpdates();
     }
 
-    fixRelations();
+    fixRelationsParentRelationship();
 
     entity->calculateEdgeVisibility();
     reLayout();
-
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Done);
 }
 
 void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
@@ -1876,14 +1827,13 @@ void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)
 
 void GraphicsScene::fromJson(const QJsonObject& doc)
 {
+    Q_EMIT graphLoadStarted();
     clearGraph();
     const auto elements = doc["elements"].toArray();
 
     for (const auto& element : elements) {
         recursiveJsonToLakosEntity(this, element);
     }
-
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Done);
 
     // Invalidate transitive reduction caches
     d->transitiveReductionAlg->reset();
@@ -1898,6 +1848,7 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
 
     const auto show_transitive = doc["transitive_visibility"].toBool();
     toggleTransitiveRelationVisibility(show_transitive);
+    Q_EMIT graphLoadFinished();
 }
 
 void GraphicsScene::highlightCyclesOnCicleModelChanged(const QModelIndex& _, const QModelIndex& index)

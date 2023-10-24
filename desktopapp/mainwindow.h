@@ -159,12 +159,9 @@ class MainWindow : public KXmlGuiWindow {
 
     void configurePluginDocks();
 
-    static QString progressDesc(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress progress);
-
     Q_SLOT void focusedGraphChanged(const QString& qualifiedName, Codethink::lvtshr::DiagramType type);
     Q_SLOT void graphLoadStarted();
     Q_SLOT void graphLoadFinished();
-    Q_SLOT void graphLoadProgress(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress progress);
     Q_SLOT void triggerUndo();
     Q_SLOT void triggerRedo();
 

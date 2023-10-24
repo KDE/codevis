@@ -166,8 +166,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     Q_SIGNAL void selectedEntityChanged(Codethink::lvtqtc::LakosEntity *entity);
 
-    void relayout();
-
     void runLayoutAlgorithm();
     // ignores the layout saved on the cache, and relayouts the items on screen.
 
@@ -201,9 +199,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // runs the layout algorithm again, on the current loaded graph.
 
     void pannelCollapse();
-    void fixRelations();
-    void edgesContainersLayout();
-    void transitiveReduction();
+    void enableLayoutUpdates();
     void layoutDone();
     [[nodiscard]] LoadFlags loadFlags() const;
     [[nodiscard]] QString fetchErrorMessage() const;

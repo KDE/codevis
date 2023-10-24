@@ -227,7 +227,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     d->actRelayout->setToolTip(tr("Recalculates the layout of the current view elements"));
     d->actRelayout->setText(tr("Refresh Layout"));
     d->actRelayout->setIcon(IconHelpers::iconFrom(":/icons/refresh"));
-    connect(d->actRelayout, &QAction::triggered, scene, &lvtqtc::GraphicsScene::relayout);
+    connect(d->actRelayout, &QAction::triggered, scene, &lvtqtc::GraphicsScene::reLayout);
 
     auto *dumpVisibleRectAction = new QAction();
     dumpVisibleRectAction->setToolTip(tr("Output to stdout the items on the visible rectangle"));

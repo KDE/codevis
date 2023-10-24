@@ -209,8 +209,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     [[nodiscard]] bool blockNodeResizeOnHover() const;
     // return the value of the blockNodeResizeOnHover flag.
 
-    void toggleIdentifyCycles();
-
     // Those calls handle the MachineState that controls the flow of information
     // for loading the database.
     // First we try to load from the Cache database, the cache database has a

@@ -176,27 +176,6 @@ TEST_CASE_METHOD(QTApplicationFixture, "Clear graphics view when nodeStorage is 
     REQUIRE(view.items().empty());
 }
 
-TEST_CASE_METHOD(QTApplicationFixture, "Identify cycles smoke test")
-{
-    auto tmpDir = TmpDir{"ident_cycles_smoke"};
-    auto dbPath = tmpDir.path() / "codedb.db";
-    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
-
-    GraphicsView view{nodeStorage, projectFileForTesting};
-    auto c = std::make_shared<ColorManagement>();
-    view.setColorManagement(c);
-    auto *scene = dynamic_cast<GraphicsScene *>(view.scene());
-
-    // Should not crash
-    scene->toggleIdentifyCycles();
-
-    auto result = nodeStorage.addPackage("pkg", "pkg", nullptr, view.scene());
-    REQUIRE_FALSE(result.has_error());
-
-    // Should not crash
-    scene->toggleIdentifyCycles();
-}
-
 TEST_CASE_METHOD(QTApplicationFixture, "Component on renamed package")
 {
     // There was a bug in which renaming a package would cause it's components to be placed outside of it. This test

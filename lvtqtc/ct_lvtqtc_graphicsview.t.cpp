@@ -92,7 +92,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic vertex addition test")
     auto class_pos_prev = some_class->pos();
     auto component_pos_prev = some_component->pos();
     auto package_pos_prev = some_package->pos();
-    scene->layoutVertices();
+    scene->runLayoutAlgorithm();
     view.show();
     processEvents();
 

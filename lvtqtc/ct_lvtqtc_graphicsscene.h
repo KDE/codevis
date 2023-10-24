@@ -74,26 +74,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // The layers are "sheets of translucent plastic" where the objects
     // are drawn. lower values means that it's on the bottom, and high
     // values are on the top. This controls the drawing order of things.
-
-    enum LoadFlags {
-        Idle, // Waiting for work
-        Running, // We are still running. wait a bit.
-        Success, // Everything as it should be.
-        NotReady, // We are not ready yet, we shouldn't be trying to do this.
-        LoadFromCacheDbError, // We hit an error while loading the cache database. Missing database cache is not an
-                              // error, but expected.
-        LoadFromDbError, // We hit an error loading from the llvm database, Missing database cache is an error.
-        LayoutNodesError, // We can't lay out the nodes.
-        LayoutEdgesError, // We can't lay out the edges.
-        LayoutGvzError, // We don't know how to lay out this graph with gvz
-        LayoutGvzDimensionsError,
-        LayoutGvzPositionError,
-        LayoutGvzLPosError,
-        LayoutEnhancedDotError, // We don't know how to lay out this graph with dot
-        SaveGraphError, // We can't save, check the logs.
-        UserAborted // User triggered an action to abort the load mid-loading.
-    };
-
     enum class UnloadDepth : unsigned short { Entity, Children };
 
     enum class CreateAction : unsigned short {
@@ -193,7 +173,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     enum class CodeDbLoadStatus { Success, Error };
 
     CacheDbLoadStatus layoutFromCacheDatabase();
-    void layoutVertices();
 
     void reLayout();
     // runs the layout algorithm again, on the current loaded graph.
@@ -201,7 +180,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     void pannelCollapse();
     void enableLayoutUpdates();
     void layoutDone();
-    [[nodiscard]] LoadFlags loadFlags() const;
     [[nodiscard]] QString fetchErrorMessage() const;
     Q_SIGNAL void errorMessage(const QString& error);
     Q_SIGNAL void graphLoadFinished();
@@ -291,8 +269,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // partial graphs are the ones requested by a right click on the elements on the canvas.
 
     lvtldr::NodeLoadFlags loadFlagsFor(lvtldr::LakosianNode *node) const override;
-
-    void setLoadFlags(LoadFlags flags);
 
     void fixRelationsParentRelationship();
     // HACK. Goes through the list of edges and fixes the parent relationship

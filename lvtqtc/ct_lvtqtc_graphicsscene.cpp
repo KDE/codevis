@@ -125,9 +125,6 @@ struct GraphicsScene::Private {
     bool blockNodeResizeOnHover = false;
     // blocks mouseHoverEvent resizing the nodes with this flag on.
 
-    LoadFlags flags = LoadFlags::Idle;
-    // flags to indicate success of parts of the load / layout algorithm.
-
     Codethink::lvtmdl::CircularRelationshipsModel *circleModel = nullptr;
     // model to display the circle relationships.
 
@@ -180,7 +177,6 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
 
     d->transitiveReductionAlg = new AlgorithmTransitiveReduction();
 
-    setLoadFlags(Idle);
     d->physicalLoader.setGraph(this);
     d->physicalLoader.setExtDeps(true);
 
@@ -869,23 +865,8 @@ LakosRelation *GraphicsScene::addRelation(LakosRelation *relation, bool isVisibl
     return relation;
 }
 
-void GraphicsScene::layoutVertices()
-{
-    if (d->flags == UserAborted) {
-        setLoadFlags(Idle);
-        return;
-    }
-
-    runLayoutAlgorithm();
-}
-
 void GraphicsScene::runLayoutAlgorithm()
 {
-    if (d->flags == UserAborted) {
-        setLoadFlags(Idle);
-        return;
-    }
-
     auto topLevelEntities = std::vector<LakosEntity *>();
     for (auto *e : d->verticesVec) {
         if (!e->parentItem()) {
@@ -906,8 +887,6 @@ void GraphicsScene::runLayoutAlgorithm()
     }
     auto entityToLevel = computeLevelForEntities(topLevelEntities);
     runLevelizationLayout(entityToLevel, LakosEntity::LevelizationLayoutType::Vertical, direction);
-
-    setLoadFlags(Success);
 }
 
 bool GraphicsScene::blockNodeResizeOnHover() const
@@ -947,12 +926,6 @@ void GraphicsScene::setBlockNodeResizeOnHover(bool block)
 }
 
 // ---------- Our State Machine starts Here. ------------------
-
-void GraphicsScene::setLoadFlags(GraphicsScene::LoadFlags flags)
-{
-    d->flags = flags;
-}
-
 lvtldr::NodeLoadFlags GraphicsScene::loadFlagsFor(lvtldr::LakosianNode *node) const
 {
     const auto search = d->entityLoadFlags.find(node);
@@ -1026,48 +999,6 @@ void GraphicsScene::enableLayoutUpdates()
 void GraphicsScene::layoutDone()
 {
     reLayout();
-}
-
-GraphicsScene::LoadFlags GraphicsScene::loadFlags() const
-{
-    return d->flags;
-}
-
-QString GraphicsScene::fetchErrorMessage() const
-{
-    switch (d->flags) {
-    case Idle:
-        return tr("Graph Layout finished but the status is Idle instead of success.");
-    case Running:
-        return tr("Graph Layout finished but the status is Running instead of success.");
-    case NotReady:
-        return tr("Graph Layout was executed with the status being Not Ready.");
-    case LoadFromCacheDbError:
-        return tr("There was an error loading from the Cache Database");
-    case LoadFromDbError:
-        return tr("There was an error loading from the LLVM Database");
-    case LayoutNodesError:
-        return tr("There was an error laying out the nodes");
-    case LayoutEdgesError:
-        return tr("There was an error laying out the edges");
-    case LayoutGvzError:
-        return tr("There was an error running the internal cache database, contact the developers.");
-    case LayoutGvzDimensionsError:
-        return tr("There was an error with the Dimensions on the cache database, contact the developers.");
-    case LayoutGvzPositionError:
-        return tr("There was an error with the positions on the cache database, contact the developers.");
-    case LayoutGvzLPosError:
-        return tr("There was an error with the field LPos on the cache database, contact the developers.");
-    case LayoutEnhancedDotError:
-        return tr("There was an error running graphviz, contact the developers");
-    case SaveGraphError:
-        return tr("There was an error saving the cache database, verify your filesystem permissions");
-    case UserAborted:
-        return tr("User aborted the generation of the graph");
-    case Success:
-        break;
-    }
-    return {};
 }
 
 } // namespace Codethink::lvtqtc

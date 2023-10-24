@@ -98,21 +98,6 @@ namespace Codethink::lvtqtc {
 struct GraphConfigurationData {
     // Those are the settings for the graph that's being currently drawn.
 
-    lvtshr::ClassView classView = lvtshr::ClassView::ClassHierarchyGraph;
-    // Tells how should we display classes
-
-    lvtshr::ClassScope classScope = lvtshr::ClassScope::All;
-    // Tells how the classes should be scoped.
-
-    int relationTypeFlags = 0;
-    // receives flags based on lvtshr::LakosRelationType
-
-    int traversalLimit = 0;
-    // number of times the graph should traverse a node
-
-    int relationLimit = 0;
-    // maximum number of relationships.
-
     bool showExternalDepEdges = false;
     // control if we show cross-subgraph edges between dependencies in the
     // package graph
@@ -130,10 +115,8 @@ struct GraphConfigurationData {
 
     bool operator==(const GraphConfigurationData& other) const
     {
-        return classView == other.classView && classScope == other.classScope
-            && relationTypeFlags == other.relationTypeFlags && traversalLimit == other.traversalLimit
-            && relationLimit == other.relationLimit && showExternalDepEdges == other.showExternalDepEdges
-            && diagramType == other.diagramType && fullyQualifiedName == other.fullyQualifiedName;
+        return showExternalDepEdges == other.showExternalDepEdges && diagramType == other.diagramType
+            && fullyQualifiedName == other.fullyQualifiedName;
     }
     // non defaulted operator overload for equality
 };
@@ -511,42 +494,6 @@ void GraphicsScene::setColorManagement(const std::shared_ptr<lvtclr::ColorManage
 {
     assert(colorManagement);
     d->colorManagement = colorManagement;
-}
-
-void GraphicsScene::setClassView(lvtshr::ClassView classView)
-{
-    if (d->graphData.classView == classView) {
-        return;
-    }
-    d->graphData.classView = classView;
-    updateGraph();
-}
-
-void GraphicsScene::setScope(lvtshr::ClassScope classScope)
-{
-    if (d->graphData.classScope == classScope) {
-        return;
-    }
-    d->graphData.classScope = classScope;
-    updateGraph();
-}
-
-void GraphicsScene::setTraversalLimit(int limit)
-{
-    if (d->graphData.traversalLimit == limit) {
-        return;
-    }
-    d->graphData.traversalLimit = limit;
-    updateGraph();
-}
-
-void GraphicsScene::setRelationLimit(int limit)
-{
-    if (d->graphData.relationLimit == limit) {
-        return;
-    }
-    d->graphData.relationLimit = limit;
-    updateGraph();
 }
 
 void GraphicsScene::setShowExternalDepEdges(bool showExternalDepEdges)

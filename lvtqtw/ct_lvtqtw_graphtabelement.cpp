@@ -70,31 +70,7 @@ namespace Codethink::lvtqtw {
 enum PackageView { DependencyTree, ReverseDependencyTree, DependencyGraph };
 
 struct GraphTabElement::Private {
-    const QMap<QString, lvtshr::ClassView> classViewMap = {
-        {tr("Traverse by relation"), lvtshr::ClassView::TraverseByRelation},
-        {tr("Traverse all paths"), lvtshr::ClassView::TraverseAllPaths},
-        {tr("Class hierarchy graph"), lvtshr::ClassView::ClassHierarchyGraph},
-        {tr("Class Hierarchy tree"), lvtshr::ClassView::ClassHierarchyTree},
-    };
-
-    const QMap<QString, lvtshr::ClassScope> scopeMap = {
-        {tr("All"), lvtshr::ClassScope::All},
-        {tr("Namespace Only"), lvtshr::ClassScope::NamespaceOnly},
-        {tr("Package Only"), lvtshr::ClassScope::PackageOnly},
-    };
-
     lvtmdl::HistoryListModel historyModel;
-
-    // Elements that can't be in the ui file, because they are on a ToolBar.
-    QToolBar *topBar = nullptr;
-    QComboBox *classView = nullptr;
-    QComboBox *scope = nullptr;
-    QSpinBox *traversalLimit = nullptr;
-    QSpinBox *relationLimit = nullptr;
-    QSpinBox *zoom = nullptr;
-    QToolButton *historyBack = nullptr;
-    QToolButton *historyForward = nullptr;
-    QAction *modeCad = nullptr;
 
     // Actions that will trigger a reload of the scene
     QAction *actRelayout = nullptr;
@@ -133,15 +109,6 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
     d->graphicsView->setSizePolicy(sizePolicy);
     ui->splitter->addWidget(d->graphicsView);
 
-    d->topBar = new QToolBar(this);
-    d->classView = new QComboBox(this);
-    d->scope = new QComboBox(this);
-    d->traversalLimit = new QSpinBox(this);
-    d->relationLimit = new QSpinBox(this);
-    d->zoom = new QSpinBox(this);
-    d->historyBack = new QToolButton(this);
-    d->historyForward = new QToolButton(this);
-
     // Floating search panel.
     d->searchWidget = new SearchWidget(this);
     d->searchWidget->setAttribute(Qt::WA_StyledBackground, true);
@@ -149,69 +116,20 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
     d->searchWidget->setAutoFillBackground(true);
     d->graphicsView->installEventFilter(d->searchWidget);
 
-    d->historyBack->setText("<");
-    d->historyForward->setText(">");
+    ui->backHistory->setText("<");
+    ui->forwardHistory->setText(">");
 
-    d->topBar->addWidget(d->historyBack);
-    d->topBar->addWidget(d->historyForward);
-    d->classOnlyActions.push_back(d->topBar->addWidget(d->classView));
-    d->classOnlyActions.push_back(d->topBar->addWidget(d->scope));
-    d->classOnlyActions.push_back(d->topBar->addWidget(d->traversalLimit));
-    d->classOnlyActions.push_back(d->topBar->addWidget(d->relationLimit));
-    d->topBar->addWidget(d->zoom);
-    d->topBar->layout()->setContentsMargins(0, 0, 0, 0);
-
-    d->zoom->setMinimum(1);
-    d->zoom->setMaximum(999);
-    d->zoom->setPrefix(tr("Zoom: "));
+    ui->zoomToolBox->setMinimum(1);
+    ui->zoomToolBox->setMaximum(999);
+    ui->zoomToolBox->setPrefix(tr("Zoom: "));
     // End Toolbar Setup.
 
-    ui->topLayout->addWidget(d->topBar);
-
-    d->classView->addItems(d->classViewMap.keys());
-    d->scope->addItems(d->scopeMap.keys());
-
-    d->traversalLimit->setValue(Preferences::classLimit());
-    d->traversalLimit->setPrefix(tr("Traversal Limit: "));
-
-    d->relationLimit->setValue(Preferences::relationLimit());
-    d->relationLimit->setPrefix(tr("Relation Limit: "));
-
-    d->classView->setCurrentText(tr("Traverse by relation"));
-    d->scope->setCurrentText(tr("All"));
-
-    d->zoom->setValue(Preferences::zoomLevel());
+    ui->zoomToolBox->setValue(Preferences::zoomLevel());
 
     // sets up the scene.
-    auto *scene = qobject_cast<lvtqtc::GraphicsScene *>(d->graphicsView->scene());
-    scene->setClassView(d->classViewMap[d->classView->currentText()]);
-    scene->setScope(d->scopeMap[d->scope->currentText()]);
-    scene->setTraversalLimit(d->traversalLimit->value());
-    scene->setRelationLimit(d->relationLimit->value());
+    connect(d->graphicsView, &Codethink::lvtqtc::GraphicsView::zoomFactorChanged, ui->zoomToolBox, &QSpinBox::setValue);
 
-    connect(d->classView, &QComboBox::currentTextChanged, this, [this, scene] {
-        d->searchWidget->hide();
-        scene->setClassView(d->classViewMap[d->classView->currentText()]);
-    });
-
-    connect(d->scope, &QComboBox::currentTextChanged, this, [this, scene] {
-        d->searchWidget->hide();
-        scene->setScope(d->scopeMap[d->scope->currentText()]);
-    });
-
-    connect(d->traversalLimit, qOverload<int>(&QSpinBox::valueChanged), this, [this, scene] {
-        d->searchWidget->hide();
-        scene->setTraversalLimit(d->traversalLimit->value());
-    });
-
-    connect(d->relationLimit, qOverload<int>(&QSpinBox::valueChanged), this, [this, scene] {
-        d->searchWidget->hide();
-        scene->setRelationLimit(d->relationLimit->value());
-    });
-
-    connect(d->graphicsView, &Codethink::lvtqtc::GraphicsView::zoomFactorChanged, d->zoom, &QSpinBox::setValue);
-
-    connect(d->zoom,
+    connect(ui->zoomToolBox,
             QOverload<int>::of(&QSpinBox::valueChanged),
             d->graphicsView,
             &Codethink::lvtqtc::GraphicsView::setZoomFactor);
@@ -226,11 +144,11 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
         d->historyModel.previous();
     });
 
-    connect(d->historyBack, &QToolButton::clicked, this, [this] {
+    connect(ui->backHistory, &QToolButton::clicked, this, [this] {
         d->historyModel.previous();
     });
 
-    connect(d->historyForward, &QToolButton::clicked, this, [this] {
+    connect(ui->forwardHistory, &QToolButton::clicked, this, [this] {
         d->historyModel.next();
     });
     connect(&d->historyModel,
@@ -264,8 +182,6 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
             &lvtqtc::GraphicsView::currentSearchItemHighlighted,
             d->searchWidget,
             &SearchWidget::setCurrentItem);
-
-    setClassViewMode();
 
     d->graphicsView->toggleLegend(Preferences::showLegend());
     d->graphicsView->toggleMinimap(Preferences::showMinimap());
@@ -359,24 +275,6 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
         d->graphicsView->setZoomFactor(100);
     });
 
-    d->modeCad = new QAction();
-    d->modeCad->setToolTip(tr("Click to switch to edit mode"));
-    d->modeCad->setText(tr("Visualize"));
-    d->modeCad->setCheckable(true);
-    d->modeCad->setChecked(true);
-    connect(d->modeCad, &QAction::triggered, this, [this](bool checked) {
-        if (checked) {
-            visualizationModeTriggered();
-        } else {
-            editModeTriggered();
-        }
-    });
-    ui->toolBox->createGroup(tr("Diagram Mode"));
-    auto *toggleModeButton = ui->toolBox->createToolButton(tr("Toolbox Mode"), d->modeCad);
-    toggleModeButton->setStyleSheet(
-        "QToolButton { border: 0px;}"
-        "QToolButton:hover { background-color: #DDD; font-weight: bold; }");
-
     // Manipulation:
     const QString manipulationId = tr("Manipulation");
     ui->toolBox->createGroup(manipulationId);
@@ -388,10 +286,6 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     ui->toolBox->createToolButton(manipulationId, d->toolAddUsesInTheImplementationRelation);
     ui->toolBox->createToolButton(manipulationId, d->toolAddUsesInTheInterfaceRelation);
     ui->toolBox->createToolButton(manipulationId, d->toolReparentEntity);
-
-    // Package View Mode tools:
-    const QString packageId = tr("Packages");
-    ui->toolBox->createGroup(packageId);
 
     // Common Tools:
     const QString visualizationId = tr("Visualization");
@@ -413,64 +307,9 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     ui->splitter->setStretchFactor(0, 0);
     ui->splitter->setStretchFactor(1, 1);
 
-    visualizationModeTriggered();
-
     if (!Preferences::enableSceneContextMenu()) {
         ui->toolBox->hideElements("Debug");
     }
-}
-
-void GraphTabElement::visualizationModeTriggered()
-{
-    // Actions that will trigger a reload of the scene
-    d->actRelayout->setEnabled(true);
-    d->classView->setEnabled(true);
-    d->scope->setEnabled(true);
-    d->traversalLimit->setEnabled(true);
-    d->relationLimit->setEnabled(true);
-    d->historyBack->setEnabled(true);
-    d->historyForward->setEnabled(true);
-
-    // Actions that allow the user to Edit the elements
-    d->toolAddPhysicalDependency->setEnabled(false);
-    d->toolAddIsALogicalRelation->setEnabled(false);
-    d->toolAddPackage->setEnabled(false);
-    d->toolAddComponent->setEnabled(false);
-    d->toolAddLogEntity->setEnabled(false);
-
-    d->graphicsView->visualizationModeTriggered();
-    d->modeCad->setIcon(QIcon(":/icons/toggle-vis-edit-state-vis"));
-    d->modeCad->setToolTip(tr("Click to switch to edit mode"));
-    d->modeCad->setText(tr("View"));
-    ui->toolBox->hideElements("Manipulation");
-    ui->toolBox->showElements("Class");
-    ui->toolBox->showElements("Packages");
-}
-
-void GraphTabElement::editModeTriggered()
-{
-    d->actRelayout->setEnabled(false);
-    d->classView->setEnabled(false);
-    d->scope->setEnabled(false);
-    d->traversalLimit->setEnabled(false);
-    d->relationLimit->setEnabled(false);
-    d->historyBack->setEnabled(false);
-    d->historyForward->setEnabled(false);
-
-    // Actions that allow the user to Edit the elements
-    d->toolAddPhysicalDependency->setEnabled(true);
-    d->toolAddIsALogicalRelation->setEnabled(true);
-    d->toolAddPackage->setEnabled(true);
-    d->toolAddComponent->setEnabled(true);
-    d->toolAddLogEntity->setEnabled(true);
-
-    d->graphicsView->editModeTriggered();
-    d->modeCad->setIcon(QIcon(":/icons/toggle-vis-edit-state-edit"));
-    d->modeCad->setToolTip(tr("Click to switch to visualization mode"));
-    d->modeCad->setText(tr("Edit"));
-    ui->toolBox->showElements("Manipulation");
-    ui->toolBox->hideElements("Class");
-    ui->toolBox->hideElements("Packages");
 }
 
 lvtqtc::GraphicsView *GraphTabElement::graphicsView() const
@@ -481,24 +320,6 @@ lvtqtc::GraphicsView *GraphTabElement::graphicsView() const
 void GraphTabElement::toggleFilterVisibility()
 {
     d->searchWidget->setVisible(!d->searchWidget->isVisible());
-}
-
-void GraphTabElement::setPackageViewMode()
-{
-    for (QAction *action : d->classOnlyActions) {
-        action->setVisible(false);
-    }
-    ui->toolBox->showElements("Packages");
-    ui->toolBox->hideElements("Class");
-}
-
-void GraphTabElement::setClassViewMode()
-{
-    for (QAction *action : d->classOnlyActions) {
-        action->setVisible(true);
-    }
-    ui->toolBox->hideElements("Packages");
-    ui->toolBox->showElements("Class");
 }
 
 bool GraphTabElement::setCurrentGraph(const QString& fullyQualifiedName,
@@ -529,13 +350,6 @@ bool GraphTabElement::setCurrentGraph(const QString& fullyQualifiedName,
 
     if (historyType == GraphTabElement::HistoryType::History) {
         d->historyModel.append({fullyQualifiedName, diagramType});
-    }
-
-    if (diagramType == DiagramType::ClassType) {
-        setClassViewMode();
-    }
-    if (diagramType == DiagramType::PackageType || diagramType == DiagramType::ComponentType) {
-        setPackageViewMode();
     }
 
     return true;

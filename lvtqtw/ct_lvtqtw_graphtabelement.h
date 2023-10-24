@@ -67,10 +67,6 @@ class LVTQTW_EXPORT GraphTabElement : public QWidget {
                     QWidget *parent);
     ~GraphTabElement() override;
 
-    // change between class and package views
-    void setPackageViewMode();
-    void setClassViewMode();
-
     bool setCurrentGraph(const QString& fullyQualifiedName, HistoryType historyType, lvtshr::DiagramType diagramType);
 
     void setCurrentDiagramFromHistory(int idx);
@@ -83,9 +79,6 @@ class LVTQTW_EXPORT GraphTabElement : public QWidget {
     // buttons
 
     Q_SIGNAL void sendMessage(const QString& message, KMessageWidget::MessageType type);
-
-    void editModeTriggered();
-    void visualizationModeTriggered();
 
     void toggleFilterVisibility();
 

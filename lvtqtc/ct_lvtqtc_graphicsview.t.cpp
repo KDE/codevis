@@ -255,12 +255,6 @@ TEST_CASE_METHOD(QTApplicationFixture, "Load Class Test")
 
     auto *scene = dynamic_cast<GraphicsScene *>(view.scene());
 
-    // Setup load rules:
-    scene->setClassView(Codethink::lvtshr::ClassView::TraverseByRelation);
-    scene->setScope(Codethink::lvtshr::ClassScope::All);
-    scene->setTraversalLimit(2);
-    scene->setRelationLimit(20);
-
     // Load class1.
     view.updateClassGraph("class1");
 

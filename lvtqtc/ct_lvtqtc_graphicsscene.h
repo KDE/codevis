@@ -124,18 +124,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // we add something on the view, just after all elements
     // are finished loading.
 
-    void setClassView(lvtshr::ClassView classView);
-    // set's the class view
-
-    void setScope(lvtshr::ClassScope classScope);
-    // set's the class scope
-
-    void setTraversalLimit(int limit);
-    // set the traversal limit.
-
-    void setRelationLimit(int limit);
-    // set the relation limit.
-
     void setShowExternalDepEdges(bool showExternalDepEdges);
     // control if we show cross-subgraph edges between dependencies in the
     // package graph

@@ -322,64 +322,10 @@ void GraphTabElement::toggleFilterVisibility()
     d->searchWidget->setVisible(!d->searchWidget->isVisible());
 }
 
-bool GraphTabElement::setCurrentGraph(const QString& fullyQualifiedName,
-                                      HistoryType historyType,
-                                      DiagramType diagramType)
-{
-    d->searchWidget->hide();
-    bool success = [&]() {
-        switch (diagramType) {
-        case DiagramType::ClassType:
-            return d->graphicsView->updateClassGraph(fullyQualifiedName);
-        case DiagramType::ComponentType:
-            return d->graphicsView->updateComponentGraph(fullyQualifiedName);
-        case DiagramType::PackageType:
-            return d->graphicsView->updatePackageGraph(fullyQualifiedName);
-        case DiagramType::RepositoryType:
-            return d->graphicsView->updateGraph(fullyQualifiedName, lvtshr::DiagramType::RepositoryType);
-        case DiagramType::FreeFunctionType:
-            return d->graphicsView->updateGraph(fullyQualifiedName, lvtshr::DiagramType::FreeFunctionType);
-        case DiagramType::NoneType:
-            break;
-        }
-        return false;
-    }();
-    if (!success) {
-        return false;
-    }
-
-    if (historyType == GraphTabElement::HistoryType::History) {
-        d->historyModel.append({fullyQualifiedName, diagramType});
-    }
-
-    return true;
-}
-
 void GraphTabElement::setCurrentDiagramFromHistory(int idx)
 {
-    d->searchWidget->hide();
-
-    std::pair<QString, lvtshr::DiagramType> info = d->historyModel.at(idx);
-    if (info.first.count() == 0) {
-        return;
-    }
-    switch (info.second) {
-    case lvtshr::DiagramType::NoneType:
-        qWarning() << "Database corrupted";
-        return;
-    case lvtshr::DiagramType::ClassType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::FreeFunctionType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::PackageType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::RepositoryType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::ComponentType:
-        setCurrentGraph(info.first, NoHistory, info.second);
-        break;
-    }
-    Q_EMIT historyUpdate(info.first, info.second);
+    // TODO: Load from Bookmark History.
+    // Q_EMIT historyUpdate(info.first, info.second);
 }
 
 void GraphTabElement::resizeEvent(QResizeEvent *ev)

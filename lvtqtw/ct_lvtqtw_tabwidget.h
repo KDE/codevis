@@ -78,8 +78,7 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
     ~TabWidget() noexcept override;
     // Destructor
 
-    void openNewGraphTab(std::optional<GraphInfo> info = std::nullopt);
-    void setCurrentGraphTab(GraphInfo const& info);
+    void openNewGraphTab();
 
     void closeTab(int idx);
     // called by a slot connection with closeTabRequested

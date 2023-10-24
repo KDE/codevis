@@ -67,8 +67,6 @@ class LVTQTW_EXPORT GraphTabElement : public QWidget {
                     QWidget *parent);
     ~GraphTabElement() override;
 
-    bool setCurrentGraph(const QString& fullyQualifiedName, HistoryType historyType, lvtshr::DiagramType diagramType);
-
     void setCurrentDiagramFromHistory(int idx);
     // connected with the currentIndexChanged from the History Model.
 

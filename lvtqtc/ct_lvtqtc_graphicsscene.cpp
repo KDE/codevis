@@ -92,35 +92,6 @@ constexpr int PROCESS_EVENTS_TIMEOUT_MS = 100;
 
 namespace Codethink::lvtqtc {
 
-// TODO: Move this struct outside of GraphicsScene.
-// It would simplify the GraphicsScene code and make things
-// easier on the long run.
-struct GraphConfigurationData {
-    // Those are the settings for the graph that's being currently drawn.
-
-    bool showExternalDepEdges = false;
-    // control if we show cross-subgraph edges between dependencies in the
-    // package graph
-
-    lvtshr::DiagramType diagramType = lvtshr::DiagramType::NoneType;
-    // Package or class diagram
-
-    QString fullyQualifiedName;
-    // Fully Qualified name of the displayed class
-
-    GraphConfigurationData() = default;
-
-    GraphConfigurationData(const GraphConfigurationData& other) = default;
-    // defaulted copy constructor
-
-    bool operator==(const GraphConfigurationData& other) const
-    {
-        return showExternalDepEdges == other.showExternalDepEdges && diagramType == other.diagramType
-            && fullyQualifiedName == other.fullyQualifiedName;
-    }
-    // non defaulted operator overload for equality
-};
-
 struct GraphicsScene::Private {
     std::unordered_map<std::string, LakosEntity *> vertices;
     // A map of Entity unique id strings against vertex descriptors.
@@ -151,10 +122,6 @@ struct GraphicsScene::Private {
     // should mostly be used on unit tests where an error should fail
     // the test, but on desktop we can ignore some of the errors.
 
-    GraphConfigurationData graphData;
-    // Data of the graph that's being displayed on the scene.
-    // Those are the elements we can change via interaction with the UI.
-
     bool blockNodeResizeOnHover = false;
     // blocks mouseHoverEvent resizing the nodes with this flag on.
 
@@ -163,9 +130,6 @@ struct GraphicsScene::Private {
 
     Codethink::lvtmdl::CircularRelationshipsModel *circleModel = nullptr;
     // model to display the circle relationships.
-
-    LakosEntity *mainEntity = nullptr;
-    // The mainEntity is the entity that was first loaded on the view.
 
     LakosEntity *selectedEntity = nullptr;
     // The selected entity is chosen by the user by selecting it on the view.
@@ -218,7 +182,7 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
 
     setLoadFlags(Idle);
     d->physicalLoader.setGraph(this);
-    d->physicalLoader.setExtDeps(d->graphData.showExternalDepEdges);
+    d->physicalLoader.setExtDeps(true);
 
     QObject::connect(&d->nodeStorage, &NodeStorage::storageCleared, this, &GraphicsScene::clearGraph);
 
@@ -299,10 +263,6 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
             if (parent->isCovered()) {
                 parent->toggleCover(PackageEntity::ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_No);
             }
-        }
-
-        if (!hasMainNodeSelected()) {
-            setMainNode(QString::fromStdString(entity->qualifiedName()), entity->instanceType());
         }
     });
 
@@ -445,16 +405,6 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
 
 GraphicsScene::~GraphicsScene() noexcept = default;
 
-lvtshr::DiagramType GraphicsScene::diagramType() const
-{
-    return d->graphData.diagramType;
-}
-
-QString GraphicsScene::qualifiedName() const
-{
-    return d->graphData.fullyQualifiedName;
-}
-
 Codethink::lvtmdl::CircularRelationshipsModel *GraphicsScene::circularRelationshipsModel() const
 {
     return d->circleModel;
@@ -477,57 +427,16 @@ void GraphicsScene::setColorManagement(const std::shared_ptr<lvtclr::ColorManage
     d->colorManagement = colorManagement;
 }
 
-void GraphicsScene::setShowExternalDepEdges(bool showExternalDepEdges)
-{
-    if (d->graphData.showExternalDepEdges == showExternalDepEdges) {
-        return;
-    }
-    d->graphData.showExternalDepEdges = showExternalDepEdges;
-    d->physicalLoader.setExtDeps(showExternalDepEdges);
-    updateGraph();
-}
-
-bool GraphicsScene::hasMainNodeSelected() const
-{
-    return d->graphData.diagramType != lvtshr::DiagramType::NoneType;
-}
-
-void GraphicsScene::setMainNode(const QString& fullyQualifiedName, lvtshr::DiagramType type)
-{
-    // we just requested to load a new graph.
-    // perhaps this graph that we are looking right now
-    // is modified, we need to save it before loading another graph.
-    if (d->graphData.fullyQualifiedName == fullyQualifiedName && d->graphData.diagramType == type
-        && !d->vertices.empty()) {
-        return;
-    }
-
-    d->graphData.fullyQualifiedName = fullyQualifiedName;
-    d->graphData.diagramType = type;
-
-    auto *node = d->nodeStorage.findByQualifiedName(type, fullyQualifiedName.toStdString());
-    d->physicalLoader.setMainNode(node);
-
-    updateGraph();
-
-    d->circleModel->setCircularRelationships({});
-    Q_EMIT mainNodeChanged(d->mainEntity);
-}
-
 void GraphicsScene::setStrictMode(bool strict)
 {
     d->strict = strict;
 }
 
-bool GraphicsScene::isReady()
-{
-    return !d->graphData.fullyQualifiedName.isEmpty();
-}
-
+// TODO: Pass the entity that we don't want to collapse here.'
 void GraphicsScene::collapseSecondaryEntities()
 {
     for (LakosEntity *entity : d->verticesVec) {
-        if (entity->parentItem() == nullptr && entity != d->mainEntity) {
+        if (entity->parentItem() == nullptr) {
             entity->shrink(QtcUtil::CreateUndoAction::e_No);
         }
     }
@@ -550,7 +459,6 @@ void GraphicsScene::reLayout()
 // This class defines what we need to implement on classes that load graphs visually
 void GraphicsScene::clearGraph()
 {
-    d->mainEntity = nullptr;
     d->showTransitive = Preferences::showRedundantEdgesDefault();
     d->vertices.clear();
     d->verticesVec.clear();
@@ -564,16 +472,13 @@ void GraphicsScene::clearGraph()
     }
 }
 
+// TODO: Remove this method and all it's internal calls.'
 void GraphicsScene::updateGraph()
 {
     if (Preferences::enableDebugOutput()) {
         qDebug() << "Reloading the Graph";
     }
 
-    if (d->flags == Running) {
-        Q_EMIT refuseToLoad(d->graphData.fullyQualifiedName);
-        return;
-    }
     clearGraph();
     setLoadFlags(Running);
     Q_EMIT graphLoadStarted();
@@ -581,12 +486,6 @@ void GraphicsScene::updateGraph()
 
     Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Start);
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-
-    if (!isReady()) {
-        setLoadFlags(NotReady);
-        Q_EMIT graphLoadFinished();
-        return;
-    }
 
     if (requestDataFromDatabase() == CodeDbLoadStatus::Error) {
         // stop graph load
@@ -600,7 +499,7 @@ void GraphicsScene::updateGraph()
 void GraphicsScene::relayout()
 {
     if (d->flags == Running) {
-        Q_EMIT refuseToLoad(d->graphData.fullyQualifiedName);
+        Q_EMIT refuseToLoad("TODO: Remove this call");
         return;
     }
 
@@ -610,29 +509,12 @@ void GraphicsScene::relayout()
     Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Start);
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
 
-    if (!isReady()) {
-        setLoadFlags(NotReady);
-        Q_EMIT graphLoadFinished();
-        return;
-    }
-
     searchTransitiveRelations();
     runLayoutAlgorithm();
     for (LakosEntity *entity : d->verticesVec) {
         entity->enableLayoutUpdates();
     }
     layoutDone();
-}
-
-void GraphicsScene::setMainEntity(LakosEntity *entity)
-{
-    d->mainEntity = entity;
-    entity->setMainEntity();
-}
-
-LakosEntity *GraphicsScene::mainEntity() const
-{
-    return d->mainEntity;
 }
 
 namespace {
@@ -781,10 +663,6 @@ LakosEntity *addVertex(GraphicsScene *scene,
             Q_EMIT scene->errorMessage("Invalid entity type for removal.");
         }
     });
-
-    if (d->graphData.fullyQualifiedName == QString::fromStdString(node->qualifiedName())) {
-        scene->setMainEntity(entity);
-    }
 
     scene->connectEntitySignals(entity);
 
@@ -1124,6 +1002,11 @@ void GraphicsScene::setLoadFlags(GraphicsScene::LoadFlags flags)
 // calls are done via the "load children", "load clients" and "load providers".
 GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
 {
+    // This should not exist anymore, probably.
+    if (true) {
+        return CodeDbLoadStatus::Error;
+    }
+
     if (d->flags == UserAborted) {
         setLoadFlags(Idle);
         finalizeLayout();
@@ -1134,46 +1017,25 @@ GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
 
     bool success = false;
-    switch (d->graphData.diagramType) {
-    case lvtshr::DiagramType::NoneType:
-        if (Preferences::enableDebugOutput()) {
-            qWarning() << "Database corrupted";
-        }
+    LakosianNode *node = nullptr; // d->nodeStorage.findByQualifiedName(d->graphData.diagramType,
+                                  // d->graphData.fullyQualifiedName.toStdString());
+
+    if (!node) {
         success = false;
-        break;
-    case lvtshr::DiagramType::RepositoryType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::ClassType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::FreeFunctionType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::PackageType:
-        [[fallthrough]];
-    case lvtshr::DiagramType::ComponentType:
-        auto *node =
-            d->nodeStorage.findByQualifiedName(d->graphData.diagramType, d->graphData.fullyQualifiedName.toStdString());
-
-        if (!node) {
-            success = false;
-            break;
-        }
-
-        lvtldr::NodeLoadFlags flags;
-        if (d->graphData.fullyQualifiedName.toStdString() == node->qualifiedName()) {
-            flags.traverseClients = Preferences::showClients();
-            flags.traverseProviders = Preferences::showProviders();
-            flags.loadChildren = true;
-        }
-
-        d->physicalLoader.clear();
-        success = d->physicalLoader.load(node, flags).has_value();
-        break;
+        return CodeDbLoadStatus::Error;
     }
 
+    lvtldr::NodeLoadFlags flags;
+
+    // TODO: Check if we are empty, and if so, enable this below:
+    // flags.traverseClients = Preferences::showClients();
+    // flags.traverseProviders = Preferences::showProviders();
+    // flags.loadChildren = true;
+
+    d->physicalLoader.clear();
+    success = d->physicalLoader.load(node, flags).has_value();
+
     if (!success) {
-        if (Preferences::enableDebugOutput()) {
-            qWarning() << d->graphData.fullyQualifiedName << "not found in package database";
-        }
         setLoadFlags(LoadFromDbError);
         finalizeLayout();
         return CodeDbLoadStatus::Error;
@@ -1378,23 +1240,10 @@ void GraphicsScene::connectEntitySignals(LakosEntity *entity)
     assert(entity);
 
     const std::string qualifiedName = entity->qualifiedName();
-    const lvtshr::DiagramType type = entity->instanceType();
 
-    connect(entity, &LogicalEntity::navigateRequested, this, [this, qualifiedName, type] {
-        QString qname = QString::fromStdString(qualifiedName);
-        switch (type) {
-        case lvtshr::DiagramType::ClassType:
-            Q_EMIT classNavigateRequested(qname);
-            break;
-        case lvtshr::DiagramType::ComponentType:
-            Q_EMIT componentNavigateRequested(qname);
-            break;
-        case lvtshr::DiagramType::PackageType:
-            Q_EMIT packageNavigateRequested(qname);
-            break;
-        default:
-            break;
-        }
+    connect(entity, &LogicalEntity::navigateRequested, this, [qualifiedName] {
+        // TODO: Navigate.
+        (void) qualifiedName;
     });
 
     connect(entity, &LakosEntity::undoCommandCreated, this, [this](QUndoCommand *command) {
@@ -1537,27 +1386,9 @@ void GraphicsScene::unloadEntity(lvtshr::UniqueId uuid, UnloadDepth depth)
 
 void GraphicsScene::unloadEntity(LakosEntity *entity)
 {
-    // if this item is the mainEntity, do not remove it or it's children.
-    // removing children still works if the "Remove Children" action
-    // is selected, this just blocks automatic removal of the main node
-    if (entity == d->mainEntity) {
-        return;
-    }
-
-    // This for *must* be run between the mainEntity check, and the parent of
-    // the mainEntity check.
     const auto entities = entity->lakosEntities();
     for (auto *child : entities) {
         unloadEntity(child);
-    }
-
-    // if this item is the parent of the mainEntity, do not remove it.
-    if (d->mainEntity) {
-        const QList<LakosEntity *> parentItems = d->mainEntity->parentHierarchy();
-        auto findIt = std::find(std::begin(parentItems), std::end(parentItems), entity);
-        if (findIt != std::end(parentItems)) {
-            return;
-        }
     }
 
     // lambda to clean collections:
@@ -1604,11 +1435,6 @@ void GraphicsScene::unloadEntity(LakosEntity *entity)
     d->vertices.erase(uniqueId);
     d->verticesVec.erase(std::remove(std::begin(d->verticesVec), std::end(d->verticesVec), entity),
                          std::end(d->verticesVec));
-
-    if (d->mainEntity == entity) {
-        d->mainEntity = nullptr;
-        d->physicalLoader.setMainNode(nullptr);
-    }
 
     qDebug() << "Unloading entity" << intptr_t(entity) << QString::fromStdString(entity->name());
     delete entity;
@@ -2078,6 +1904,8 @@ void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, cons
     for (auto *newEntity : newEntities) {
         newEntity->recursiveEdgeRelayout();
     }
+
+    Q_EMIT graphLoadFinished();
 }
 
 void GraphicsScene::addEdgeBetween(LakosEntity *fromEntity, LakosEntity *toEntity, lvtshr::LakosRelationType type)
@@ -2127,11 +1955,10 @@ QJsonObject GraphicsScene::toJson() const
             array.append(e->toJson());
         }
     }
-
-    const auto mainEntityName = d->mainEntity ? d->mainEntity->qualifiedName() : std::string{};
-    return {{"elements", array},
-            {"transitive_visibility", d->showTransitive},
-            {"main_entity", QString::fromStdString(mainEntityName)}};
+    return {
+        {"elements", array},
+        {"transitive_visibility", d->showTransitive},
+    };
 }
 
 void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)
@@ -2183,11 +2010,6 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
 
     const auto show_transitive = doc["transitive_visibility"].toBool();
     toggleTransitiveRelationVisibility(show_transitive);
-
-    auto *mainEntity = entityByQualifiedName(doc["main_entity"].toString().toStdString());
-    if (mainEntity) {
-        setMainEntity(mainEntity);
-    }
 }
 
 void GraphicsScene::highlightCyclesOnCicleModelChanged(const QModelIndex& _, const QModelIndex& index)

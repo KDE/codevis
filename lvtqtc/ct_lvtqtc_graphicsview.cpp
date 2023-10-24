@@ -96,10 +96,6 @@ GraphicsView::GraphicsView(NodeStorage& nodeStorage, lvtprj::ProjectFile const& 
     d->toolTipItem->move(10, 110);
     d->toolTipItem->setVisible(false);
 
-    connect(d->scene, &GraphicsScene::packageNavigateRequested, this, &GraphicsView::packageNavigateRequested);
-    connect(d->scene, &GraphicsScene::classNavigateRequested, this, &GraphicsView::classNavigateRequested);
-    connect(d->scene, &GraphicsScene::componentNavigateRequested, this, &GraphicsView::componentNavigateRequested);
-
     connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this] {
         d->minimap->setSceneRect(mapToScene(rect()).boundingRect());
     });
@@ -130,11 +126,6 @@ void GraphicsView::undoCommandReceived(QUndoCommand *command)
     Q_EMIT onUndoCommandReceived(this, command);
 }
 
-lvtshr::DiagramType GraphicsView::diagramType() const
-{
-    return d->scene->diagramType();
-}
-
 void GraphicsView::toggleMinimap(bool toggle)
 {
     d->minimap->setVisible(toggle);
@@ -161,35 +152,6 @@ void GraphicsView::setColorManagement(const std::shared_ptr<lvtclr::ColorManagem
     d->scene->setColorManagement(colorManagement);
 }
 
-bool GraphicsView::updateClassGraph(const QString& fullyQualifiedClassName)
-{
-    return updateGraph(fullyQualifiedClassName, lvtshr::DiagramType::ClassType);
-}
-
-bool GraphicsView::updatePackageGraph(const QString& fullyQualifiedPackageName)
-{
-    return updateGraph(fullyQualifiedPackageName, lvtshr::DiagramType::PackageType);
-}
-
-bool GraphicsView::updateComponentGraph(const QString& fullyQualifiedComponentName)
-{
-    return updateGraph(fullyQualifiedComponentName, lvtshr::DiagramType::ComponentType);
-}
-
-bool GraphicsView::updateGraph(const QString& fullyQualifiedName, lvtshr::DiagramType type)
-{
-    // TODO: This is probably not needed anymore.
-    // Verify how to change this with the simple version of load
-    // used by the drag and drop.
-    const auto oldQualifiedName = d->fullyQualifiedName;
-    d->fullyQualifiedName = fullyQualifiedName;
-    d->scene->setMainNode(fullyQualifiedName, type);
-    if (d->scene->mainEntity() && oldQualifiedName != d->fullyQualifiedName) {
-        fitAllInView();
-    }
-    return true;
-}
-
 void GraphicsView::fitAllInView()
 {
     // Note: Do not use `d->scene->itemsBoundingRect()` to fit all in view, because it takes in consideration hidden
@@ -204,14 +166,12 @@ void GraphicsView::fitAllInView()
     fitRectInView(boundingRect);
 }
 
-void GraphicsView::fitMainEntityInView()
+void GraphicsView::fitItemInView(QGraphicsItem *entity)
 {
-    auto const& e = d->scene->mainEntity();
-
-    auto w = e->rect().width();
-    auto h = e->rect().height();
-    auto x = e->scenePos().x() - w / 2.;
-    auto y = e->scenePos().y() - h / 2.;
+    auto w = entity->boundingRect().width();
+    auto h = entity->boundingRect().height();
+    auto x = entity->scenePos().x() - w / 2.;
+    auto y = entity->scenePos().y() - h / 2.;
 
     auto r = QRectF{x, y, w, h};
     fitRectInView(r);

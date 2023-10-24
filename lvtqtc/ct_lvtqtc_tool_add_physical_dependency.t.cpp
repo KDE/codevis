@@ -51,7 +51,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Add dependency")
     auto *aab = expectAddComponent("aab", "aab", aa);
 
     GraphicsViewWrapperForTesting gv{nodeStorage};
-    gv.updatePackageGraph(QString::fromStdString(aa->qualifiedName()));
+    //: TODO: Update this call:
+    // gv.updatePackageGraph(QString::fromStdString(aa->qualifiedName()));
     gv.show();
 
     auto tool = ToolAddPhysicalDependency{&gv, nodeStorage};

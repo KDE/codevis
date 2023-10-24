@@ -50,29 +50,6 @@ using namespace Codethink::lvtmdl;
 using namespace Codethink::lvtshr;
 using namespace Codethink::lvtprj;
 
-namespace {
-DiagramType nodeTypeToDiagramType(NodeType::Enum type)
-{
-    switch (type) {
-    case NodeType::e_Class:
-        return DiagramType::ClassType;
-    case NodeType::e_Namespace:
-        break;
-    case NodeType::e_Package:
-        return DiagramType::PackageType;
-    case NodeType::e_Repository:
-        return DiagramType::RepositoryType;
-    case NodeType::e_Component:
-        return DiagramType::ComponentType;
-    case NodeType::e_FreeFunction:
-        return DiagramType::FreeFunctionType;
-    case NodeType::e_Invalid:
-        break;
-    }
-    return DiagramType::NoneType;
-}
-} // namespace
-
 namespace Codethink::lvtqtw {
 
 struct TabWidget::Private {
@@ -201,45 +178,15 @@ GraphTabElement *TabWidget::createTabElement()
     view->setColorManagement(d->colorManagement);
 
     connect(tabElement, &GraphTabElement::historyUpdate, this, &TabWidget::setCurrentTabText);
-    connect(view, &lvtqtc::GraphicsView::classNavigateRequested, this, [this](QString qname) {
-        this->setCurrentGraphTab(GraphInfo{std::move(qname), NodeType::e_Class});
-    });
-    connect(view, &lvtqtc::GraphicsView::packageNavigateRequested, this, [this](QString qname) {
-        this->setCurrentGraphTab(GraphInfo{std::move(qname), NodeType::e_Package});
-    });
-    connect(view, &lvtqtc::GraphicsView::componentNavigateRequested, this, [this](QString qname) {
-        this->setCurrentGraphTab(GraphInfo{std::move(qname), NodeType::e_Component});
-    });
-
     return tabElement;
 }
 
-void TabWidget::openNewGraphTab(std::optional<GraphInfo> info)
+void TabWidget::openNewGraphTab()
 {
     auto *tabElement = createTabElement();
-    QString title = [&]() {
-        if (!info) {
-            return tr("Unnamed %1").arg(count());
-        }
-        tabElement->setCurrentGraph(info->qualifiedName,
-                                    GraphTabElement::HistoryType::History,
-                                    nodeTypeToDiagramType(info->nodeType));
-        return info->qualifiedName;
-    }();
+    QString title = tr("Unnamed %1").arg(count());
     int tabIdx = addTab(tabElement, title);
     setCurrentIndex(tabIdx);
-}
-
-void TabWidget::setCurrentGraphTab(GraphInfo const& info)
-{
-    auto *currentTab = qobject_cast<lvtqtw::GraphTabElement *>(currentWidget());
-    auto diagramType = nodeTypeToDiagramType(info.nodeType);
-    if (!currentTab->setCurrentGraph(info.qualifiedName, GraphTabElement::HistoryType::History, diagramType)) {
-        return;
-    }
-    const auto idx = currentIndex();
-    setTabIcon(idx, QIcon());
-    setCurrentTabText(info.qualifiedName, diagramType);
 }
 
 lvtqtc::GraphicsView *TabWidget::graphicsView()

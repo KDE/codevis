@@ -124,10 +124,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // we add something on the view, just after all elements
     // are finished loading.
 
-    void setShowExternalDepEdges(bool showExternalDepEdges);
-    // control if we show cross-subgraph edges between dependencies in the
-    // package graph
-
     void setColorManagement(const std::shared_ptr<lvtclr::ColorManagement>& colorManagement);
 
     void setStrictMode(bool strictMode);
@@ -135,13 +131,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // default is off.
 
     bool hasMainNodeSelected() const;
-
-    void setMainNode(const QString& fullyQualifiedName, lvtshr::DiagramType type);
-    // sets the fully qualified name and type used for the main node in the
-    // diagram
-
-    [[nodiscard]] lvtshr::DiagramType diagramType() const;
-    [[nodiscard]] QString qualifiedName() const;
 
     // This class defines what we need to implement on classes that load graphs visually
     void clearGraph() override;
@@ -175,10 +164,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     [[nodiscard]] std::vector<LakosEntity *>& allEntities() const;
 
-    Q_SIGNAL void packageNavigateRequested(const QString& fullyQualifiedName);
-    Q_SIGNAL void classNavigateRequested(const QString& fullyQualifiedName);
-    Q_SIGNAL void componentNavigateRequested(const QString& fullyQualifiedName);
-    Q_SIGNAL void mainNodeChanged(Codethink::lvtqtc::LakosEntity *entity);
     Q_SIGNAL void selectedEntityChanged(Codethink::lvtqtc::LakosEntity *entity);
 
     void updateGraph();
@@ -246,8 +231,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     };
     Q_SIGNAL void graphLoadProgressUpdate(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress progress);
 
-    [[nodiscard]] LakosEntity *mainEntity() const;
-    void setMainEntity(LakosEntity *entity);
     void populateMenu(QMenu& menu, QMenu *debugMenu);
 
     void fixTransitiveEdgeVisibility();
@@ -318,9 +301,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // partial graphs are the ones requested by a right click on the elements on the canvas.
 
     lvtldr::NodeLoadFlags loadFlagsFor(lvtldr::LakosianNode *node) const override;
-
-    bool isReady();
-    // checks if we can start drawing the graph.
 
     void setLoadFlags(LoadFlags flags);
 

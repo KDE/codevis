@@ -44,7 +44,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Undo/Redo add component")
 
     // This GraphicsView is in the heap so that we can control it's lifetime
     auto *gv = new GraphicsViewWrapperForTesting{nodeStorage};
-    gv->updatePackageGraph(QString::fromStdString(a->qualifiedName()));
+    // TODO: Update this call.
+    // gv->updatePackageGraph(QString::fromStdString(a->qualifiedName()));
     gv->show();
 
     auto undoRedo = UndoManager{};

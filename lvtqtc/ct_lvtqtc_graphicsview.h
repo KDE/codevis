@@ -47,6 +47,8 @@ class ProjectFile;
 
 namespace Codethink::lvtqtc {
 
+class LakosianEntity;
+
 class LVTQTC_EXPORT GraphicsView : public QGraphicsView
 // Visualizes a Tree model and reacts to changes
 {
@@ -68,17 +70,6 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
 
     void setUndoManager(UndoManager *undoManager);
 
-    bool updateClassGraph(const QString& fullyQualifiedClassName);
-    // loads and displays the graph represented by the fully qualified class name
-
-    bool updatePackageGraph(const QString& fullyQualifiedPackageName);
-    // loads and displays the package represented by the fully qualified package name
-
-    bool updateComponentGraph(const QString& fullyQualifiedComponentName);
-    // loads and displays the package represented by the fully qualified component name
-
-    bool updateGraph(const QString& fullyQualifiedName, lvtshr::DiagramType type);
-
     Q_SIGNAL void zoomFactorChanged(int zoomFactor);
     // The current zoom factor, emitted when the internal value changes
 
@@ -99,7 +90,7 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
     void fitAllInView();
     // Adjust zoom so that the whole scene is visible
 
-    void fitMainEntityInView();
+    void fitItemInView(QGraphicsItem *entity);
     // Adjust zoom so that the main entity is visible
 
     void setPluginManager(Codethink::lvtplg::PluginManager& pm);
@@ -127,7 +118,6 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
     Q_SIGNAL void errorMessage(const QString& message);
 
     void debugVisibleScreen();
-    [[nodiscard]] lvtshr::DiagramType diagramType() const;
 
     void setCurrentTool(ITool *tool);
     // sets the tool that's controlling the view.

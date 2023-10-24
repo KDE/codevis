@@ -472,30 +472,6 @@ void GraphicsScene::clearGraph()
     }
 }
 
-// TODO: Remove this method and all it's internal calls.'
-void GraphicsScene::updateGraph()
-{
-    if (Preferences::enableDebugOutput()) {
-        qDebug() << "Reloading the Graph";
-    }
-
-    clearGraph();
-    setLoadFlags(Running);
-    Q_EMIT graphLoadStarted();
-    Q_EMIT d->circleModel->initialState();
-
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::Start);
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-
-    if (requestDataFromDatabase() == CodeDbLoadStatus::Error) {
-        // stop graph load
-        return;
-    }
-
-    layoutVertices();
-    finalizeLayout();
-}
-
 void GraphicsScene::relayout()
 {
     if (d->flags == Running) {
@@ -998,52 +974,6 @@ void GraphicsScene::setLoadFlags(GraphicsScene::LoadFlags flags)
     d->flags = flags;
 }
 
-// This method is only called for the "main" node. The subsequent database
-// calls are done via the "load children", "load clients" and "load providers".
-GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
-{
-    // This should not exist anymore, probably.
-    if (true) {
-        return CodeDbLoadStatus::Error;
-    }
-
-    if (d->flags == UserAborted) {
-        setLoadFlags(Idle);
-        finalizeLayout();
-        return CodeDbLoadStatus::Error;
-    }
-
-    Q_EMIT graphLoadProgressUpdate(GraphLoadProgress::CdbLoad);
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, PROCESS_EVENTS_TIMEOUT_MS);
-
-    bool success = false;
-    LakosianNode *node = nullptr; // d->nodeStorage.findByQualifiedName(d->graphData.diagramType,
-                                  // d->graphData.fullyQualifiedName.toStdString());
-
-    if (!node) {
-        success = false;
-        return CodeDbLoadStatus::Error;
-    }
-
-    lvtldr::NodeLoadFlags flags;
-
-    // TODO: Check if we are empty, and if so, enable this below:
-    // flags.traverseClients = Preferences::showClients();
-    // flags.traverseProviders = Preferences::showProviders();
-    // flags.loadChildren = true;
-
-    d->physicalLoader.clear();
-    success = d->physicalLoader.load(node, flags).has_value();
-
-    if (!success) {
-        setLoadFlags(LoadFromDbError);
-        finalizeLayout();
-        return CodeDbLoadStatus::Error;
-    }
-
-    return CodeDbLoadStatus::Success;
-}
-
 lvtldr::NodeLoadFlags GraphicsScene::loadFlagsFor(lvtldr::LakosianNode *node) const
 {
     const auto search = d->entityLoadFlags.find(node);
@@ -1105,48 +1035,6 @@ void GraphicsScene::fixRelationsParentRelationship()
             edge->setParentItem(nullptr);
         }
     });
-}
-
-void GraphicsScene::finalizeLayout()
-{
-    const QString ourErrorMessage = fetchErrorMessage();
-    if (!ourErrorMessage.isEmpty()) {
-        if (Preferences::enableDebugOutput()) {
-            qDebug() << "Finalized with" << ourErrorMessage;
-        }
-    }
-
-    if (d->flags != Success) {
-        clearGraph();
-        Q_EMIT errorMessage(ourErrorMessage);
-    } else {
-        // we only need to add the toplevel items to the scene,
-        // as the inner items are added automatically.
-        for (auto *item : d->verticesVec) {
-            if (item->parentItem()) {
-                continue;
-            }
-
-            addItem(item);
-        }
-
-        // some vertices are child items, and we can't add them
-        // to the scene yet, but we don't know the order.
-        for (auto *item : d->relationVec) {
-            if (item->scene()) {
-                continue;
-            }
-
-            addItem(item);
-        }
-    }
-
-    fixRelations();
-    edgesContainersLayout();
-    if (!d->showTransitive) {
-        transitiveReduction();
-    }
-    layoutDone();
 }
 
 void GraphicsScene::fixRelations()

@@ -528,17 +528,14 @@ bool LakosRelation::shouldBeHidden() const
 void LakosRelation::populateMenu(QMenu& menu, QMenu *debugMenu)
 {
     auto *gs = qobject_cast<GraphicsScene *>(scene());
-    bool isEditMode = gs->isEditMode();
 
     menu.addAction(
         QObject::tr("%1 to %2").arg(QString::fromStdString(from()->name()), QString::fromStdString(to()->name())));
 
-    if (isEditMode) {
-        auto *removeAction = new QAction(tr("Remove"));
-        removeAction->setToolTip(tr("Removes this relation from the database"));
-        connect(removeAction, &QAction::triggered, this, &LakosRelation::requestRemoval);
-        menu.addAction(removeAction);
-    }
+    auto *removeAction = new QAction(tr("Remove"));
+    removeAction->setToolTip(tr("Removes this relation from the database"));
+    connect(removeAction, &QAction::triggered, this, &LakosRelation::requestRemoval);
+    menu.addAction(removeAction);
 
     auto *node = d->pointsFrom->internalNode();
     if (node->type() == lvtshr::DiagramType::PackageType && !node->isPackageGroup()) {

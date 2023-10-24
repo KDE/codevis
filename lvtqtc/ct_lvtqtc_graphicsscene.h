@@ -291,9 +291,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     LakosEntity *findLakosEntityFromUid(lvtshr::UniqueId uid) const;
 
-    void visualizationModeTriggered();
-    void editModeTriggered();
-    bool isEditMode();
     void collapseSecondaryEntities();
 
     void loadEntity(lvtshr::UniqueId uuid, UnloadDepth depth);

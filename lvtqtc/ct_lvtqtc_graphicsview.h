@@ -179,9 +179,6 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
         return qItems[0];
     }
 
-    void visualizationModeTriggered();
-    void editModeTriggered();
-
   protected:
     void fitRectInView(QRectF const& r);
 

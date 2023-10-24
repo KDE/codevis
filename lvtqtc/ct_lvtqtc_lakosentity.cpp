@@ -694,7 +694,6 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
     if (parentItem()) {
         scenePosition = parentItem()->mapFromScene(scenePosition);
     }
-    bool isEditMode = qobject_cast<GraphicsScene *>(scene())->isEditMode();
 
     QList<QAction *> retValues;
 
@@ -704,7 +703,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(selectAction);
     }
 
-    if (!isEditMode && d->loaderInfo.isValid()) {
+    if (d->loaderInfo.isValid()) {
         auto *loadClientsAction = new QAction();
         loadClientsAction->setText(tr("Load all clients"));
         connect(loadClientsAction, &QAction::triggered, this, [this] {
@@ -742,7 +741,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(unloadAction);
     }
 
-    if (!isEditMode && loaderInfo().isValid()) {
+    if (loaderInfo().isValid()) {
         if (d->notAllChildrenLoadedInfo) {
             auto *childAction = new QAction();
 
@@ -803,7 +802,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
     separator->setSeparator(true);
     retValues.append(separator);
 
-    if (isEditMode) {
+    {
         auto *action = new QAction();
         action->setText(tr("Rename entity"));
         connect(action, &QAction::triggered, this, [this] {
@@ -821,7 +820,6 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         });
         retValues.append(action);
     }
-
     {
         auto *action = new QAction();
         const QString toolTip = d->node->notes().empty() ? tr("Add Notes") : tr("Change Notes");
@@ -858,7 +856,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(action);
     }
 
-    if (!isEditMode && !isMainEntity()) {
+    if (!isMainEntity()) {
         auto *action = new QAction();
         action->setText(tr("Navigate to %1").arg(QString::fromStdString(d->qualifiedName)));
         connect(action, &QAction::triggered, this, [this] {
@@ -867,12 +865,10 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(action);
     }
 
-    if (isEditMode) {
-        auto *removeAction = new QAction(tr("Remove"));
-        removeAction->setToolTip(tr("Removes this entity from the database"));
-        connect(removeAction, &QAction::triggered, this, &LakosEntity::requestRemoval);
-        retValues.append(removeAction);
-    }
+    auto *removeAction = new QAction(tr("Remove"));
+    removeAction->setToolTip(tr("Removes this entity from the database"));
+    connect(removeAction, &QAction::triggered, this, &LakosEntity::requestRemoval);
+    retValues.append(removeAction);
 
     if (d->showRedundantEdges) {
         auto *hideEdgesAction = new QAction();

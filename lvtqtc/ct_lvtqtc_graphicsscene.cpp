@@ -180,10 +180,6 @@ struct GraphicsScene::Private {
     // also set their showTransitive status. but modifying a child
     // won't change this.
 
-    bool isEditMode = false;
-    // if in edit mode, we are not allowing navigation.
-    // if in not edit mode, we dont allow edit.
-
     AlgorithmTransitiveReduction *transitiveReductionAlg = nullptr;
 
     lvtprj::ProjectFile const& projectFile;
@@ -452,21 +448,6 @@ GraphicsScene::~GraphicsScene() noexcept = default;
 lvtshr::DiagramType GraphicsScene::diagramType() const
 {
     return d->graphData.diagramType;
-}
-
-void GraphicsScene::visualizationModeTriggered()
-{
-    d->isEditMode = false;
-}
-
-void GraphicsScene::editModeTriggered()
-{
-    d->isEditMode = true;
-}
-
-bool GraphicsScene::isEditMode()
-{
-    return d->isEditMode;
 }
 
 QString GraphicsScene::qualifiedName() const

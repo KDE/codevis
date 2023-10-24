@@ -206,13 +206,18 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
             sysIncludes.push_back("-isystem" + *bundledHeaders);
         }
 
-        auto removeLambda = [this](clang::tooling::CompileCommand& cmd) -> bool {
+        // Command lines that doesn't exist on clang, and could be potentially used
+        // from compile_commands.json - if we allow them in, we will have problems.
+        const std::vector<std::string> missingCommandLineOnClang = {"-mno-direct-extern-access"};
+
+        auto removeIgnoredFilesLambda = [this](clang::tooling::CompileCommand& cmd) -> bool {
             return ClpUtil::isFileIgnored(cmd.Filename, d_ignoreGlobs);
         };
 
-        d_compileCommands.erase(std::remove_if(d_compileCommands.begin(), d_compileCommands.end(), removeLambda),
+        d_compileCommands.erase(
+            std::remove_if(d_compileCommands.begin(), d_compileCommands.end(), removeIgnoredFilesLambda),
 
-                                std::end(d_compileCommands));
+            std::end(d_compileCommands));
 
         for (auto& cmd : d_compileCommands) {
             std::filesystem::path path = std::filesystem::weakly_canonical(cmd.Filename);
@@ -223,6 +228,19 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
             // the source is configured to use and to make the output
             // easier to read
             cmd.CommandLine.emplace_back("-Wno-everything");
+
+            auto new_end = std::remove_if(cmd.CommandLine.begin(),
+                                          cmd.CommandLine.end(),
+                                          [&missingCommandLineOnClang](const std::string& command) -> bool {
+                                              for (const auto& missingCmdLine : missingCommandLineOnClang) {
+                                                  if (command.find(missingCmdLine) != command.npos) {
+                                                      return true;
+                                                  }
+                                              }
+                                              return false;
+                                          });
+
+            cmd.CommandLine.erase(new_end, cmd.CommandLine.end());
 
             // add system includes
             std::copy(sysIncludes.begin(), sysIncludes.end(), std::back_inserter(cmd.CommandLine));

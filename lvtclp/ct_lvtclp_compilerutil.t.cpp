@@ -25,6 +25,7 @@ using namespace Codethink;
 
 TEST_CASE("search for stddef")
 {
+#ifdef __linux__
     // TODO: forcing to gcc, but we should test if gcc is installed,
     // if clang is installed, and run this for both.
     std::optional<std::string> res = Codethink::lvtclp::CompilerUtil::runCompiler("gcc");
@@ -50,4 +51,5 @@ TEST_CASE("search for stddef")
     REQUIRE(begin_search_idx != end_search_idx);
     REQUIRE(begin_search_idx < end_search_idx);
     REQUIRE((end_search_idx - begin_search_idx) > 1);
+#endif
 }

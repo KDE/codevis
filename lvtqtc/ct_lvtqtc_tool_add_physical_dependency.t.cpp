@@ -58,9 +58,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Add dependency")
     auto *scene = dynamic_cast<GraphicsScene *>(gv.scene());
     scene->loadEntityByQualifiedName(QString::fromStdString(aab->qualifiedName()), QPoint(10, 10));
     scene->loadEntityByQualifiedName(QString::fromStdString(aaa->qualifiedName()), QPoint(100, 100));
-    scene->enableLayoutUpdates();
 
-    scene->runLayoutAlgorithm();
+    scene->enableLayoutUpdates();
     scene->reLayout();
 
     gv.show();
@@ -78,14 +77,11 @@ TEST_CASE_METHOD(QTApplicationFixture, "Add dependency")
     // Using the tool ar arbitrary place won't do anything (including no crashing)
     REQUIRE_FALSE(mousePressAt(tool, {0, 0}));
     REQUIRE(lastMessage.empty());
-
-    REQUIRE_FALSE(mousePressAt(tool, {0, 0}));
-    REQUIRE(lastMessage.empty());
+    QTest::qWait(500);
 
     // Basic tool usage
     tool.activate();
     REQUIRE(lastMessage == "Select the source Element");
-
     REQUIRE_FALSE(aaa->hasProvider(aab));
     mousePressAt(tool, gv.getEntityPosition(aaa->uid()));
     mouseReleaseAt(tool, gv.getEntityPosition(aaa->uid()));

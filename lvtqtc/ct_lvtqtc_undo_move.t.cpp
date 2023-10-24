@@ -45,19 +45,20 @@ TEST_CASE_METHOD(QTApplicationFixture, "Undo/Redo move")
     auto *a = nodeStorage.addPackage("a", "a").value();
     auto *aa = nodeStorage.addPackage("aa", "aa", a).value();
     auto *ab = nodeStorage.addPackage("ab", "ab", a).value();
-    (void) ab;
 
     // This GraphicsView is in the heap so that we can control it's lifetime
     auto *gv = new GraphicsViewWrapperForTesting{nodeStorage};
-    // TODO: Update this call.
-    // gv->updatePackageGraph(QString::fromStdString(a->qualifiedName()));
+    auto *scene = dynamic_cast<GraphicsScene *>(gv->scene());
+    scene->loadEntityByQualifiedName(QString::fromStdString(ab->qualifiedName()), QPoint(10, 10));
+    scene->loadEntityByQualifiedName(QString::fromStdString(aa->qualifiedName()), QPoint(100, 100));
+
+    scene->enableLayoutUpdates();
+    scene->reLayout();
     gv->show();
-    auto *scene = qobject_cast<GraphicsScene *>(gv->scene());
 
     LakosEntity *entityAA = scene->entityByQualifiedName("aa");
     auto undoRedo = UndoManager{};
-    undoRedo.addUndoCommand(
-        new UndoMove(qobject_cast<GraphicsScene *>(gv->scene()), aa->qualifiedName(), QPoint(10, 10), QPoint(20, 20)));
+    undoRedo.addUndoCommand(new UndoMove(scene, aa->qualifiedName(), QPoint(10, 10), QPoint(20, 20)));
 
     undoRedo.undo();
     QTest::qWait(1000);

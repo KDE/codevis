@@ -324,7 +324,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     dumpSceneAction->setText(tr("Output scene"));
     dumpSceneAction->setIcon(IconHelpers::iconFrom(":/icons/fatal"));
     connect(dumpSceneAction, &QAction::triggered, scene, [scene] {
-        scene->dumpScene();
+        qDebug() << scene->toJson();
     });
 
     auto *minimapAction = new QAction();

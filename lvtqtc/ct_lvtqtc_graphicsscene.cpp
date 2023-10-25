@@ -1264,65 +1264,6 @@ lvtldr::NodeLoadFlags GraphicsScene::loadFlagsFor(lvtldr::LakosianNode *node) co
     return NodeLoadFlags{};
 }
 
-void GraphicsScene::dumpScene(const QList<QGraphicsItem *>& items)
-{
-    for (auto *item : items) {
-        dumpScene(item, 0);
-    }
-}
-
-void GraphicsScene::dumpScene(QGraphicsItem *item, int indent)
-{
-    if (!Preferences::enableDebugOutput()) {
-        return;
-    }
-
-    if (!item) {
-        // qAsConst<QList<QGraphicsItem*>> has been explicitly deleted
-        for (const auto& i : items()) { // clazy:exclude=range-loop,range-loop-detach
-            if (i->parentItem() == nullptr) {
-                dumpScene(i, indent);
-            }
-        }
-        return;
-    }
-
-    auto output_data = [this, item, indent](LakosEntity *entity) {
-        auto relations = entity->edgesCollection();
-        if (!relations.empty()) {
-            qDebug() << std::string(indent, ' ') << " Relations";
-            for (const auto& edge : entity->edgesCollection()) {
-                qDebug() << std::string(indent, ' ') << "From:" << edge->from()->qualifiedName();
-                qDebug() << std::string(indent, ' ') << "To: " << edge->to()->qualifiedName();
-            }
-        }
-        // qAsConst<QList<QGraphicsItem*>> has been explicitly deleted
-        for (QGraphicsItem *c : item->childItems()) { // clazy:exclude=range-loop,range-loop-detach
-            if (auto *childentity = qgraphicsitem_cast<LakosEntity *>(c)) {
-                dumpScene(childentity, indent + 4);
-            }
-        }
-    };
-
-    if (auto *package = dynamic_cast<PackageEntity *>(item)) {
-        qDebug() << std::string(indent, ' ') << " Package: " << package->qualifiedName();
-        output_data(package);
-        return;
-    }
-
-    if (auto *component = dynamic_cast<ComponentEntity *>(item)) {
-        qDebug() << std::string(indent, ' ') << " Component: " << component->qualifiedName();
-        output_data(component);
-        return;
-    }
-
-    if (auto *classPtr = qgraphicsitem_cast<LakosEntity *>(item)) {
-        qDebug() << std::string(indent, ' ') << " Class: " << classPtr->qualifiedName();
-        output_data(classPtr);
-        return;
-    }
-}
-
 // HACK: This should really not exist.
 void GraphicsScene::fixRelationsParentRelationship()
 {

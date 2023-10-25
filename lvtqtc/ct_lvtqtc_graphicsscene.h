@@ -258,12 +258,8 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     };
     Q_SIGNAL void graphLoadProgressUpdate(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress progress);
 
-    void dumpScene(QGraphicsItem *item = nullptr, int indent = 0);
-    void dumpScene(const QList<QGraphicsItem *>& items);
-
     [[nodiscard]] LakosEntity *mainEntity() const;
     void setMainEntity(LakosEntity *entity);
-
     void populateMenu(QMenu& menu, QMenu *debugMenu);
 
     void fixTransitiveEdgeVisibility();

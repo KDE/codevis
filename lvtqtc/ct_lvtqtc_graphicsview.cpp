@@ -152,8 +152,7 @@ void GraphicsView::setUndoManager(UndoManager *undoManager)
 
 void GraphicsView::debugVisibleScreen()
 {
-    auto itemList = items(viewport()->rect());
-    d->scene->dumpScene(itemList);
+    qDebug() << d->scene->toJson();
 }
 
 void GraphicsView::setColorManagement(const std::shared_ptr<lvtclr::ColorManagement>& colorManagement)

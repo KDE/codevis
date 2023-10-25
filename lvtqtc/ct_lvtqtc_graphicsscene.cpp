@@ -1953,38 +1953,35 @@ void GraphicsScene::fixTransitiveEdgeVisibility()
 void GraphicsScene::toggleEdgeBoundingRects()
 {
     LakosRelation::toggleBoundingRect();
-    for (auto *relation : d->relationVec) {
-        relation->updateDebugInformation();
-    }
+    updateEdgeDebugInfo();
 }
 
 void GraphicsScene::toggleEdgeShapes()
 {
     LakosRelation::toggleShape();
-    for (auto *relation : d->relationVec) {
-        relation->updateDebugInformation();
-    }
+    updateEdgeDebugInfo();
 }
 
 void GraphicsScene::toggleEdgeTextualInformation()
 {
     LakosRelation::toggleTextualInformation();
-    for (auto *relation : d->relationVec) {
-        relation->updateDebugInformation();
-    }
+    updateEdgeDebugInfo();
 }
 
 void GraphicsScene::toggleEdgeIntersectionPaths()
 {
     LakosRelation::toggleIntersectionPaths();
-    for (auto *relation : d->relationVec) {
-        relation->updateDebugInformation();
-    }
+    updateEdgeDebugInfo();
 }
 
 void GraphicsScene::toggleEdgeOriginalLine()
 {
     LakosRelation::toggleOriginalLine();
+    updateEdgeDebugInfo();
+}
+
+void GraphicsScene::updateEdgeDebugInfo()
+{
     for (auto *relation : d->relationVec) {
         relation->updateDebugInformation();
     }

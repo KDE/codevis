@@ -276,6 +276,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     /* Debug Methods, methods to help us visualize contextual information
      * of elements */
+    void updateEdgeDebugInfo();
     void toggleEdgeBoundingRects();
     void toggleEdgeShapes();
     void toggleEdgeTextualInformation();

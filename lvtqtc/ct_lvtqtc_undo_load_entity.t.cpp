@@ -46,11 +46,10 @@ TEST_CASE_METHOD(QTApplicationFixture, "Undo/Redo Load Components")
     auto *aaa = nodeStorage.addComponent("aaa", "aaa", aa).value();
 
     GraphicsViewWrapperForTesting gv{nodeStorage};
-    // TODO: Update this call.
-    // gv.updatePackageGraph(QString::fromStdString(a->qualifiedName()));
+    auto *scene = dynamic_cast<GraphicsScene *>(gv.scene());
+    scene->loadEntityByQualifiedName(QString::fromStdString(aaa->qualifiedName()), QPoint(10, 10));
     gv.show();
 
-    auto *scene = qobject_cast<GraphicsScene *>(gv.scene());
     auto *aa_node = scene->entityByQualifiedName(aa->qualifiedName());
     REQUIRE(aa_node);
 

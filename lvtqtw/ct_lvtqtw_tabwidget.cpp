@@ -181,12 +181,26 @@ GraphTabElement *TabWidget::createTabElement()
     return tabElement;
 }
 
-void TabWidget::openNewGraphTab()
+void TabWidget::replaceGraphAt(int idx, const QString& qualifiedName)
+{
+    auto *tabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(widget(idx));
+    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
+    scene->clearGraph();
+    scene->loadEntityByQualifiedName(qualifiedName, QPoint{});
+}
+
+void TabWidget::openNewGraphTab(std::optional<QString> qualifiedName)
 {
     auto *tabElement = createTabElement();
-    QString title = tr("Unnamed %1").arg(count());
-    int tabIdx = addTab(tabElement, title);
+    int tabIdx = addTab(tabElement, tr("Unnamed %1").arg(count()));
     setCurrentIndex(tabIdx);
+
+    if (!qualifiedName.has_value()) {
+        return;
+    }
+
+    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
+    scene->loadEntityByQualifiedName(qualifiedName.value(), QPoint{});
 }
 
 lvtqtc::GraphicsView *TabWidget::graphicsView()

@@ -782,11 +782,8 @@ void MainWindow::setCurrentGraph(const QModelIndex& idx)
 
 void MainWindow::newTabRequested(const QModelIndex& idx)
 {
-    // TODO: Fix This
-
-    // QString qualifiedName = idx.data(ModelRoles::e_QualifiedName).toString();
-    // NodeType::Enum type = static_cast<NodeType::Enum>(idx.data(ModelRoles::e_NodeType).toInt());
-    // currentGraphTab->openNewGraphTab(TabWidget::GraphInfo{qualifiedName, type});
+    const QString qualifiedName = idx.data(ModelRoles::e_QualifiedName).toString();
+    currentGraphTab->openNewGraphTab(qualifiedName);
 }
 
 void MainWindow::exportSvg()
@@ -1246,9 +1243,9 @@ Codethink::lvtprj::ProjectFile& MainWindow::projectFile()
 void MainWindow::requestMenuPackageView(const QModelIndex& idx, const QPoint& pos)
 {
     QMenu menu;
-    QAction *act = menu.addAction(tr("Load on Empty Scene"));
+    QAction *act = menu.addAction(tr("Open in New Tab"));
     connect(act, &QAction::triggered, this, [this, idx] {
-        setCurrentGraph(idx);
+        newTabRequested(idx);
     });
 
     act = menu.addAction(tr("Load on Current Scene"));

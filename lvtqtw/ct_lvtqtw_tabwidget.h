@@ -78,10 +78,13 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
     ~TabWidget() noexcept override;
     // Destructor
 
-    void openNewGraphTab();
+    /* Opens a new tab and loads qualifiedName if it exist */
+    void openNewGraphTab(std::optional<QString> qualifiedName = std::nullopt);
+
+    /* Clears the current graph and loads the qualifiedName */
+    void replaceGraphAt(int idx, const QString& qualifiedName);
 
     void closeTab(int idx);
-    // called by a slot connection with closeTabRequested
 
     void setCurrentTabText(const QString& fullyQualifiedName, lvtshr::DiagramType type);
     // Slot for when we need to update the tab name to keep up with a history

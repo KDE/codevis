@@ -180,21 +180,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     Q_SIGNAL void errorMessage(const QString& error);
     Q_SIGNAL void graphLoadFinished();
 
-    enum class GraphLoadProgress : int {
-        Start = 0,
-        CheckCache,
-        CdbLoad,
-        QtEventLoop, // the event loop takes considerable time on the first loop
-                     // after all of the vertices are added
-        VertexLayout,
-        PannelCollapse,
-        FixRelations,
-        EdgesContainersLayout,
-        TransitiveReduction,
-        Done
-    };
-    Q_SIGNAL void graphLoadProgressUpdate(Codethink::lvtqtc::GraphicsScene::GraphLoadProgress progress);
-
     void populateMenu(QMenu& menu, QMenu *debugMenu);
 
     void fixTransitiveEdgeVisibility();

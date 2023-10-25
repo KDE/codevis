@@ -20,6 +20,7 @@
 // This file is home to tests for adding user defined types to the database
 
 #include <ct_lvtmdb_fileobject.h>
+#include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_methodobject.h>
 #include <ct_lvtmdb_namespaceobject.h>
 #include <ct_lvtmdb_objectstore.h>
@@ -716,4 +717,29 @@ int main()
         auto *bad = session.getType("bdlat_BasicEnumerationWrapper<baljsn::EncodingStyle::Value>::Wrapper");
         REQUIRE(!bad);
     });
+}
+
+TEST_CASE("C functions")
+{
+    const static char *source =
+        "typedef struct { int x; } Foo;"
+        "static void g() {}"
+        "int h(const Foo*);"
+        "int f(Foo *foo) { g(); return h(foo); }"
+        "int h(const Foo*) { return 42; }";
+    ObjectStore session;
+    REQUIRE(Test_Util::runOnCode(session, source, "testFreeFunction.cpp"));
+    auto obtainedFunctionNames = [&]() {
+        auto res = std::unordered_set<std::string>{};
+        session.withROLock([&]() {
+            for (auto const& [f, fd] : session.functions()) {
+                auto& _fd = fd;
+                fd->withROLock([&]() {
+                    res.insert(_fd->qualifiedName());
+                });
+            }
+        });
+        return res;
+    }();
+    REQUIRE(obtainedFunctionNames == std::unordered_set<std::string>{"f", "g", "h"});
 }

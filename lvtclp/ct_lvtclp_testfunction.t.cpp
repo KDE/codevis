@@ -90,9 +90,8 @@ static void function()
     REQUIRE(Test_Util::runOnCode(session, source, "testStaticFn.cpp"));
 
     session.withROLock([&] {
-        REQUIRE(session.functions().empty());
+        REQUIRE(session.functions().size() == 1);
     });
-    // No functions were added
 }
 
 TEST_CASE("Function overload")

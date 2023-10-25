@@ -53,8 +53,6 @@
 #include <functional>
 #include <string>
 
-#include <thread>
-
 namespace {
 
 // clang::Type::isTypedefNameType (not in older clang)
@@ -734,42 +732,28 @@ bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
             return true;
         }
 
-        // don't consider globally visible functions because they are their own
-        // architecturally-significant thing and should eventually be drawn on
-        // diagrams as themselves
-        if (!functionDecl->isGlobal()) {
-            // find out what classes this function uses in its implementation
-            // and store them in the StaticFnHandler
-            // (local var decls are handled separately)
-            std::vector<lvtmdb::TypeObject *> usesInImpls =
-                listChildStatementRelations(functionDecl, functionDecl->getBody(), nullptr);
-            for (lvtmdb::TypeObject *dep : usesInImpls) {
-                if (!dep) {
-                    continue;
-                }
-                d_staticFnHandler_p->addFnUses(functionDecl, dep);
+        // find out what classes this function uses in its implementation
+        // and store them in the StaticFnHandler
+        // (local var decls are handled separately)
+        std::vector<lvtmdb::TypeObject *> usesInImpls =
+            listChildStatementRelations(functionDecl, functionDecl->getBody(), nullptr);
+        for (lvtmdb::TypeObject *dep : usesInImpls) {
+            if (!dep) {
+                continue;
             }
-
-            // find out if this function calls any functions
-            auto visitCallExpr = [this, functionDecl](const clang::CallExpr *callExpr) {
-                const clang::FunctionDecl *callee = callExpr->getDirectCallee();
-                if (callee && !callee->isGlobal()) {
-                    d_staticFnHandler_p->addFnUses(functionDecl, callee);
-                }
-            };
-            searchClangStmtAST<clang::CallExpr>(functionDecl->getBody(), visitCallExpr);
-
-            // we don't add file-static functions to the database because they
-            // don't have a globally unique name by which we can refer to them
-            return true;
+            d_staticFnHandler_p->addFnUses(functionDecl, dep);
         }
+
+        // find out if this function calls any functions
+        auto visitCallExpr = [this, functionDecl](const clang::CallExpr *callExpr) {
+            const clang::FunctionDecl *callee = callExpr->getDirectCallee();
+            if (callee) {
+                d_staticFnHandler_p->addFnUses(functionDecl, callee);
+            }
+        };
+        searchClangStmtAST<clang::CallExpr>(functionDecl->getBody(), visitCallExpr);
 
         if (funcIsTemplateSpecialization(functionDecl)) {
-            return true;
-        }
-
-        if (!functionDecl->hasExternalFormalLinkage()) {
-            // internal linkage
             return true;
         }
 

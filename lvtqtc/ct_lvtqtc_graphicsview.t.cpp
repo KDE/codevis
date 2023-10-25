@@ -255,9 +255,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Load Class Test")
 
     auto *scene = dynamic_cast<GraphicsScene *>(view.scene());
 
-    // Load class1.
-    // TODO: Fix this.
-    // view.updateClassGraph("class1");
+    scene->loadEntityByQualifiedName(QString::fromStdString(innerClass1->qualifiedName()), QPoint(10, 10));
 
     REQUIRE(scene->entityByQualifiedName("class1"));
     REQUIRE_FALSE(scene->entityByQualifiedName("class2"));

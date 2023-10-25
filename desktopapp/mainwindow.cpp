@@ -1337,25 +1337,27 @@ void MainWindow::requestMenuPackageView(const QModelIndex& idx, const QPoint& po
         scene->reLayout();
     });
 
-    act = menu.addAction("Open in Browser");
-    connect(act, &QAction::triggered, this, [this, idx] {
-        const NodeType::Enum type = static_cast<NodeType::Enum>(idx.data(ModelRoles::e_NodeType).toInt());
-        if (type == NodeType::e_Package) {
-            auto *node =
-                sharedNodeStorage.findByQualifiedName(idx.data(ModelRoles::e_QualifiedName).toString().toStdString());
-            auto *pkgNode = dynamic_cast<Codethink::lvtldr::PackageNode *>(node);
-            QString filePath = QString::fromStdString(pkgNode->dirPath());
-            filePath.replace("${SOURCE_DIR}", QString::fromStdString(projectFile().sourceCodePath().string()));
-            const QFileInfo fInfo(filePath);
-            if (!fInfo.exists()) {
-                showErrorMessage(tr("No such file or directory: %1").arg(filePath));
-                return;
-            }
+    const NodeType::Enum type = static_cast<NodeType::Enum>(idx.data(ModelRoles::e_NodeType).toInt());
+    if (type == NodeType::e_Package) {
+        auto *node =
+            sharedNodeStorage.findByQualifiedName(idx.data(ModelRoles::e_QualifiedName).toString().toStdString());
+        auto *pkgNode = dynamic_cast<Codethink::lvtldr::PackageNode *>(node);
+        QString filePath = QString::fromStdString(pkgNode->dirPath());
+        filePath.replace("${SOURCE_DIR}", QString::fromStdString(projectFile().sourceCodePath().string()));
+        const QFileInfo fInfo(filePath);
 
+        act = menu.addAction("Open Locally");
+        if (!fInfo.exists()) {
+            act->setToolTip(tr("Couldn't find folder for this package."));
+            act->setEnabled(false);
+        }
+
+        connect(act, &QAction::triggered, this, [filePath] {
             const QUrl localFilePath = QUrl::fromLocalFile(filePath);
             QDesktopServices::openUrl(localFilePath);
-        }
-    });
+        });
+    }
+
     menu.exec(pos);
 }
 

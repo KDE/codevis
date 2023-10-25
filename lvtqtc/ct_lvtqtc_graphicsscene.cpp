@@ -81,15 +81,6 @@
 
 using namespace Codethink::lvtldr;
 
-namespace {
-
-// https://doc.qt.io/qt-5/qcoreapplication.html#processEvents-1
-// QCoreApplication::processEvents will keep processing events until there are
-// no more events to process or until a timeout occurs (measured in milliseconds).
-constexpr int PROCESS_EVENTS_TIMEOUT_MS = 100;
-
-} // namespace
-
 namespace Codethink::lvtqtc {
 
 struct GraphicsScene::Private {
@@ -117,11 +108,6 @@ struct GraphicsScene::Private {
 
     lvtldr::PhysicalLoader physicalLoader;
 
-    bool strict = false;
-    // Controls how forgiving we are of errors
-    // should mostly be used on unit tests where an error should fail
-    // the test, but on desktop we can ignore some of the errors.
-
     bool blockNodeResizeOnHover = false;
     // blocks mouseHoverEvent resizing the nodes with this flag on.
 
@@ -132,8 +118,6 @@ struct GraphicsScene::Private {
     // The selected entity is chosen by the user by selecting it on the view.
 
     lvtldr::NodeStorage& nodeStorage;
-
-    bool skipPannelCollapse = false;
 
     bool showTransitive = false;
     // Show all transitive edges on the top level elements.
@@ -423,11 +407,6 @@ void GraphicsScene::setColorManagement(const std::shared_ptr<lvtclr::ColorManage
     d->colorManagement = colorManagement;
 }
 
-void GraphicsScene::setStrictMode(bool strict)
-{
-    d->strict = strict;
-}
-
 // TODO: Pass the entity that we don't want to collapse here.'
 void GraphicsScene::collapseSecondaryEntities()
 {
@@ -469,6 +448,27 @@ void GraphicsScene::clearGraph()
 }
 
 namespace {
+
+QString errorKindToStr(ErrorRemoveEntity::Kind kind, const QString& type)
+{
+    switch (kind) {
+    case lvtldr::ErrorRemoveEntity::Kind::CannotRemoveWithProviders: {
+        return QObject::tr(
+                   "Currently we can't remove %1 with connected with other packages, break the connections "
+                   "first.")
+            .arg(type);
+    }
+    case lvtldr::ErrorRemoveEntity::Kind::CannotRemoveWithClients: {
+        return QObject::tr("Currently we can't remove %1 with clients, break the connections first.").arg(type);
+    }
+    case lvtldr::ErrorRemoveEntity::Kind::CannotRemoveWithChildren: {
+        return QObject::tr("Currently we can't remove %1 that contains children, remove the childs first.").arg(type);
+    }
+    }
+
+    // Unreachable.
+    return QString();
+}
 
 template<typename EntityType>
 LakosEntity *addVertex(GraphicsScene *scene,
@@ -523,24 +523,8 @@ LakosEntity *addVertex(GraphicsScene *scene,
         if (node->type() == lvtshr::DiagramType::PackageType) {
             auto err = nodeStorage.removePackage(node);
             if (err.has_error()) {
-                switch (err.error().kind) {
-                case lvtldr::ErrorRemovePackage::Kind::CannotRemovePackageWithProviders: {
-                    Q_EMIT scene->errorMessage(QObject::tr(
-                        "Currently we can't remove packages with connected with other packages, break the connections "
-                        "first."));
-                    return;
-                }
-                case lvtldr::ErrorRemovePackage::Kind::CannotRemovePackageWithClients: {
-                    Q_EMIT scene->errorMessage(
-                        QObject::tr("Currently we can't remove packages with clients, break the connections first."));
-                    return;
-                }
-                case lvtldr::ErrorRemovePackage::Kind::CannotRemovePackageWithChildren: {
-                    Q_EMIT scene->errorMessage(QObject::tr(
-                        "Currently we can't remove packages that contains children, remove the childs first."));
-                    return;
-                }
-                }
+                Q_EMIT scene->errorMessage(errorKindToStr(err.error().kind, QStringLiteral("packages")));
+                return;
             }
             view->undoCommandReceived(new UndoAddPackage(scene,
                                                          entity->pos(),
@@ -552,25 +536,8 @@ LakosEntity *addVertex(GraphicsScene *scene,
         } else if (node->type() == lvtshr::DiagramType::ComponentType) {
             auto err = nodeStorage.removeComponent(node);
             if (err.has_error()) {
-                switch (err.error().kind) {
-                case lvtldr::ErrorRemoveComponent::Kind::CannotRemoveComponentWithProviders: {
-                    Q_EMIT scene->errorMessage(QObject::tr(
-                        "Currently we can't remove components with connected with other components, break the "
-                        "connections first."));
-                    return;
-                }
-                case lvtldr::ErrorRemoveComponent::Kind::CannotRemoveComponentWithClients: {
-                    Q_EMIT scene->errorMessage(
-                        QObject::tr("Currently we can't remove components with clients, break the "
-                                    "connections first."));
-                    return;
-                }
-                case lvtldr::ErrorRemoveComponent::Kind::CannotRemoveComponentWithChildren: {
-                    Q_EMIT scene->errorMessage(QObject::tr(
-                        "Currently we can't remove components that contains children, remove the childs first."));
-                    return;
-                }
-                }
+                Q_EMIT scene->errorMessage(errorKindToStr(err.error().kind, "components"));
+                return;
             }
             view->undoCommandReceived(new UndoAddComponent(scene,
                                                            entity->pos(),
@@ -582,26 +549,8 @@ LakosEntity *addVertex(GraphicsScene *scene,
         } else if (node->type() == lvtshr::DiagramType::ClassType) {
             auto err = nodeStorage.removeLogicalEntity(node);
             if (err.has_error()) {
-                switch (err.error().kind) {
-                case lvtldr::ErrorRemoveLogicalEntity::Kind::CannotRemoveUDTWithProviders: {
-                    Q_EMIT scene->errorMessage(QObject::tr(
-                        "Currently we can't remove logical entities connected with other entities, break the "
-                        "connections first."));
-                    return;
-                }
-                case lvtldr::ErrorRemoveLogicalEntity::Kind::CannotRemoveUDTWithClients: {
-                    Q_EMIT scene->errorMessage(
-                        QObject::tr("Currently we can't remove logical entities with clients, break the connections "
-                                    "first."));
-                    return;
-                }
-                case lvtldr::ErrorRemoveLogicalEntity::Kind::CannotRemoveUDTWithChildren: {
-                    Q_EMIT scene->errorMessage(QObject::tr(
-                        "Currently we can't remove logical entities that contains children, remove the inner childs "
-                        "first."));
-                    return;
-                }
-                }
+                Q_EMIT scene->errorMessage(errorKindToStr(err.error().kind, "user defined type"));
+                return;
             }
             view->undoCommandReceived(new UndoAddLogicalEntity(scene,
                                                                entity->pos(),

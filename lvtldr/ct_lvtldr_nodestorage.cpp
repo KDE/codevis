@@ -139,18 +139,18 @@ cpp::result<LakosianNode *, ErrorAddPackage> NodeStorage::addPackage(const std::
     return lakosianNode;
 }
 
-cpp::result<void, ErrorRemovePackage> NodeStorage::removePackage(LakosianNode *node)
+cpp::result<void, ErrorRemoveEntity> NodeStorage::removePackage(LakosianNode *node)
 {
-    using Kind = ErrorRemovePackage::Kind;
+    using Kind = ErrorRemoveEntity::Kind;
 
     if (!node->providers().empty()) {
-        return cpp::fail(ErrorRemovePackage{Kind::CannotRemovePackageWithProviders});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithProviders});
     }
     if (!node->clients().empty()) {
-        return cpp::fail(ErrorRemovePackage{Kind::CannotRemovePackageWithClients});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithClients});
     }
     if (!node->children().empty()) {
-        return cpp::fail(ErrorRemovePackage{Kind::CannotRemovePackageWithChildren});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithChildren});
     }
 
     if (node->parent()) {
@@ -210,19 +210,19 @@ NodeStorage::addComponent(const std::string& name, const std::string& qualifiedN
     return lakosianNode;
 }
 
-cpp::result<void, ErrorRemoveComponent> NodeStorage::removeComponent(LakosianNode *node)
+cpp::result<void, ErrorRemoveEntity> NodeStorage::removeComponent(LakosianNode *node)
 {
-    using Kind = ErrorRemoveComponent::Kind;
+    using Kind = ErrorRemoveEntity::Kind;
 
     if (!node->providers().empty()) {
-        return cpp::fail(ErrorRemoveComponent{Kind::CannotRemoveComponentWithProviders});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithProviders});
     }
 
     if (!node->clients().empty()) {
-        return cpp::fail(ErrorRemoveComponent{Kind::CannotRemoveComponentWithClients});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithClients});
     }
     if (!node->children().empty()) {
-        return cpp::fail(ErrorRemoveComponent{Kind::CannotRemoveComponentWithChildren});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithChildren});
     }
 
     // Must be done before actual removal
@@ -298,18 +298,18 @@ cpp::result<LakosianNode *, ErrorAddUDT> NodeStorage::addLogicalEntity(const std
     return addedNode;
 }
 
-cpp::result<void, ErrorRemoveLogicalEntity> NodeStorage::removeLogicalEntity(LakosianNode *node)
+cpp::result<void, ErrorRemoveEntity> NodeStorage::removeLogicalEntity(LakosianNode *node)
 {
-    using Kind = ErrorRemoveLogicalEntity::Kind;
+    using Kind = ErrorRemoveEntity::Kind;
 
     if (!node->providers().empty()) {
-        return cpp::fail(ErrorRemoveLogicalEntity{Kind::CannotRemoveUDTWithProviders});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithProviders});
     }
     if (!node->clients().empty()) {
-        return cpp::fail(ErrorRemoveLogicalEntity{Kind::CannotRemoveUDTWithClients});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithClients});
     }
     if (!node->children().empty()) {
-        return cpp::fail(ErrorRemoveLogicalEntity{Kind::CannotRemoveUDTWithChildren});
+        return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithChildren});
     }
 
     // Update cache

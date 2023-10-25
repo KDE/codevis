@@ -221,7 +221,7 @@ TEST_CASE("Package groups and standalone packages interaction")
 
 TEST_CASE("Remove Packages")
 {
-    using ErrorKind = ErrorRemovePackage::Kind;
+    using ErrorKind = ErrorRemoveEntity::Kind;
 
     {
         auto tmpDir = TmpDir{"remove_packages_basic"};
@@ -255,7 +255,7 @@ TEST_CASE("Remove Packages")
         REQUIRE(nodeStorage.getTopLevelPackages().size() == 1);
         auto ret = nodeStorage.removePackage(pkg1);
         REQUIRE(ret.has_error());
-        REQUIRE(ret.error().kind == ErrorKind::CannotRemovePackageWithChildren);
+        REQUIRE(ret.error().kind == ErrorKind::CannotRemoveWithChildren);
         REQUIRE(nodeStorage.getTopLevelPackages().size() == 1);
 
         ret = nodeStorage.removePackage(pkg2);
@@ -281,11 +281,11 @@ TEST_CASE("Remove Packages")
         REQUIRE(nodeStorage.getTopLevelPackages().size() == 2);
         auto ret1 = nodeStorage.removePackage(pkg1);
         REQUIRE(ret1.has_error());
-        REQUIRE(ret1.error().kind == ErrorKind::CannotRemovePackageWithProviders);
+        REQUIRE(ret1.error().kind == ErrorKind::CannotRemoveWithProviders);
         REQUIRE(nodeStorage.getTopLevelPackages().size() == 2);
         auto ret2 = nodeStorage.removePackage(pkg2);
         REQUIRE(ret2.has_error());
-        REQUIRE(ret2.error().kind == ErrorKind::CannotRemovePackageWithClients);
+        REQUIRE(ret2.error().kind == ErrorKind::CannotRemoveWithClients);
         REQUIRE(nodeStorage.getTopLevelPackages().size() == 2);
     }
 }

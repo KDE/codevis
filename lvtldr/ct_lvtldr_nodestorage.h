@@ -46,29 +46,12 @@ class TypeNode;
 // class NodeStorage
 // ==========================
 
-struct ErrorRemovePackage {
-    enum class Kind {
-        CannotRemovePackageWithProviders,
-        CannotRemovePackageWithClients,
-        CannotRemovePackageWithChildren
-    };
+struct ErrorRemoveEntity {
+    enum class Kind { CannotRemoveWithProviders, CannotRemoveWithClients, CannotRemoveWithChildren };
 
     Kind kind;
 };
-struct ErrorRemoveComponent {
-    enum class Kind {
-        CannotRemoveComponentWithProviders,
-        CannotRemoveComponentWithClients,
-        CannotRemoveComponentWithChildren
-    };
 
-    Kind kind;
-};
-struct ErrorRemoveLogicalEntity {
-    enum class Kind { CannotRemoveUDTWithProviders, CannotRemoveUDTWithClients, CannotRemoveUDTWithChildren };
-
-    Kind kind;
-};
 struct ErrorAddPhysicalDependency {
     enum class Kind {
         InvalidType,
@@ -153,14 +136,14 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
                                                             LakosianNode *parent = nullptr,
                                                             std::any userdata = std::any());
 
-    cpp::result<void, ErrorRemovePackage> removePackage(LakosianNode *node);
+    cpp::result<void, ErrorRemoveEntity> removePackage(LakosianNode *node);
     // removes a package.
 
     cpp::result<LakosianNode *, ErrorAddComponent>
     addComponent(const std::string& name, const std::string& qualifiedName, LakosianNode *parentPackage);
     // adds a component on a Package.
 
-    cpp::result<void, ErrorRemoveComponent> removeComponent(LakosianNode *node);
+    cpp::result<void, ErrorRemoveEntity> removeComponent(LakosianNode *node);
     // removes a package.
 
     cpp::result<LakosianNode *, ErrorAddUDT> addLogicalEntity(const std::string& name,
@@ -170,7 +153,7 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
     // adds a logical entity on a given parent.
     // the given parent can be a component, or a logical entity.
 
-    cpp::result<void, ErrorRemoveLogicalEntity> removeLogicalEntity(LakosianNode *node);
+    cpp::result<void, ErrorRemoveEntity> removeLogicalEntity(LakosianNode *node);
 
     [[nodiscard]] cpp::result<void, ErrorAddPhysicalDependency> addPhysicalDependency(LakosianNode *source,
                                                                                       LakosianNode *target);

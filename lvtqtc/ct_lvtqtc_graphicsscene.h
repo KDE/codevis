@@ -106,10 +106,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     void setColorManagement(const std::shared_ptr<lvtclr::ColorManagement>& colorManagement);
 
-    void setStrictMode(bool strictMode);
-    // Sets whether we should attempt to continue or fail immediately on errors
-    // default is off.
-
     bool hasMainNodeSelected() const;
 
     // This class defines what we need to implement on classes that load graphs visually

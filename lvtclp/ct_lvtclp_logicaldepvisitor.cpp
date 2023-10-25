@@ -49,7 +49,9 @@
 
 #include <llvm/Support/raw_ostream.h>
 
+#include <fstream>
 #include <functional>
+#include <iostream>
 #include <string>
 
 #include <thread>
@@ -672,8 +674,52 @@ std::string LogicalDepVisitor::getTemplateParameters(const clang::FunctionDecl *
     return templateParameters;
 }
 
+class CoutToFileContext {
+  public:
+    explicit CoutToFileContext(): outputFile("output.txt", std::ios_base::app), originalRdBuf(std::cout.rdbuf())
+    {
+        std::cout.rdbuf(outputFile.rdbuf());
+    }
+
+    ~CoutToFileContext()
+    {
+        std::cout.rdbuf(originalRdBuf);
+    }
+
+    std::ofstream outputFile;
+    decltype(std::cout.rdbuf()) originalRdBuf;
+};
+
+class CaptureCallGraphASTVisitor : public clang::RecursiveASTVisitor<CaptureCallGraphASTVisitor> {
+  public:
+    explicit CaptureCallGraphASTVisitor(clang::ASTContext *Context, clang::FunctionDecl *functionDecl):
+        Context(Context), functionDecl(functionDecl)
+    {
+    }
+
+    bool VisitCallExpr(clang::CallExpr *callExpr)
+    {
+        auto *directCallee = callExpr->getDirectCallee();
+        if (!directCallee) {
+            return true;
+        }
+        CoutToFileContext _;
+        std::cout << "\"" << functionDecl->getQualifiedNameAsString() << "\" -> \"" << directCallee->getNameAsString()
+                  << "\"\n";
+        return true;
+    }
+
+    clang::ASTContext *Context;
+    clang::FunctionDecl *functionDecl;
+};
+
 bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
 {
+    if (functionDecl->hasBody()) {
+        auto myVis = CaptureCallGraphASTVisitor{Context, functionDecl};
+        myVis.TraverseStmt(functionDecl->getBody());
+    }
+
     if (d_visitLog_p->alreadyVisited(functionDecl, clang::Decl::Kind::Function, functionDecl->getTemplatedKind())) {
         return true;
     }

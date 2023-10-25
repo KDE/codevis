@@ -49,8 +49,9 @@ TEST_CASE_METHOD(QTApplicationFixture, "Undo/Redo add logical entity")
 
     // This GraphicsView is in the heap so that we can control it's lifetime
     auto *gv = new GraphicsViewWrapperForTesting{nodeStorage};
-    // TODO: update this call.
-    // gv->updateComponentGraph(QString::fromStdString(aaa->qualifiedName()));
+    auto *scene = dynamic_cast<GraphicsScene *>(gv->scene());
+    scene->loadEntityByQualifiedName(QString::fromStdString(logical_entity->qualifiedName()), QPoint(10, 10));
+
     gv->show();
 
     auto undoRedo = UndoManager{};
@@ -69,14 +70,11 @@ TEST_CASE_METHOD(QTApplicationFixture, "Undo/Redo add logical entity")
     REQUIRE(gv->hasEntityWithId(logicalEntityUUID));
 
     undoRedo.undo();
-
-    /*
     // Component is removed from both nodeStorage and the GraphicsScene
     REQUIRE(nodeStorage.findById(logicalEntityUUID) == nullptr);
     REQUIRE_FALSE(gv->hasEntityWithId(logicalEntityUUID));
 
     undoRedo.redo();
-
     // Component is added back to nodeStorage and GraphicsScene
     logical_entity = nodeStorage.findByQualifiedName(DiagramType::ClassType, "SomeClass");
     REQUIRE(logical_entity);
@@ -87,11 +85,9 @@ TEST_CASE_METHOD(QTApplicationFixture, "Undo/Redo add logical entity")
 
     // Undo/Redo must work even if the GraphicsScene gets deleted
     delete gv;
-
     REQUIRE(nodeStorage.findByQualifiedName(DiagramType::ClassType, "SomeClass"));
     undoRedo.undo();
     REQUIRE(nodeStorage.findByQualifiedName(DiagramType::ClassType, "SomeClass") == nullptr);
     undoRedo.redo();
     REQUIRE(nodeStorage.findByQualifiedName(DiagramType::ClassType, "SomeClass"));
-*/
 }

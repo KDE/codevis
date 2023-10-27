@@ -98,12 +98,10 @@ add_dependencies(lvtplg generate_lvtclp_plugin_headers)
 
 add_custom_command(
     OUTPUT
-        "${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_hookbindings.inc.cpp"
-        "${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_handlerbindings.inc.cpp"
+        "${CMAKE_CURRENT_BINARY_DIR}/ct_lvtplg_hookbindings.inc.cpp"
+        "${CMAKE_CURRENT_BINARY_DIR}/ct_lvtplg_handlerbindings.inc.cpp"
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_python_hook_bindings.py ${CMAKE_BINARY_DIR}/lvtplg/
-    COMMAND ${CLANG_FORMAT} -i ${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_hookbindings.inc.cpp
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_python_handler_bindings.py ${CMAKE_BINARY_DIR}/lvtplg/
-    COMMAND ${CLANG_FORMAT} -i ${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_handlerbindings.inc.cpp
     DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/generate_python_hook_bindings.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/generate_python_handler_bindings.py"
@@ -115,8 +113,8 @@ add_custom_command(
 add_custom_target(
     generate_lvtclp_py_bindings ALL
     DEPENDS
-        "${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_hookbindings.inc.cpp"
-        "${CMAKE_BINARY_DIR}/lvtplg/ct_lvtplg_handlerbindings.inc.cpp"
+        "${CMAKE_CURRENT_BINARY_DIR}/ct_lvtplg_hookbindings.inc.cpp"
+        "${CMAKE_CURRENT_BINARY_DIR}/ct_lvtplg_handlerbindings.inc.cpp"
 )
 add_dependencies(lvtplg generate_lvtclp_py_bindings)
 

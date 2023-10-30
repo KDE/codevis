@@ -52,7 +52,7 @@ AddTargetLibrary(
 )
 
 target_include_directories(lvtmdb
-    PRIVATE
+    PUBLIC
     ${SQLite3_INCLUDE_DIRS}
 )
 

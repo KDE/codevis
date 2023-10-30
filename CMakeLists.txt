@@ -289,7 +289,7 @@ if (BUILD_DESKTOP_APP)
 
     install(TARGETS
         lakospreferences
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
     )
 
     add_subdirectory(doc)

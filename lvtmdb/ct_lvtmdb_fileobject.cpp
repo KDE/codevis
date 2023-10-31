@@ -88,6 +88,12 @@ const std::vector<NamespaceObject *>& FileObject::namespaces() const
     return d_namespaces;
 }
 
+const std::vector<FunctionObject *>& FileObject::globalFunctions() const
+{
+    assertReadable();
+    return d_globalfunctions;
+}
+
 const std::vector<TypeObject *>& FileObject::types() const
 {
     assertReadable();
@@ -104,6 +110,12 @@ void FileObject::addNamespace(NamespaceObject *nmspc)
 {
     assertWritable();
     MdbUtil::pushBackUnique(d_namespaces, nmspc);
+}
+
+void FileObject::addGlobalFunction(FunctionObject *fnc)
+{
+    assertWritable();
+    MdbUtil::pushBackUnique(d_globalfunctions, fnc);
 }
 
 void FileObject::addType(TypeObject *type)

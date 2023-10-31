@@ -34,6 +34,7 @@ class ComponentObject;
 class NamespaceObject;
 class PackageObject;
 class TypeObject;
+class FunctionObject;
 
 // ===================
 // class FileObject
@@ -62,6 +63,8 @@ class LVTMDB_EXPORT FileObject : public DatabaseObject {
     std::vector<NamespaceObject *> d_namespaces;
 
     std::vector<TypeObject *> d_types;
+
+    std::vector<FunctionObject *> d_globalfunctions;
 
   public:
     // CREATORS
@@ -93,6 +96,8 @@ class LVTMDB_EXPORT FileObject : public DatabaseObject {
 
     [[nodiscard]] const std::vector<NamespaceObject *>& namespaces() const;
 
+    [[nodiscard]] const std::vector<FunctionObject *>& globalFunctions() const;
+
     [[nodiscard]] const std::vector<TypeObject *>& types() const;
 
     // MANIPULATORS
@@ -100,6 +105,9 @@ class LVTMDB_EXPORT FileObject : public DatabaseObject {
     // Update the stored hash for a file
 
     void addNamespace(NamespaceObject *nmspc);
+    // An exclusive lock on this is required before calling this method
+
+    void addGlobalFunction(FunctionObject *fnc);
     // An exclusive lock on this is required before calling this method
 
     void addType(TypeObject *type);

@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <initializer_list>
 #include <string>
+#include <tuple>
+#include <unordered_set>
 #include <vector>
 
 #include <catch2-local-includes.h>
@@ -741,5 +743,31 @@ TEST_CASE("C functions")
         });
         return res;
     }();
-    REQUIRE(obtainedFunctionNames == std::unordered_set<std::string>{"f", "g", "h"});
+    {
+        using Expected = decltype(obtainedFunctionNames);
+        REQUIRE(obtainedFunctionNames == Expected{"f", "g", "h"});
+    }
+
+    auto obtainedFunctionsInFiles = [&]() {
+        auto res = std::unordered_set<std::string>{};
+        auto *file = [&]() {
+            auto *ret = (FileObject *) nullptr;
+            session.withROLock([&]() {
+                ret = session.getFile("testFreeFunction.cpp");
+            });
+            return ret;
+        }();
+        file->withROLock([&]() {
+            for (auto const& func : file->globalFunctions()) {
+                func->withROLock([&]() {
+                    res.insert(func->qualifiedName());
+                });
+            }
+        });
+        return res;
+    }();
+    {
+        using Expected = decltype(obtainedFunctionsInFiles);
+        REQUIRE(obtainedFunctionsInFiles == Expected{"f", "g", "h"});
+    }
 }

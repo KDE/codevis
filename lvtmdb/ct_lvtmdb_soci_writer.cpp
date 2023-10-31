@@ -540,6 +540,25 @@ void exportFileRelations(FileObject *file, soci::session& db)
         db << "insert into namespace_source_file(source_file_id, namespace_id) values (:s, :t)", soci::use(this_id),
             soci::use(dep_id);
     }
+
+    // free functions
+    for (FunctionObject *fnc : file->globalFunctions()) {
+        auto _lock = fnc->readOnlyLock();
+        (void) _lock;
+
+        int dep_id = query_id_from_qual_name(db, "function_declaration", fnc->qualifiedName()).value().first;
+        db << "select source_file_id from global_function_source_file where source_file_id = :s and function_id = :t "
+              "limit "
+              "1",
+            soci::use(this_id), soci::use(dep_id);
+
+        if (db.got_data()) {
+            continue;
+        }
+
+        db << "insert into global_function_source_file(source_file_id, function_id) values (:s, :t)",
+            soci::use(this_id), soci::use(dep_id);
+    }
 }
 
 void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)

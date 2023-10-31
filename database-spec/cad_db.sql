@@ -214,6 +214,15 @@ CREATE TABLE IF NOT EXISTS "field_type" (
 	CONSTRAINT "fk_field_type_key1" FOREIGN KEY("type_class_id") REFERENCES "class_declaration"("id") on delete cascade deferrable initially deferred,
 	CONSTRAINT "fk_field_type_key2" FOREIGN KEY("field_id") REFERENCES "field_declaration"("id") on delete cascade deferrable initially deferred
 );
+CREATE TABLE IF NOT EXISTS "global_function_source_file" (
+    "id"	integer,
+    "source_file_id"	bigint,
+    "function_id"	bigint,
+    PRIMARY KEY("id" AUTOINCREMENT),
+    CONSTRAINT "fk_global_function_source_file_source_id" FOREIGN KEY("source_file_id") REFERENCES "source_file"("id") deferrable initially deferred,
+    CONSTRAINT "fk_global_function_source_file_function_id" FOREIGN KEY("function_id") REFERENCES "function_declaration"("id") deferrable initially deferred
+);
+
 CREATE INDEX IF NOT EXISTS "namespace_source_file_source_file_source_file" ON "namespace_source_file" (
 	"source_file_id"
 );
@@ -316,6 +325,10 @@ CREATE INDEX IF NOT EXISTS "uses_in_the_interface_source_id" ON "uses_in_the_int
 CREATE INDEX IF NOT EXISTS "variable_declaration_qualified_name" ON "variable_declaration" (
 	"qualified_name"
 );
+CREATE INDEX IF NOT EXISTS "global_function_source_file_id" ON "global_function_source_file" (
+    "id"
+);
+
 CREATE TABLE IF NOT EXISTS "cad_notes" (
     "id"	integer,
     "version"	integer NOT NULL,

@@ -788,6 +788,14 @@ bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
                 parentNamespace->addFunction(function);
             });
         }
+
+        const clang::SourceManager& srcMgr = Context->getSourceManager();
+        std::string sourceFile = ClpUtil::getRealPath(functionDecl->getLocation(), srcMgr);
+        lvtmdb::FileObject *filePtr =
+            ClpUtil::writeSourceFile(sourceFile, false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        filePtr->withRWLock([&] {
+            filePtr->addGlobalFunction(function);
+        });
     }
 
     return true;

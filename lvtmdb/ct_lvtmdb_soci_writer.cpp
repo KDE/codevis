@@ -91,7 +91,15 @@ bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std
     }
 
     if (std::filesystem::exists(resulting_file)) {
-        std::filesystem::remove(resulting_file);
+        try {
+            std::filesystem::remove(resulting_file);
+        } catch (std::exception& e) {
+            // This only happens in windows. something keeps those files open and windows
+            // can't delete them. but it's safe to assume that at least, we have a database to use.
+            // so even if it's an exception, we can safely return true.
+            std::cout << "Exception: " << e.what() << "\n";
+            return true;
+        }
     }
 
     bool res = thisFile.copy(QString::fromStdString(resulting_file.string())); // to the filesystem.

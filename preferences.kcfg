@@ -14,6 +14,10 @@
             <default>false</default>
         </entry>
         <entry name="enableDebugOutput" type="Bool">
+            <label>Dumps debug messages to stdout.</label>
+            <default>false</default>
+        </entry>
+        <entry name="enableCodeParseDebugOutput" type="Bool">
             <label>Dumps debug messages to stdout. This can potentially slowdown the Code Analysis step</label>
             <default>false</default>
         </entry>

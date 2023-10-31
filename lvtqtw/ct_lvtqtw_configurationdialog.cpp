@@ -76,6 +76,10 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
 
     connect(d->ui.debugContextMenu, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableSceneContextMenu);
     connect(d->ui.enableDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableDebugOutput);
+    connect(d->ui.enableCodeParseDebugOutput,
+            &QCheckBox::toggled,
+            Preferences::self(),
+            &Preferences::setEnableCodeParseDebugOutput);
     connect(d->ui.storeDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setStoreDebugOutput);
 
     connect(d->ui.isARelation, &QCheckBox::toggled, Preferences::self(), &Preferences::setShowIsARelation);
@@ -248,6 +252,7 @@ void ConfigurationDialog::load()
 {
     d->ui.debugContextMenu->setChecked(Preferences::enableSceneContextMenu());
     d->ui.enableDebugOutput->setChecked(Preferences::enableDebugOutput());
+    d->ui.enableCodeParseDebugOutput->setChecked(Preferences::enableCodeParseDebugOutput());
     d->ui.storeDebugOutput->setChecked(Preferences::storeDebugOutput());
     d->ui.showProviders->setChecked(Preferences::showProviders());
     d->ui.showClients->setChecked(Preferences::showClients());

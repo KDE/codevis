@@ -573,6 +573,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QCheckBox" name="enableCodeParseDebugOutput">
+           <property name="text">
+            <string>Enable Code Parse Debug Output</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QCheckBox" name="storeDebugOutput">
            <property name="text">
             <string>Store Debug Output</string>

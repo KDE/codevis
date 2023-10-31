@@ -708,7 +708,7 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
                                           const std::vector<std::string>& ignoreList,
                                           const std::vector<std::filesystem::path>& nonLakosianDirs)
 {
-    const bool catchCodeAnalysisOutput = Preferences::enableDebugOutput();
+    const bool catchCodeAnalysisOutput = Preferences::enableCodeParseDebugOutput();
 
     if (!d->tool_p) {
         d->tool_p = std::make_unique<lvtclp::Tool>(sourcePath(),

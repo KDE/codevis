@@ -217,6 +217,10 @@ void DebugModel::debugMessageHandler(QtMsgType msgType, const QMessageLogContext
         return;
     }
 
+    if (message.trimmed().isEmpty()) {
+        return;
+    }
+
     // clang-tidy cert-err33-c requires us to check the return value of printf
     auto checkRet = [](int ret) {
         assert(ret > 0);

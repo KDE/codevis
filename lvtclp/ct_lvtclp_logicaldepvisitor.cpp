@@ -1113,13 +1113,7 @@ void LogicalDepVisitor::processMethodArg(const clang::VarDecl *varDecl,
     // given to us)
     if (access == clang::AS_none) {
         if (methodParent->isLambda()) {
-            const clang::Decl::Kind parentContextKind = methodParent->getDeclContext()->getDeclKind();
-
-            if (parentContextKind == clang::Decl::Kind::CXXMethod) {
-                // This lambda is used inside a method so it should so it
-                // should always be usesInTheImpl
-                access = clang::AS_private;
-            } else {
+            if (methodParent->getDeclContext()->getDeclKind() != clang::Decl::Kind::CXXMethod) {
                 // This is a lambda as a class field so
                 // parentContextKind == clang::Decl::Kind::CXXRecord
                 // We get called for this once from addField (which sets the
@@ -1130,12 +1124,17 @@ void LogicalDepVisitor::processMethodArg(const clang::VarDecl *varDecl,
                 // already added
                 return;
             }
+
+            // This lambda is used inside a method so it should so it
+            // should always be usesInTheImpl
+            access = clang::AS_private;
         } else {
             // method parent is not a lambda so this is a normal method
             // argument and should use the access specifier of the method
             access = methodDecl->getAccess();
         }
     }
+
     if (access == clang::AS_none) {
         // we won't add anything later anyway so fail early without troubling
         // the database

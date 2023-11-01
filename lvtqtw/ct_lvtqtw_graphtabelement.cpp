@@ -516,6 +516,8 @@ bool GraphTabElement::setCurrentGraph(const QString& fullyQualifiedName,
             return d->graphicsView->updatePackageGraph(fullyQualifiedName);
         case DiagramType::RepositoryType:
             return d->graphicsView->updateGraph(fullyQualifiedName, lvtshr::DiagramType::RepositoryType);
+        case DiagramType::FreeFunctionType:
+            return d->graphicsView->updateGraph(fullyQualifiedName, lvtshr::DiagramType::FreeFunctionType);
         case DiagramType::NoneType:
             break;
         }
@@ -552,6 +554,8 @@ void GraphTabElement::setCurrentDiagramFromHistory(int idx)
         qWarning() << "Database corrupted";
         return;
     case lvtshr::DiagramType::ClassType:
+        [[fallthrough]];
+    case lvtshr::DiagramType::FreeFunctionType:
         [[fallthrough]];
     case lvtshr::DiagramType::PackageType:
         [[fallthrough]];

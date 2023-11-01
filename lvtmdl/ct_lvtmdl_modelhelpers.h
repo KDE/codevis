@@ -57,6 +57,7 @@ struct LVTMDL_EXPORT NodeType {
         e_Package, // Represents a SourcePackage
         e_Repository, // Represents a SourceRepository
         e_Component, // Represents a SourceComponent
+        e_FreeFunction, // Represents a global FreeFunction
         e_Invalid // Only used as a return value for bad conversion
     };
 

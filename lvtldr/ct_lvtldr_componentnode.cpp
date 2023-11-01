@@ -150,10 +150,18 @@ void ComponentNode::loadChildren()
     d->childrenLoaded = true;
 
     d->children.clear();
-    d->children.reserve(d_fields.childUdtIds.size());
-    for (auto&& id : d_fields.childUdtIds) {
+    d->children.reserve(d_fields.childUdtIds.size() + d_fields.childGlobalFunctionIds.size());
+    for (auto const& id : d_fields.childUdtIds) {
         LakosianNode *node = d->store.findById({DiagramType::ClassType, id});
         if (dynamic_cast<TypeNode *>(node)->hasClassNamespace()) {
+            continue;
+        }
+        d->children.push_back(node);
+    }
+
+    for (auto const& id : d_fields.childGlobalFunctionIds) {
+        LakosianNode *node = d->store.findById({DiagramType::FreeFunctionType, id});
+        if (!node) {
             continue;
         }
         d->children.push_back(node);
@@ -203,6 +211,10 @@ void ComponentNode::removeChild(LakosianNode *child)
     Q_EMIT onChildCountChanged(d->children.size());
     {
         auto& v = d_fields.childUdtIds;
+        v.erase(std::remove(v.begin(), v.end(), child->id()), v.end());
+    }
+    {
+        auto& v = d_fields.childGlobalFunctionIds;
         v.erase(std::remove(v.begin(), v.end(), child->id()), v.end());
     }
     {

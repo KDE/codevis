@@ -207,16 +207,14 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
     Q_SIGNAL void entityReparent(LakosianNode *, LakosianNode *, LakosianNode *);
 
   private:
-    // TODO: Replace old version with V2 when refactoring is done
     template<typename LDR_TYPE>
-    LakosianNode *fetchFromDBByQualifiedNameV2(const std::string& qualifiedName);
-
-    // TODO: Replace old version with V2 when refactoring is done
-    template<typename LDR_TYPE>
-    LakosianNode *fetchFromDBByIdV2(const lvtshr::UniqueId& uid);
+    LakosianNode *fetchFromDBByQualifiedName(const std::string& qualifiedName);
 
     template<typename LDR_TYPE>
-    void updateAndNotifyNodeRenameV2(LakosianNode *node);
+    LakosianNode *fetchFromDBById(const lvtshr::UniqueId& uid);
+
+    template<typename LDR_TYPE>
+    void updateAndNotifyNodeRename(LakosianNode *node);
 
     void preloadHighLevelComponents();
 };

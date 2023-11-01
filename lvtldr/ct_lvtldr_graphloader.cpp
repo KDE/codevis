@@ -198,6 +198,9 @@ lvtqtc::LakosEntity *GraphLoader::load(const GraphLoader::LoaderVertex& vertex)
         case lvtshr::DiagramType::ComponentType:
             entity = d->graph->addCompVertex(vertex.node, vertex.expanded, parent, vertex.info);
             break;
+        case lvtshr::DiagramType::FreeFunctionType:
+            entity = d->graph->addUdtVertex(vertex.node, vertex.expanded, parent, vertex.info);
+            break;
         case lvtshr::DiagramType::NoneType:
             break;
         }

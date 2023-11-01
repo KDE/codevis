@@ -294,6 +294,9 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
                 return addCompVertex(node, true, parent, info);
             case lvtshr::DiagramType::PackageType:
                 return addPkgVertex(node, true, parent, info);
+            case lvtshr::DiagramType::FreeFunctionType:
+                // Not implemented (We do not support creating free functions in CAD mode)
+                break;
             case lvtshr::DiagramType::RepositoryType:
                 break;
             case lvtshr::DiagramType::NoneType:
@@ -1213,6 +1216,8 @@ GraphicsScene::CodeDbLoadStatus GraphicsScene::requestDataFromDatabase()
     case lvtshr::DiagramType::RepositoryType:
         [[fallthrough]];
     case lvtshr::DiagramType::ClassType:
+        [[fallthrough]];
+    case lvtshr::DiagramType::FreeFunctionType:
         [[fallthrough]];
     case lvtshr::DiagramType::PackageType:
         [[fallthrough]];
@@ -2152,6 +2157,8 @@ void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, cons
                 return &GraphicsScene::addPkgVertex;
             case lvtshr::DiagramType::RepositoryType:
                 return &GraphicsScene::addRepositoryVertex;
+            case lvtshr::DiagramType::FreeFunctionType:
+                return &GraphicsScene::addUdtVertex;
             case lvtshr::DiagramType::NoneType:
                 break;
             }

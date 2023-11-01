@@ -44,6 +44,8 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
             return EntityType::Package;
         case lvtshr::DiagramType::RepositoryType:
             return EntityType::Unknown;
+        case lvtshr::DiagramType::FreeFunctionType:
+            return EntityType::Unknown;
         case lvtshr::DiagramType::NoneType:
             return EntityType::Unknown;
         }

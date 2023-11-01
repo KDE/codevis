@@ -49,6 +49,7 @@ enum class DiagramType {
     PackageType = 100,
     RepositoryType = 1000,
     NoneType = 1001,
+    FreeFunctionType = 10000,
 };
 
 enum class AccessSpecifier {

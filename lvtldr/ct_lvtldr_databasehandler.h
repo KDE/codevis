@@ -21,6 +21,7 @@
 #define DIAGRAM_SERVER_CT_LVTLDR_DATABASEHANDLER_H
 
 #include <ct_lvtldr_componentnodefields.h>
+#include <ct_lvtldr_freefunctionnodefields.h>
 #include <ct_lvtldr_packagenodefields.h>
 #include <ct_lvtldr_repositorynodefields.h>
 #include <ct_lvtldr_typenodefields.h>
@@ -62,6 +63,10 @@ class DatabaseHandler {
     virtual void updateFields(PackageNodeFields const& dao) = 0;
     virtual void addFields(PackageNodeFields& dao) = 0;
     virtual void removePackageFieldsById(RecordNumberType id) = 0;
+
+    virtual FreeFunctionNodeFields getFreeFunctionFieldsByQualifiedName(std::string const& qualifiedName) = 0;
+    virtual FreeFunctionNodeFields getFreeFunctionFieldsById(RecordNumberType id) = 0;
+    virtual void updateFields(FreeFunctionNodeFields const& dao) = 0;
 
     virtual void addConcreteDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;
     virtual void removeConcreteDependency(RecordNumberType idFrom, RecordNumberType idTo) = 0;

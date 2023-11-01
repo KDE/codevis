@@ -21,6 +21,7 @@
 
 #include <ct_lvtldr_componentnode.h>
 #include <ct_lvtldr_databasehandler.h>
+#include <ct_lvtldr_freefunctionnode.h>
 #include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtldr_packagenode.h>
 #include <ct_lvtldr_repositorynode.h>
@@ -132,7 +133,7 @@ cpp::result<LakosianNode *, ErrorAddPackage> NodeStorage::addPackage(const std::
 
     Q_EMIT nodeAdded(lakosianNode, std::move(userdata));
     connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
-        updateAndNotifyNodeRenameV2<lvtldr::PackageNode>(node);
+        updateAndNotifyNodeRename<lvtldr::PackageNode>(node);
     });
     Q_EMIT storageChanged();
     return lakosianNode;
@@ -203,7 +204,7 @@ NodeStorage::addComponent(const std::string& name, const std::string& qualifiedN
 
     Q_EMIT nodeAdded(lakosianNode, std::any());
     connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
-        updateAndNotifyNodeRenameV2<lvtldr::ComponentNode>(node);
+        updateAndNotifyNodeRename<lvtldr::ComponentNode>(node);
     });
     Q_EMIT storageChanged();
     return lakosianNode;
@@ -288,7 +289,7 @@ cpp::result<LakosianNode *, ErrorAddUDT> NodeStorage::addLogicalEntity(const std
 
     // Update cache
     auto id = lvtshr::UniqueId{lvtshr::DiagramType::ClassType, dao.id};
-    auto *addedNode = fetchFromDBByIdV2<lvtldr::TypeNode>(id);
+    auto *addedNode = fetchFromDBById<lvtldr::TypeNode>(id);
     assert(addedNode);
     parent->addChild(addedNode).expect("Unexpected failure adding a logical entity to the NodeStorage.");
 
@@ -602,16 +603,19 @@ LakosianNode *NodeStorage::findById(const lvtshr::UniqueId& id)
 
     switch (id.diagramType()) {
     case lvtshr::DiagramType::ClassType: {
-        return fetchFromDBByIdV2<lvtldr::TypeNode>(id);
+        return fetchFromDBById<lvtldr::TypeNode>(id);
     }
     case lvtshr::DiagramType::ComponentType: {
-        return fetchFromDBByIdV2<lvtldr::ComponentNode>(id);
+        return fetchFromDBById<lvtldr::ComponentNode>(id);
     }
     case lvtshr::DiagramType::PackageType: {
-        return fetchFromDBByIdV2<lvtldr::PackageNode>(id);
+        return fetchFromDBById<lvtldr::PackageNode>(id);
     }
     case lvtshr::DiagramType::RepositoryType: {
-        return fetchFromDBByIdV2<lvtldr::RepositoryNode>(id);
+        return fetchFromDBById<lvtldr::RepositoryNode>(id);
+    }
+    case lvtshr::DiagramType::FreeFunctionType: {
+        return fetchFromDBById<lvtldr::FreeFunctionNode>(id);
     }
     case DiagramType::NoneType:
         break;
@@ -633,16 +637,19 @@ LakosianNode *NodeStorage::findByQualifiedName(lvtshr::DiagramType type, const s
     // Search for the node in the backend
     switch (type) {
     case lvtshr::DiagramType::ClassType: {
-        return fetchFromDBByQualifiedNameV2<lvtldr::TypeNode>(qualifiedName);
+        return fetchFromDBByQualifiedName<lvtldr::TypeNode>(qualifiedName);
     }
     case lvtshr::DiagramType::ComponentType: {
-        return fetchFromDBByQualifiedNameV2<lvtldr::ComponentNode>(qualifiedName);
+        return fetchFromDBByQualifiedName<lvtldr::ComponentNode>(qualifiedName);
     }
     case lvtshr::DiagramType::PackageType: {
-        return fetchFromDBByQualifiedNameV2<lvtldr::PackageNode>(qualifiedName);
+        return fetchFromDBByQualifiedName<lvtldr::PackageNode>(qualifiedName);
     }
     case lvtshr::DiagramType::RepositoryType: {
-        return fetchFromDBByQualifiedNameV2<lvtldr::RepositoryNode>(qualifiedName);
+        return fetchFromDBByQualifiedName<lvtldr::RepositoryNode>(qualifiedName);
+    }
+    case lvtshr::DiagramType::FreeFunctionType: {
+        return fetchFromDBByQualifiedName<lvtldr::FreeFunctionNode>(qualifiedName);
     }
     case lvtshr::DiagramType::NoneType: {
         break;
@@ -708,9 +715,14 @@ auto getFieldsByQualifiedName<RepositoryNode>(DatabaseHandler& dbHandler, const 
 {
     return dbHandler.getRepositoryFieldsByQualifiedName(qualifiedName);
 }
+template<>
+auto getFieldsByQualifiedName<FreeFunctionNode>(DatabaseHandler& dbHandler, const std::string& qualifiedName)
+{
+    return dbHandler.getFreeFunctionFieldsByQualifiedName(qualifiedName);
+}
 
 template<typename LDR_TYPE>
-LakosianNode *NodeStorage::fetchFromDBByQualifiedNameV2(const std::string& qualifiedName)
+LakosianNode *NodeStorage::fetchFromDBByQualifiedName(const std::string& qualifiedName)
 {
     auto dao = getFieldsByQualifiedName<LDR_TYPE>(*d->dbHandler, qualifiedName);
     if (dao.id == -1) {
@@ -721,7 +733,7 @@ LakosianNode *NodeStorage::fetchFromDBByQualifiedNameV2(const std::string& quali
     auto [it, _] = d->nodes.emplace(uid, std::make_unique<LDR_TYPE>(*this, *d->dbHandler, dao));
     auto *lakosianNode = it->second.get();
     connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
-        updateAndNotifyNodeRenameV2<LDR_TYPE>(node);
+        updateAndNotifyNodeRename<LDR_TYPE>(node);
     });
     return lakosianNode;
 }
@@ -750,9 +762,14 @@ auto getFieldsById<RepositoryNode>(DatabaseHandler& dbHandler, RecordNumberType 
 {
     return dbHandler.getRepositoryFieldsById(id);
 }
+template<>
+auto getFieldsById<FreeFunctionNode>(DatabaseHandler& dbHandler, RecordNumberType id)
+{
+    return dbHandler.getFreeFunctionFieldsById(id);
+}
 
 template<typename LDR_TYPE>
-LakosianNode *NodeStorage::fetchFromDBByIdV2(const lvtshr::UniqueId& uid)
+LakosianNode *NodeStorage::fetchFromDBById(const lvtshr::UniqueId& uid)
 {
     auto dao = getFieldsById<LDR_TYPE>(*d->dbHandler, uid.recordNumber());
     if (dao.id == -1) {
@@ -762,13 +779,13 @@ LakosianNode *NodeStorage::fetchFromDBByIdV2(const lvtshr::UniqueId& uid)
     auto [it, _] = d->nodes.emplace(uid, std::make_unique<LDR_TYPE>(*this, *d->dbHandler, dao));
     auto *lakosianNode = it->second.get();
     connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
-        updateAndNotifyNodeRenameV2<LDR_TYPE>(node);
+        updateAndNotifyNodeRename<LDR_TYPE>(node);
     });
     return lakosianNode;
 }
 
 template<typename LDR_TYPE>
-void NodeStorage::updateAndNotifyNodeRenameV2(LakosianNode *node)
+void NodeStorage::updateAndNotifyNodeRename(LakosianNode *node)
 {
     d->dbHandler->updateFields(LDR_TYPE::from(node)->getFields());
     Q_EMIT nodeNameChanged(node);

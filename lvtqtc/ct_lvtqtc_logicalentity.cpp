@@ -19,6 +19,7 @@
 
 #include <ct_lvtqtc_logicalentity.h>
 
+#include <ct_lvtldr_freefunctionnode.h>
 #include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtldr_typenode.h>
 
@@ -37,31 +38,32 @@ LogicalEntity::LogicalEntity(lvtldr::LakosianNode *node, lvtshr::LoaderInfo info
     updateTooltip();
     setRoundRadius(20);
     setText(node->name());
-
-    auto *logicalNode = dynamic_cast<lvtldr::TypeNode *>(node);
-    assert(logicalNode);
-
     d->typeText = new QGraphicsSimpleTextItem(this);
 
-    const QString text = [logicalNode]() -> QString {
-        switch (logicalNode->kind()) {
-        case lvtshr::UDTKind::Class:
-            return tr("class");
-        case lvtshr::UDTKind::Enum:
-            return tr("Enum");
-        case lvtshr::UDTKind::Struct:
-            return tr("Struct");
-        case lvtshr::UDTKind::TypeAlias:
-            return tr("Type Alias");
-        case lvtshr::UDTKind::Union:
-            return tr("Union");
-        case lvtshr::UDTKind::Unknown:
-            return tr("Unknown");
-        }
-        return {};
-    }();
-
-    d->typeText->setText(text);
+    auto *typeNode = dynamic_cast<lvtldr::TypeNode *>(node);
+    if (typeNode) {
+        const QString text = [typeNode]() -> QString {
+            switch (typeNode->kind()) {
+            case lvtshr::UDTKind::Class:
+                return tr("class");
+            case lvtshr::UDTKind::Enum:
+                return tr("Enum");
+            case lvtshr::UDTKind::Struct:
+                return tr("Struct");
+            case lvtshr::UDTKind::TypeAlias:
+                return tr("Type Alias");
+            case lvtshr::UDTKind::Union:
+                return tr("Union");
+            case lvtshr::UDTKind::Unknown:
+                return tr("Unknown");
+            }
+            return {};
+        }();
+        d->typeText->setText(text);
+    } else {
+        assert(dynamic_cast<lvtldr::FreeFunctionNode *>(node));
+        d->typeText->setText(tr("Free Function"));
+    }
 
     connect(this, &LogicalEntity::rectangleChanged, this, [this] {
         constexpr int SPACING = 5;

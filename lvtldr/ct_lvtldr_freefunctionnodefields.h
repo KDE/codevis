@@ -1,4 +1,4 @@
-// ct_lvtldr_componentnodefields.h                                   -*-C++-*-
+// ct_lvtldr_freefunctionnodefields.h                                        -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
@@ -17,8 +17,8 @@
 // limitations under the License.
 */
 
-#ifndef DIAGRAM_SERVER_CT_LVTLDR_COMPONENTNODEFIELDS_H
-#define DIAGRAM_SERVER_CT_LVTLDR_COMPONENTNODEFIELDS_H
+#ifndef DIAGRAM_SERVER_CT_LVTLDR_FREEFUNCTIONNODEFIELDS_H
+#define DIAGRAM_SERVER_CT_LVTLDR_FREEFUNCTIONNODEFIELDS_H
 
 #include <ct_lvtshr_uniqueid.h>
 
@@ -28,20 +28,21 @@
 
 namespace Codethink::lvtldr {
 
-struct ComponentNodeFields {
+struct FreeFunctionNodeFields {
     using RecordNumberType = Codethink::lvtshr::UniqueId::RecordNumberType;
 
     RecordNumberType id = -1;
     int version = -1;
-    std::string qualifiedName;
     std::string name;
-    std::optional<RecordNumberType> packageId = std::nullopt;
-    std::vector<RecordNumberType> providerIds;
-    std::vector<RecordNumberType> clientIds;
-    std::vector<RecordNumberType> childUdtIds;
-    std::vector<RecordNumberType> childGlobalFunctionIds;
+    std::string qualifiedName;
+
+    // Heuristic data - Free functions are actually related to source files, but we prepare them
+    // as component ID and store as a pseudo-field to ease search. This should be reviewed as soon as
+    // we decide between (a) Add a ComponentId field in the DB _or_ (b) Move this to be lazy evaluated
+    // on the class (FreeFunctionNode).
+    std::optional<RecordNumberType> componentId = std::nullopt;
 };
 
 } // namespace Codethink::lvtldr
 
-#endif // DIAGRAM_SERVER_CT_LVTLDR_COMPONENTNODEFIELDS_H
+#endif // DIAGRAM_SERVER_CT_LVTLDR_FREEFUNCTIONNODEFIELDS_H

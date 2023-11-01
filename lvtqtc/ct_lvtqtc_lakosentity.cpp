@@ -757,6 +757,9 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
                     return tr("Load UDT's");
                 case lvtshr::DiagramType::ClassType:
                     return tr("Load Inner Classes and Structs");
+                case lvtshr::DiagramType::FreeFunctionType:
+                    // Currently, we do not expect types or functions inside free functions
+                    return {};
                 case lvtshr::DiagramType::NoneType:
                     assert(false && "Should never hit.");
                 }
@@ -779,6 +782,9 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
                     return tr("Unload UDT's");
                 case lvtshr::DiagramType::ClassType:
                     return tr("Unload Inner Classes and Structs");
+                case lvtshr::DiagramType::FreeFunctionType:
+                    // Currently, we do not expect types or functions inside free functions
+                    return {};
                 case lvtshr::DiagramType::NoneType:
                     assert(false && "Should never hit.");
                 }

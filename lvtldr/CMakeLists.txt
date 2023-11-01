@@ -14,6 +14,7 @@ AddTargetLibrary(
         ct_lvtldr_repositorynode.cpp
         ct_lvtldr_typenode.cpp
         ct_lvtldr_igraphloader.cpp
+        ct_lvtldr_freefunctionnode.cpp
     HEADERS
         ct_lvtldr_componentnode.h
         ct_lvtldr_componentnodefields.h
@@ -28,6 +29,8 @@ AddTargetLibrary(
         ct_lvtldr_sociutils.h
         ct_lvtldr_typenode.h
         ct_lvtldr_igraphloader.h
+        ct_lvtldr_freefunctionnode.h
+        ct_lvtldr_freefunctionnodefields.h
     QT_HEADERS
         ct_lvtldr_nodestorage.h
         ct_lvtldr_lakosiannode.h

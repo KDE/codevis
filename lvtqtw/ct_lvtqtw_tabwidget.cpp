@@ -64,6 +64,8 @@ DiagramType nodeTypeToDiagramType(NodeType::Enum type)
         return DiagramType::RepositoryType;
     case NodeType::e_Component:
         return DiagramType::ComponentType;
+    case NodeType::e_FreeFunction:
+        return DiagramType::FreeFunctionType;
     case NodeType::e_Invalid:
         break;
     }

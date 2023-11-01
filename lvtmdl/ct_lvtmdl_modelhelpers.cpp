@@ -41,6 +41,8 @@ NodeType::Enum NodeType::fromDiagramType(lvtshr::DiagramType type)
         return NodeType::e_Package;
     case DiagramType::RepositoryType:
         return NodeType::e_Repository;
+    case DiagramType::FreeFunctionType:
+        return NodeType::e_FreeFunction;
     case DiagramType::NoneType:
         break;
     }
@@ -60,6 +62,8 @@ lvtshr::DiagramType NodeType::toDiagramType(NodeType::Enum type)
         break;
     case e_Repository:
         return DiagramType::RepositoryType;
+    case NodeType::e_FreeFunction:
+        return DiagramType::FreeFunctionType;
     case e_Invalid:
         break;
     }

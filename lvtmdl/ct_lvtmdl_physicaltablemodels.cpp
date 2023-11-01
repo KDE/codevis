@@ -53,6 +53,8 @@ void PhysicalDepsBaseTableModel::refreshData()
         break;
     case lvtshr::DiagramType::RepositoryType:
         break;
+    case lvtshr::DiagramType::FreeFunctionType:
+        return;
     case lvtshr::DiagramType::NoneType:
         qDebug() << "Database Inconsistent: There's no diagram type for"
                  << QString::fromStdString(fullyQualifiedName());

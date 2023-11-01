@@ -203,6 +203,21 @@ class SociDatabaseHandler : public DatabaseHandler {
         return getPackageFields("id", id);
     }
 
+    void updateFields(FreeFunctionNodeFields const& dao) override
+    {
+        // Intentionally not implemented
+    }
+
+    FreeFunctionNodeFields getFreeFunctionFieldsByQualifiedName(std::string const& qualifiedName) override
+    {
+        return getFreeFunctionFields("qualified_name", qualifiedName);
+    }
+
+    FreeFunctionNodeFields getFreeFunctionFieldsById(RecordNumberType id) override
+    {
+        return getFreeFunctionFields("id", id);
+    }
+
     void addFields(PackageNodeFields& dao) override
     {
         soci::transaction tr(d_db);
@@ -530,6 +545,18 @@ class SociDatabaseHandler : public DatabaseHandler {
                 dao.childUdtIds.emplace_back(i);
             }
         }
+        {
+            soci::rowset<RecordNumberType> files_rs =
+                (d_db.prepare << "select id from source_file where component_id = :k", soci::use(dao.id));
+            for (auto const& source_id : files_rs) {
+                soci::rowset<RecordNumberType> rs =
+                    (d_db.prepare << "select function_id from global_function_source_file where source_file_id = :k",
+                     soci::use(source_id));
+                for (auto const& i : rs) {
+                    dao.childGlobalFunctionIds.emplace_back(i);
+                }
+            }
+        }
 
         return dao;
     }
@@ -588,6 +615,28 @@ class SociDatabaseHandler : public DatabaseHandler {
             }
         }
 
+        return dao;
+    }
+
+    template<typename T>
+    FreeFunctionNodeFields getFreeFunctionFields(std::string const& uniqueKeyColumnName, T const& keyValue)
+    {
+        decltype(getFreeFunctionFields(uniqueKeyColumnName, keyValue)) dao;
+        d_db << "select id, version, name, qualified_name from function_declaration where " + uniqueKeyColumnName
+                + " = :k limit 1",
+            soci::into(dao.id), soci::into(dao.version), soci::into(dao.name), soci::into(dao.qualifiedName),
+            soci::use(keyValue);
+
+        {
+            auto source_id = -1;
+            d_db << "select source_file_id from global_function_source_file where function_id = :k limit 1",
+                soci::into(source_id), soci::use(dao.id);
+
+            auto component_id = -1;
+            d_db << "select component_id from source_file where id = :k limit 1", soci::into(component_id),
+                soci::use(source_id);
+            dao.componentId = component_id;
+        }
         return dao;
     }
 

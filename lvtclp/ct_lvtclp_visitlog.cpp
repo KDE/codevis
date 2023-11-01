@@ -38,7 +38,7 @@ struct CallbackId {
     }
 };
 
-bool operator==(const CallbackId& lhs, const CallbackId& rhs)
+inline bool operator==(const CallbackId& lhs, const CallbackId& rhs)
 {
     return lhs.declKind == rhs.declKind && lhs.templateKind == rhs.templateKind && lhs.location == rhs.location;
 }

@@ -40,7 +40,7 @@ struct CallbackId {
 
 bool operator==(const CallbackId& lhs, const CallbackId& rhs)
 {
-    return lhs.location == rhs.location && lhs.declKind == rhs.declKind && lhs.templateKind == rhs.templateKind;
+    return lhs.declKind == rhs.declKind && lhs.templateKind == rhs.templateKind && lhs.location == rhs.location;
 }
 
 } // namespace

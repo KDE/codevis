@@ -657,16 +657,19 @@ std::string LogicalDepVisitor::getTemplateParameters(const clang::FunctionDecl *
 
     if (functionDecl->getTemplatedKind() == clang::FunctionDecl::TK_FunctionTemplate) {
         clang::FunctionTemplateDecl *templateDecl = functionDecl->getDescribedFunctionTemplate();
-        QStringList arguments;
+
+        std::string arguments;
         clang::TemplateParameterList *parameterList = templateDecl->getTemplateParameters();
         for (auto *namedDecl : *parameterList) {
-            QString argument;
-            argument += "typename ";
-            argument += QString::fromStdString(namedDecl->getQualifiedNameAsString());
-            arguments.push_back(argument);
+            const std::string argument = "typename " + namedDecl->getQualifiedNameAsString();
+            if (arguments.empty()) {
+                arguments += argument;
+            } else {
+                arguments += ", " + argument;
+            }
         }
 
-        templateParameters = "template <" + arguments.join(", ").toStdString() + ">";
+        templateParameters = "template <" + arguments + ">";
     }
 
     return templateParameters;
@@ -1276,27 +1279,26 @@ void LogicalDepVisitor::parseFieldTemplate(const clang::Decl *decl,
 
 std::string LogicalDepVisitor::getSignature(const clang::FunctionDecl *functionDecl)
 {
-    QStringList arguments;
-    std::string name(functionDecl->getNameAsString());
-
+    std::string arguments{};
     for (auto *parameter : functionDecl->parameters()) {
-        auto argument = QString::fromStdString(parameter->getType().getAsString());
-        argument += " ";
-        argument += QString::fromStdString(parameter->getNameAsString());
+        std::string argument = parameter->getType().getAsString() + " " + parameter->getNameAsString();
         if (parameter->hasDefaultArg()) {
             clang::SourceRange range = parameter->getDefaultArgRange();
             clang::SourceManager& srcMgr = Context->getSourceManager();
             llvm::StringRef s = clang::Lexer::getSourceText(clang::CharSourceRange::getTokenRange(range),
                                                             srcMgr,
                                                             Context->getLangOpts());
-            argument += " = ";
-            argument += QString::fromStdString(s.str());
+            argument += " = " + s.str();
         }
 
-        arguments.push_back(argument);
+        if (arguments.empty()) {
+            arguments += argument;
+        } else {
+            arguments += ", " + argument;
+        }
     }
 
-    return name + "(" + arguments.join(", ").toStdString() + ")";
+    return functionDecl->getNameAsString() + "(" + arguments + ")";
 }
 
 void LogicalDepVisitor::addReturnRelation(const clang::FunctionDecl *func,

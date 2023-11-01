@@ -1099,94 +1099,96 @@ void LogicalDepVisitor::processMethodArg(const clang::VarDecl *varDecl,
     const clang::DeclContext *varContext = varDecl->getDeclContext();
     assert(varContext);
 
-    if (varContext->getDeclKind() == clang::Decl::Kind::CXXMethod) {
-        const auto *methodDecl = clang::cast<clang::CXXMethodDecl>(varContext);
-        assert(methodDecl);
+    if (varContext->getDeclKind() != clang::Decl::Kind::CXXMethod) {
+        return;
+    }
 
-        const clang::CXXRecordDecl *methodParent = methodDecl->getParent();
-        assert(methodParent);
+    const auto *methodDecl = clang::cast<clang::CXXMethodDecl>(varContext);
+    assert(methodDecl);
 
-        // figure out what our access specifier should be (if one wasn't already
-        // given to us)
-        if (access == clang::AS_none) {
-            if (methodParent->isLambda()) {
-                const clang::Decl::Kind parentContextKind = methodParent->getDeclContext()->getDeclKind();
+    const clang::CXXRecordDecl *methodParent = methodDecl->getParent();
+    assert(methodParent);
 
-                if (parentContextKind == clang::Decl::Kind::CXXMethod) {
-                    // This lambda is used inside a method so it should so it
-                    // should always be usesInTheImpl
-                    access = clang::AS_private;
-                } else {
-                    // This is a lambda as a class field so
-                    // parentContextKind == clang::Decl::Kind::CXXRecord
-                    // We get called for this once from addField (which sets the
-                    // correct access specifier) and once by VisitVarDecl for the
-                    // argument (from which we cannot figure out the access
-                    // specifier). If we got here then this is the second call,
-                    // which can be safely ignored because the argument is
-                    // already added
-                    return;
-                }
+    // figure out what our access specifier should be (if one wasn't already
+    // given to us)
+    if (access == clang::AS_none) {
+        if (methodParent->isLambda()) {
+            const clang::Decl::Kind parentContextKind = methodParent->getDeclContext()->getDeclKind();
+
+            if (parentContextKind == clang::Decl::Kind::CXXMethod) {
+                // This lambda is used inside a method so it should so it
+                // should always be usesInTheImpl
+                access = clang::AS_private;
             } else {
-                // method parent is not a lambda so this is a normal method
-                // argument and should use the access specifier of the method
-                access = methodDecl->getAccess();
+                // This is a lambda as a class field so
+                // parentContextKind == clang::Decl::Kind::CXXRecord
+                // We get called for this once from addField (which sets the
+                // correct access specifier) and once by VisitVarDecl for the
+                // argument (from which we cannot figure out the access
+                // specifier). If we got here then this is the second call,
+                // which can be safely ignored because the argument is
+                // already added
+                return;
             }
+        } else {
+            // method parent is not a lambda so this is a normal method
+            // argument and should use the access specifier of the method
+            access = methodDecl->getAccess();
         }
-        if (access == clang::AS_none) {
-            // we won't add anything later anyway so fail early without troubling
-            // the database
-            return;
-        }
+    }
+    if (access == clang::AS_none) {
+        // we won't add anything later anyway so fail early without troubling
+        // the database
+        return;
+    }
 
-        // normal (non-lambda, not local class, etc) will have been already
-        // added to the database, in which case we need to link the argument to
-        // the method
-        lvtmdb::MethodObject *methodDeclarationPtr = nullptr;
-        if (!skipRecord(methodParent)) {
-            d_memDb.withROLock([&] {
-                methodDeclarationPtr = d_memDb.getMethod(methodDecl->getQualifiedNameAsString(),
-                                                         getSignature(methodDecl),
-                                                         getTemplateParameters(methodDecl),
-                                                         getReturnType(methodDecl));
+    // normal (non-lambda, not local class, etc) will have been already
+    // added to the database, in which case we need to link the argument to
+    // the method
+    lvtmdb::MethodObject *methodDeclarationPtr = nullptr;
+    if (!skipRecord(methodParent)) {
+        d_memDb.withROLock([&] {
+            methodDeclarationPtr = d_memDb.getMethod(methodDecl->getQualifiedNameAsString(),
+                                                     getSignature(methodDecl),
+                                                     getTemplateParameters(methodDecl),
+                                                     getReturnType(methodDecl));
+        });
+        if (!methodDeclarationPtr) {
+            const std::string message = "WARN: failed to look up method " + methodDecl->getQualifiedNameAsString()
+                + " to add method argument\n";
+
+            if (d_messageCallback) {
+                auto& fnc = *d_messageCallback;
+                fnc(message, ClpUtil::getThreadId());
+            }
+
+            d_memDb.withRWLock([&] {
+                d_memDb.getOrAddError(lvtmdb::MdbUtil::ErrorKind::ParserError,
+                                      methodDecl->getQualifiedNameAsString(),
+                                      "failed to look up method",
+                                      methodDecl->getLocation().printToString(Context->getSourceManager()));
             });
-            if (!methodDeclarationPtr) {
-                const std::string message = "WARN: failed to look up method " + methodDecl->getQualifiedNameAsString()
-                    + " to add method argument\n";
-
-                if (d_messageCallback) {
-                    auto& fnc = *d_messageCallback;
-                    fnc(message, ClpUtil::getThreadId());
-                }
-
-                d_memDb.withRWLock([&] {
-                    d_memDb.getOrAddError(lvtmdb::MdbUtil::ErrorKind::ParserError,
-                                          methodDecl->getQualifiedNameAsString(),
-                                          "failed to look up method",
-                                          methodDecl->getLocation().printToString(Context->getSourceManager()));
-                });
-            }
         }
+    }
 
-        // if it is a template we also need to add all of the template parameters
-        // to the database
-        const clang::TemplateSpecializationType *templateTypePtr =
-            varDecl->getType().getNonReferenceType()->getAs<clang::TemplateSpecializationType>();
-        if (templateTypePtr) {
-            parseArgumentTemplate(varDecl, templateTypePtr, access, containerDecl, methodDeclarationPtr);
-        }
+    // if it is a template we also need to add all of the template parameters
+    // to the database
+    const clang::TemplateSpecializationType *templateTypePtr =
+        varDecl->getType().getNonReferenceType()->getAs<clang::TemplateSpecializationType>();
+    if (templateTypePtr) {
+        parseArgumentTemplate(varDecl, templateTypePtr, access, containerDecl, methodDeclarationPtr);
+    }
 
-        // finally write the method-argument relation to the database
-        const clang::QualType qualType = varDecl->getType();
-        writeMethodArgRelation(varDecl, qualType, access, containerDecl, methodDeclarationPtr);
+    // finally write the method-argument relation to the database
+    const clang::QualType qualType = varDecl->getType();
+    writeMethodArgRelation(varDecl, qualType, access, containerDecl, methodDeclarationPtr);
 
-        // Process any expressions for initializing default arguments:
-        if (varDecl->getKind() == clang::Decl::Kind::ParmVar) {
-            const auto *paramVar = clang::cast<clang::ParmVarDecl>(varDecl);
-            assert(paramVar);
+    // Process any expressions for initializing default arguments:
+    if (varDecl->getKind() == clang::Decl::Kind::ParmVar) {
+        const auto *paramVar = clang::cast<clang::ParmVarDecl>(varDecl);
+        assert(paramVar);
 
-            processChildStatements(varDecl, paramVar->getDefaultArg(), containerDecl);
-        }
+        processChildStatements(varDecl, paramVar->getDefaultArg(), containerDecl);
     }
 }
 

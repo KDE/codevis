@@ -1153,10 +1153,10 @@ void LogicalDepVisitor::processMethodArg(const clang::VarDecl *varDecl,
                                                      getReturnType(methodDecl));
         });
         if (!methodDeclarationPtr) {
-            const std::string message = "WARN: failed to look up method " + methodDecl->getQualifiedNameAsString()
-                + " to add method argument\n";
-
             if (d_messageCallback) {
+                const std::string message = "WARN: failed to look up method " + methodDecl->getQualifiedNameAsString()
+                    + " to add method argument\n";
+
                 auto& fnc = *d_messageCallback;
                 fnc(message, ClpUtil::getThreadId());
             }

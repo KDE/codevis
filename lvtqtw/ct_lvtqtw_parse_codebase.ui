@@ -211,6 +211,16 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout">
            <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Thread Count (defaults to Ideal Thread Count)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="threadCount"/>
+           </item>
+           <item>
             <widget class="QRadioButton" name="updateDb">
              <property name="toolTip">
               <string>Uses the current database and scans only the differences on the source and header files</string>

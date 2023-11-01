@@ -256,6 +256,13 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
         ui->btnClose->setEnabled(true);
     });
 
+    connect(ui->threadCount, QOverload<int>::of(&QSpinBox::valueChanged), this, [this] {
+        Preferences::setThreadCount(ui->threadCount->value());
+    });
+
+    ui->threadCount->setValue(Preferences::threadCount());
+    ui->threadCount->setMaximum(QThread::idealThreadCount() + 1);
+
     connect(ui->btnSaveOutput, &QPushButton::clicked, this, &ParseCodebaseDialog::saveOutput);
 
     connect(ui->searchCompileCommands, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForBuildFolder);
@@ -714,7 +721,7 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
         d->tool_p = std::make_unique<lvtclp::Tool>(sourcePath(),
                                                    std::vector<std::filesystem::path>{std::move(compileCommandsJson)},
                                                    codebasePath().toStdString(),
-                                                   QThread::idealThreadCount(),
+                                                   ui->threadCount->value(),
                                                    ignoreList,
                                                    nonLakosianDirs,
                                                    d->thirdPartyPathMapping,

@@ -7,7 +7,7 @@
     <include>QApplication</include>
     <include>QString</include>
     <include>QDir</include>
-
+    <include>QThread</include>
     <group name="Debug">
         <entry name="enableSceneContextMenu" type="Bool">
             <label>Displays a Debug context menu on the Graphics Scene</label>
@@ -228,6 +228,14 @@
             <label>Last document opened</label>
             <default>
                 *.t.cpp,*.m.cpp,moc_*.cpp,*standalone*,*thirdparty*
+            </default>
+        </entry>
+        <entry name="threadCount" type="Int">
+            <label>Maximum number of concurrent threads</label>
+            <default code="true">
+                [] {
+                    return QThread::idealThreadCount();
+                } ()
             </default>
         </entry>
     </group>

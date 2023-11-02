@@ -81,7 +81,6 @@
 
 #include <KActionCollection>
 #include <KLocalizedString>
-#include <KNotification>
 #include <KStandardAction>
 #include <kwidgetsaddons_version.h>
 
@@ -1279,10 +1278,6 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
 
     updateSessionPtr();
     d_projectFile.setSourceCodePath(d_parseCodebaseDialog_p->sourcePath());
-
-    KNotification *notification = new KNotification("parserFinished");
-    notification->setText(tr("Finished parsing the project"));
-    notification->sendEvent();
 }
 
 void MainWindow::updateSessionPtr()

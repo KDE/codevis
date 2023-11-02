@@ -30,6 +30,7 @@
 #include <KZip>
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHeaderView>
@@ -43,6 +44,8 @@
 #include <QTableWidget>
 #include <QThread>
 #include <QVariant>
+
+#include <KNotification>
 
 #include <preferences.h>
 #include <soci/soci.h>
@@ -228,6 +231,7 @@ struct ParseCodebaseDialog::Private {
     std::vector<std::pair<ThirdPartyPath, ThirdPartyPackageName>> thirdPartyPathMapping;
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
+    QElapsedTimer parseTimer;
 };
 
 ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
@@ -656,6 +660,7 @@ void ParseCodebaseDialog::initParse()
         }
     }
 
+    d->parseTimer.restart();
     const auto compileCommandsDir = ui->compileCommandsFolder->text();
     const auto compileCommandsJson = (compileCommandsDir + QDir::separator() + COMPILE_COMMANDS).toStdString();
     const auto compileCommandsExists = QFileInfo::exists(QString::fromStdString(compileCommandsJson));
@@ -892,17 +897,39 @@ void ParseCodebaseDialog::endParse()
         ui->errorText->setText(tr("Physical parsing done. Continuing with logical parse"));
         ui->errorText->show();
         Q_EMIT parseFinished(State::RunAllPhysical);
+
+        QTime time(0, 0);
+        time = time.addMSecs(d->parseTimer.elapsed());
+
+        KNotification *notification = new KNotification("parserFinished");
+        notification->setText(
+            tr("Physical Parse finished with: %1<br/>Starting Logical Parse.").arg(time.toString("mm:ss.zzz")));
+        notification->sendEvent();
+        d->parseTimer.restart();
         initParse();
         return;
     }
 
     if (d->dialogState == State::RunPhysicalOnly) {
         Q_EMIT parseFinished(d->dialogState);
+
+        QTime time(0, 0);
+        time = time.addMSecs(d->parseTimer.elapsed());
+        KNotification *notification = new KNotification("parserFinished");
+        notification->setText(tr("Physical Parse finished with: %1.").arg(time.toString("mm:ss.zzz")));
+        notification->sendEvent();
     } else if (d->dialogState == State::RunAllLogical) {
+        QTime time(0, 0);
+        time = time.addMSecs(d->parseTimer.elapsed());
+
+        KNotification *notification = new KNotification("parserFinished");
+        notification->setText(tr("Logical Parse finished with: %1.").arg(time.toString("mm:ss.zzz")));
+        notification->sendEvent();
         Q_EMIT parseFinished(d->dialogState);
     }
     d->dialogState = State::Idle;
     d->tool_p = nullptr;
+    d->parseTimer.invalidate();
 
     if (d->pluginManager) {
         soci::session db;

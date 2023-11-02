@@ -57,6 +57,7 @@ AddTargetLibrary(
         KF${KF_MAJOR_VERSION}::TextEditor
         KF${KF_MAJOR_VERSION}::NewStuffCore
         KF${KF_MAJOR_VERSION}::NewStuffWidgets
+        KF${KF_MAJOR_VERSION}::Notifications
         Codethink::lvtmdl
         Codethink::lvtclp
         Codethink::lvtqtc

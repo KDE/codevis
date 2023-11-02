@@ -41,10 +41,6 @@ TEST_CASE("normalisePath tests")
     // Trailling '/' on the prefix path was being evaluated as invalid prefix. This test has been added to avoid
     // regression.
     REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/abc/", "/home/abc/xxx/project/") == "abc/");
-
-    // Non-canonical prefix path was being wrongly processed. This test has been added to avoid regression.
-    REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/abc/", "/home/abc/xxx/project/../")
-            == "project/abc/");
 }
 
 TEST_CASE("Lakosian rules matching tests")

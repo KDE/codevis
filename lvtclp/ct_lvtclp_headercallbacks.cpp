@@ -43,7 +43,7 @@ HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
                                  std::optional<HeaderLocationCallback_f> headerLocationCallback):
     sourceManager(*sm),
     d_memDb(memDb),
-    d_prefix(std::move(prefix)),
+    d_prefix(std::filesystem::weakly_canonical(prefix)),
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_ignoreGlobs(std::move(ignoreGlobs)),

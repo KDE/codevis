@@ -47,6 +47,7 @@
 #include <clang/Lex/PPCallbacks.h>
 #include <clang/Rewrite/Core/Rewriter.h>
 
+#include <filesystem>
 #include <llvm/Support/raw_ostream.h>
 
 #include <functional>
@@ -132,7 +133,7 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
                                      bool catchCodeAnalysisOutput):
     Context(Context),
     d_memDb(memDb),
-    d_prefix(std::move(prefix)),
+    d_prefix(std::filesystem::weakly_canonical(prefix)),
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_visitLog_p(std::move(visitLog)),

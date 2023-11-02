@@ -266,6 +266,13 @@ configure_file(
     ${CMAKE_BINARY_DIR}/parse_bde.sh
 )
 
+SET(${CMAKE_CURRENT_SOURCE_DIR}/systemtests/)
+
+configure_file(
+    autogen-test-variables.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/autogen-test-variables.h
+)
+
 install(FILES
     ${CMAKE_BINARY_DIR}/parse_bde.sh
     PERMISSIONS

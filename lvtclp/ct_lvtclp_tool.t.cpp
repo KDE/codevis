@@ -32,6 +32,8 @@
 
 #include <catch2-local-includes.h>
 
+#include <autogen-test-variables.h>
+
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;
 
@@ -532,11 +534,6 @@ TEST_CASE_METHOD(ToolTestFixture, "Tool")
 
 TEST_CASE("Run Tool on example project")
 {
-    auto *TEST_PRJ_PATH = std::getenv("TEST_PRJ_PATH");
-    WARN("TEST_PRJ_PATH not set. Please set it to <your_srcdir>/lvtclp/systemtests/");
-    REQUIRE(TEST_PRJ_PATH != nullptr);
-    auto const PREFIX = std::string{TEST_PRJ_PATH};
-
     StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/hello_world/");
     Tool tool(PREFIX + "/hello_world/", cmds, PREFIX + "/hello_world/database");
     ObjectStore& session = tool.getObjectStore();
@@ -552,11 +549,6 @@ TEST_CASE("Run Tool on example project")
 
 TEST_CASE("Run Tool on example project incrementally")
 {
-    auto *TEST_PRJ_PATH = std::getenv("TEST_PRJ_PATH");
-    WARN("TEST_PRJ_PATH not set. Please set it to <your_srcdir>/lvtclp/systemtests/");
-    REQUIRE(TEST_PRJ_PATH != nullptr);
-    auto const PREFIX = std::string{TEST_PRJ_PATH};
-
     auto sourcePath = PREFIX + "/package_circular_dependency/";
 
     auto files = std::initializer_list<std::pair<std::string, std::string>>{
@@ -618,11 +610,6 @@ TEST_CASE("Run Tool on example project incrementally")
 
 TEST_CASE("Run Tool on project including other lakosian project")
 {
-    auto *TEST_PRJ_PATH = std::getenv("TEST_PRJ_PATH");
-    WARN("TEST_PRJ_PATH not set. Please set it to <your_srcdir>/lvtclp/systemtests/");
-    REQUIRE(TEST_PRJ_PATH != nullptr);
-    auto const PREFIX = std::string{TEST_PRJ_PATH};
-
     auto const prjAPath = PREFIX + "/project_with_includes_outside_src/prjA";
     auto const prjBPath = PREFIX + "/project_with_includes_outside_src/prjB";
     StaticCompilationDatabase cmds({{"groups/one/oneaaa/oneaaa_comp.cpp", "oneaaa_comp.o"}},
@@ -650,11 +637,6 @@ struct HashFunc {
 
 TEST_CASE("Run Tool store test-only dependencies")
 {
-    auto *TEST_PRJ_PATH = std::getenv("TEST_PRJ_PATH");
-    WARN("TEST_PRJ_PATH not set. Please set it to <your_srcdir>/lvtclp/systemtests/");
-    REQUIRE(TEST_PRJ_PATH != nullptr);
-    auto const PREFIX = std::string{TEST_PRJ_PATH};
-
     auto const prjAPath = PREFIX + "/test_only_dependencies/prjA";
     StaticCompilationDatabase cmds(
         {

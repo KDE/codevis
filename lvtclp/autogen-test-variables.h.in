@@ -1,0 +1,1 @@
+std::string PREFIX = "@TEST_PRJ_PATH@";

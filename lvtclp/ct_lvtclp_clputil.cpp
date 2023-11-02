@@ -22,6 +22,7 @@
 #include <ct_lvtclp_componentutil.h>
 
 #include <ct_lvtmdb_componentobject.h>
+#include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <ct_lvtmdb_typeobject.h>
@@ -314,6 +315,14 @@ void ClpUtil::addUsesInImpl(lvtmdb::TypeObject *source, lvtmdb::TypeObject *targ
         return;
     }
     lvtmdb::TypeObject::addUsesInTheImplementation(source, target);
+}
+
+void ClpUtil::addFnDependency(lvtmdb::FunctionObject *source, lvtmdb::FunctionObject *target)
+{
+    if (!source || !target || source == target) {
+        return;
+    }
+    lvtmdb::FunctionObject::addDependency(source, target);
 }
 
 FileType ClpUtil::categorisePath(const std::string& file)

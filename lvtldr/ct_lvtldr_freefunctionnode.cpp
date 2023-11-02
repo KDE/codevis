@@ -55,6 +55,32 @@ void FreeFunctionNode::loadParent()
     d->parent = d->store.findById({DiagramType::ComponentType, *d_fields.componentId});
 }
 
+void FreeFunctionNode::loadProviders()
+{
+    if (d->providersLoaded) {
+        return;
+    }
+    d->providersLoaded = true;
+
+    for (auto&& id : d_fields.calleeIds) {
+        LakosianNode *node = d->store.findById({DiagramType::FreeFunctionType, id});
+        d->providers.emplace_back(LakosianEdge{lvtshr::UsesInTheImplementation, node});
+    }
+}
+
+void FreeFunctionNode::loadClients()
+{
+    if (d->clientsLoaded) {
+        return;
+    }
+    d->clientsLoaded = true;
+
+    for (auto&& id : d_fields.callerIds) {
+        LakosianNode *node = d->store.findById({DiagramType::FreeFunctionType, id});
+        d->clients.emplace_back(LakosianEdge{lvtshr::UsesInTheImplementation, node});
+    }
+}
+
 std::string FreeFunctionNode::qualifiedName() const
 {
     return NamingUtils::buildQualifiedName(d_qualifiedNameParts, name(), "::");

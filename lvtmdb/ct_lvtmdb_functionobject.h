@@ -25,6 +25,7 @@
 #include <ct_lvtmdb_functionbase.h>
 
 #include <string>
+#include <vector>
 
 namespace Codethink::lvtmdb {
 
@@ -44,6 +45,9 @@ class LVTMDB_EXPORT FunctionObject : public FunctionBase {
     NamespaceObject *d_parent_p;
     // Immediate parent namespace
 
+    std::vector<FunctionObject *> d_callees;
+    std::vector<FunctionObject *> d_callers;
+
   public:
     // CREATORS
     FunctionObject(std::string qualifiedName,
@@ -61,6 +65,11 @@ class LVTMDB_EXPORT FunctionObject : public FunctionBase {
 
     // ACCESSORS
     [[nodiscard]] NamespaceObject *parent() const;
+    [[nodiscard]] const std::vector<FunctionObject *>& callers() const;
+    [[nodiscard]] const std::vector<FunctionObject *>& callees() const;
+
+    // CLASS METHODS
+    static void addDependency(FunctionObject *source, FunctionObject *target);
 };
 
 } // namespace Codethink::lvtmdb

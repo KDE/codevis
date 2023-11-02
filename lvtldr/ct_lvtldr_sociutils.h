@@ -637,6 +637,23 @@ class SociDatabaseHandler : public DatabaseHandler {
                 soci::use(source_id);
             dao.componentId = component_id;
         }
+
+        {
+            soci::rowset<RecordNumberType> rs =
+                (d_db.prepare << "select callee_id from function_calls where caller_id = :k", soci::use(dao.id));
+            for (auto&& i : rs) {
+                dao.calleeIds.emplace_back(i);
+            }
+        }
+
+        {
+            soci::rowset<RecordNumberType> rs =
+                (d_db.prepare << "select caller_id from function_calls where callee_id = :k", soci::use(dao.id));
+            for (auto&& i : rs) {
+                dao.callerIds.emplace_back(i);
+            }
+        }
+
         return dao;
     }
 

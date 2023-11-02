@@ -66,17 +66,8 @@ class LVTLDR_EXPORT FreeFunctionNode : public LakosianNode {
         // There are no expected children for free functions.
     }
 
-    void loadProviders() override
-    {
-        // TODO: Fill providers
-        d->providersLoaded = true;
-    }
-
-    void loadClients() override
-    {
-        // TODO: Fill clients
-        d->clientsLoaded = true;
-    }
+    void loadProviders() override;
+    void loadClients() override;
 
     // ACCESSORS
     [[nodiscard]] lvtshr::DiagramType type() const override;

@@ -179,6 +179,14 @@ CREATE TABLE IF NOT EXISTS "uses_in_the_implementation" (
 	CONSTRAINT "fk_uses_in_the_implementation_target" FOREIGN KEY("target_id") REFERENCES "class_declaration"("id") deferrable initially deferred,
 	CONSTRAINT "fk_uses_in_the_implementation_source" FOREIGN KEY("source_id") REFERENCES "class_declaration"("id") deferrable initially deferred
 );
+CREATE TABLE IF NOT EXISTS "function_calls" (
+    "id"	integer,
+    "caller_id"	bigint,
+    "callee_id"	bigint,
+    PRIMARY KEY("id" AUTOINCREMENT),
+    CONSTRAINT "fk_function_calls_caller" FOREIGN KEY("caller_id") REFERENCES "function_declaration"("id") deferrable initially deferred,
+    CONSTRAINT "fk_function_calls_cellee" FOREIGN KEY("callee_id") REFERENCES "function_declaration"("id") deferrable initially deferred
+);
 CREATE TABLE IF NOT EXISTS "namespace_source_file" (
 	"source_file_id"	bigint NOT NULL,
 	"namespace_id"	bigint NOT NULL,

@@ -48,4 +48,23 @@ NamespaceObject *FunctionObject::parent() const
     return d_parent_p;
 }
 
+const std::vector<FunctionObject *>& FunctionObject::callers() const
+{
+    assertReadable();
+    return d_callers;
+}
+
+const std::vector<FunctionObject *>& FunctionObject::callees() const
+{
+    assertReadable();
+    return d_callees;
+}
+
+void FunctionObject::addDependency(FunctionObject *source, FunctionObject *target)
+{
+    assert(source);
+    assert(target);
+    addPeerRelationship(source, target, source->d_callees, target->d_callers);
+}
+
 } // namespace Codethink::lvtmdb

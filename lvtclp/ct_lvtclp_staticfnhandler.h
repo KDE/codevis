@@ -49,6 +49,9 @@ class ObjectStore;
 namespace Codethink::lvtmdb {
 class TypeObject;
 }
+namespace Codethink::lvtmdb {
+class FunctionObject;
+}
 
 namespace Codethink::lvtclp {
 
@@ -79,6 +82,7 @@ class StaticFnHandler {
     // Function described by decl uses-in-the-impl dep
     void addUdtUses(lvtmdb::TypeObject *udt, const clang::FunctionDecl *decl);
     // udt uses-in-the-impl function described by decl
+    void addCallgraphDep(lvtmdb::FunctionObject *source_f, lvtmdb::FunctionObject *target_f);
 
     void writeOutToDb();
     // (Once traversal of a translation unit is done) write out the

@@ -705,6 +705,32 @@ void exportMethodRelations(MethodObject *method, soci::session& db)
             soci::use(dep_id);
     }
 }
+
+void exportFunctionCallgraph(FunctionObject *fn, soci::session& db)
+{
+    auto lock = fn->readOnlyLock();
+    (void) lock;
+
+    int this_id = query_id_from_qual_name(db, "function_declaration", fn->qualifiedName()).value().first;
+
+    // variable types
+    for (FunctionObject *callee : fn->callees()) {
+        auto _lock = callee->readOnlyLock();
+        (void) _lock;
+
+        int callee_id = query_id_from_qual_name(db, "function_declaration", callee->qualifiedName()).value().first;
+        db << "select callee_id from function_calls where caller_id = :s and callee_id = :t limit 1",
+            soci::use(this_id), soci::use(callee_id);
+
+        if (db.got_data()) {
+            continue;
+        }
+
+        db << "insert into function_calls(caller_id, callee_id) values (:s, :t)", soci::use(this_id),
+            soci::use(callee_id);
+    }
+}
+
 } // namespace
 namespace Codethink::lvtmdb {
 
@@ -833,6 +859,11 @@ void SociWriter::writeFrom(const ObjectStore& store)
     for (const auto& [_, method] : store.methods()) {
         (void) _;
         exportMethodRelations(method.get(), d_db);
+    }
+
+    for (const auto& [_, fn] : store.functions()) {
+        (void) _;
+        exportFunctionCallgraph(fn.get(), d_db);
     }
 
     const std::vector<std::pair<int, int>> db_options = {

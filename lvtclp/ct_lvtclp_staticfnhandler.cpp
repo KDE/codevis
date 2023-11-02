@@ -114,6 +114,8 @@ struct StaticFnHandler::Private {
     // stores dependency relationships from functions to functions
     std::unordered_map<lvtmdb::TypeObject *, std::unordered_set<FnId>> udtDepFn;
     // stores dependency relationships from UDTs to functions
+    std::unordered_map<lvtmdb::FunctionObject *, std::unordered_set<lvtmdb::FunctionObject *>> callgraphDeps;
+    // stores the callgraph dependency for functions
 
     std::unordered_set<FnId> visited;
     // used in flattenFn
@@ -128,6 +130,7 @@ struct StaticFnHandler::Private {
         fnDepFn.clear();
         udtDepFn.clear();
         visited.clear();
+        callgraphDeps.clear();
     }
 };
 
@@ -150,6 +153,15 @@ void StaticFnHandler::addFnUses(const clang::FunctionDecl *decl, const clang::Fu
     if (fnId != depId) {
         d->fnDepFn[fnId].insert(depId);
     }
+}
+
+void StaticFnHandler::addCallgraphDep(lvtmdb::FunctionObject *source_f, lvtmdb::FunctionObject *target_f)
+{
+    if (!source_f || !target_f || source_f == target_f) {
+        return;
+    }
+
+    d->callgraphDeps[source_f].insert(target_f);
 }
 
 void StaticFnHandler::addUdtUses(lvtmdb::TypeObject *udt, const clang::FunctionDecl *decl)
@@ -178,7 +190,7 @@ void StaticFnHandler::flattenFn(const FnId sourceFn)
 
         // for each udt used by the function dependency
         for (lvtmdb::TypeObject *udtDep : d->fnDepUdt[fnDep]) {
-            // add as a depenendency of sourceFn
+            // add as a dependency of sourceFn
             d->fnDepUdt[sourceFn].insert(udtDep);
         }
     }
@@ -186,6 +198,13 @@ void StaticFnHandler::flattenFn(const FnId sourceFn)
 
 void StaticFnHandler::writeOutToDb()
 {
+    // Save function dependencies
+    for (auto const& [sourceFn, targetFns] : d->callgraphDeps) {
+        for (auto const& targetFn : targetFns) {
+            ClpUtil::addFnDependency(sourceFn, targetFn);
+        }
+    }
+
     // short circuit to skip flattening functions where we would end up with
     // nothing to write to the database anyway
     if (d->udtDepFn.empty() || d->fnDepUdt.empty()) {

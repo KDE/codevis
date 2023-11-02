@@ -41,6 +41,9 @@ struct FreeFunctionNodeFields {
     // we decide between (a) Add a ComponentId field in the DB _or_ (b) Move this to be lazy evaluated
     // on the class (FreeFunctionNode).
     std::optional<RecordNumberType> componentId = std::nullopt;
+
+    std::vector<RecordNumberType> callerIds;
+    std::vector<RecordNumberType> calleeIds;
 };
 
 } // namespace Codethink::lvtldr

@@ -20,6 +20,7 @@
 #include <ct_lvtclp_clputil.h>
 
 #include <catch2-local-includes.h>
+#include <llvm/Support/GlobPattern.h>
 
 using namespace Codethink;
 
@@ -69,7 +70,15 @@ TEST_CASE("Lakosian rules matching tests")
 
 TEST_CASE("is File Ignored")
 {
-    REQUIRE(lvtclp::ClpUtil::isFileIgnored("moc_katewaiter.cpp", {"moc_*"}));
-    REQUIRE(lvtclp::ClpUtil::isFileIgnored("moc_katewaiter.cpp", {"abcde*", "moc_*"}));
-    REQUIRE_FALSE(lvtclp::ClpUtil::isFileIgnored("someotherfile.cpp", {"moc_*"}));
+    std::vector<llvm::GlobPattern> patterns;
+    llvm::Expected<llvm::GlobPattern> res = llvm::GlobPattern::create("moc_*");
+    patterns.push_back(res.get());
+
+    REQUIRE(lvtclp::ClpUtil::isFileIgnored("moc_katewaiter.cpp", patterns));
+    REQUIRE_FALSE(lvtclp::ClpUtil::isFileIgnored("someotherfile.cpp", patterns));
+
+    res = llvm::GlobPattern::create("abcde*");
+    patterns.push_back(res.get());
+
+    REQUIRE(lvtclp::ClpUtil::isFileIgnored("moc_katewaiter.cpp", patterns));
 }

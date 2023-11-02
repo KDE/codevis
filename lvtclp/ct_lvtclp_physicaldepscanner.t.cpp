@@ -91,7 +91,7 @@ TEST_CASE("Optional include location callbacks")
         std::vector<std::filesystem::path>{},
         std::vector<std::pair<std::string, std::string>>{},
         [](auto&& _) {},
-        std::vector<std::string>{},
+        std::vector<llvm::GlobPattern>{},
         headerLocationCallback));
 
     REQUIRE(!err);

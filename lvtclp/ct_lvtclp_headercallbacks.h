@@ -32,6 +32,7 @@
 // std
 #include <filesystem>
 #include <functional>
+#include <llvm/Support/GlobPattern.h>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -81,8 +82,7 @@ class HeaderCallbacks : public clang::PPCallbacks {
 
     std::vector<std::filesystem::path> d_nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
-    std::vector<std::string> d_ignoreGlobs;
-
+    std::vector<llvm::GlobPattern> d_ignoreGlobs;
     std::optional<HeaderLocationCallback_f> d_headerLocationCallback;
 
   public:
@@ -92,7 +92,7 @@ class HeaderCallbacks : public clang::PPCallbacks {
                     std::filesystem::path prefix,
                     std::vector<std::filesystem::path> nonLakosians,
                     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                    std::vector<std::string> ignoreGlobs,
+                    std::vector<llvm::GlobPattern> ignoreGlobs,
                     std::optional<HeaderLocationCallback_f> headerLocationCallback = std::nullopt);
 
     // MANIPULATORS

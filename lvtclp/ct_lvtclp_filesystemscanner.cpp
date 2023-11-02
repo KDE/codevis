@@ -99,7 +99,7 @@ struct FilesystemScanner::Private {
     std::function<void(const std::string&, long)> messageCallback;
     bool catchCodeAnalysisOutput;
 
-    std::vector<std::string> ignoreGlobs;
+    std::vector<llvm::GlobPattern> ignoreGlobs;
 
     explicit Private(lvtmdb::ObjectStore& memDb,
                      std::filesystem::path prefix,
@@ -107,7 +107,7 @@ struct FilesystemScanner::Private {
                      std::function<void(const std::string, long)> messageCallback,
                      std::vector<std::filesystem::path> nonLakosianDirs,
                      bool catchCodeAnalysisOutput,
-                     std::vector<std::string> ignoreGlobs):
+                     std::vector<llvm::GlobPattern> ignoreGlobs):
         memDb(memDb),
         prefix(std::move(prefix)),
         cdb(cdb),
@@ -125,7 +125,7 @@ FilesystemScanner::FilesystemScanner(lvtmdb::ObjectStore& memDb,
                                      std::function<void(const std::string&, long)> messageCallback,
                                      bool catchCodeAnalysisOutput,
                                      std::vector<std::filesystem::path> nonLakosianDirs,
-                                     std::vector<std::string> ignoreGlobs):
+                                     std::vector<llvm::GlobPattern> ignoreGlobs):
     d(std::make_unique<FilesystemScanner::Private>(memDb,
                                                    prefix,
                                                    cdb,

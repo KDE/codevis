@@ -39,7 +39,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
     std::vector<std::filesystem::path> d_nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
     std::function<void(const std::string&)> d_filenameCallback;
-    std::vector<std::string> d_ignoreGlobs;
+    std::vector<llvm::GlobPattern> d_ignoreGlobs;
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> d_headerLocationCallback;
 
   public:
@@ -48,7 +48,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
                    std::vector<std::filesystem::path> nonLakosians,
                    std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                    std::function<void(const std::string&)> filenameCallback,
-                   std::vector<std::string> ignoreGlobs,
+                   std::vector<llvm::GlobPattern> ignoreGlobs,
                    std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
         d_memDb(memDb),
         d_prefix(std::move(prefix)),
@@ -118,7 +118,7 @@ struct DepScanActionFactory::Private {
     std::vector<std::filesystem::path> nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> thirdPartyDirs;
     std::function<void(const std::string&)> filenameCallback;
-    std::vector<std::string> ignoreGlobs;
+    std::vector<llvm::GlobPattern> ignoreGlobs;
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback;
 
     Private(lvtmdb::ObjectStore& memDb,
@@ -126,7 +126,7 @@ struct DepScanActionFactory::Private {
             std::vector<std::filesystem::path> nonLakosians,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
             std::function<void(const std::string&)> filenameCallback,
-            std::vector<std::string> ignoreGlobs,
+            std::vector<llvm::GlobPattern> ignoreGlobs,
             std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
         memDb(memDb),
         prefix(std::move(prefix)),
@@ -145,7 +145,7 @@ DepScanActionFactory::DepScanActionFactory(
     const std::vector<std::filesystem::path>& nonLakosians,
     const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
     std::function<void(const std::string&)> filenameCallback,
-    std::vector<std::string> ignoreGlobs,
+    std::vector<llvm::GlobPattern> ignoreGlobs,
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
     d(std::make_unique<DepScanActionFactory::Private>(memDb,
                                                       prefix,

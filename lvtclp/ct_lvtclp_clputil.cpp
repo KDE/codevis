@@ -456,11 +456,10 @@ bool ClpUtil::isComponentOnStandalonePackage(const std::filesystem::path& compon
     return false;
 }
 
-bool ClpUtil::isFileIgnored(const std::string& file, std::vector<std::string> const& ignoreGlobs)
+bool ClpUtil::isFileIgnored(const std::string& file, std::vector<llvm::GlobPattern> const& ignoreGlobs)
 {
     for (auto&& ignoreGlob : ignoreGlobs) {
-        auto pattern = llvm::GlobPattern::create(ignoreGlob);
-        if (pattern && pattern->match(file)) {
+        if (ignoreGlob.match(file)) {
             return true;
         }
     }

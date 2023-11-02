@@ -34,6 +34,7 @@
 
 #include <clang/Basic/SourceManager.h>
 #include <clang/Tooling/CompilationDatabase.h>
+#include <llvm/Support/GlobPattern.h>
 
 namespace Codethink {
 
@@ -106,7 +107,7 @@ struct LVTCLP_EXPORT ClpUtil {
     static bool isComponentOnPackageGroup(const std::filesystem::path& componentPath);
     static bool isComponentOnStandalonePackage(const std::filesystem::path& componentPath);
 
-    static bool isFileIgnored(const std::string& file, std::vector<std::string> const& ignoreGlobs);
+    static bool isFileIgnored(const std::string& file, std::vector<llvm::GlobPattern> const& ignoreGlobs);
 
     using PkgMatcherAddPkgFunction = std::function<void(std::string const& qualifiedName,
                                                         std::optional<std::string> parentQualifiedName,

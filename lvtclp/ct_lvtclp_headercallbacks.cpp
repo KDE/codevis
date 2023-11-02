@@ -39,7 +39,7 @@ HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
                                  std::filesystem::path prefix,
                                  std::vector<std::filesystem::path> nonLakosians,
                                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                                 std::vector<std::string> ignoreGlobs,
+                                 std::vector<llvm::GlobPattern> ignoreGlobs,
                                  std::optional<HeaderLocationCallback_f> headerLocationCallback):
     sourceManager(*sm),
     d_memDb(memDb),

@@ -33,6 +33,7 @@
 
 #include <clang/Tooling/CommonOptionsParser.h>
 
+#include <llvm/Support/GlobPattern.h>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -168,18 +169,22 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
     std::function<void(const std::string&, long)> d_messageCallback;
     std::vector<clang::tooling::CompileCommand> d_compileCommands;
     std::filesystem::path d_commonParent;
+    std::vector<llvm::GlobPattern> d_ignorePatterns;
 
   public:
     // CREATORS
     explicit PartialCompilationDatabase(std::filesystem::path sourcePath,
                                         std::vector<clang::tooling::CompileCommand> compileCommands,
-                                        std::vector<std::string> ignoreGlobs,
                                         std::function<void(const std::string&, long)> messageCallback):
-        d_ignoreGlobs(std::move(ignoreGlobs)),
         d_messageCallback(std::move(messageCallback)),
         d_compileCommands(std::move(compileCommands)),
         d_commonParent(std::move(sourcePath))
     {
+    }
+
+    void setIgnoreGlobs(const std::vector<llvm::GlobPattern>& ignoreGlobs)
+    {
+        d_ignorePatterns = ignoreGlobs;
     }
 
     // MANIPULATORS
@@ -211,7 +216,7 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
         const std::vector<std::string> missingCommandLineOnClang = {"-mno-direct-extern-access"};
 
         auto removeIgnoredFilesLambda = [this](clang::tooling::CompileCommand& cmd) -> bool {
-            return ClpUtil::isFileIgnored(cmd.Filename, d_ignoreGlobs);
+            return ClpUtil::isFileIgnored(cmd.Filename, d_ignorePatterns);
         };
 
         d_compileCommands.erase(
@@ -368,7 +373,7 @@ struct Tool::Private {
     std::vector<std::filesystem::path> compileCommandsJsons;
     std::filesystem::path databasePath;
     unsigned numThreads = 1;
-    std::vector<std::string> ignoreList;
+    std::vector<llvm::GlobPattern> ignoreList;
     std::vector<std::filesystem::path> nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> thirdPartyDirs;
     bool printToConsole = false;
@@ -417,11 +422,16 @@ struct Tool::Private {
         ignoreList.clear();
 
         // add non-duplicates
-        for (const std::string& glob : userIgnoreList) {
-            const auto it = std::find(ignoreList.begin(), ignoreList.end(), glob);
-            if (it == ignoreList.end()) {
-                ignoreList.push_back(glob);
+        std::set<std::string> nonDuplicatedItems(std::begin(userIgnoreList), std::end(userIgnoreList));
+        for (const auto& ignoreFile : nonDuplicatedItems) {
+            llvm::Expected<llvm::GlobPattern> pat = llvm::GlobPattern::create(ignoreFile);
+            if (pat) {
+                ignoreList.push_back(pat.get());
             }
+        }
+
+        if (compilationDb) {
+            compilationDb->setIgnoreGlobs(ignoreList);
         }
     }
 
@@ -499,7 +509,7 @@ struct Tool::Private {
         nonLakosianDirs(std::move(nonLakosianDirs)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         printToConsole(inPrintToConsole),
-        compilationDb(std::in_place, sourcePath, compileCommands, ignoreList, messageCallback)
+        compilationDb(std::in_place, sourcePath, compileCommands, messageCallback)
     {
         setNumThreads(numThreadsIn);
         setIgnoreList(ignoreList);
@@ -601,17 +611,15 @@ bool Tool::processCompilationDatabase()
                 return false;
             }
         }
-        d->compilationDb.emplace(d->sourcePath, compDb.getAllCompileCommands(), d->ignoreList, d->messageCallback);
+        d->compilationDb.emplace(d->sourcePath, compDb.getAllCompileCommands(), d->messageCallback);
     } else if (d->compileCommand.has_value()) {
-        d->compilationDb.emplace(d->sourcePath,
-                                 std::vector({d->compileCommand.value()}),
-                                 d->ignoreList,
-                                 d->messageCallback);
+        d->compilationDb.emplace(d->sourcePath, std::vector({d->compileCommand.value()}), d->messageCallback);
     } else {
         std::cerr << "No compilation database nor compilation command on the tool execution";
         return false;
     }
 
+    d->compilationDb->setIgnoreGlobs(d->ignoreList);
     d->compilationDb->setup(d->useSystemHeaders, !d->printToConsole);
     return true;
 }

@@ -34,6 +34,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <llvm/Support/GlobPattern.h>
+
 namespace Codethink::lvtmdb {
 class ObjectStore;
 }
@@ -72,7 +74,7 @@ class LVTCLP_EXPORT FilesystemScanner {
                                std::function<void(const std::string&, long)> messageCallback,
                                bool catchCodeAnalysisOutput,
                                std::vector<std::filesystem::path> nonLakosianDirs,
-                               std::vector<std::string> ignoreGlobs);
+                               std::vector<llvm::GlobPattern> ignoreGlobs);
     // cdb and memDb must live at least as long as this FilesystemScanner
 
     ~FilesystemScanner() noexcept;

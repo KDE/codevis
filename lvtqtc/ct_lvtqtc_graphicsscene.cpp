@@ -2035,7 +2035,7 @@ void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, cons
 
     auto *lakosianNode = d->nodeStorage.findByQualifiedName(qualName);
     if (!lakosianNode) {
-        Q_EMIT errorMessage(tr("Element not found"));
+        Q_EMIT errorMessage(tr("Element %1 not found").arg(qualifiedName));
         return;
     }
     assert(lakosianNode);

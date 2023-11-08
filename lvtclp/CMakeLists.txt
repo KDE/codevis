@@ -303,3 +303,56 @@ elseif (WIN32)
     # Winbdows threats directories without the first \ as relatives to the current folder.
     add_compile_definitions(CT_CLANG_HEADERS_RELATIVE_DIR="clang")
 endif()
+
+if (ENABLE_FORTRAN_SCANNER)
+    MESSAGE("Fortran support ENABLED")
+
+    # MLIR is required by flang
+    find_package(MLIR REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/mlir/" NO_DEFAULT_PATH)
+    find_package(Flang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/flang/" NO_DEFAULT_PATH)
+
+    AddTargetLibrary(
+            LIBRARY_NAME
+            lvtclp_fortran
+            SOURCES
+            fortran/ct_lvtclp_logicalscanner.cpp
+            fortran/ct_lvtclp_physicalscanner.cpp
+            fortran/ct_lvtclp_tool.cpp
+            HEADERS
+            fortran/ct_lvtclp_logicalscanner.h
+            fortran/ct_lvtclp_physicalscanner.h
+            fortran/ct_lvtclp_tool.h
+            LIBRARIES
+            flangFrontend
+            flangFrontendTool
+            ${SYSTEM_EXTRA_LIBRARIES}
+    )
+    target_include_directories(lvtclp_fortran
+            PRIVATE
+            ${LLVM_INCLUDE_DIR}
+            )
+    target_compile_definitions(lvtclp_fortran
+            PRIVATE
+            FLANG_LITTLE_ENDIAN=1
+            )
+
+    if (COMPILE_TESTS)
+        function(add_lvtclp_fortran_test)
+            set(options NONE)
+            set(oneValueArgs NAME)
+            set(multiValueArgs SOURCES LIBRARIES)
+            cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+            add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_fortran lvttst)
+            add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
+        endfunction()
+
+        add_lvtclp_fortran_test(
+            NAME test_ct_lvtclp_fortranscanner
+            SOURCES
+                fortran/ct_lvtclp_fortranscanner.t.cpp
+        )
+    endif()
+else()
+    MESSAGE("Fortran support DISABLED")
+endif()

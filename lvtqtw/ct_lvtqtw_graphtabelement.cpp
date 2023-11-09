@@ -93,6 +93,10 @@ struct GraphTabElement::Private {
     std::vector<lvtqtc::ITool *> tools;
 
     GraphicsView *graphicsView = nullptr;
+
+    Private(lvtprj::ProjectFile& prj): projectFile(prj)
+    {
+    }
 };
 
 GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile& projectFile, QWidget *parent):

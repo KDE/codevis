@@ -323,10 +323,6 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
         }
     });
 
-    connect(ui->btnResetIgnorePattern, &QPushButton::clicked, this, [this] {
-        ui->ignorePattern->setText(Preferences::defaultLastIgnorePatternValue());
-    });
-
     ui->progressBar->setMinimum(0);
 
     connect(ui->compileCommandsFolder, &QLineEdit::textChanged, this, [this] {

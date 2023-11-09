@@ -71,6 +71,7 @@ AddTargetLibrary(
         ${KFNewStuffWidgetsIfAvailable}
         Codethink::lvtmdl
         Codethink::lvtclp
+        Codethink::lvtclp_fortran
         Codethink::lvtqtc
         Codethink::lvtqtd
         Codethink::lvtprj

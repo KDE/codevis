@@ -24,6 +24,7 @@
 #include <ct_lvtprj_projectfile.h>
 #include <ct_lvtqtw_textview.h>
 #include <ct_lvtshr_iterator.h>
+#include <fortran/ct_lvtclp_tool.h>
 
 #include <ui_ct_lvtqtw_parse_codebase.h>
 
@@ -47,6 +48,7 @@
 
 #include <KNotification>
 
+#include <clang/Tooling/JSONCompilationDatabase.h>
 #include <preferences.h>
 #include <soci/soci.h>
 
@@ -219,6 +221,7 @@ struct PkgMappingDialog : public QDialog {
 struct ParseCodebaseDialog::Private {
     State dialogState = State::Idle;
     std::unique_ptr<lvtclp::Tool> tool_p = nullptr;
+    std::unique_ptr<lvtclp::fortran::Tool> fotran_tool_p = nullptr;
     QThread *parseThread = nullptr;
     bool threadSuccess = false;
     int progress = 0;
@@ -718,6 +721,12 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
 {
     const bool catchCodeAnalysisOutput = Preferences::enableCodeParseDebugOutput();
 
+    auto errorMessage = std::string{};
+    auto jsonDb =
+        clang::tooling::JSONCompilationDatabase::loadFromFile(compileCommandsJson,
+                                                              errorMessage,
+                                                              clang::tooling::JSONCommandLineSyntax::AutoDetect);
+
     if (!d->tool_p) {
         d->tool_p = std::make_unique<lvtclp::Tool>(sourcePath(),
                                                    std::vector<std::filesystem::path>{std::move(compileCommandsJson)},
@@ -727,6 +736,22 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
                                                    nonLakosianDirs,
                                                    d->thirdPartyPathMapping,
                                                    catchCodeAnalysisOutput);
+    }
+    if (!d->fotran_tool_p) {
+        auto fortranFiles = std::vector<std::filesystem::path>{};
+        for (auto const& cmd : jsonDb->getAllCompileCommands()) {
+            auto filename = std::filesystem::path{cmd.Filename};
+            auto ext = filename.extension().string();
+            if (ext != ".f" && ext != ".for" && ext != ".f90") {
+                continue;
+            }
+            if (filename.is_relative()) {
+                std::cout << "Warning: Relative path is not handled yet. Skipping " << filename << "\n";
+                continue;
+            }
+            fortranFiles.emplace_back(filename);
+        }
+        d->fotran_tool_p = std::make_unique<lvtclp::fortran::Tool>(fortranFiles);
     }
 
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
@@ -750,11 +775,12 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
 
     auto threadFn = [this]() {
         assert(d->tool_p);
-        if (d->dialogState == State::RunPhysicalOnly || d->dialogState == State::RunAllPhysical) {
-            d->threadSuccess = d->tool_p->runPhysical();
-        } else if (d->dialogState == State::RunAllLogical) {
-            d->threadSuccess = d->tool_p->runFull(true);
-        }
+        //        if (d->dialogState == State::RunPhysicalOnly || d->dialogState == State::RunAllPhysical) {
+        //            d->threadSuccess = d->tool_p->runPhysical();
+        //        } else if (d->dialogState == State::RunAllLogical) {
+        //            d->threadSuccess = d->tool_p->runFull(true);
+        //        }
+        d->threadSuccess = d->fotran_tool_p->runFull();
     };
 
     d->parseThread = QThread::create(threadFn);
@@ -819,7 +845,8 @@ void ParseCodebaseDialog::updateDatabase()
         }
     }
 
-    auto& mdb = d->tool_p->getObjectStore();
+    //    auto& mdb = d->tool_p->getObjectStore();
+    auto& mdb = d->fotran_tool_p->getObjectStore();
     lvtmdb::SociWriter writer;
     writer.createOrOpen(path);
     mdb.writeToDatabase(writer);

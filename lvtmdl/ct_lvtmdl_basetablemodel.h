@@ -37,9 +37,6 @@ class LVTMDL_EXPORT BaseTableModel : public QAbstractTableModel {
     BaseTableModel(int columnCount, QObject *parent = nullptr);
     ~BaseTableModel() override;
 
-    void setFocusedNode(const std::string& fullyQualifiedName, lvtshr::DiagramType type);
-    // sets the data we are displaying
-
     [[nodiscard]] std::string fullyQualifiedName() const;
     [[nodiscard]] lvtshr::DiagramType type() const;
 

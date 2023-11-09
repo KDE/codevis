@@ -24,6 +24,7 @@
 
 #include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtplg_pluginmanager.h>
+#include <ct_lvtprj_projectfile.h>
 
 #include <ct_lvtshr_graphenums.h>
 
@@ -33,6 +34,7 @@
 #include <memory>
 
 class QString;
+class QJsonDocument;
 class CodeVisApplicationTestFixture;
 
 namespace Ui {
@@ -56,15 +58,7 @@ class LVTQTW_EXPORT GraphTabElement : public QWidget {
   public:
     friend class ::CodeVisApplicationTestFixture;
 
-    // enum for backwards / forward navigation.
-    enum HistoryType {
-        NoHistory, // don't record on history
-        History // record on history
-    };
-
-    GraphTabElement(Codethink::lvtldr::NodeStorage& nodeStorage,
-                    lvtprj::ProjectFile const& projectFile,
-                    QWidget *parent);
+    GraphTabElement(Codethink::lvtldr::NodeStorage& nodeStorage, lvtprj::ProjectFile& projectFile, QWidget *parent);
     ~GraphTabElement() override;
 
     void setCurrentDiagramFromHistory(int idx);
@@ -72,7 +66,7 @@ class LVTQTW_EXPORT GraphTabElement : public QWidget {
 
     [[nodiscard]] lvtqtc::GraphicsView *graphicsView() const;
 
-    Q_SIGNAL void historyUpdate(const QString& fullyQualifiedName, lvtshr::DiagramType type);
+    Q_SIGNAL void historyUpdate(const QString& bookmarkName);
     // triggered when we change the displayed graph due to one of the history
     // buttons
 
@@ -81,6 +75,9 @@ class LVTQTW_EXPORT GraphTabElement : public QWidget {
     void toggleFilterVisibility();
 
     void setPluginManager(Codethink::lvtplg::PluginManager& pm);
+
+    void saveBookmark(const QString& title, lvtprj::ProjectFile::BookmarkType type);
+    void loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType historyType);
 
   protected:
     void resizeEvent(QResizeEvent *ev) override;

@@ -29,6 +29,8 @@
 #include <ct_lvtqtw_tabwidget.h>
 #include <ct_lvttst_tmpdir.h>
 
+#include <ct_lvtshr_graphenums.h>
+
 #include <QJsonDocument>
 #include <catch2-local-includes.h>
 
@@ -110,6 +112,6 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic Bookmark Workflow")
     tab.closeTab(0);
     REQUIRE(tab.tabText(0) == "Unnamed 0");
 
-    tab.loadBookmark(projectFile.getBookmark("Bookmark1"));
+    tab.loadBookmark(projectFile.getBookmark("Bookmark1"), Codethink::lvtshr::HistoryType::NoHistory);
     REQUIRE(tab.tabText(0) == "Bookmark1");
 }

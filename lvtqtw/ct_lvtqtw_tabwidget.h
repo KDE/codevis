@@ -60,13 +60,7 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
 // Visualizes a Tree model and reacts to changes
 {
     Q_OBJECT
-
   public:
-    struct GraphInfo {
-        QString qualifiedName;
-        lvtmdl::NodeType::Enum nodeType;
-    };
-
     // CREATORS
     TabWidget(Codethink::lvtldr::NodeStorage& nodeStorage,
               lvtprj::ProjectFile& projectFile,
@@ -86,7 +80,7 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
 
     void closeTab(int idx);
 
-    void setCurrentTabText(const QString& fullyQualifiedName, lvtshr::DiagramType type);
+    void setCurrentTabText(const QString& fullyQualifiedName);
     // Slot for when we need to update the tab name to keep up with a history
     // change
 
@@ -94,12 +88,12 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
 
     void setUndoManager(lvtqtc::UndoManager *undoManager);
 
-    Q_SIGNAL void currentTabTextChanged(const QString& name, lvtshr::DiagramType type);
+    Q_SIGNAL void currentTabTextChanged(const QString& name);
     Q_SIGNAL void errorMessage(const QString& errorMessage);
     // triggered when we set the text of the current tab.
 
     void saveBookmark(const QString& name, int idx, Codethink::lvtprj::ProjectFile::BookmarkType type);
-    void loadBookmark(const QJsonDocument& doc);
+    void loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType historyType);
 
     // Called when the application closes or when the user clicks on save.
     void saveTabsOnProject(Codethink::lvtprj::ProjectFile::BookmarkType type);

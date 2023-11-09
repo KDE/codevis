@@ -863,8 +863,6 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::errorMessage, &MainWindow::showErrorMessage);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestEnableWindow, &MainWindow::enableWindow);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestDisableWindow, &MainWindow::disableWindow);
-    addGSConnection(&Codethink::lvtqtc::GraphicsScene::selectedEntityChanged,
-                    &MainWindow::updateFocusedEntityOnTableModels);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::createReportActionClicked, &MainWindow::createReport);
 
     if (d_pluginManager_p) {
@@ -1101,7 +1099,7 @@ void MainWindow::disableWindow()
     qApp->processEvents();
 }
 
-void MainWindow::focusedGraphChanged(const QString& qualifiedName, Codethink::lvtshr::DiagramType type)
+void MainWindow::focusedGraphChanged(const QString& qualifiedName)
 {
     m_currentQualifiedName = qualifiedName;
 
@@ -1109,10 +1107,6 @@ void MainWindow::focusedGraphChanged(const QString& qualifiedName, Codethink::lv
         d_projectFile.location().empty() ? "Untitled" : QString::fromStdString(d_projectFile.location().string());
 
     setWindowTitle(qApp->applicationName() + " " + projectName + " " + qualifiedName);
-
-    for (Codethink::lvtmdl::BaseTableModel *model : qAsConst(tableModels)) {
-        model->setFocusedNode(qualifiedName.toStdString(), type);
-    }
 }
 
 void MainWindow::openGenerateDatabase()
@@ -1311,7 +1305,7 @@ void MainWindow::bookmarksChanged()
         auto *bookmarkAction = new QAction(bookmark);
         connect(bookmarkAction, &QAction::triggered, this, [this, bookmark] {
             QJsonDocument doc = d_projectFile.getBookmark(bookmark);
-            currentGraphTab->loadBookmark(doc);
+            currentGraphTab->loadBookmark(doc, Codethink::lvtshr::HistoryType::History);
         });
 
         actions.append(bookmarkAction);
@@ -1319,17 +1313,6 @@ void MainWindow::bookmarksChanged()
 
     unplugActionList("bookmark_actionlist");
     plugActionList("bookmark_actionlist", actions);
-}
-
-void MainWindow::updateFocusedEntityOnTableModels(LakosEntity *entity)
-{
-    if (!entity) {
-        return;
-    }
-
-    for (BaseTableModel *model : qAsConst(tableModels)) {
-        model->setFocusedNode(entity->qualifiedName(), entity->instanceType());
-    }
 }
 
 void MainWindow::configurePluginDocks()

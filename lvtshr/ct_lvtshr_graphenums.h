@@ -62,6 +62,12 @@ enum class AccessSpecifier {
     e_none = 3, // undefined access
 };
 
+// enum for backwards / forward navigation.
+enum class HistoryType {
+    NoHistory, // don't record on history
+    History // record on history
+};
+
 enum class UDTKind { Class, Enum, Struct, TypeAlias, Union, Unknown };
 
 /*! Defines how searches on the Diagram should be handled. */

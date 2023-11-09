@@ -159,7 +159,7 @@ class MainWindow : public KXmlGuiWindow {
 
     void configurePluginDocks();
 
-    Q_SLOT void focusedGraphChanged(const QString& qualifiedName, Codethink::lvtshr::DiagramType type);
+    Q_SLOT void focusedGraphChanged(const QString& qualifiedName);
     Q_SLOT void graphLoadStarted();
     Q_SLOT void graphLoadFinished();
     Q_SLOT void triggerUndo();
@@ -213,9 +213,6 @@ class MainWindow : public KXmlGuiWindow {
 
     Q_SLOT void requestMenuPackageView(const QModelIndex& idx, const QPoint& pos);
     Q_SLOT void requestMenuNamespaceView(const QModelIndex& idx, const QPoint& pos);
-
-    Q_SLOT void updateFocusedEntityOnTableModels(Codethink::lvtqtc::LakosEntity *entity);
-
     Q_SLOT void updatePluginData();
 
     void createReport(std::string const& title, std::string const& htmlContents);

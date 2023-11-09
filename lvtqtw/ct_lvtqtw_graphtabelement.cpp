@@ -70,11 +70,12 @@ namespace Codethink::lvtqtw {
 enum PackageView { DependencyTree, ReverseDependencyTree, DependencyGraph };
 
 struct GraphTabElement::Private {
+    lvtprj::ProjectFile& projectFile;
+
     lvtmdl::HistoryListModel historyModel;
 
     // Actions that will trigger a reload of the scene
     QAction *actRelayout = nullptr;
-
     // Actions that allow the user to Edit the elements
     lvtqtc::ITool *toolAddPhysicalDependency = nullptr;
     lvtqtc::ITool *toolAddIsALogicalRelation = nullptr;
@@ -94,8 +95,10 @@ struct GraphTabElement::Private {
     GraphicsView *graphicsView = nullptr;
 };
 
-GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile const& projectFile, QWidget *parent):
-    QWidget(parent), ui(std::make_unique<Ui::GraphTabElement>()), d(std::make_unique<GraphTabElement::Private>())
+GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile& projectFile, QWidget *parent):
+    QWidget(parent),
+    ui(std::make_unique<Ui::GraphTabElement>()),
+    d(std::make_unique<GraphTabElement::Private>(projectFile))
 {
     ui->setupUi(this);
 
@@ -115,13 +118,6 @@ GraphTabElement::GraphTabElement(NodeStorage& nodeStorage, lvtprj::ProjectFile c
     d->searchWidget->setBackgroundRole(QPalette::Window);
     d->searchWidget->setAutoFillBackground(true);
     d->graphicsView->installEventFilter(d->searchWidget);
-
-    ui->backHistory->setText("<");
-    ui->forwardHistory->setText(">");
-
-    ui->zoomToolBox->setMinimum(1);
-    ui->zoomToolBox->setMaximum(999);
-    ui->zoomToolBox->setPrefix(tr("Zoom: "));
     // End Toolbar Setup.
 
     ui->zoomToolBox->setValue(Preferences::zoomLevel());
@@ -324,8 +320,7 @@ void GraphTabElement::toggleFilterVisibility()
 
 void GraphTabElement::setCurrentDiagramFromHistory(int idx)
 {
-    // TODO: Load from Bookmark History.
-    // Q_EMIT historyUpdate(info.first, info.second);
+    Q_EMIT historyUpdate(d->historyModel.at(idx));
 }
 
 void GraphTabElement::resizeEvent(QResizeEvent *ev)
@@ -347,6 +342,37 @@ std::vector<lvtqtc::ITool *> GraphTabElement::tools() const
 void GraphTabElement::setPluginManager(Codethink::lvtplg::PluginManager& pm)
 {
     d->graphicsView->setPluginManager(pm);
+}
+
+void GraphTabElement::saveBookmark(const QString& title, lvtprj::ProjectFile::BookmarkType type)
+{
+    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(graphicsView()->scene());
+    auto jsonObj = scene->toJson();
+
+    QJsonObject mainObj{{"scene", jsonObj},
+                        {"tabname", title},
+                        {"id", title},
+                        {"zoom_level", graphicsView()->zoomFactor()}};
+
+    const cpp::result<void, lvtprj::ProjectFileError> ret = d->projectFile.saveBookmark(QJsonDocument(mainObj), type);
+
+    if (ret.has_error()) {
+        Q_EMIT sendMessage(tr("Error saving bookmark."), KMessageWidget::MessageType::Error);
+    }
+}
+
+void GraphTabElement::loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType historyType)
+{
+    QJsonObject obj = doc.object();
+    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(graphicsView()->scene());
+
+    scene->fromJson(obj["scene"].toObject());
+
+    graphicsView()->setZoomFactor(obj["zoom_level"].toInt());
+
+    if (historyType == lvtshr::HistoryType::History) {
+        d->historyModel.append(doc["id"].toString());
+    }
 }
 
 } // namespace Codethink::lvtqtw

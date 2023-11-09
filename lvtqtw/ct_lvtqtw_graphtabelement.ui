@@ -38,10 +38,16 @@
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QToolButton" name="backHistory">
            <property name="text">
             <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset theme="go-previous"/>
            </property>
           </widget>
          </item>
@@ -49,6 +55,9 @@
           <widget class="QToolButton" name="forwardHistory">
            <property name="text">
             <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset theme="go-next"/>
            </property>
           </widget>
          </item>
@@ -68,7 +77,17 @@
         </layout>
        </item>
        <item>
-        <widget class="QSpinBox" name="zoomToolBox"/>
+        <widget class="QSpinBox" name="zoomToolBox">
+         <property name="prefix">
+          <string>Zoom:</string>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>999</number>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="Codethink::lvtqtw::ToolBox" name="toolBox" native="true">

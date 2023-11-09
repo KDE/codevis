@@ -152,10 +152,10 @@ void TabWidget::closeTab(int idx)
     }
 }
 
-void TabWidget::setCurrentTabText(const QString& fullyQualifiedName, lvtshr::DiagramType type)
+void TabWidget::setCurrentTabText(const QString& fullyQualifiedName)
 {
     setTabText(currentIndex(), fullyQualifiedName);
-    Q_EMIT currentTabTextChanged(fullyQualifiedName, type);
+    Q_EMIT currentTabTextChanged(fullyQualifiedName);
 }
 
 GraphTabElement *TabWidget::createTabElement()
@@ -177,7 +177,9 @@ GraphTabElement *TabWidget::createTabElement()
     auto *view = tabElement->graphicsView();
     view->setColorManagement(d->colorManagement);
 
-    connect(tabElement, &GraphTabElement::historyUpdate, this, &TabWidget::setCurrentTabText);
+    connect(tabElement, &GraphTabElement::historyUpdate, this, [this](const QString& bookmark) {
+        loadBookmark(d->projectFile.getBookmark(bookmark), HistoryType::NoHistory);
+    });
     return tabElement;
 }
 
@@ -236,26 +238,6 @@ void TabWidget::setUndoManager(lvtqtc::UndoManager *undoManager)
     }
 }
 
-void TabWidget::saveBookmark(const QString& title, int idx, ProjectFile::BookmarkType type)
-{
-    auto *tabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(widget(idx));
-    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
-    auto jsonObj = scene->toJson();
-
-    QJsonObject mainObj{{"scene", jsonObj},
-                        {"tabname", title},
-                        {"id", title},
-                        {"zoom_level", tabElement->graphicsView()->zoomFactor()}};
-
-    const cpp::result<void, ProjectFileError> ret = d->projectFile.saveBookmark(QJsonDocument(mainObj), type);
-
-    if (ret.has_error()) {
-        Q_EMIT errorMessage(tr("Error saving bookmark."));
-    }
-
-    setTabText(idx, title);
-}
-
 void TabWidget::saveTabsOnProject(ProjectFile::BookmarkType type)
 {
     for (int i = 0; i < count(); i++) {
@@ -263,18 +245,24 @@ void TabWidget::saveTabsOnProject(ProjectFile::BookmarkType type)
     }
 }
 
-void TabWidget::loadBookmark(const QJsonDocument& doc)
+void TabWidget::saveBookmark(const QString& title, int idx, ProjectFile::BookmarkType type)
+{
+    auto *tabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(widget(idx));
+    tabElement->saveBookmark(title, type);
+
+    setTabText(idx, title);
+}
+
+void TabWidget::loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType historyType)
 {
     QJsonObject obj = doc.object();
     const auto idx = currentIndex();
+    auto *tabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(widget(idx));
 
     setTabText(idx, obj["tabname"].toString());
     setTabIcon(idx, QIcon(":/icons/build"));
 
-    auto *scene = qobject_cast<GraphicsScene *>(graphicsView()->scene());
-    scene->fromJson(obj["scene"].toObject());
-
-    graphicsView()->setZoomFactor(obj["zoom_level"].toInt());
+    tabElement->loadBookmark(doc, historyType);
 }
 
 } // end namespace Codethink::lvtqtw

@@ -53,18 +53,6 @@ BaseTableModel::BaseTableModel(int columnCount, QObject *parent):
 
 BaseTableModel::~BaseTableModel() = default;
 
-void BaseTableModel::setFocusedNode(const std::string& fullyQualifiedName, lvtshr::DiagramType type)
-{
-    if ((d->fullyQualifiedName == fullyQualifiedName) && (d->type == type)) {
-        return;
-    }
-
-    d->fullyQualifiedName = fullyQualifiedName;
-    d->type = type;
-
-    refreshData();
-}
-
 int BaseTableModel::columnCount(const QModelIndex& unused) const
 {
     (void) unused;

@@ -42,12 +42,12 @@ class LVTMDL_EXPORT HistoryListModel : public QAbstractListModel {
     void previous();
     Q_SIGNAL void currentIndexChanged(int idx);
 
-    void append(const std::pair<QString, lvtshr::DiagramType>& qualifiedNameToType);
+    void append(const QString& bookmarkName);
     void setMaximumHistory(int maximum);
 
     [[nodiscard]] int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     [[nodiscard]] QVariant data(const QModelIndex& idx, int role) const override;
-    [[nodiscard]] std::pair<QString, lvtshr::DiagramType> at(int idx) const;
+    [[nodiscard]] QString at(int idx) const;
 
   private:
     struct Private;

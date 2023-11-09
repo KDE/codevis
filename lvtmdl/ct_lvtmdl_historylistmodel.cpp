@@ -27,7 +27,7 @@ namespace Codethink::lvtmdl {
 struct HistoryListModel::Private {
     int currentIndex = -1;
     int maximumHistory = 10;
-    std::vector<std::pair<QString, lvtshr::DiagramType>> history;
+    std::vector<QString> bookmarkHistory;
 };
 
 HistoryListModel::HistoryListModel(QObject *parent):
@@ -44,7 +44,6 @@ int HistoryListModel::currentIndex() const
 
 void HistoryListModel::setCurrentIndex(int idx)
 {
-    qDebug() << "Trying to set the current index";
     if (d->currentIndex == idx) {
         qDebug() << "Current index is the same, returning";
         return;
@@ -56,40 +55,37 @@ void HistoryListModel::setCurrentIndex(int idx)
 
 void HistoryListModel::next()
 {
-    qDebug() << "Trying to call next";
     if (currentIndex() + 1 < rowCount()) {
+        qDebug() << "Setting current index to" << currentIndex() + 1;
         setCurrentIndex(currentIndex() + 1);
-    } else {
-        qDebug() << "Can't advance." << currentIndex() << rowCount();
     }
 }
 
 void HistoryListModel::previous()
 {
-    qDebug() << "Trying to call prev";
     if (currentIndex() - 1 >= 0 && rowCount() > 0) {
+        qDebug() << "Setting current index to" << currentIndex() - 1;
         setCurrentIndex(currentIndex() - 1);
-    } else {
-        qDebug() << "Cant go back" << currentIndex() << rowCount();
     }
 }
 
-void HistoryListModel::append(const std::pair<QString, lvtshr::DiagramType>& qualifiedNameToType)
+void HistoryListModel::append(const QString& bookmarkName)
 {
+    qDebug() << "Adding " << bookmarkName << "on the history model";
     beginInsertRows({}, rowCount(), rowCount());
-    d->history.push_back(qualifiedNameToType);
-    assert(d->history.size() <= (std::size_t) INT_MAX);
-    d->currentIndex = static_cast<int>(d->history.size()) - 1;
+    d->bookmarkHistory.push_back(bookmarkName);
+    assert(d->bookmarkHistory.size() < (std::size_t) INT_MAX);
+    d->currentIndex = static_cast<int>(d->bookmarkHistory.size()) - 1;
     endInsertRows();
 }
 
 void HistoryListModel::setMaximumHistory(int maximum)
 {
     d->maximumHistory = maximum;
-    if ((int) d->history.size() > maximum) {
+    if ((int) d->bookmarkHistory.size() > maximum) {
         beginResetModel();
-        d->history.resize(maximum);
-        d->history.shrink_to_fit();
+        d->bookmarkHistory.resize(maximum);
+        d->bookmarkHistory.shrink_to_fit();
         endResetModel();
     }
 }
@@ -97,7 +93,7 @@ void HistoryListModel::setMaximumHistory(int maximum)
 int HistoryListModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
-    const std::size_t size = d->history.size();
+    const std::size_t size = d->bookmarkHistory.size();
     assert(size <= (std::size_t) INT_MAX);
     return static_cast<int>(size);
 }
@@ -116,15 +112,15 @@ QVariant HistoryListModel::data(const QModelIndex& idx, int role) const
         return {};
     }
 
-    return d->history[idx.row()].first;
+    return d->bookmarkHistory[idx.row()];
 }
 
-std::pair<QString, lvtshr::DiagramType> Codethink::lvtmdl::HistoryListModel::at(int idx) const
+QString Codethink::lvtmdl::HistoryListModel::at(int idx) const
 {
     if (idx >= rowCount()) {
         return {};
     }
-    return d->history[idx];
+    return d->bookmarkHistory[idx];
 }
 
 } // namespace Codethink::lvtmdl

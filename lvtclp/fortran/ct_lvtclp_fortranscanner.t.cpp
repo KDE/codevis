@@ -17,6 +17,7 @@
 
 #include <catch2-local-includes.h>
 #include <ct_lvtmdb_componentobject.h>
+#include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <fortran/ct_lvtclp_tool.h>
 #include <test-project-paths.h>
@@ -27,7 +28,7 @@ TEST_CASE("simple fortran project")
     using namespace Codethink::lvtmdb;
 
     auto const PREFIX = std::string{TEST_PRJ_PATH};
-    auto tool = fortran::Tool{PREFIX + "/fortran_basics/a.f"};
+    auto tool = fortran::Tool{{PREFIX + "/fortran_basics/a.f"}};
     tool.runFull();
 
     auto locks = std::vector<Lockable::ROLock>{};
@@ -36,6 +37,11 @@ TEST_CASE("simple fortran project")
     };
     auto& memDb = tool.getObjectStore();
     l(memDb.readOnlyLock());
+
+    // Although only one file is being parsed, we do get information from the others, but
+    // don't save their files. Only parsed files are currently added to the database. This
+    // may be changed in the future, but for now, this is the expected behavior.
+    REQUIRE(memDb.getAllFiles().size() == 1);
 
     auto *componentA = memDb.getComponent("a");
     REQUIRE(componentA);

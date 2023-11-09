@@ -17,6 +17,7 @@
 
 #include <fortran/ct_lvtclp_logicalscanner.h>
 
+#include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <flang/Frontend/CompilerInstance.h>
 #include <flang/Parser/parse-tree-visitor.h>
@@ -48,10 +49,12 @@ struct FindExecutionPartCallsTreeVisitor {
 };
 
 struct ParseTreeVisitor {
-    ParseTreeVisitor(ObjectStore& memDb): memDb(memDb)
+    ParseTreeVisitor(ObjectStore& memDb, std::filesystem::path const& currentFilePath):
+        memDb(memDb), currentFilePath(currentFilePath)
     {
     }
     ObjectStore& memDb;
+    std::filesystem::path currentFilePath;
 
     // TODO: Perhaps we could return false and pick only the useful paths?
     //       This same note should also be considered for other visitors.
@@ -74,7 +77,11 @@ struct ParseTreeVisitor {
                 /*returnType=*/"",
                 /*templateParameters=*/"",
                 /*parent=*/nullptr);
-            (void) function;
+
+            auto *file = memDb.getFile(currentFilePath);
+            file->withRWLock([&] {
+                file->addGlobalFunction(function);
+            });
         });
 
         auto& execPart = std::get<ExecutionPart>(f.t);
@@ -89,7 +96,8 @@ LogicalParseAction::LogicalParseAction(ObjectStore& memDb): memDb(memDb)
 
 void LogicalParseAction::executeAction()
 {
-    auto visitor = ParseTreeVisitor{memDb};
+    auto currentInputPath = std::filesystem::path{getCurrentFileOrBufferName().str()};
+    auto visitor = ParseTreeVisitor{memDb, currentInputPath};
     Fortran::parser::Walk(getInstance().getParsing().parseTree(), visitor);
 }
 

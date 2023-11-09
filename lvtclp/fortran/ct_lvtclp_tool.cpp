@@ -40,7 +40,7 @@ namespace Codethink::lvtclp::fortran {
 
 using namespace Fortran::frontend;
 
-Tool::Tool(std::filesystem::path const& filename): filename(filename)
+Tool::Tool(std::vector<std::filesystem::path> const& files): files(files)
 {
 }
 
@@ -90,7 +90,9 @@ void run(FrontendAction& act, std::string const& filename)
 bool Tool::runPhysical(bool skipScan)
 {
     auto action = PhysicalParseAction{memDb};
-    run(action, this->filename.string());
+    for (auto const& f : files) {
+        run(action, f.string());
+    }
 
     return true;
 }
@@ -101,7 +103,9 @@ bool Tool::runFull(bool skipPhysical)
         runPhysical(/*skipScan=*/false);
     }
     auto action = LogicalParseAction{memDb};
-    run(action, this->filename.string());
+    for (auto const& f : files) {
+        run(action, f);
+    }
 
     return true;
 }

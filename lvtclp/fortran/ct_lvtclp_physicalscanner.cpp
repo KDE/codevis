@@ -34,7 +34,7 @@ void PhysicalParseAction::executeAction()
     auto currentInputPath = std::filesystem::path{getCurrentFileOrBufferName().str()};
     lvtmdb::ComponentObject *currentComponent = nullptr;
     memDb.withRWLock([&]() {
-        // TODO: Proper package handling
+        // TODO: Proper package handling (get package name instead of "Fortran")
         auto *package = memDb.getOrAddPackage(
             /*qualifiedName=*/"Fortran",
             /*name=*/"Fortran",
@@ -45,6 +45,15 @@ void PhysicalParseAction::executeAction()
             /*qualifiedName=*/currentInputPath.stem(),
             /*name=*/currentInputPath.stem(),
             /*package=*/package);
+        auto *file = memDb.getOrAddFile(
+            /*qualifiedName=*/currentInputPath.string(),
+            /*name=*/currentInputPath.string(),
+            /*isHeader=*/false,
+            /*hash=*/"", // TODO: Properly generate hash, if ever necessary
+            /*package=*/package,
+            /*component=*/currentComponent);
+        (void) file;
+        assert(file);
     });
     assert(currentComponent);
 

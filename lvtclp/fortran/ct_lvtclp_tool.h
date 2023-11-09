@@ -9,7 +9,7 @@ namespace Codethink::lvtclp::fortran {
 
 class LVTCLP_EXPORT Tool {
   public:
-    Tool(std::filesystem::path const& filename);
+    Tool(std::vector<std::filesystem::path> const& files);
 
     bool runPhysical(bool skipScan = false);
     bool runFull(bool skipPhysical = false);
@@ -17,7 +17,7 @@ class LVTCLP_EXPORT Tool {
     lvtmdb::ObjectStore& getObjectStore();
 
   private:
-    std::filesystem::path filename;
+    std::vector<std::filesystem::path> files;
     lvtmdb::ObjectStore memDb;
 };
 

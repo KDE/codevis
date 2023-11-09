@@ -15,32 +15,72 @@
 // limitations under the License.
 */
 
+#include <ct_lvtmdb_componentobject.h>
 #include <flang/Frontend/CompilerInstance.h>
 #include <fortran/ct_lvtclp_physicalscanner.h>
 
-#include <iostream>
+#include <filesystem>
 
 namespace Codethink::lvtclp::fortran {
 
 using namespace Fortran::parser;
 
+PhysicalParseAction::PhysicalParseAction(lvtmdb::ObjectStore& memDb): memDb(memDb)
+{
+}
+
 void PhysicalParseAction::executeAction()
 {
-    std::string currentInputPath{getCurrentFileOrBufferName()};
+    auto currentInputPath = std::filesystem::path{getCurrentFileOrBufferName().str()};
+    lvtmdb::ComponentObject *currentComponent = nullptr;
+    memDb.withRWLock([&]() {
+        // TODO: Proper package handling
+        auto *package = memDb.getOrAddPackage(
+            /*qualifiedName=*/"Fortran",
+            /*name=*/"Fortran",
+            /*diskPath=*/"",
+            /*parent=*/nullptr,
+            /*repository=*/nullptr);
+        currentComponent = memDb.getOrAddComponent(
+            /*qualifiedName=*/currentInputPath.stem(),
+            /*name=*/currentInputPath.stem(),
+            /*package=*/package);
+    });
+    assert(currentComponent);
+
     auto& allSources = getInstance().getAllCookedSources().allSources();
-    auto showSourceFileFrom = [&allSources](Provenance const& p) {
+    auto showSourceFileFrom = [&](Provenance const& p) {
         auto srcFile = allSources.GetSourceFile(p);
         if (srcFile == nullptr) {
             return; // Doesn't have associated source file
         }
-        // TODO: Save to database
-        std::cout << "+ Source file: " << srcFile->path() << "\n";
+
+        lvtmdb::ComponentObject *targetComponent = nullptr;
+        memDb.withRWLock([&]() {
+            // TODO: Proper package handling
+            auto *package = memDb.getOrAddPackage(
+                /*qualifiedName=*/"Fortran",
+                /*name=*/"Fortran",
+                /*diskPath=*/"",
+                /*parent=*/nullptr,
+                /*repository=*/nullptr);
+            auto dependencyPath = std::filesystem::path{srcFile->path()};
+            targetComponent = memDb.getOrAddComponent(
+                /*qualifiedName=*/dependencyPath.stem(),
+                /*name=*/dependencyPath.stem(),
+                /*package=*/package);
+        });
+        assert(targetComponent);
+        lvtmdb::ComponentObject::addDependency(currentComponent, targetComponent);
     };
 
     auto interval = *allSources.GetFirstFileProvenance();
     auto currProvenance = interval.start();
     while (allSources.IsValid(currProvenance)) {
         showSourceFileFrom(interval.start());
+        // TODO: NextAfter doesn't properly get the next interval, just the next position
+        //       with size 1. This means after the first interval, positions are incremented
+        //       by 1, and thus this algorithm is extremely dummy.
         interval = interval.NextAfter();
         currProvenance = interval.start();
     }

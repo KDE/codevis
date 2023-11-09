@@ -17,6 +17,7 @@
 
 #include <fortran/ct_lvtclp_logicalscanner.h>
 
+#include <ct_lvtmdb_objectstore.h>
 #include <flang/Frontend/CompilerInstance.h>
 #include <flang/Parser/parse-tree-visitor.h>
 #include <flang/Parser/parse-tree.h>
@@ -26,65 +27,69 @@
 namespace Codethink::lvtclp::fortran {
 
 using namespace Fortran::parser;
+using namespace Codethink::lvtmdb;
 
 struct FindExecutionPartCallsTreeVisitor {
-    template<typename A>
-    bool Pre(const A&)
+    FindExecutionPartCallsTreeVisitor(ObjectStore& memDb): memDb(memDb)
     {
-        return true;
     }
+    ObjectStore& memDb;
 
-    template<typename A>
-    void Post(const A&)
-    {
-    }
+    // clang-format off
+    template<typename A> bool Pre(const A&) { return true; }
+    template<typename A> void Post(const A&) {}
+    // clang-format on
 
     void Post(const CallStmt& f)
     {
-        // Note: newer (llvm-17) flang only. TODO: Fix for llvm-15 or llvm-16 builds
+        // TODO: newer (llvm-17) flang only - need to fix (or drop support) for llvm-15 or llvm-16 builds
         // std::cout << "++ CALLS " << std::get<Name>(std::get<ProcedureDesignator>(f.call.t).u).ToString() << "\n";
     }
 };
 
 struct ParseTreeVisitor {
-    // Note: Perhaps we could return false and pick only the useful paths?
+    ParseTreeVisitor(ObjectStore& memDb): memDb(memDb)
+    {
+    }
+    ObjectStore& memDb;
+
+    // TODO: Perhaps we could return false and pick only the useful paths?
     //       This same note should also be considered for other visitors.
-    template<typename A>
-    bool Pre(const A&)
-    {
-        return true;
-    }
-
-    template<typename A>
-    void Post(const A&)
-    {
-    }
-
-    void Post(const FunctionStmt& f)
-    {
-        std::cout << std::get<Fortran::parser::Name>(f.t).ToString() << "\n";
-    }
-
-    void Post(const SubroutineStmt& f)
-    {
-        std::cout << std::get<Name>(f.t).ToString() << "\n";
-    }
+    // clang-format off
+    template<typename A> bool Pre(const A&) { return true; }
+    template<typename A> void Post(const A&) {}
+    // clang-format on
 
     void Post(const SubroutineSubprogram& f)
     {
         auto& sr = std::get<Statement<SubroutineStmt>>(f.t);
-        // TODO: Save to database
-        std::cout << "+ FOUND " << std::get<Name>(sr.statement.t).ToString() << "\n";
+
+        // TODO: QualifiedName is not unique if we use name directly
+        auto functionName = std::get<Name>(sr.statement.t).ToString();
+        memDb.withRWLock([&]() {
+            auto *function = memDb.getOrAddFunction(
+                /*qualifiedName=*/functionName,
+                /*name=*/functionName,
+                /*signature=*/"",
+                /*returnType=*/"",
+                /*templateParameters=*/"",
+                /*parent=*/nullptr);
+            (void) function;
+        });
+
         auto& execPart = std::get<ExecutionPart>(f.t);
-        auto visitor = FindExecutionPartCallsTreeVisitor{};
+        auto visitor = FindExecutionPartCallsTreeVisitor{memDb};
         Fortran::parser::Walk(execPart, visitor);
-        std::cout << "------------------\n";
     }
 };
 
+LogicalParseAction::LogicalParseAction(ObjectStore& memDb): memDb(memDb)
+{
+}
+
 void LogicalParseAction::executeAction()
 {
-    ParseTreeVisitor visitor;
+    auto visitor = ParseTreeVisitor{memDb};
     Fortran::parser::Walk(getInstance().getParsing().parseTree(), visitor);
 }
 

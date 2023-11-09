@@ -323,6 +323,7 @@ if (ENABLE_FORTRAN_SCANNER)
             fortran/ct_lvtclp_physicalscanner.h
             fortran/ct_lvtclp_tool.h
             LIBRARIES
+            Codethink::lvtmdb
             flangFrontend
             flangFrontendTool
             ${SYSTEM_EXTRA_LIBRARIES}

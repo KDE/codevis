@@ -18,13 +18,23 @@
 #ifndef CODEVIS_CT_LVTCLP_PHYSICALSCANNER_H
 #define CODEVIS_CT_LVTCLP_PHYSICALSCANNER_H
 
+#include <ct_lvtmdb_objectstore.h>
 #include <flang/Frontend/FrontendActions.h>
 #include <lvtclp_export.h>
+#include <string>
+#include <tuple>
+#include <unordered_set>
 
 namespace Codethink::lvtclp::fortran {
 
 class LVTCLP_EXPORT PhysicalParseAction : public Fortran::frontend::PrescanAction {
+  public:
+    PhysicalParseAction(lvtmdb::ObjectStore& memDb);
+
+  private:
     void executeAction() override;
+
+    lvtmdb::ObjectStore& memDb;
 };
 
 } // namespace Codethink::lvtclp::fortran

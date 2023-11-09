@@ -21,10 +21,19 @@
 #include <flang/Frontend/FrontendActions.h>
 #include <lvtclp_export.h>
 
+namespace Codethink::lvtmdb {
+class ObjectStore;
+}
+
 namespace Codethink::lvtclp::fortran {
 
 class LVTCLP_EXPORT LogicalParseAction : public Fortran::frontend::PrescanAndSemaAction {
+  public:
+    LogicalParseAction(lvtmdb::ObjectStore& memDb);
+
+  private:
     void executeAction() override;
+    lvtmdb::ObjectStore& memDb;
 };
 
 } // namespace Codethink::lvtclp::fortran

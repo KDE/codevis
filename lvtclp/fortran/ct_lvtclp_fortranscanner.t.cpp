@@ -16,10 +16,61 @@
 */
 
 #include <catch2-local-includes.h>
+#include <ct_lvtmdb_componentobject.h>
+#include <ct_lvtmdb_packageobject.h>
 #include <fortran/ct_lvtclp_tool.h>
+#include <test-project-paths.h>
 
 TEST_CASE("simple fortran project")
 {
-    auto tool = Codethink::lvtclp::fortran::Tool{};
+    using namespace Codethink::lvtclp;
+    using namespace Codethink::lvtmdb;
+
+    auto const PREFIX = std::string{TEST_PRJ_PATH};
+    auto tool = fortran::Tool{PREFIX + "/fortran_basics/a.f"};
     tool.runFull();
+
+    auto locks = std::vector<Lockable::ROLock>{};
+    auto l = [&](Lockable::ROLock&& lock) {
+        locks.emplace_back(std::move(lock));
+    };
+    auto& memDb = tool.getObjectStore();
+    l(memDb.readOnlyLock());
+
+    auto *componentA = memDb.getComponent("a");
+    REQUIRE(componentA);
+    l(componentA->readOnlyLock());
+
+    auto *componentB = memDb.getComponent("b");
+    REQUIRE(componentB);
+    l(componentB->readOnlyLock());
+
+    auto *package = componentA->package();
+    REQUIRE(package);
+    l(package->readOnlyLock());
+
+    REQUIRE(componentA->name() == "a");
+    REQUIRE(componentB->name() == "b");
+    REQUIRE(package->name() == "Fortran");
+
+    auto *funcCal1 = memDb.getFunction(
+        /*qualifiedName=*/"cal1",
+        /*signature=*/"",
+        /*templateParameters=*/"",
+        /*returnType=*/"");
+    REQUIRE(funcCal1);
+
+    auto *funcCal2 = memDb.getFunction(
+        /*qualifiedName=*/"cal2",
+        /*signature=*/"",
+        /*templateParameters=*/"",
+        /*returnType=*/"");
+    REQUIRE(funcCal2);
+
+    auto *funcCal3 = memDb.getFunction(
+        /*qualifiedName=*/"cal3",
+        /*signature=*/"",
+        /*templateParameters=*/"",
+        /*returnType=*/"");
+    REQUIRE(funcCal3);
 }

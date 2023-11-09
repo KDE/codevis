@@ -40,7 +40,11 @@ namespace Codethink::lvtclp::fortran {
 
 using namespace Fortran::frontend;
 
-void run(FrontendAction& act)
+Tool::Tool(std::filesystem::path const& filename): filename(filename)
+{
+}
+
+void run(FrontendAction& act, std::string const& filename)
 {
     std::unique_ptr<CompilerInstance> flang(new CompilerInstance());
     flang->createDiagnostics();
@@ -55,8 +59,7 @@ void run(FrontendAction& act)
     llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = new clang::DiagnosticOptions();
     clang::DiagnosticsEngine diags(diagID, &*diagOpts, diagsBuffer);
 
-    // TODO: Check how to pass files or maybe cmakelists information?
-    auto args = std::array<const char *, 1>{"helloworld.f"};
+    auto args = std::array<const char *, 1>{filename.c_str()};
     auto commandLineArgs = llvm::ArrayRef<const char *>(args);
     bool success = CompilerInvocation::createFromArgs(flang->getInvocation(), commandLineArgs, diags);
 
@@ -86,8 +89,8 @@ void run(FrontendAction& act)
 
 bool Tool::runPhysical(bool skipScan)
 {
-    auto action = PhysicalParseAction{};
-    run(action);
+    auto action = PhysicalParseAction{memDb};
+    run(action, this->filename.string());
 
     return true;
 }
@@ -97,10 +100,15 @@ bool Tool::runFull(bool skipPhysical)
     if (!skipPhysical) {
         runPhysical(/*skipScan=*/false);
     }
-    auto action = LogicalParseAction{};
-    run(action);
+    auto action = LogicalParseAction{memDb};
+    run(action, this->filename.string());
 
     return true;
+}
+
+lvtmdb::ObjectStore& Tool::getObjectStore()
+{
+    return this->memDb;
 }
 
 } // namespace Codethink::lvtclp::fortran

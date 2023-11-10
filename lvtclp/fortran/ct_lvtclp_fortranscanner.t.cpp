@@ -18,6 +18,7 @@
 #include <catch2-local-includes.h>
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_fileobject.h>
+#include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <fortran/ct_lvtclp_tool.h>
 #include <test-project-paths.h>
@@ -79,4 +80,11 @@ TEST_CASE("simple fortran project")
         /*templateParameters=*/"",
         /*returnType=*/"");
     REQUIRE(funcCal3);
+
+    REQUIRE(funcCal1->callees().size() == 2);
+    REQUIRE(funcCal1->callers().size() == 0);
+    REQUIRE(funcCal2->callees().size() == 0);
+    REQUIRE(funcCal2->callers().size() == 1);
+    REQUIRE(funcCal3->callees().size() == 0);
+    REQUIRE(funcCal3->callers().size() == 0);
 }

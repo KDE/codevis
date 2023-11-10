@@ -71,7 +71,7 @@ include(GetDate)
 include(FeatureSummary)
 find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
-find_package(LLVM 15 REQUIRED) # Forcing llvm version for testing purposes. TODO: Remove this
+find_package(LLVM 17 REQUIRED)
 find_package(Clang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/clang/" NO_DEFAULT_PATH)
 
 set(CMAKE_AUTOMOC FALSE)
@@ -113,7 +113,8 @@ find_package(Qt${QT_MAJOR_VERSION}Core ${QT_MIN_VERSION} CONFIG REQUIRED)
 if (QT_MAJOR_VERSION STREQUAL "6")
     find_package(Qt6Core5Compat)
 endif()
-message("Found Qt version: '${QT_MAJOR_VERSION}'")
+message("-- Qt Version: ${QT_MAJOR_VERSION}")
+message("-- LLVM Version: ${LLVM_VERSION}")
 
 if (BUILD_DESKTOP_APP)
     find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)

@@ -18,6 +18,7 @@
 #include <fortran/ct_lvtclp_logicalscanner.h>
 
 #include <ct_lvtmdb_fileobject.h>
+#include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <flang/Frontend/CompilerInstance.h>
 #include <flang/Parser/parse-tree-visitor.h>
@@ -31,10 +32,11 @@ using namespace Fortran::parser;
 using namespace Codethink::lvtmdb;
 
 struct FindExecutionPartCallsTreeVisitor {
-    FindExecutionPartCallsTreeVisitor(ObjectStore& memDb): memDb(memDb)
+    FindExecutionPartCallsTreeVisitor(ObjectStore& memDb, FunctionObject *caller): memDb(memDb), caller(caller)
     {
     }
     ObjectStore& memDb;
+    FunctionObject *caller;
 
     // clang-format off
     template<typename A> bool Pre(const A&) { return true; }
@@ -43,8 +45,17 @@ struct FindExecutionPartCallsTreeVisitor {
 
     void Post(const CallStmt& f)
     {
-        // TODO: newer (llvm-17) flang only - need to fix (or drop support) for llvm-15 or llvm-16 builds
-        // std::cout << "++ CALLS " << std::get<Name>(std::get<ProcedureDesignator>(f.call.t).u).ToString() << "\n";
+        auto functionName = std::get<Name>(std::get<ProcedureDesignator>(f.call.t).u).ToString();
+        memDb.withRWLock([&]() {
+            auto *callee = memDb.getOrAddFunction(
+                /*qualifiedName=*/functionName,
+                /*name=*/functionName,
+                /*signature=*/"",
+                /*returnType=*/"",
+                /*templateParameters=*/"",
+                /*parent=*/nullptr);
+            FunctionObject::addDependency(caller, callee);
+        });
     }
 };
 
@@ -69,8 +80,9 @@ struct ParseTreeVisitor {
 
         // TODO: QualifiedName is not unique if we use name directly
         auto functionName = std::get<Name>(sr.statement.t).ToString();
+        FunctionObject *function = nullptr;
         memDb.withRWLock([&]() {
-            auto *function = memDb.getOrAddFunction(
+            function = memDb.getOrAddFunction(
                 /*qualifiedName=*/functionName,
                 /*name=*/functionName,
                 /*signature=*/"",
@@ -83,9 +95,10 @@ struct ParseTreeVisitor {
                 file->addGlobalFunction(function);
             });
         });
+        assert(function);
 
         auto& execPart = std::get<ExecutionPart>(f.t);
-        auto visitor = FindExecutionPartCallsTreeVisitor{memDb};
+        auto visitor = FindExecutionPartCallsTreeVisitor{memDb, function};
         Fortran::parser::Walk(execPart, visitor);
     }
 };

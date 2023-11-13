@@ -395,6 +395,11 @@ void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::C
         }
         cmd.Filename = filename.string();
 
+        auto ext = filename.extension().string();
+        if (ext != ".cc" && ext != ".cpp" && ext != ".c" && ext != ".h" && ext != ".hpp" && ext != ".hh") {
+            continue;
+        }
+
         d->files.push_back(cmd.Filename);
         d->compileCommands.push_back(std::move(cmd));
     }

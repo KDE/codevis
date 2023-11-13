@@ -866,12 +866,16 @@ void SociWriter::writeFrom(const ObjectStore& store)
         exportFunctionCallgraph(fn.get(), d_db);
     }
 
-    const std::vector<std::pair<int, int>> db_options = {
-        {static_cast<int>(SociHelper::Key::Version), SociHelper::CURRENT_VERSION},
-        {static_cast<int>(SociHelper::Key::DatabaseState), static_cast<int>(store.state())}};
+    int n = 0;
+    d_db << "select count(*) from db_option", soci::into(n);
+    if (n == 0) {
+        const std::vector<std::pair<int, int>> db_options = {
+            {static_cast<int>(SociHelper::Key::Version), SociHelper::CURRENT_VERSION},
+            {static_cast<int>(SociHelper::Key::DatabaseState), static_cast<int>(store.state())}};
 
-    for (const auto& [key, val] : db_options) {
-        d_db << "insert into db_option(key, value) values(:k, :v)", soci::use(key), soci::use(val);
+        for (const auto& [key, val] : db_options) {
+            d_db << "insert into db_option(key, value) values(:k, :v)", soci::use(key), soci::use(val);
+        }
     }
 
     tr.commit();

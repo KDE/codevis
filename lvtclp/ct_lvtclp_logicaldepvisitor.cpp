@@ -683,6 +683,13 @@ bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
     auto addFunctionToDb = [this](const clang::FunctionDecl *functionDecl) {
         std::string name = functionDecl->getNameAsString();
         std::string qualifiedName = functionDecl->getQualifiedNameAsString();
+        if (name.ends_with('_')) {
+            // Heuristic: If the free function ends with '_', assume this is calling Fortran code,
+            // and thus the '_' should be removed.
+            name = name.substr(0, name.length() - 1);
+            qualifiedName = qualifiedName.substr(0, qualifiedName.length() - 1);
+        }
+
         std::string parentName = qualifiedName.substr(0, qualifiedName.length() - name.length() - 2);
         std::string signature = getSignature(functionDecl);
         std::string templateParameters = getTemplateParameters(functionDecl);

@@ -721,15 +721,9 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
 {
     const bool catchCodeAnalysisOutput = Preferences::enableCodeParseDebugOutput();
 
-    auto errorMessage = std::string{};
-    auto jsonDb =
-        clang::tooling::JSONCompilationDatabase::loadFromFile(compileCommandsJson,
-                                                              errorMessage,
-                                                              clang::tooling::JSONCommandLineSyntax::AutoDetect);
-
     if (!d->tool_p) {
         d->tool_p = std::make_unique<lvtclp::Tool>(sourcePath(),
-                                                   std::vector<std::filesystem::path>{std::move(compileCommandsJson)},
+                                                   std::vector<std::filesystem::path>{compileCommandsJson},
                                                    codebasePath().toStdString(),
                                                    ui->threadCount->value(),
                                                    ignoreList,
@@ -738,6 +732,12 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
                                                    catchCodeAnalysisOutput);
     }
     if (!d->fotran_tool_p) {
+        auto errorMessage = std::string{};
+        auto jsonDb =
+            clang::tooling::JSONCompilationDatabase::loadFromFile(compileCommandsJson,
+                                                                  errorMessage,
+                                                                  clang::tooling::JSONCommandLineSyntax::AutoDetect);
+
         auto fortranFiles = std::vector<std::filesystem::path>{};
         for (auto const& cmd : jsonDb->getAllCompileCommands()) {
             auto filename = std::filesystem::path{cmd.Filename};
@@ -775,12 +775,14 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
 
     auto threadFn = [this]() {
         assert(d->tool_p);
-        //        if (d->dialogState == State::RunPhysicalOnly || d->dialogState == State::RunAllPhysical) {
-        //            d->threadSuccess = d->tool_p->runPhysical();
-        //        } else if (d->dialogState == State::RunAllLogical) {
-        //            d->threadSuccess = d->tool_p->runFull(true);
-        //        }
-        d->threadSuccess = d->fotran_tool_p->runFull();
+        assert(d->fotran_tool_p);
+        if (d->dialogState == State::RunPhysicalOnly || d->dialogState == State::RunAllPhysical) {
+            d->threadSuccess = d->tool_p->runPhysical();
+            d->threadSuccess = d->fotran_tool_p->runPhysical();
+        } else if (d->dialogState == State::RunAllLogical) {
+            d->threadSuccess = d->tool_p->runFull(true);
+            d->threadSuccess = d->fotran_tool_p->runFull(true);
+        }
     };
 
     d->parseThread = QThread::create(threadFn);
@@ -845,11 +847,17 @@ void ParseCodebaseDialog::updateDatabase()
         }
     }
 
-    //    auto& mdb = d->tool_p->getObjectStore();
-    auto& mdb = d->fotran_tool_p->getObjectStore();
     lvtmdb::SociWriter writer;
     writer.createOrOpen(path);
-    mdb.writeToDatabase(writer);
+
+    {
+        auto& mdb = d->tool_p->getObjectStore();
+        mdb.writeToDatabase(writer);
+    }
+    {
+        auto& mdb = d->fotran_tool_p->getObjectStore();
+        mdb.writeToDatabase(writer);
+    }
 
     if (d->pluginManager) {
         auto& pm = (*d->pluginManager).get();

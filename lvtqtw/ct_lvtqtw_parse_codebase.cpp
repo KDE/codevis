@@ -742,7 +742,7 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
         for (auto const& cmd : jsonDb->getAllCompileCommands()) {
             auto filename = std::filesystem::path{cmd.Filename};
             auto ext = filename.extension().string();
-            if (ext != ".f" && ext != ".for" && ext != ".f90") {
+            if (ext != ".f" && ext != ".for" && ext != ".f90" && ext != ".inc") {
                 continue;
             }
             if (filename.is_relative()) {

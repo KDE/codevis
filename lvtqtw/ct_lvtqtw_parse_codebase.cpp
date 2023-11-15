@@ -911,6 +911,7 @@ void ParseCodebaseDialog::endParse()
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Killed);
         d->tool_p = nullptr;
+        d->fotran_tool_p = nullptr;
         return;
     }
 
@@ -920,6 +921,7 @@ void ParseCodebaseDialog::endParse()
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Idle);
         d->tool_p = nullptr;
+        d->fotran_tool_p = nullptr;
         return;
     }
 
@@ -960,6 +962,7 @@ void ParseCodebaseDialog::endParse()
     }
     d->dialogState = State::Idle;
     d->tool_p = nullptr;
+    d->fotran_tool_p = nullptr;
     d->parseTimer.invalidate();
 
     if (d->pluginManager) {

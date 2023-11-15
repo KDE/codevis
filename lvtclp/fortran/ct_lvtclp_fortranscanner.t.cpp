@@ -81,6 +81,13 @@ TEST_CASE("simple fortran project")
         /*returnType=*/"");
     REQUIRE(funcCal3);
 
+    auto *funcCalF = memDb.getFunction(
+        /*qualifiedName=*/"cal_f",
+        /*signature=*/"",
+        /*templateParameters=*/"",
+        /*returnType=*/"");
+    REQUIRE(funcCalF);
+
     REQUIRE(funcCal1->callees().size() == 2);
     REQUIRE(funcCal1->callers().size() == 0);
     REQUIRE(funcCal2->callees().size() == 0);

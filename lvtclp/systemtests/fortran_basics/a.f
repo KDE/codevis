@@ -13,3 +13,7 @@
       end subroutine cal1
 
       INCLUDE 'b.f'
+
+      function cal_f(A)
+      real A
+      end function cal_f

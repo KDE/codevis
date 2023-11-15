@@ -76,10 +76,35 @@ struct ParseTreeVisitor {
 
     void Post(const SubroutineSubprogram& f)
     {
-        auto& sr = std::get<Statement<SubroutineStmt>>(f.t);
+        prepareAndAddFuncToDB(f);
+    }
+
+    void Post(const FunctionSubprogram& f)
+    {
+        prepareAndAddFuncToDB(f);
+    }
+
+  private:
+    // clang-format off
+    template<typename T>
+    requires(std::is_same_v<T, FunctionSubprogram> || std::is_same_v<T, SubroutineSubprogram>)
+    void prepareAndAddFuncToDB(T const& f)
+    // clang-format on
+    {
+        auto const& ss = std::get<0>(f.t);
+        {
+            // Sanity check
+            using ss_T = std::remove_cvref_t<decltype(ss)>;
+            // clang-format off
+            static_assert(
+                std::is_same_v<ss_T, Statement<SubroutineStmt>> ||
+                std::is_same_v<ss_T, Statement<FunctionStmt>>
+            );
+            // clang-format on
+        }
 
         // TODO: QualifiedName is not unique if we use name directly
-        auto functionName = std::get<Name>(sr.statement.t).ToString();
+        auto functionName = std::get<Name>(ss.statement.t).ToString();
         FunctionObject *function = nullptr;
         memDb.withRWLock([&]() {
             function = memDb.getOrAddFunction(
@@ -89,13 +114,13 @@ struct ParseTreeVisitor {
                 /*returnType=*/"",
                 /*templateParameters=*/"",
                 /*parent=*/nullptr);
+            assert(function);
 
             auto *file = memDb.getFile(currentFilePath);
             file->withRWLock([&] {
                 file->addGlobalFunction(function);
             });
         });
-        assert(function);
 
         auto& execPart = std::get<ExecutionPart>(f.t);
         auto visitor = FindExecutionPartCallsTreeVisitor{memDb, function};

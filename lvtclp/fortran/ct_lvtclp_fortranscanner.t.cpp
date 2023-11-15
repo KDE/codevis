@@ -114,4 +114,14 @@ TEST_CASE("Mixed fortran and C project")
                                                        {PREFIX + "/fortran_c_mixed/main.c"}};
     auto tool = fortran::Tool{fileList};
     tool.runFull();
+
+    auto locks = std::vector<Lockable::ROLock>{};
+    auto l = [&](Lockable::ROLock&& lock) {
+        locks.emplace_back(std::move(lock));
+    };
+    auto& memDb = tool.getObjectStore();
+    l(memDb.readOnlyLock());
+
+    // '.c' files are ignored
+    REQUIRE(memDb.getAllFiles().size() == 2);
 }

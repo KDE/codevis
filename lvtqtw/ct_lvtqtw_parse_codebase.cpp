@@ -780,8 +780,8 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
             d->threadSuccess = d->tool_p->runPhysical();
             d->threadSuccess = d->fotran_tool_p->runPhysical();
         } else if (d->dialogState == State::RunAllLogical) {
-            d->threadSuccess = d->tool_p->runFull(true);
-            d->threadSuccess = d->fotran_tool_p->runFull(true);
+            d->threadSuccess = d->tool_p->runFull(/*skipPhysical=*/true);
+            d->threadSuccess = d->fotran_tool_p->runFull(/*skipPhysical=*/true);
         }
     };
 

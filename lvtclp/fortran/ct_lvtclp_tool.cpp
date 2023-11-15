@@ -23,6 +23,7 @@
 #include <flang/Frontend/FrontendActions.h>
 
 #include <clang/Driver/DriverDiagnostic.h>
+#include <clang/Tooling/JSONCompilationDatabase.h>
 #include <flang/Frontend/CompilerInstance.h>
 #include <flang/Frontend/CompilerInvocation.h>
 #include <flang/Frontend/TextDiagnosticBuffer.h>
@@ -36,11 +37,53 @@
 #include <iostream>
 #include <memory>
 
+namespace {
+
+std::vector<std::filesystem::path> filterFortranFiles(std::vector<std::filesystem::path> const& files)
+{
+    auto fortranFiles = std::vector<std::filesystem::path>{};
+    for (auto const& file : files) {
+        auto ext = file.extension().string();
+        if (ext != ".f" && ext != ".for" && ext != ".f90" && ext != ".inc") {
+            continue;
+        }
+        fortranFiles.emplace_back(file);
+    }
+    return fortranFiles;
+}
+
+std::vector<std::filesystem::path> extractFilesFromCompileCommands(std::filesystem::path const& compileCommandsJson)
+{
+    auto errorMessage = std::string{};
+    auto jsonDb =
+        clang::tooling::JSONCompilationDatabase::loadFromFile(compileCommandsJson.string(),
+                                                              errorMessage,
+                                                              clang::tooling::JSONCommandLineSyntax::AutoDetect);
+
+    auto fortranFiles = std::vector<std::filesystem::path>{};
+    for (auto const& cmd : jsonDb->getAllCompileCommands()) {
+        auto filename = std::filesystem::path{cmd.Filename};
+        if (filename.is_relative()) {
+            std::cout << "Warning: Relative path is not currently handled. Skipping " << filename << "\n";
+            continue;
+        }
+        fortranFiles.emplace_back(filename);
+    }
+    return fortranFiles;
+}
+
+} // namespace
+
 namespace Codethink::lvtclp::fortran {
 
 using namespace Fortran::frontend;
 
-Tool::Tool(std::vector<std::filesystem::path> const& files): files(files)
+Tool::Tool(std::filesystem::path const& compileCommandsJson):
+    files(filterFortranFiles(extractFilesFromCompileCommands(compileCommandsJson)))
+{
+}
+
+Tool::Tool(std::vector<std::filesystem::path> const& files): files(filterFortranFiles(files))
 {
 }
 

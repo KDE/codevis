@@ -79,7 +79,7 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
                                     const std::vector<std::filesystem::path>& nonLakosianDirs);
     // Runs CMake to generate compile_commands.json file before starting parse step 2
 
-    void initParse_Step2(std::string compileCommandsJson,
+    void initParse_Step2(const std::string& compileCommandsJson,
                          const std::vector<std::string>& ignoreList,
                          const std::vector<std::filesystem::path>& nonLakosianDirs);
     // Actually starts the parsing process.

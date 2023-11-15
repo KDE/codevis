@@ -29,7 +29,8 @@ TEST_CASE("simple fortran project")
     using namespace Codethink::lvtmdb;
 
     auto const PREFIX = std::string{TEST_PRJ_PATH};
-    auto tool = fortran::Tool{{PREFIX + "/fortran_basics/a.f"}};
+    auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/fortran_basics/a.f"}};
+    auto tool = fortran::Tool{fileList};
     tool.runFull();
 
     auto locks = std::vector<Lockable::ROLock>{};
@@ -99,4 +100,18 @@ TEST_CASE("simple fortran project")
 
     REQUIRE(funcCalF->callees().size() == 0);
     REQUIRE(funcCalF->callers().size() == 1);
+}
+
+TEST_CASE("Mixed fortran and C project")
+{
+    using namespace Codethink::lvtclp;
+    using namespace Codethink::lvtmdb;
+    auto const PREFIX = std::string{TEST_PRJ_PATH};
+
+    auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/fortran_c_mixed/a.f"},
+                                                       {PREFIX + "/fortran_c_mixed/b.f"},
+                                                       {PREFIX + "/fortran_c_mixed/c.c"},
+                                                       {PREFIX + "/fortran_c_mixed/main.c"}};
+    auto tool = fortran::Tool{fileList};
+    tool.runFull();
 }

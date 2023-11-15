@@ -715,7 +715,7 @@ void ParseCodebaseDialog::runCMakeAndInitParse_Step2(const std::string& compileC
     refreshCompileCommands->start(cmakeExecutable, QStringList({".", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"}));
 }
 
-void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
+void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson,
                                           const std::vector<std::string>& ignoreList,
                                           const std::vector<std::filesystem::path>& nonLakosianDirs)
 {
@@ -732,26 +732,7 @@ void ParseCodebaseDialog::initParse_Step2(std::string compileCommandsJson,
                                                    catchCodeAnalysisOutput);
     }
     if (!d->fotran_tool_p) {
-        auto errorMessage = std::string{};
-        auto jsonDb =
-            clang::tooling::JSONCompilationDatabase::loadFromFile(compileCommandsJson,
-                                                                  errorMessage,
-                                                                  clang::tooling::JSONCommandLineSyntax::AutoDetect);
-
-        auto fortranFiles = std::vector<std::filesystem::path>{};
-        for (auto const& cmd : jsonDb->getAllCompileCommands()) {
-            auto filename = std::filesystem::path{cmd.Filename};
-            auto ext = filename.extension().string();
-            if (ext != ".f" && ext != ".for" && ext != ".f90" && ext != ".inc") {
-                continue;
-            }
-            if (filename.is_relative()) {
-                std::cout << "Warning: Relative path is not handled yet. Skipping " << filename << "\n";
-                continue;
-            }
-            fortranFiles.emplace_back(filename);
-        }
-        d->fotran_tool_p = std::make_unique<lvtclp::fortran::Tool>(fortranFiles);
+        d->fotran_tool_p = std::make_unique<lvtclp::fortran::Tool>(compileCommandsJson);
     }
 
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());

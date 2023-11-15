@@ -10,6 +10,7 @@ namespace Codethink::lvtclp::fortran {
 class LVTCLP_EXPORT Tool {
   public:
     Tool(std::vector<std::filesystem::path> const& files);
+    Tool(std::filesystem::path const& compileCommandsJson);
 
     bool runPhysical(bool skipScan = false);
     bool runFull(bool skipPhysical = false);

@@ -496,11 +496,7 @@ C *c;
         REQUIRE(c->name() == "c");
         REQUIRE(c->parent() == foo);
         REQUIRE(!c->isGlobal());
-#if CLANG_VERSION_MAJOR >= 16
         REQUIRE(c->signature() == "C *");
-#else
-        REQUIRE(c->signature() == "class C *");
-#endif
     });
 }
 
@@ -525,12 +521,7 @@ C *c;
         REQUIRE(c->name() == "c");
         REQUIRE(!c->parent());
         REQUIRE(c->isGlobal());
-#if CLANG_VERSION_MAJOR >= 16
         REQUIRE(c->signature() == "C *");
-#else
-        REQUIRE(c->signature() == "class C *");
-#endif
-
     });
 }
 

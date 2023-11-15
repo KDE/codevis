@@ -372,11 +372,7 @@ class D {
 
     MethodObject *method = nullptr;
     session.withROLock([&] {
-#if CLANG_VERSION_MAJOR >= 16
         method = session.getMethod("D::method", "method(int i, const C & c)", std::string{}, "void");
-#else
-        method = session.getMethod("D::method", "method(int i, const class C & c)", std::string{}, "void");
-#endif
     });
     REQUIRE(method);
 
@@ -419,11 +415,7 @@ class D {
         C = session.getType("C");
         D = session.getType("D");
         foo0 = session.getMethod("D::foo", "foo()", std::string{}, "int");
-#if CLANG_VERSION_MAJOR >= 16
         foo1 = session.getMethod("D::foo", "foo(C arg)", std::string{}, "int");
-#else
-        foo1 = session.getMethod("D::foo", "foo(class C arg)", std::string{}, "int");
-#endif
     });
 
     REQUIRE(C);

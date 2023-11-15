@@ -101,13 +101,7 @@ class HeaderCallbacks : public clang::PPCallbacks {
                             clang::StringRef FileName,
                             bool IsAngled,
                             clang::CharSourceRange FilenameRange,
-#if CLANG_VERSION_MAJOR >= 16
                             clang::OptionalFileEntryRef File,
-#elif CLANG_VERSION_MAJOR >= 15
-                            clang::Optional<clang::FileEntryRef> File,
-#else
-                            const clang::FileEntry *File,
-#endif
                             clang::StringRef SearchPath,
                             clang::StringRef RelativePath,
                             const clang::Module *Imported,

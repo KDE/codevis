@@ -56,39 +56,17 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
                                          clang::StringRef FileName,
                                          bool IsAngled,
                                          clang::CharSourceRange FilenameRange,
-#if CLANG_VERSION_MAJOR >= 16
                                          clang::OptionalFileEntryRef File,
-#elif CLANG_VERSION_MAJOR >= 15
-                                         clang::Optional<clang::FileEntryRef> File,
-#else
-                                         const clang::FileEntry *File,
-#endif
                                          clang::StringRef SearchPath,
                                          clang::StringRef RelativePath,
                                          const clang::Module *Imported,
                                          clang::SrcMgr::CharacteristicKind FileType)
 {
-#if CLANG_VERSION_MAJOR >= 16
     if (!File.has_value()) {
         return;
     }
-#elif CLANG_VERSION_MAJOR >= 15
-    if (!File.hasValue()) {
-        return;
-    }
-#else
-    if (File == nullptr) {
-        return;
-    }
-#endif
 
-    auto realPathStr =
-#if CLANG_VERSION_MAJOR >= 15
-        File.value().getFileEntry().tryGetRealPathName().str()
-#else
-        File->tryGetRealPathName().str()
-#endif
-        ;
+    auto realPathStr = File.value().getFileEntry().tryGetRealPathName().str();
 
     if (d_sourceFile_p == nullptr) {
         return;

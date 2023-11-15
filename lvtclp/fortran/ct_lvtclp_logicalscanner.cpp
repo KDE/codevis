@@ -43,9 +43,9 @@ struct FindExecutionPartCallsTreeVisitor {
     template<typename A> void Post(const A&) {}
     // clang-format on
 
-    void Post(const CallStmt& f)
+    void Post(const Call& f)
     {
-        auto functionName = std::get<Name>(std::get<ProcedureDesignator>(f.call.t).u).ToString();
+        auto functionName = std::get<Name>(std::get<ProcedureDesignator>(f.t).u).ToString();
         memDb.withRWLock([&]() {
             auto *callee = memDb.getOrAddFunction(
                 /*qualifiedName=*/functionName,

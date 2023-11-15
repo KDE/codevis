@@ -88,10 +88,15 @@ TEST_CASE("simple fortran project")
         /*returnType=*/"");
     REQUIRE(funcCalF);
 
-    REQUIRE(funcCal1->callees().size() == 2);
+    REQUIRE(funcCal1->callees().size() == 3);
     REQUIRE(funcCal1->callers().size() == 0);
+
     REQUIRE(funcCal2->callees().size() == 0);
     REQUIRE(funcCal2->callers().size() == 1);
+
     REQUIRE(funcCal3->callees().size() == 0);
     REQUIRE(funcCal3->callers().size() == 0);
+
+    REQUIRE(funcCalF->callees().size() == 0);
+    REQUIRE(funcCalF->callers().size() == 1);
 }

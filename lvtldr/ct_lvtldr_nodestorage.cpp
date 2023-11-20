@@ -662,8 +662,12 @@ LakosianNode *NodeStorage::findByQualifiedName(lvtshr::DiagramType type, const s
 LakosianNode *NodeStorage::findByQualifiedName(const std::string& qualifiedName)
 {
     using lvtshr::DiagramType;
-    for (auto const& type :
-         {DiagramType::RepositoryType, DiagramType::PackageType, DiagramType::ComponentType, DiagramType::ClassType}) {
+    for (auto const& type : {DiagramType::RepositoryType,
+                             DiagramType::PackageType,
+                             DiagramType::ComponentType,
+                             DiagramType::ClassType,
+                             DiagramType::RepositoryType,
+                             DiagramType::FreeFunctionType}) {
         auto *lakosianNode = findByQualifiedName(type, qualifiedName);
         if (lakosianNode) {
             return lakosianNode;

@@ -1511,6 +1511,7 @@ void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, cons
         Q_EMIT errorMessage(tr("Element %1 not found").arg(qualifiedName));
         return;
     }
+
     assert(lakosianNode);
 
     LakosEntity *lastAddedEntity = nullptr;

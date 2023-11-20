@@ -19,6 +19,11 @@
 
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtclp_tool.h>
+#include <fortran/ct_lvtclp_tool.h>
+
+#include <clang/Tooling/JSONCompilationDatabase.h>
+#include <ct_lvtmdb_functionobject.h>
+#include <ct_lvtmdb_soci_reader.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -413,29 +418,36 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    auto tool = !args.compilationDbPaths.empty() ? std::make_unique<Codethink::lvtclp::Tool>(args.sourcePath,
-                                                                                             args.compilationDbPaths,
-                                                                                             args.dbPath,
-                                                                                             args.numThreads,
-                                                                                             args.ignoreList,
-                                                                                             args.nonLakosianDirs,
-                                                                                             args.packageMappings,
-                                                                                             !args.silent)
-                                                 : std::make_unique<Codethink::lvtclp::Tool>(args.sourcePath,
-                                                                                             compileCommand.value(),
-                                                                                             args.dbPath,
-                                                                                             args.ignoreList,
-                                                                                             args.nonLakosianDirs,
-                                                                                             args.packageMappings,
-                                                                                             !args.silent);
+    auto clang_tool = !args.compilationDbPaths.empty()
+        ? std::make_unique<Codethink::lvtclp::Tool>(args.sourcePath,
+                                                    args.compilationDbPaths,
+                                                    args.dbPath,
+                                                    args.numThreads,
+                                                    args.ignoreList,
+                                                    args.nonLakosianDirs,
+                                                    args.packageMappings,
+                                                    !args.silent)
+        : std::make_unique<Codethink::lvtclp::Tool>(args.sourcePath,
+                                                    compileCommand.value(),
+                                                    args.dbPath,
+                                                    args.ignoreList,
+                                                    args.nonLakosianDirs,
+                                                    args.packageMappings,
+                                                    !args.silent);
 
-    tool->setUseSystemHeaders(args.useSystemHeaders);
+    clang_tool->setUseSystemHeaders(args.useSystemHeaders);
+
+    auto flang_tool = std::make_unique<Codethink::lvtclp::fortran::Tool>(args.compilationDbPaths[0]);
 
     const bool success = [&]() {
         if (args.physicalOnly) {
-            return tool->runPhysical();
+            auto clang_result = clang_tool->runPhysical();
+            auto flang_result = flang_tool->runPhysical();
+            return clang_result && flang_result;
         }
-        return tool->runFull();
+        auto clang_result = clang_tool->runFull();
+        auto flang_result = flang_tool->runFull();
+        return clang_result && flang_result;
     }();
 
     if (!success) {
@@ -449,14 +461,71 @@ int main(int argc, char **argv)
     // The database stored by the tool is in memory, and we need to dump
     // to disk, so we can ignore it - and use the DataWriter to fetch
     // information from the tool and dump *that* info to disk.
-    Codethink::lvtmdb::ObjectStore& store = tool->getObjectStore();
-    Codethink::lvtmdb::SociWriter writer;
-    if (!writer.createOrOpen(args.dbPath.string())) {
-        std::cerr << "Error saving database file to disk\n";
-        return EXIT_FAILURE;
+    {
+        Codethink::lvtmdb::SociWriter writer;
+        if (!writer.createOrOpen(args.dbPath.string())) {
+            std::cerr << "Error saving database file to disk\n";
+            return EXIT_FAILURE;
+        }
+        {
+            auto& mdb = clang_tool->getObjectStore();
+            mdb.writeToDatabase(writer);
+        }
+        {
+            auto& mdb = flang_tool->getObjectStore();
+            mdb.writeToDatabase(writer);
+        }
     }
+    {
+        using namespace Codethink;
+        auto path = args.dbPath.string();
 
-    store.writeToDatabase(writer);
+        // Heuristically find bindings from/to C/Fortran code
+        // TODO: Code duplicated with lvtqtw/ct_lvtqtw_parse_codebase.cpp - Move to somewhere else.
+        // TODO: Check where this should be moved to.
+
+        // TODO: We don't have a proper merge, so we need to get the merged data from disk.
+        lvtmdb::ObjectStore mergedStore;
+        {
+            lvtmdb::SociReader reader;
+            mergedStore.readFromDatabase(reader, path).expect("Unexpected error loading database.");
+        }
+
+        auto& all_functions = mergedStore.functions();
+        auto bindDependencies = std::vector<std::pair<lvtmdb::FunctionObject *, lvtmdb::FunctionObject *>>{};
+        for (auto const& [_, ownedCFuncObject] : all_functions) {
+            auto *cFunc = ownedCFuncObject.get();
+            auto cFuncLock = cFunc->readOnlyLock();
+            if (!cFunc->name().ends_with('_')) {
+                continue;
+            }
+
+            // Check for possible Fortran binding
+            // TODO: Only take in consideration Fortran functions. There may be a C function that matches the rules
+            //       below, and the output would be wrong.
+            auto fortranName = cFunc->name().substr(0, cFunc->name().size() - 1);
+            auto it = std::find_if(std::cbegin(all_functions), std::cend(all_functions), [&fortranName](auto const& f) {
+                return f.second->name() == fortranName;
+            });
+            if (it == std::end(all_functions)) {
+                continue; // Couldn't find.
+            }
+
+            auto *fortranFunc = it->second.get();
+            auto fortranFuncLock = fortranFunc->readOnlyLock();
+
+            bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
+        }
+
+        mergedStore.withRWLock([&]() {
+            for (auto& [from, to] : bindDependencies) {
+                lvtmdb::FunctionObject::addDependency(from, to);
+            }
+        });
+        lvtmdb::SociWriter writer;
+        writer.createOrOpen(path);
+        mergedStore.writeToDatabase(writer);
+    }
 
     return EXIT_SUCCESS;
 }

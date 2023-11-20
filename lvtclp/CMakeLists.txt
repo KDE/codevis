@@ -111,7 +111,7 @@ endfunction()
 add_lvtclp_exec(
     NAME codevis_create_codebase_db
     SOURCES ct_lvtclp_create_codebase_db.m.cpp
-    LIBRARIES Qt${QT_MAJOR_VERSION}::Core)
+    LIBRARIES Qt${QT_MAJOR_VERSION}::Core lvtclp_fortran)
 
 add_lvtclp_exec(
     NAME codevis_merge_databases

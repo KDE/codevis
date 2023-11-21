@@ -887,12 +887,6 @@ void MainWindow::updatePluginData()
         return graphicsScene->objectName().toStdString();
     };
 
-    auto getEntity = []() {
-        // TODO: Fix This.
-        //  This is probably "get main node" but that doesn't exists anymore.'
-        return createWrappedEntityFromLakosEntity(nullptr);
-    };
-
     auto getVisibleEntities = [&graphicsScene]() {
         auto entities = std::vector<Entity>{};
         for (auto&& e : graphicsScene->allEntities()) {
@@ -921,11 +915,7 @@ void MainWindow::updatePluginData()
         return ProjectData{getSourceCodePath};
     };
 
-    d_pluginManager_p->callHooksMainNodeChanged(getSceneName,
-                                                getEntity,
-                                                getVisibleEntities,
-                                                getEdgeByQualifiedName,
-                                                getProjectData);
+    d_pluginManager_p->callHooksGraphChanged(getSceneName, getVisibleEntities, getEdgeByQualifiedName, getProjectData);
 }
 
 void MainWindow::createReport(std::string const& title, std::string const& htmlContents)

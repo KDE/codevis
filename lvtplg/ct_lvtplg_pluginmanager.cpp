@@ -296,21 +296,18 @@ void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneNa
         libraries);
 }
 
-void PluginManager::callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
-                                             mainNodeChanged_getEntity_f const& getEntity,
-                                             mainNodeChanged_getVisibleEntities_f const& getVisibleEntities,
-                                             mainNodeChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
-                                             mainNodeChanged_getProjectData_f const& getProjectData)
+void PluginManager::callHooksGraphChanged(graphChanged_getSceneName_f const& getSceneName,
+                                          graphChanged_getVisibleEntities_f const& getVisibleEntities,
+                                          graphChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
+                                          graphChanged_getProjectData_f const& getProjectData)
 {
-    callAllHooks<hookMainNodeChanged_f>(
-        "hookMainNodeChanged",
-        PluginMainNodeChangedHandler{std::bind_front(&PluginManager::getPluginData, this),
-                                     getSceneName,
-                                     getEntity,
-                                     getVisibleEntities,
-                                     getEdgeByQualifiedName,
-                                     getProjectData},
-        libraries);
+    callAllHooks<hookGraphChanged_f>("hookGraphChanged",
+                                     PluginGraphChangedHandler{std::bind_front(&PluginManager::getPluginData, this),
+                                                               getSceneName,
+                                                               getVisibleEntities,
+                                                               getEdgeByQualifiedName,
+                                                               getProjectData},
+                                     libraries);
 }
 
 void PluginManager::registerPluginData(std::string const& id, void *data)

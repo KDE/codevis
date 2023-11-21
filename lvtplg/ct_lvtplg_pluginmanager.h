@@ -105,16 +105,14 @@ class LVTPLG_EXPORT PluginManager {
     using getSceneName_f = decltype(PluginActiveSceneChangedHandler::getSceneName);
     void callHooksActiveSceneChanged(getSceneName_f const& getSceneName);
 
-    using mainNodeChanged_getSceneName_f = decltype(PluginMainNodeChangedHandler::getSceneName);
-    using mainNodeChanged_getEntity_f = decltype(PluginMainNodeChangedHandler::getEntity);
-    using mainNodeChanged_getVisibleEntities_f = decltype(PluginMainNodeChangedHandler::getVisibleEntities);
-    using mainNodeChanged_getEdgeByQualifiedName_f = decltype(PluginMainNodeChangedHandler::getEdgeByQualifiedName);
-    using mainNodeChanged_getProjectData_f = decltype(PluginMainNodeChangedHandler::getProjectData);
-    void callHooksMainNodeChanged(mainNodeChanged_getSceneName_f const& getSceneName,
-                                  mainNodeChanged_getEntity_f const& getEntity,
-                                  mainNodeChanged_getVisibleEntities_f const& getVisibleEntities,
-                                  mainNodeChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
-                                  mainNodeChanged_getProjectData_f const& getProjectData);
+    using graphChanged_getSceneName_f = decltype(PluginGraphChangedHandler::getSceneName);
+    using graphChanged_getVisibleEntities_f = decltype(PluginGraphChangedHandler::getVisibleEntities);
+    using graphChanged_getEdgeByQualifiedName_f = decltype(PluginGraphChangedHandler::getEdgeByQualifiedName);
+    using graphChanged_getProjectData_f = decltype(PluginGraphChangedHandler::getProjectData);
+    void callHooksGraphChanged(graphChanged_getSceneName_f const& getSceneName,
+                               graphChanged_getVisibleEntities_f const& getVisibleEntities,
+                               graphChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
+                               graphChanged_getProjectData_f const& getProjectData);
 
     void registerPluginData(std::string const& id, void *data);
     void unregisterPluginData(std::string const& id);

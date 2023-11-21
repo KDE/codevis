@@ -124,14 +124,11 @@ HANDLERS = [
                  AS_LAMBDA),
     ]),
 
-    HandlerInfo("PluginMainNodeChangedHandler", [
+    HandlerInfo("PluginGraphChangedHandler", [
         Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
                  'Returns the plugin data previously registered with `registerPluginData`.',
                  'pyGetPluginData<T>'),
         Function('std::string', 'getSceneName', [],
-                 '',
-                 AS_LAMBDA),
-        Function('Entity', 'getEntity', [],
                  '',
                  AS_LAMBDA),
         Function('std::vector<Entity>', 'getVisibleEntities', [],

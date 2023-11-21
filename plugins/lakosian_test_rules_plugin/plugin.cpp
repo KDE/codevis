@@ -30,7 +30,6 @@ static auto const BAD_TEST_DEPENDENCY_COLOR = Color{225, 225, 0};
 using SceneId = std::string;
 
 struct ToggleDataState {
-    std::string mainEntityQualifiedName;
     ToggleTestEntitiesState toggleState = ToggleTestEntitiesState::VISIBLE;
     std::vector<std::string> toggledTestEntities;
     std::vector<std::tuple<std::string, std::string>> testOnlyEdges;
@@ -67,15 +66,9 @@ void hookActiveSceneChanged(PluginActiveSceneChangedHandler *handler)
     pluginData->activeSceneId = handler->getSceneName();
 }
 
-void hookMainNodeChanged(PluginMainNodeChangedHandler *handler)
+void hookMainNodeChanged(PluginGraphChangedHandler *handler)
 {
     auto *pluginData = getPluginData(handler);
-
-    auto isSameEntitySelected = pluginData->toggleDataState[handler->getSceneName()].mainEntityQualifiedName
-        == handler->getEntity().getQualifiedName();
-    if (isSameEntitySelected) {
-        return;
-    }
 
     pluginData->activeSceneId = handler->getSceneName();
     pluginData->toggleDataState[pluginData->activeSceneId] = {};

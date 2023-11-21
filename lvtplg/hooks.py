@@ -12,5 +12,5 @@ HOOKS = [
     HookInfo("void", "LogicalParserOnCppCommentFound", "PluginLogicalParserOnCppCommentFoundHandler", "Called every time a comment is found in the logical parser."),
     HookInfo("void", "OnParseCompleted", "PluginParseCompletedHandler", "Called after the Physical and Logical (if enabled) parsing are done."),
     HookInfo("void", "ActiveSceneChanged", "PluginActiveSceneChangedHandler", "Called when the active scene is changed in the GUI."),
-    HookInfo("void", "MainNodeChanged", "PluginMainNodeChangedHandler", "Called when the main node of a given graphics scene has changed."),
+    HookInfo("void", "GraphChanged", "PluginGraphChangedHandler", "Called when graph has changed."),
 ]

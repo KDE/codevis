@@ -77,6 +77,7 @@
 #include <QJsonObject>
 
 #include <fstream>
+#include <qgraphicsitem.h>
 #include <random>
 
 using namespace Codethink::lvtldr;
@@ -116,6 +117,8 @@ struct GraphicsScene::Private {
 
     LakosEntity *selectedEntity = nullptr;
     // The selected entity is chosen by the user by selecting it on the view.
+
+    QGraphicsSimpleTextItem *bgMessage = nullptr;
 
     lvtldr::NodeStorage& nodeStorage;
 
@@ -381,6 +384,11 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
                              entity->setParentItem(newParentEntity);
                          }
                      });
+
+    d->bgMessage = new QGraphicsSimpleTextItem();
+    d->bgMessage->setText(tr("Drag And Drop Elements\nTo Visualize Them"));
+    d->bgMessage->setVisible(true);
+    addItem(d->bgMessage);
 }
 
 GraphicsScene::~GraphicsScene() noexcept = default;
@@ -441,10 +449,12 @@ void GraphicsScene::clearGraph()
     d->entityLoadFlags.clear();
     d->transitiveReductionAlg->reset();
 
+    removeItem(d->bgMessage);
     clear();
-    if (Preferences::enableDebugOutput()) {
-        qDebug() << "Graph Cleared!";
-    }
+
+    addItem(d->bgMessage);
+    d->bgMessage->setPos(sceneRect().center());
+    d->bgMessage->setVisible(true);
 }
 
 namespace {
@@ -578,6 +588,7 @@ LakosEntity *addVertex(GraphicsScene *scene,
     if (Preferences::enableDebugOutput()) {
         qDebug() << "Setting empty flags for" << QString::fromStdString(entity->qualifiedName());
     }
+    d->bgMessage->setVisible(false);
     return entity;
 }
 } // namespace
@@ -1157,8 +1168,16 @@ void GraphicsScene::unloadEntity(LakosEntity *entity)
     d->verticesVec.erase(std::remove(std::begin(d->verticesVec), std::end(d->verticesVec), entity),
                          std::end(d->verticesVec));
 
-    qDebug() << "Unloading entity" << intptr_t(entity) << QString::fromStdString(entity->name());
     delete entity;
+
+    if (Preferences::enableDebugOutput()) {
+        qDebug() << "Unloading entity" << intptr_t(entity) << QString::fromStdString(entity->name());
+    }
+
+    if (d->vertices.empty()) {
+        d->bgMessage->setPos(sceneRect().center());
+        d->bgMessage->show();
+    }
 }
 
 void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)

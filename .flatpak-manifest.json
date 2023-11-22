@@ -1,0 +1,25 @@
+{
+   "command": "codevis_desktop",
+   "desktop-file-name-suffix": " (Nightly)",
+   "finish-args": [
+      "--share=ipc",
+      "--socket=fallback-x11",
+      "--socket=wayland"
+   ],
+   "id": "org.kde.codevis",
+   "modules": [
+      {
+         "buildsystem": "cmake-ninja",
+         "name": "codevis",
+         "sources": [
+            {
+               "type": "git",
+               "url": "https://invent.kde.org/sdk/codevis.git"
+            }
+         ]
+      }
+   ],
+   "runtime": "org.kde.Platform",
+   "runtime-version": "5.15-21.08",
+   "sdk": "org.kde.Sdk"
+}

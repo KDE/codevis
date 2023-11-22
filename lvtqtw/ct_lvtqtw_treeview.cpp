@@ -29,6 +29,7 @@
 
 #include <QDrag>
 #include <QMimeData>
+#include <qnamespace.h>
 
 namespace Codethink::lvtqtw {
 
@@ -117,6 +118,14 @@ void TreeView::mouseReleaseEvent(QMouseEvent *ev)
 {
     QTreeView::mouseReleaseEvent(ev);
     d->mousePressPos = QPoint{};
+}
+
+void TreeView::keyPressEvent(QKeyEvent *e)
+{
+    QTreeView::keyPressEvent(e);
+    if (e->key() == Qt::Key_Escape) {
+        clearSelection();
+    }
 }
 
 } // namespace Codethink::lvtqtw

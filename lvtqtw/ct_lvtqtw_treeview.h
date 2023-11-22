@@ -69,6 +69,7 @@ class LVTQTW_EXPORT TreeView : public QTreeView
   protected:
     void mousePressEvent(QMouseEvent *ev) override;
     void mouseReleaseEvent(QMouseEvent *ev) override;
+    void keyPressEvent(QKeyEvent *ev) override;
 
   private:
     // DATA

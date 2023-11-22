@@ -38,6 +38,7 @@
 #include <QToolTip>
 #include <QTransform>
 
+#include <qnamespace.h>
 #include <set>
 
 #include <preferences.h>
@@ -583,7 +584,7 @@ void GraphicsView::contextMenuEvent(QContextMenuEvent *event)
 
 void GraphicsView::dragEnterEvent(QDragEnterEvent *event)
 {
-    if (event->mimeData()->hasFormat("codevis/qualifiedname")) {
+    if (event->mimeData()->hasFormat("codevis/qualifiednames")) {
         event->acceptProposedAction();
     }
 }
@@ -595,8 +596,15 @@ void GraphicsView::dragMoveEvent(QDragMoveEvent *event)
 
 void GraphicsView::dropEvent(QDropEvent *event)
 {
-    const QString& qualName = event->mimeData()->data("codevis/qualifiedname");
-    d->scene->loadEntityByQualifiedName(qualName, mapToScene(event->pos()));
+    const QString qualNames = event->mimeData()->data("codevis/qualifiednames");
+    const QStringList qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);
+    for (const auto& qualName : qualNameList) {
+        d->scene->loadEntityByQualifiedName(qualName, mapToScene(event->pos()));
+    }
+
+    if (qualNameList.size() > 1) {
+        d->scene->reLayout();
+    }
 }
 
 GraphicsScene *GraphicsView::graphicsScene() const

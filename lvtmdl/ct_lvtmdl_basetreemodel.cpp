@@ -22,6 +22,8 @@
 #include <ct_lvtmdl_modelhelpers.h>
 
 #include <QDebug>
+#include <QIODevice>
+#include <QMimeData>
 
 namespace Codethink::lvtmdl {
 
@@ -116,4 +118,26 @@ Qt::ItemFlags BaseTreeModel::flags(const QModelIndex& index) const
     return baseFlags;
 }
 
+QStringList BaseTreeModel::mimeTypes() const
+{
+    return {"codevis/qualifiednames"};
+}
+
+QMimeData *BaseTreeModel::mimeData(const QModelIndexList& indexes) const
+{
+    QMimeData *mimeData = new QMimeData();
+    QByteArray encodedData;
+
+    for (auto& idx : indexes) {
+        const auto qualName = idx.data(lvtmdl::ModelRoles::e_QualifiedName).toByteArray();
+        if (!encodedData.isEmpty()) {
+            encodedData.push_back(";");
+        }
+        encodedData.push_back(qualName);
+    }
+
+    mimeData->setData("codevis/qualifiednames", encodedData);
+    qDebug() << "encodedData: " << QString(encodedData);
+    return mimeData;
+}
 } // end namespace Codethink::lvtmdl

@@ -47,6 +47,8 @@ TreeView::TreeView(QWidget *parent): QTreeView(parent), d(std::make_unique<TreeV
     // Sorting the table loads the data, but also messes up the positions.
     // not sorting the table does not load the data.
     setSortingEnabled(false);
+    setDragEnabled(true);
+    setSelectionMode(QAbstractItemView::SelectionMode::MultiSelection);
 
     connect(this, &QTreeView::clicked, this, [this](const QModelIndex& idx) {
         auto isBranch = idx.data(lvtmdl::ModelRoles::e_IsBranch).value<bool>();
@@ -109,30 +111,6 @@ void TreeView::mousePressEvent(QMouseEvent *ev)
 void TreeView::setFilterText(const QString& txt)
 {
     d->filterModel->setFilter(txt);
-}
-
-void TreeView::mouseMoveEvent(QMouseEvent *ev)
-{
-    QTreeView::mouseMoveEvent(ev);
-    const auto testPos = ev->pos() - d->mousePressPos;
-    if (testPos.manhattanLength() < 5) {
-        return;
-    }
-
-    const QModelIndex& idx = indexAt(ev->pos());
-    if (!idx.isValid()) {
-        return;
-    }
-
-    const QByteArray qualName = idx.data(lvtmdl::ModelRoles::e_QualifiedName).toString().toLocal8Bit();
-
-    auto *drag = new QDrag(this);
-    auto *mimeData = new QMimeData();
-    mimeData->setData("codevis/qualifiedname", qualName);
-    drag->setMimeData(mimeData);
-
-    Qt::DropAction dropAction = drag->exec();
-    (void) dropAction;
 }
 
 void TreeView::mouseReleaseEvent(QMouseEvent *ev)

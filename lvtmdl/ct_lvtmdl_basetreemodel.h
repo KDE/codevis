@@ -68,6 +68,9 @@ class LVTMDL_EXPORT BaseTreeModel : public QStandardItemModel
 
     void setColorManagement(std::shared_ptr<lvtclr::ColorManagement> colorManagement);
 
+    QStringList mimeTypes() const override;
+    QMimeData *mimeData(const QModelIndexList& indexes) const override;
+
   private:
     std::unique_ptr<BaseTreeModelPrivate> d;
 };

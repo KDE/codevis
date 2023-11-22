@@ -61,8 +61,10 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic vertex addition test")
     view.resize(400, 300);
     auto *scene = dynamic_cast<GraphicsScene *>(view.scene());
 
+    // We have the Text saying "Drop Elements" now.
     auto previous_size = view.items().size();
-    REQUIRE(previous_size == 0);
+    REQUIRE(previous_size == 1);
+
     auto *some_class = scene->addUdtVertex(classNode, false, nullptr, Codethink::lvtshr::LoaderInfo{});
     scene->addItem(some_class);
     REQUIRE(view.items().size() > previous_size);
@@ -162,18 +164,19 @@ TEST_CASE_METHOD(QTApplicationFixture, "Clear graphics view when nodeStorage is 
     view.setColorManagement(c);
     view_second.setColorManagement(c);
 
-    REQUIRE(view.items().empty());
-    REQUIRE(view_second.items().empty());
+    // Empty views have the text "Drop items to view"
+    REQUIRE(view.items().size() == 1);
+    REQUIRE(view_second.items().size() == 1);
     REQUIRE(view.scene() != view_second.scene());
 
     auto *scn = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(view.scene());
     auto result = nodeStorage.addPackage("somepkg", "somepkg", nullptr, scn);
 
-    REQUIRE(view_second.items().empty());
+    REQUIRE(view_second.items().size() == 1);
     REQUIRE_FALSE(result.has_error());
     REQUIRE(!view.items().empty());
     nodeStorage.clear();
-    REQUIRE(view.items().empty());
+    REQUIRE(view.items().size() == 1);
 }
 
 TEST_CASE_METHOD(QTApplicationFixture, "Component on renamed package")

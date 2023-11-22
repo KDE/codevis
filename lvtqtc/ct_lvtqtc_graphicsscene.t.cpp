@@ -98,7 +98,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Relayout Single Entity")
     const QJsonObject json = gs->toJson();
 
     gs->clearGraph();
-    REQUIRE(gs->items().empty());
+    // Item "Drag to View"
+    REQUIRE(gs->items().size() == 1);
 
     gs->fromJson(json);
 

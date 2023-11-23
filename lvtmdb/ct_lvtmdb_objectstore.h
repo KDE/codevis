@@ -98,17 +98,17 @@ class LVTMDB_EXPORT ObjectStore : public Lockable {
     State state() const;
 
     // ACCESSORS
-    std::unordered_map<std::string, std::unique_ptr<ComponentObject>>& components() const;
-    std::unordered_map<std::string, std::unique_ptr<ErrorObject>>& errors() const;
-    std::unordered_map<std::string, std::unique_ptr<FieldObject>>& fields() const;
-    std::unordered_map<std::string, std::unique_ptr<FileObject>>& files() const;
-    std::unordered_map<std::string, std::unique_ptr<FunctionObject>>& functions() const;
-    std::unordered_map<std::string, std::unique_ptr<MethodObject>>& methods() const;
-    std::unordered_map<std::string, std::unique_ptr<NamespaceObject>>& namespaces() const;
-    std::unordered_map<std::string, std::unique_ptr<RepositoryObject>>& repositories() const;
-    std::unordered_map<std::string, std::unique_ptr<PackageObject>>& packages() const;
-    std::unordered_map<std::string, std::unique_ptr<TypeObject>>& types() const;
-    std::unordered_map<std::string, std::unique_ptr<VariableObject>>& variables() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<ComponentObject>>& components() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<ErrorObject>>& errors() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<FieldObject>>& fields() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<FileObject>>& files() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<FunctionObject>>& functions() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<MethodObject>>& methods() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<NamespaceObject>>& namespaces() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<RepositoryObject>>& repositories() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<PackageObject>>& packages() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<TypeObject>>& types() const;
+    [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<VariableObject>>& variables() const;
 
     // interface to look up by qualified name:
     // Return a matching object or nullptr if nothing was found

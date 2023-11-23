@@ -344,7 +344,7 @@ if (ENABLE_FORTRAN_SCANNER)
             set(multiValueArgs SOURCES LIBRARIES)
             cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-            add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_fortran lvttst)
+            add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp lvtclp_fortran lvtclp_test lvttst)
             add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
         endfunction()
 

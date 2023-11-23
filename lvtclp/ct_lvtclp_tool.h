@@ -94,6 +94,7 @@ class LVTCLP_EXPORT Tool : public QObject {
 
     // MANIPULATORS
     lvtmdb::ObjectStore& getObjectStore();
+    void setSharedMemDb(std::shared_ptr<lvtmdb::ObjectStore> const& sharedMemDb);
 
     // Get a reference to the output database.
     // The reference is valid so long as this Tool instance remains valid

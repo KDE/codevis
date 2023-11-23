@@ -16,10 +16,20 @@ class LVTCLP_EXPORT Tool {
     bool runFull(bool skipPhysical = false);
 
     lvtmdb::ObjectStore& getObjectStore();
+    void setSharedMemDb(std::shared_ptr<lvtmdb::ObjectStore> const& sharedMemDb);
 
   private:
     std::vector<std::filesystem::path> files;
-    lvtmdb::ObjectStore memDb;
+
+    // The tool can be used either with a local memory database or with a
+    // shared one. Only one can be used at a time. The default is to use
+    // localMemDb. If setMemDb(other) is called, will ignore the local one.
+    lvtmdb::ObjectStore localMemDb;
+    std::shared_ptr<lvtmdb::ObjectStore> sharedMemDb = nullptr;
+    [[nodiscard]] inline lvtmdb::ObjectStore& memDb()
+    {
+        return this->sharedMemDb ? *this->sharedMemDb : this->localMemDb;
+    }
 };
 
 } // namespace Codethink::lvtclp::fortran

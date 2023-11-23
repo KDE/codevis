@@ -1,4 +1,4 @@
-extern void cal1_(double *a, double *b, double *c);
+#include "other.h"
 
 int cal_c()
 {

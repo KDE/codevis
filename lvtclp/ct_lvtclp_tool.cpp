@@ -383,7 +383,11 @@ struct Tool::Private {
 
     UseSystemHeaders useSystemHeaders = UseSystemHeaders::e_Query;
 
-    lvtmdb::ObjectStore memDb;
+    // The tool can be used either with a local memory database or with a
+    // shared one. Only one can be used at a time. The default is to use
+    // localMemDb. If setMemDb(other) is called, will ignore the local one.
+    lvtmdb::ObjectStore localMemDb;
+    std::shared_ptr<lvtmdb::ObjectStore> sharedMemDb = nullptr;
 
     std::optional<PartialCompilationDatabase> compilationDb;
     // full compilation db (compileCommandJson minus ignoreList)
@@ -408,6 +412,11 @@ struct Tool::Private {
     bool showDatabaseErrors = false;
     // Flag that indicates that database errors should be
     // reported to the UI.
+
+    [[nodiscard]] lvtmdb::ObjectStore& memDb()
+    {
+        return sharedMemDb ? *sharedMemDb : localMemDb;
+    }
 
     void setNumThreads(unsigned numThreadsIn)
     {
@@ -578,9 +587,14 @@ Tool::Tool(std::filesystem::path sourcePath,
 
 Tool::~Tool() noexcept = default;
 
+void Tool::setSharedMemDb(std::shared_ptr<lvtmdb::ObjectStore> const& sharedMemDb)
+{
+    d->sharedMemDb = sharedMemDb;
+}
+
 lvtmdb::ObjectStore& Tool::getObjectStore()
 {
-    return d->memDb;
+    return d->memDb();
 }
 
 void Tool::setUseSystemHeaders(UseSystemHeaders value)
@@ -670,11 +684,11 @@ void Tool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, boo
         if (d->printToConsole) {
             qDebug() << "Going to remove file: " << qualifiedName.c_str();
         }
-        d->memDb.withRWLock([&] {
+        d->memDb().withRWLock([&] {
             const bool alreadyRemoved =
                 std::find(std::begin(removedFiles), std::end(removedFiles), qualifiedName) != std::end(removedFiles);
             if (!alreadyRemoved) {
-                removedFiles += d->memDb.removeFile(d->memDb.getFile(qualifiedName), removedPtrs);
+                removedFiles += d->memDb().removeFile(d->memDb().getFile(qualifiedName), removedPtrs);
             }
         });
     };
@@ -685,11 +699,11 @@ void Tool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, boo
     for (const std::string& pkg : res.deletedPkgs) {
         lvtmdb::PackageObject *memPkg = nullptr;
 
-        d->memDb.withROLock([&] {
-            memPkg = d->memDb.getPackage(pkg);
+        d->memDb().withROLock([&] {
+            memPkg = d->memDb().getPackage(pkg);
         });
         std::set<intptr_t> removed;
-        d->memDb.removePackage(memPkg, removed);
+        d->memDb().removePackage(memPkg, removed);
     }
 
     if (d->printToConsole) {
@@ -737,7 +751,7 @@ bool Tool::findPhysicalEntities(bool doIncremental)
 
     bool dbErrorState = false;
 
-    const lvtmdb::ObjectStore::State oldState = d->memDb.state();
+    const lvtmdb::ObjectStore::State oldState = d->memDb().state();
     if (oldState == lvtmdb::ObjectStore::State::Error || oldState == lvtmdb::ObjectStore::State::PhysicalError) {
         // we can't trust anything in this database
         doIncremental = false;
@@ -750,8 +764,8 @@ bool Tool::findPhysicalEntities(bool doIncremental)
         // inclusion error.
         // TODO: Verify if there's a better handling for error databases and/or warn the user about it.
         //        // Don't trust anything in an error database
-        //        d->memDb.withRWLock([&]() {
-        //            d->memDb.clear();
+        //        d->memDb().withRWLock([&]() {
+        //            d->memDb().clear();
         //        });
     }
 
@@ -763,7 +777,7 @@ bool Tool::findPhysicalEntities(bool doIncremental)
         doIncremental = false;
     }
 
-    FilesystemScanner scanner(d->memDb,
+    FilesystemScanner scanner(d->memDb(),
                               d->compilationDb->commonParent(),
                               *d->compilationDb,
                               d->messageCallback,
@@ -800,7 +814,7 @@ bool Tool::findPhysicalEntities(bool doIncremental)
 
     if (d->lastRunMadeChanges || dbErrorState) {
         // we only have physical entities: no dependencies
-        d->memDb.setState(lvtmdb::ObjectStore::State::NoneReady);
+        d->memDb().setState(lvtmdb::ObjectStore::State::NoneReady);
     }
 
     return true;
@@ -845,7 +859,7 @@ bool Tool::runPhysical(bool skipScan)
     };
 
     std::unique_ptr<clang::tooling::FrontendActionFactory> dependencyScanner =
-        std::make_unique<DepScanActionFactory>(d->memDb,
+        std::make_unique<DepScanActionFactory>(d->memDb(),
                                                d->compilationDb->commonParent(),
                                                d->nonLakosianDirs,
                                                d->thirdPartyDirs,
@@ -855,7 +869,7 @@ bool Tool::runPhysical(bool skipScan)
 
     Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());
 
-    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, messageCallback, d->memDb);
+    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, messageCallback, d->memDb());
 
     llvm::Error err = d->toolExecutor->execute(std::move(dependencyScanner));
 
@@ -869,7 +883,7 @@ bool Tool::runPhysical(bool skipScan)
     }
 
     if (err) {
-        d->memDb.setState(lvtmdb::ObjectStore::State::PhysicalError);
+        d->memDb().setState(lvtmdb::ObjectStore::State::PhysicalError);
 
         err = llvm::handleErrors(std::move(err), [&](llvm::StringError const& err) -> llvm::Error {
             Q_EMIT messageFromThread(QString::fromStdString(err.getMessage()), 0);
@@ -879,11 +893,11 @@ bool Tool::runPhysical(bool skipScan)
     }
 
     if (cancelled) {
-        d->memDb.setState(lvtmdb::ObjectStore::State::NoneReady);
+        d->memDb().setState(lvtmdb::ObjectStore::State::NoneReady);
     } else {
-        if (d->memDb.state() != lvtmdb::ObjectStore::State::AllReady
-            || d->memDb.state() != lvtmdb::ObjectStore::State::LogicalError) {
-            d->memDb.setState(lvtmdb::ObjectStore::State::PhysicalReady);
+        if (d->memDb().state() != lvtmdb::ObjectStore::State::AllReady
+            || d->memDb().state() != lvtmdb::ObjectStore::State::LogicalError) {
+            d->memDb().setState(lvtmdb::ObjectStore::State::PhysicalReady);
         }
     }
 
@@ -904,7 +918,7 @@ bool Tool::runFull(bool skipPhysical)
     }
 
     bool doIncremental = true;
-    const lvtmdb::ObjectStore::State oldState = d->memDb.state();
+    const lvtmdb::ObjectStore::State oldState = d->memDb().state();
     if (oldState != lvtmdb::ObjectStore::State ::AllReady) {
         // the database never contained logical information so we can't do an
         // incremental update
@@ -941,7 +955,7 @@ bool Tool::runFull(bool skipPhysical)
     }
 
     std::unique_ptr<clang::tooling::FrontendActionFactory> actionFactory =
-        std::make_unique<LogicalDepActionFactory>(d->memDb,
+        std::make_unique<LogicalDepActionFactory>(d->memDb(),
                                                   d->compilationDb->commonParent(),
                                                   d->nonLakosianDirs,
                                                   d->thirdPartyDirs,
@@ -952,7 +966,7 @@ bool Tool::runFull(bool skipPhysical)
 
     Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());
 
-    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, d->messageCallback, d->memDb);
+    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, d->messageCallback, d->memDb());
 
     llvm::Error err = d->toolExecutor->execute(std::move(actionFactory));
 
@@ -966,7 +980,7 @@ bool Tool::runFull(bool skipPhysical)
     }
 
     if (err) {
-        d->memDb.setState(lvtmdb::ObjectStore::State::LogicalError);
+        d->memDb().setState(lvtmdb::ObjectStore::State::LogicalError);
 
         err = llvm::handleErrors(std::move(err), [&](llvm::StringError const& err) -> llvm::Error {
             Q_EMIT messageFromThread(QString::fromStdString(err.getMessage()), 0);
@@ -976,7 +990,7 @@ bool Tool::runFull(bool skipPhysical)
     }
 
     if (!cancelled) {
-        d->memDb.setState(lvtmdb::ObjectStore::State::AllReady);
+        d->memDb().setState(lvtmdb::ObjectStore::State::AllReady);
     }
     // else keep it the same because physical info is probably okay
 
@@ -985,13 +999,13 @@ bool Tool::runFull(bool skipPhysical)
             qDebug() << "Collating output database";
         }
         Q_EMIT processingFileNotification(tr("Collating output database"));
-        // d->memDb.withROLock([&] {
-        //    d->memDb.writeToDb(d->outputDb.session());
-        //    d->outputDb.setState(static_cast<lvtmdb::ObjectStore::State>(d->memDb.state()));
+        // d->memDb().withROLock([&] {
+        //    d->memDb().writeToDb(d->outputDb.session());
+        //    d->outputDb.setState(static_cast<lvtmdb::ObjectStore::State>(d->memDb().state()));
         // });
     }
 
-    if (!LogicalPostProcessUtil::postprocess(d->memDb, d->printToConsole)) {
+    if (!LogicalPostProcessUtil::postprocess(d->memDb(), d->printToConsole)) {
         return false;
     }
 

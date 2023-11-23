@@ -132,7 +132,7 @@ void run(FrontendAction& act, std::string const& filename)
 
 bool Tool::runPhysical(bool skipScan)
 {
-    auto action = PhysicalParseAction{memDb};
+    auto action = PhysicalParseAction{this->memDb()};
     for (auto const& f : files) {
         run(action, f.string());
     }
@@ -145,7 +145,7 @@ bool Tool::runFull(bool skipPhysical)
     if (!skipPhysical) {
         runPhysical(/*skipScan=*/false);
     }
-    auto action = LogicalParseAction{memDb};
+    auto action = LogicalParseAction{this->memDb()};
     for (auto const& f : files) {
         run(action, f);
     }
@@ -155,7 +155,12 @@ bool Tool::runFull(bool skipPhysical)
 
 lvtmdb::ObjectStore& Tool::getObjectStore()
 {
-    return this->memDb;
+    return this->memDb();
+}
+
+void Tool::setSharedMemDb(std::shared_ptr<lvtmdb::ObjectStore> const& sharedMemDb)
+{
+    this->sharedMemDb = sharedMemDb;
 }
 
 } // namespace Codethink::lvtclp::fortran

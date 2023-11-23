@@ -16,6 +16,9 @@
 */
 
 #include <catch2-local-includes.h>
+#include <ct_lvtclp_logicaldepscanner.h>
+#include <ct_lvtclp_testutil.h>
+#include <ct_lvtclp_toolexecutor.h>
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_functionobject.h>
@@ -106,12 +109,13 @@ TEST_CASE("Mixed fortran and C project")
 {
     using namespace Codethink::lvtclp;
     using namespace Codethink::lvtmdb;
-    auto const PREFIX = std::string{TEST_PRJ_PATH};
+    auto const PREFIX = std::string{TEST_PRJ_PATH} + "/fortran_c_mixed";
 
-    auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/fortran_c_mixed/a.f"},
-                                                       {PREFIX + "/fortran_c_mixed/b.f"},
-                                                       {PREFIX + "/fortran_c_mixed/c.c"},
-                                                       {PREFIX + "/fortran_c_mixed/main.c"}};
+    auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/a.f"},
+                                                       {PREFIX + "/b.f"},
+                                                       // C files will be ignored by Fortran parser.
+                                                       {PREFIX + "/c.c"},
+                                                       {PREFIX + "/main.c"}};
     auto tool = fortran::Tool{fileList};
     tool.runFull();
 
@@ -124,4 +128,21 @@ TEST_CASE("Mixed fortran and C project")
 
     // '.c' files are ignored
     REQUIRE(memDb.getAllFiles().size() == 2);
+
+    auto cdb = StaticCompilationDatabase{{{PREFIX + "/c.c", "c.o"}, {PREFIX + "/main.c", "main.o"}},
+                                         "placeholder",
+                                         {"-I" + PREFIX, "-std=c++17"},
+                                         PREFIX};
+    auto executor = ToolExecutor{cdb,
+                                 /*threadcount=*/1,
+                                 /*messageCallback=*/[](auto&& _1, auto&& _2) {},
+                                 memDb};
+    (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
+        memDb,
+        PREFIX,
+        /*nonLakosians=*/std::vector<std::filesystem::path>{},
+        /*d_thirdPartyDirs=*/std::vector<std::pair<std::string, std::string>>{},
+        /*filenameCallback=*/[](const std::string&) {},
+        /*messageCallback=*/std::nullopt,
+        /*catchCodeAnalysisOutput=*/false));
 }

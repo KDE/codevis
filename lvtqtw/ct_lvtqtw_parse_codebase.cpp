@@ -222,6 +222,7 @@ struct PkgMappingDialog : public QDialog {
 
 struct ParseCodebaseDialog::Private {
     State dialogState = State::Idle;
+    std::shared_ptr<lvtmdb::ObjectStore> sharedMemDb = nullptr;
     std::unique_ptr<lvtclp::Tool> tool_p = nullptr;
     std::unique_ptr<lvtclp::fortran::Tool> fotran_tool_p = nullptr;
     QThread *parseThread = nullptr;
@@ -244,6 +245,7 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     d(std::make_unique<ParseCodebaseDialog::Private>()),
     ui(std::make_unique<Ui::ParseCodebaseDialog>())
 {
+    d->sharedMemDb = std::make_shared<lvtmdb::ObjectStore>();
     ui->setupUi(this);
 
     // TODO: Remove those things / Fix them when we finish the presentation.
@@ -736,6 +738,8 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
     if (!d->fotran_tool_p) {
         d->fotran_tool_p = std::make_unique<lvtclp::fortran::Tool>(compileCommandsJson);
     }
+    d->tool_p->setSharedMemDb(d->sharedMemDb);
+    d->fotran_tool_p->setSharedMemDb(d->sharedMemDb);
 
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
     connect(d->tool_p.get(),
@@ -833,61 +837,64 @@ void ParseCodebaseDialog::updateDatabase()
     {
         lvtmdb::SociWriter writer;
         writer.createOrOpen(path);
-        {
-            auto& mdb = d->tool_p->getObjectStore();
-            mdb.writeToDatabase(writer);
-        }
-        {
-            auto& mdb = d->fotran_tool_p->getObjectStore();
-            mdb.writeToDatabase(writer);
-        }
+        d->sharedMemDb->writeToDatabase(writer);
+
+        //        {
+        //            auto& mdb = d->fotran_tool_p->getObjectStore();
+        //            mdb.writeToDatabase(writer);
+        //        }
     }
-    {
-        // Heuristically find bindings from/to C/Fortran code
-        // TODO: Check where this should be moved to.
-
-        // TODO: We don't have a proper merge, so we need to get the merged data from disk.
-        lvtmdb::ObjectStore mergedStore;
-        {
-            lvtmdb::SociReader reader;
-            mergedStore.readFromDatabase(reader, path).expect("Unexpected error loading database.");
-        }
-
-        auto& all_functions = mergedStore.functions();
-        auto bindDependencies = std::vector<std::pair<lvtmdb::FunctionObject *, lvtmdb::FunctionObject *>>{};
-        for (auto const& [_, ownedCFuncObject] : all_functions) {
-            auto *cFunc = ownedCFuncObject.get();
-            auto cFuncLock = cFunc->readOnlyLock();
-            if (!cFunc->name().ends_with('_')) {
-                continue;
-            }
-
-            // Check for possible Fortran binding
-            // TODO: Only take in consideration Fortran functions. There may be a C function that matches the rules
-            //       below, and the output would be wrong.
-            auto fortranName = cFunc->name().substr(0, cFunc->name().size() - 1);
-            auto it = std::find_if(std::cbegin(all_functions), std::cend(all_functions), [&fortranName](auto const& f) {
-                return f.second->name() == fortranName;
-            });
-            if (it == std::end(all_functions)) {
-                continue; // Couldn't find.
-            }
-
-            auto *fortranFunc = it->second.get();
-            auto fortranFuncLock = fortranFunc->readOnlyLock();
-
-            bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
-        }
-
-        mergedStore.withRWLock([&]() {
-            for (auto& [from, to] : bindDependencies) {
-                lvtmdb::FunctionObject::addDependency(from, to);
-            }
-        });
-        lvtmdb::SociWriter writer;
-        writer.createOrOpen(path);
-        mergedStore.writeToDatabase(writer);
-    }
+    //    {
+    //        // Heuristically find bindings from/to C/Fortran code
+    //        // TODO: Check where this should be moved to.
+    //
+    //        // TODO: We don't have a proper merge, so we need to get the merged data from disk.
+    //        lvtmdb::ObjectStore mergedStore;
+    //        {
+    //            lvtmdb::SociReader reader;
+    //            mergedStore.readFromDatabase(reader, path + ".tmp").expect("Unexpected error loading database.");
+    //        }
+    //
+    //        auto& all_functions = mergedStore.functions();
+    //        auto bindDependencies = std::vector<std::pair<lvtmdb::FunctionObject *, lvtmdb::FunctionObject *>>{};
+    //        for (auto const& [_, ownedCFuncObject] : all_functions) {
+    //            auto *cFunc = ownedCFuncObject.get();
+    //            auto cFuncName = std::string{};
+    //            cFunc->withROLock([&]() {
+    //                cFuncName = cFunc->name();
+    //            });
+    //            if (!cFuncName.ends_with('_')) {
+    //                continue;
+    //            }
+    //
+    //            // Check for possible Fortran binding
+    //            // TODO: Only take in consideration Fortran functions. There may be a C function that matches the
+    //            rules
+    //            //       below, and the output would be wrong.
+    //            auto fortranName = cFuncName.substr(0, cFuncName.size() - 1);
+    //            auto it = std::find_if(std::cbegin(all_functions), std::cend(all_functions), [&fortranName](auto
+    //            const& f) {
+    //                auto lock = f.second->readOnlyLock();
+    //                (void) lock;
+    //                return f.second->name() == fortranName;
+    //            });
+    //            if (it == std::end(all_functions)) {
+    //                continue; // Couldn't find.
+    //            }
+    //
+    //            auto *fortranFunc = it->second.get();
+    //            bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
+    //        }
+    //
+    //        mergedStore.withRWLock([&]() {
+    //            for (auto& [from, to] : bindDependencies) {
+    //                lvtmdb::FunctionObject::addDependency(from, to);
+    //            }
+    //        });
+    //        lvtmdb::SociWriter writer;
+    //        writer.createOrOpen(path);
+    //        mergedStore.writeToDatabase(writer);
+    //    }
 
     if (d->pluginManager) {
         auto& pm = (*d->pluginManager).get();
@@ -940,6 +947,9 @@ void ParseCodebaseDialog::endParse()
         ui->errorText->show();
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Killed);
+        d->sharedMemDb->withRWLock([&] {
+            d->sharedMemDb->clear();
+        });
         d->tool_p = nullptr;
         d->fotran_tool_p = nullptr;
         return;
@@ -950,6 +960,9 @@ void ParseCodebaseDialog::endParse()
         ui->errorText->show();
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Idle);
+        d->sharedMemDb->withRWLock([&] {
+            d->sharedMemDb->clear();
+        });
         d->tool_p = nullptr;
         d->fotran_tool_p = nullptr;
         return;
@@ -991,6 +1004,9 @@ void ParseCodebaseDialog::endParse()
         Q_EMIT parseFinished(d->dialogState);
     }
     d->dialogState = State::Idle;
+    d->sharedMemDb->withRWLock([&] {
+        d->sharedMemDb->clear();
+    });
     d->tool_p = nullptr;
     d->fotran_tool_p = nullptr;
     d->parseTimer.invalidate();

@@ -20,6 +20,8 @@
 #include <ct_lvtclp_compilerutil.h>
 
 #include <catch2-local-includes.h>
+#include <sstream>
+#include <string>
 
 using namespace Codethink;
 

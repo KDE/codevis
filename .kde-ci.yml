@@ -30,7 +30,7 @@ Dependencies:
 
 - 'on': ['Linux/Qt5', 'FreeBSD/Qt5']
   'require':
-    'plasma/plasma-kactivities': '@stable'
+    'plasma/plasma-activities': '@stable'
 
 - 'on': ['Linux/Qt6', 'FreeBSD/Qt6']
   'require':

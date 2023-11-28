@@ -17,5 +17,5 @@ diagram-server.kdev4
 *.*-swp
 .idea
 cmake-build-*/
-python/**/__pycache__
+**/__pycache__
 

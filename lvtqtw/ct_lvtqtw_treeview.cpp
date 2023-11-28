@@ -49,7 +49,7 @@ TreeView::TreeView(QWidget *parent): QTreeView(parent), d(std::make_unique<TreeV
     // not sorting the table does not load the data.
     setSortingEnabled(false);
     setDragEnabled(true);
-    setSelectionMode(QAbstractItemView::SelectionMode::MultiSelection);
+    setSelectionMode(QAbstractItemView::SelectionMode::ExtendedSelection);
 
     connect(this, &QTreeView::clicked, this, [this](const QModelIndex& idx) {
         auto isBranch = idx.data(lvtmdl::ModelRoles::e_IsBranch).value<bool>();

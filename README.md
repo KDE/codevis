@@ -7,6 +7,10 @@
 - [**Windows (.exe)**](https://invent.kde.org/sdk/codevis/-/jobs/1392579/artifacts/raw/.kde-ci-packages/codevis-master-420-windows-cl-msvc2019-x86_64.exe)
 - [**Ubuntu 22.04 (.tar.gz)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/3d638af46b04db490f31871717e303c6/codevis-ubuntu-22.04.tar.gz)
 
+## Prebuilt plugins
+
+- [**Windows plugins (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/de3522514134fbcd489bde3565ae8d0c/codevis-plugins.zip)
+
 [![build status](https://invent.kde.org/sdk/codevis/badges/master/pipeline.svg)](https://invent.kde.org/sdk/codevis/-/pipelines/?ref=master)
 
 Codevis is an analysis and visualization tool designed to assist in code maintenance for C++ codebases.

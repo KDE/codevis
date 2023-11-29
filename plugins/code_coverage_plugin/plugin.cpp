@@ -34,8 +34,8 @@
 
 #include <iostream>
 
-static char CTX_MENU_TITLE[] = "Load code coverage information";
-static char PLUGIN_DATA_ID[] = "CodeCovPluginData";
+static auto const CTX_MENU_TITLE = std::string{"Load code coverage information"};
+static auto const PLUGIN_DATA_ID = std::string{"CodeCovPluginData"};
 
 struct CodeCoveragePluginData {
     std::string jsonFilePath;

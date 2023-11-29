@@ -24,11 +24,11 @@
 using EntityUniqueId = std::string;
 using Cycle = std::vector<EntityUniqueId>;
 
-static auto const PLUGIN_DATA_ID = "cycle_detection_plugin";
-static auto const DOCK_WIDGET_TITLE = "Cycle detection";
-static auto const DOCK_WIDGET_ID = "cyc_detection_plg";
-static auto const DOCK_WIDGET_TREE_ID = "cyc_detection_tree";
-static auto const ITEM_USER_DATA_CYCLE_ID = "cycle";
+static auto const PLUGIN_DATA_ID = std::string{"cycle_detection_plugin"};
+static auto const DOCK_WIDGET_TITLE = std::string{"Cycle detection"};
+static auto const DOCK_WIDGET_ID = std::string{"cyc_detection_plg"};
+static auto const DOCK_WIDGET_TREE_ID = std::string{"cyc_detection_tree"};
+static auto const ITEM_USER_DATA_CYCLE_ID = std::string{"cycle"};
 static auto const NODE_SELECTED_COLOR = Color{200, 50, 50};
 static auto const NODE_UNSELECTED_COLOR = Color{200, 200, 200};
 static auto const EDGE_SELECTED_COLOR = Color{230, 40, 40};

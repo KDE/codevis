@@ -26,6 +26,7 @@
 enum class ToggleTestEntitiesState { VISIBLE, HIDDEN };
 enum class MergeTestDependenciesOnCUT { YES, NO };
 static auto const BAD_TEST_DEPENDENCY_COLOR = Color{225, 225, 0};
+static auto const PLUGIN_ID = std::string{"LKS_TEST_RULES_PLG"};
 
 using SceneId = std::string;
 
@@ -36,8 +37,6 @@ struct ToggleDataState {
 };
 
 struct PluginData {
-    static auto constexpr ID = "LKS_TEST_RULES_PLG";
-
     std::map<SceneId, ToggleDataState> toggleDataState;
     SceneId activeSceneId;
 };
@@ -45,18 +44,18 @@ struct PluginData {
 template<typename Handler_t>
 PluginData *getPluginData(Handler_t *handler)
 {
-    return static_cast<PluginData *>(handler->getPluginData(PluginData::ID));
+    return static_cast<PluginData *>(handler->getPluginData(PLUGIN_ID));
 }
 
 void hookSetupPlugin(PluginSetupHandler *handler)
 {
-    handler->registerPluginData(PluginData::ID, new PluginData{});
+    handler->registerPluginData(PLUGIN_ID, new PluginData{});
 }
 
 void hookTeardownPlugin(PluginSetupHandler *handler)
 {
     auto *data = getPluginData(handler);
-    handler->unregisterPluginData(PluginData::ID);
+    handler->unregisterPluginData(PLUGIN_ID);
     delete data;
 }
 

@@ -49,9 +49,9 @@ if (BUILD_DESKTOP_APP)
             ct_lvtcgn_codegendialog.ui
         LIBRARIES
             ${SYSTEM_EXTRA_LIBRARIES}
-            Qt::Core
-            Qt::Gui
-            Qt::Widgets
+            Qt${QT_MAJOR_VERSION}::Core
+            Qt${QT_MAJOR_VERSION}::Gui
+            Qt${QT_MAJOR_VERSION}::Widgets
             KF${KF_MAJOR_VERSION}::WidgetsAddons
             Codethink::lvtqtw
             Codethink::lvtcgn_mdl

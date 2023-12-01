@@ -22,7 +22,9 @@
 
 // KDE
 #include <KMessageBox>
+#ifndef KDE_FRAMEWORKS_IS_OLD
 #include <KNSWidgets/Button>
+#endif
 #include <KStandardGuiItem>
 #include <KTextEditor/Document>
 #include <KTextEditor/Editor>

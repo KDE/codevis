@@ -35,7 +35,9 @@
 
 // KDE
 #include <KMessageBox>
+#ifndef KDE_FRAMEWORKS_IS_OLD
 #include <KPluginWidget>
+#endif
 
 // std
 #include <cassert>
@@ -62,17 +64,21 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
 {
     d->ui.setupUi(this);
     d->pluginManager = pluginManager;
+#ifndef KDE_FRAMEWORKS_IS_OLD
     d->ui.getNewPlugins->setConfigFile(QStringLiteral("codevis.knsrc"));
+#endif
 
     setWindowTitle("Configure Software");
 
     populateMouseTabOptions();
     load();
 
+#ifndef KDE_FRAMEWORKS_IS_OLD
     connect(d->ui.getNewPlugins,
             &KNSWidgets::Button::dialogFinished,
             this,
             &Codethink::lvtqtw::ConfigurationDialog::getNewScriptFinished);
+#endif
 
     connect(d->ui.debugContextMenu, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableSceneContextMenu);
     connect(d->ui.enableDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableDebugOutput);
@@ -228,6 +234,7 @@ void ConfigurationDialog::showEvent(QShowEvent *ev)
 
 void ConfigurationDialog::updatePluginInformation()
 {
+#ifndef KDE_FRAMEWORKS_IS_OLD
     auto plugins = QVector<KPluginMetaData>{};
     QString categoryLabel = "Codevis Plugins";
     for (auto const& metadataFile : d->pluginManager->getPluginsMetadataFilePaths()) {
@@ -246,6 +253,7 @@ void ConfigurationDialog::updatePluginInformation()
                 }
                 plugin->get().setEnabled(enabled);
             });
+#endif
 }
 
 void ConfigurationDialog::load()

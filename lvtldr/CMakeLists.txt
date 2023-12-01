@@ -39,7 +39,7 @@ AddTargetLibrary(
         Codethink::lvtmdb # Used only for testing, but clazy will complain if not added as a dependency explicitly
         Soci::core
         Soci::sqlite3
-        Qt::Core
+        Qt${QT_MAJOR_VERSION}::Core
         ${SQLite3_LIBRARIES}
 )
 
@@ -59,10 +59,12 @@ target_link_libraries(codevis_physicalloader
     ${SYSTEM_EXTRA_LIBRARIES}
     Soci::core
     Soci::sqlite3
-    Qt::Core
+    Qt${QT_MAJOR_VERSION}::Core
     ${SQLite3_LIBRARIES}
 )
-install(TARGETS codevis_physicalloader ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+if (NOT KDE_FRAMEWORKS_IS_OLD)
+    install(TARGETS codevis_physicalloader ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+endif()
 target_include_directories(codevis_physicalloader
     PRIVATE
     ${SQLite3_INCLUDE_DIRS}
@@ -102,7 +104,7 @@ if (COMPILE_TESTS)
         ${SYSTEM_EXTRA_LIBRARIES}
         Soci::core
         Soci::sqlite3
-        Qt::Core
+        Qt${QT_MAJOR_VERSION}::Core
         ${SQLite3_LIBRARIES}
     )
     target_include_directories(test_ct_lvtldr_nodestorage

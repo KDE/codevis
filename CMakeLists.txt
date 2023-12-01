@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 # KDE Applications version, managed by release script.
 set(RELEASE_SERVICE_VERSION_MAJOR "23")
@@ -17,8 +17,8 @@ option(USE_QT_WEBENGINE "If set, will compile using Qt Webengine (preferred) to 
 option(ENABLE_PYTHON_PLUGINS "If set, will consider plugins implemented in Python" ON)
 option(IGNORE_BROKEN_TESTS_KDE_CI "If set, ignores some broken tests on LLVM 16 / KDE CI." ON)
 
-set(QT_MIN_VERSION "5.15.2")
-set(KF5_DEP_VERSION "5.90.0")
+set(QT_MIN_VERSION "5.12.0")
+set(KF5_MIN_VERSION "5.68.0")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,8 +28,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/submodules/configuration-parser/cmake)
 
-find_package(ECM ${KF5_DEP_VERSION} QUIET REQUIRED NO_MODULE)
+find_package(ECM ${KF5_MIN_VERSION} QUIET REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+if (ECM_VERSION_MAJOR LESS 5 OR (ECM_VERSION_MAJOR EQUAL 5 AND ECM_VERSION_MINOR LESS 90))
+    set(ECM_IS_OLD TRUE)
+endif()
 
 # This Breaks Soci.
 # For the future we should migrate to QtSql or something.
@@ -46,12 +49,17 @@ list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 
 include(KDEInstallDirs)
 include(KDEClangFormat)
-include(KDEGitCommitHooks)
+if (NOT ECM_IS_OLD)
+    include(KDEGitCommitHooks)
+    kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
+endif()
 
 include(ECMOptionalAddSubdirectory)
 include(ECMAddAppIcon)
 include(ECMInstallIcons)
-include(ECMDeprecationSettings)
+if (NOT ECM_IS_OLD)
+    include(ECMDeprecationSettings)
+endif()
 include(ECMEnableSanitizers) 
 
 include(AddTargetLibrary)
@@ -61,7 +69,7 @@ include(GetDate)
 include(FeatureSummary)
 find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
-find_package(Clang REQUIRED)
+find_package(Clang 17 REQUIRED)
 
 set(CMAKE_AUTOMOC FALSE)
 set(CMAKE_AUTOUIC FALSE)
@@ -102,11 +110,11 @@ find_package(Qt${QT_MAJOR_VERSION}Core ${QT_MIN_VERSION} CONFIG REQUIRED)
 if (QT_MAJOR_VERSION STREQUAL "6")
     find_package(Qt6Core5Compat)
 endif()
-message("Found ${QT_MAJOR_VERSION}")
+message("Found Qt version: '${QT_MAJOR_VERSION}'")
 
 if (BUILD_DESKTOP_APP)
     find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)
-    find_package(KF${KF_MAJOR_VERSION} ${KF5_DEP_VERSION} REQUIRED COMPONENTS
+    find_package(KF${KF_MAJOR_VERSION} ${KF5_MIN_VERSION} REQUIRED COMPONENTS
         Archive
         Config
         Crash
@@ -122,6 +130,16 @@ if (BUILD_DESKTOP_APP)
         OPTIONAL_COMPONENTS
         DocTools
     )
+    # KF5 doesn't have split version, so we build it here
+    string(REPLACE "." ";" VERSION_LIST ${KF5_VERSION})
+    list(GET VERSION_LIST 0 KF_VERSION_MAJOR)
+    list(GET VERSION_LIST 1 KF_VERSION_MINOR)
+    list(GET VERSION_LIST 2 KF_VERSION_PATCH)
+    if (KF_VERSION_MAJOR LESS 5 OR (KF_VERSION_MINOR EQUAL 5 AND KF_VERSION_MINOR LESS 90))
+        set(KDE_FRAMEWORKS_IS_OLD TRUE)
+        add_compile_definitions(KDE_FRAMEWORKS_IS_OLD=1)
+    endif()
+
     if (USE_QT_WEBENGINE)
         find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS WebEngineWidgets)
         add_compile_definitions(USE_WEB_ENGINE=1)
@@ -129,6 +147,11 @@ if (BUILD_DESKTOP_APP)
     if (UNIX AND NOT APPLE)
         find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS DBus)
     endif()
+endif()
+
+find_package(Catch2)
+if (NOT Catch2_FOUND)
+    set(COMPILE_TESTS OFF)
 endif()
 
 if (COMPILE_TESTS)
@@ -144,7 +167,6 @@ if (COMPILE_TESTS)
         "test-project-paths.h"
     )
 
-    find_package(Catch2 REQUIRED)
     if (Catch2_VERSION_MAJOR EQUAL 2)
         SET(CATCH2_INTERNAL_INCLUDE_FILE "catch2/catch.hpp")
         configure_file(
@@ -200,7 +222,7 @@ if (DOXYGEN_FOUND)
     COMMENT "Doxygen ...")
 endif (DOXYGEN_FOUND)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT UBUNTU2004)
     # warnings encountered in llvm/clang headers
     set(SKIP_CLANG_WARNINGS "-Wno-unused-parameter -Wno-comment -Wno-strict-aliasing -Wno-nonnull -Wno-deprecated-declarations")
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -210,14 +232,16 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror -Wno-gnu-zero-variadic-macro-arguments ${SKIP_CLANG_WARNINGS}")
 endif()
 
-
 if (APPLE)
     SET(MACOSX_BUNDLE_ICON_FILE iconset.icns)
 endif()
 
-qt_add_resources(resources_SRCS
+cmake_language(CALL
+    qt${QT_MAJOR_VERSION}_add_resources
+    resources_SRCS
     resources.qrc
 )
+
 add_library(resources STATIC ${resources_SRCS})
 
 get_git_version(GIT_VERSION)
@@ -275,7 +299,7 @@ if (BUILD_DESKTOP_APP)
     generate_export_header(lakospreferences)
 
     target_link_libraries(lakospreferences
-        Qt::Widgets
+        Qt5::Widgets
         KF${KF_MAJOR_VERSION}::ConfigCore
         KF${KF_MAJOR_VERSION}::ConfigGui
     )
@@ -287,10 +311,12 @@ if (BUILD_DESKTOP_APP)
         $<INSTALL_INTERFACE:include/lakos/preferences>
     )
 
-    install(TARGETS
-        lakospreferences
-        DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
-    )
+    if (NOT KDE_FRAMEWORKS_IS_OLD)
+        install(TARGETS
+            lakospreferences
+            DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
+        )
+    endif()
 
     add_subdirectory(doc)
     add_subdirectory(lvtmdl)
@@ -304,9 +330,6 @@ endif()
 if (BUILD_PLUGINS)
     add_subdirectory(plugins)
 endif()
-
-include(KDEGitCommitHooks)
-kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND ENABLE_CODE_COVERAGE)
     # Warning: Not setting up any TARGET below. Assume ctest will be run before running `make coverage` so that we dont

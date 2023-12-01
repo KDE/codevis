@@ -14,7 +14,7 @@ AddTargetLibrary(
   LIBRARIES
     ${SYSTEM_EXTRA_LIBRARIES}
     Codethink::lvtmdb
-    Qt::Core
+    Qt${QT_MAJOR_VERSION}::Core
     KF${KF_MAJOR_VERSION}::Archive
     Codethink::lvtshr
 )
@@ -32,7 +32,9 @@ target_include_directories(codevis_create_prj_from_db
     ${SQLite3_INCLUDE_DIRS}
 )
 
-install(TARGETS codevis_create_prj_from_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+if (NOT KDE_FRAMEWORKS_IS_OLD)
+    install(TARGETS codevis_create_prj_from_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+endif()
 
 if (COMPILE_TESTS)
     add_executable(test_lvtprj_project ct_lvtprj_projectfile.t.cpp)

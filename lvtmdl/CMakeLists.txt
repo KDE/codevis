@@ -42,7 +42,7 @@ AddTargetLibrary(
 
   LIBRARIES
     ${SYSTEM_EXTRA_LIBRARIES}
-    Qt::Core
+    Qt${QT_MAJOR_VERSION}::Core
     Codethink::lvtldr
     Codethink::lvtclr
 )

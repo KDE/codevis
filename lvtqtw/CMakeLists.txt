@@ -1,5 +1,16 @@
 include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
 
+if (${KF_VERSION_MINOR} LESS 90)
+    message("Warning: Old KDE Framework version doesn't have KFNewStuffWidgets available. Disabling support.")
+    set(KFNewStuffWidgetsIfAvailable "") # No such library
+
+    # Old KF5 didn't have KNewStuffWidget features, so they are disabled in this .ui file
+    set(CONFIGURATION_DIALOG_UI ct_lvtqtw_configurationdialog_oldkf5.ui)
+else()
+    set(KFNewStuffWidgetsIfAvailable KF${KF_MAJOR_VERSION}::NewStuffWidgets)
+    set(CONFIGURATION_DIALOG_UI ct_lvtqtw_configurationdialog.ui)
+endif()
+
 AddTargetLibrary(
     LIBRARY_NAME
         lvtqtw
@@ -45,7 +56,7 @@ AddTargetLibrary(
     DESIGNER_FORMS
         ct_lvtqtw_graphtabelement.ui
         ct_lvtqtw_errorview.ui
-        ct_lvtqtw_configurationdialog.ui
+        ${CONFIGURATION_DIALOG_UI}
         ct_lvtqtw_parse_codebase.ui
         ct_lvtqtw_searchwidget.ui
         ct_lvtqtw_welcomewidget.ui
@@ -56,18 +67,18 @@ AddTargetLibrary(
         KF${KF_MAJOR_VERSION}::WidgetsAddons
         KF${KF_MAJOR_VERSION}::TextEditor
         KF${KF_MAJOR_VERSION}::NewStuffCore
-        KF${KF_MAJOR_VERSION}::NewStuffWidgets
         KF${KF_MAJOR_VERSION}::Notifications
+        ${KFNewStuffWidgetsIfAvailable}
         Codethink::lvtmdl
         Codethink::lvtclp
         Codethink::lvtqtc
         Codethink::lvtqtd
         Codethink::lvtprj
         Codethink::lvtplg
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
-        Qt::Svg
+        Qt${QT_MAJOR_VERSION}::Core
+        Qt${QT_MAJOR_VERSION}::Gui
+        Qt${QT_MAJOR_VERSION}::Widgets
+        Qt${QT_MAJOR_VERSION}::Svg
         Codethink::lakospreferences
 )
 

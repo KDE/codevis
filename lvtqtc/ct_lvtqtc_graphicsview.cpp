@@ -597,7 +597,13 @@ void GraphicsView::dragMoveEvent(QDragMoveEvent *event)
 void GraphicsView::dropEvent(QDropEvent *event)
 {
     const QString qualNames = event->mimeData()->data("codevis/qualifiednames");
+#ifdef KDE_FRAMEWORKS_IS_OLD
+    const QStringList qualNameList = qualNames.split(";");
+    qualNameList.removeAll(QString(";"));
+#else
     const QStringList qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);
+#endif
+
     for (const auto& qualName : qualNameList) {
         d->scene->loadEntityByQualifiedName(qualName, mapToScene(event->pos()));
     }

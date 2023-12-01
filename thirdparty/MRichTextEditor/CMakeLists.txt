@@ -11,8 +11,8 @@ AddTargetLibrary(
     DESIGNER_FORMS
         mrichtextedit.ui
     LIBRARIES
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
+        Qt${QT_MAJOR_VERSION}::Core
+        Qt${QT_MAJOR_VERSION}::Gui
+        Qt${QT_MAJOR_VERSION}::Widgets
 )
 set_property(TARGET MRichTextEdit PROPERTY CXX_STANDARD 17)

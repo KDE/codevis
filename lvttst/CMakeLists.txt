@@ -31,7 +31,7 @@ if (COMPILE_TESTS)
         )
 
         target_link_libraries(lvttst_fixture_qt
-            Qt::Widgets
+            Qt${QT_MAJOR_VERSION}::Widgets
         )
     endif()
     add_library(lvttst_tmpdir

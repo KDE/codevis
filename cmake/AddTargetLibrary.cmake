@@ -18,10 +18,16 @@ macro(AddTargetLibrary)
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
     # Build the Meta Object Compiler targets
-    qt_wrap_cpp(DTARGS_SOURCES ${DTARGS_QT_HEADERS} OPTIONS "--no-warnings" "--no-notes")
+    cmake_language(CALL
+        qt${QT_MAJOR_VERSION}_wrap_cpp
+        DTARGS_SOURCES ${DTARGS_QT_HEADERS} OPTIONS "--no-warnings" "--no-notes"
+    )
 
     if (BUILD_DESKTOP_APP)
-        qt_wrap_ui(DTARGS_SOURCES ${DTARGS_DESIGNER_FORMS})
+        cmake_language(CALL
+            qt${QT_MAJOR_VERSION}_wrap_ui
+            DTARGS_SOURCES ${DTARGS_DESIGNER_FORMS}
+        )
     endif()
 
     add_library(${DTARGS_LIBRARY_NAME} SHARED ${DTARGS_SOURCES} ${DTARGS_HEADERS} ${DTARGS_QT_HEADERS})
@@ -42,8 +48,10 @@ macro(AddTargetLibrary)
         $<INSTALL_INTERFACE:include/lakos/${DTARGS_LIBRARY_NAME}>
     )
 
-    install(TARGETS
-        ${DTARGS_LIBRARY_NAME}
-        DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
-    )
+    if (NOT KDE_FRAMEWORKS_IS_OLD)
+        install(TARGETS
+            ${DTARGS_LIBRARY_NAME}
+            DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
+        )
+    endif()
 endmacro()

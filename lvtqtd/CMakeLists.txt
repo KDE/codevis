@@ -10,7 +10,7 @@ AddTargetLibrary(
     LIBRARIES
         Codethink::lvtmdl
         Codethink::lvtqtc
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
+        Qt${QT_MAJOR_VERSION}::Core
+        Qt${QT_MAJOR_VERSION}::Gui
+        Qt${QT_MAJOR_VERSION}::Widgets
 )

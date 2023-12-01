@@ -76,7 +76,7 @@ AddTargetLibrary(
         Codethink::lvtshr
         ${CLANG_EXTRA_LIBRARIES}
         ${SYSTEM_EXTRA_LIBRARIES}
-        Qt::Core
+        Qt${QT_MAJOR_VERSION}::Core
         Python::Python
 )
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -111,12 +111,12 @@ endfunction()
 add_lvtclp_exec(
     NAME codevis_create_codebase_db
     SOURCES ct_lvtclp_create_codebase_db.m.cpp
-    LIBRARIES Qt::Core)
+    LIBRARIES Qt${QT_MAJOR_VERSION}::Core)
 
 add_lvtclp_exec(
     NAME codevis_merge_databases
     SOURCES ct_lvtclp_merge_databases.m.cpp
-    LIBRARIES Qt::Core Threads::Threads
+    LIBRARIES Qt${QT_MAJOR_VERSION}::Core Threads::Threads
 )
 
 add_lvtclp_exec(
@@ -286,9 +286,11 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+if (NOT KDE_FRAMEWORKS_IS_OLD)
+    install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+    install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+    install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+endif()
 
 if (APPLE)
     # See desktopapp/CMakeLists.txt for copying the headers into the bundle

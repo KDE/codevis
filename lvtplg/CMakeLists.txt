@@ -17,7 +17,7 @@ AddTargetLibrary(
     ${SYSTEM_EXTRA_LIBRARIES}
     Codethink::lvtshr
     KF${KF_MAJOR_VERSION}::NewStuffCore
-    Qt::Core
+    Qt${QT_MAJOR_VERSION}::Core
     Python::Python
 )
 target_compile_definitions(lvtplg PRIVATE AS_EMBEDDED=1)

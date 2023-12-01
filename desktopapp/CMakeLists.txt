@@ -9,24 +9,27 @@ set(CodeVisDesktop_SRCS
     projectsettingsdialog.cpp
 )
 
-qt_wrap_cpp(CodeVisDesktop_SRCS
+cmake_language(CALL
+    qt${QT_MAJOR_VERSION}_wrap_cpp
+    CodeVisDesktop_SRCS
     mainwindow.h
     projectsettingsdialog.h
     codevis_dbus_interface.h
 )
-
-qt_wrap_ui(CodeVisDesktop_SRCS
+cmake_language(CALL
+    qt${QT_MAJOR_VERSION}_wrap_ui
+    CodeVisDesktop_SRCS
     mainwindow.ui
     projectsettingsdialog.ui
 )
 
 set(CODEVIS_DESKTOP_QT_LIBRARIES
-    Qt::Core
-    Qt::Gui
-    Qt::Widgets
+    Qt${QT_MAJOR_VERSION}::Core
+    Qt${QT_MAJOR_VERSION}::Gui
+    Qt${QT_MAJOR_VERSION}::Widgets
 )
 if (USE_QT_WEBENGINE)
-    set(CODEVIS_DESKTOP_QT_LIBRARIES "${CODEVIS_DESKTOP_QT_LIBRARIES}" Qt::WebEngineWidgets)
+    set(CODEVIS_DESKTOP_QT_LIBRARIES "${CODEVIS_DESKTOP_QT_LIBRARIES}" Qt${QT_MAJOR_VERSION}::WebEngineWidgets)
 endif()
 
 # Mac and Windows are currently failing on the CI
@@ -35,23 +38,25 @@ if (UNIX AND NOT APPLE)
         ${CMAKE_CURRENT_BINARY_DIR}/org.codethink.CodeVis.xml
     )
 
-    qt_generate_dbus_interface(
+    cmake_language(CALL
+        qt${QT_MAJOR_VERSION}_generate_dbus_interface
         codevis_dbus_interface.h
         org.codethink.CodeVis.xml
-
         # Only parse scriptable properties.
         OPTIONS -p -s -m
     )
 
     # install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.codethink.CodeVis.xml DESTINATION ${DBUS_INTERFACES_INSTALL_DIR})
 
-    qt_add_dbus_adaptor(CodeVisDesktop_DBUS_SRCS
+    cmake_language(CALL
+        qt${QT_MAJOR_VERSION}_add_dbus_adaptor
+        CodeVisDesktop_DBUS_SRCS
         ${CMAKE_CURRENT_BINARY_DIR}/org.codethink.CodeVis.xml
         codevis_dbus_interface.h
-        CodeVisDBusInterface # Clasname used for the adaptor.
+        CodeVisDBusInterface # Classname used for the adaptor.
     )
 
-    set(CODEVIS_DESKTOP_QT_LIBRARIES ${CODEVIS_DESKTOP_QT_LIBRARIES} Qt::DBus)
+    set(CODEVIS_DESKTOP_QT_LIBRARIES ${CODEVIS_DESKTOP_QT_LIBRARIES} Qt${QT_MAJOR_VERSION}::DBus)
 endif()
 
 if (APPLE)
@@ -75,6 +80,13 @@ add_library(codevis_lib STATIC
     ${AppleHeaders_SRCS}
 )
 
+if (${KF_VERSION_MINOR} LESS 90)
+    message("Warning: Old KDE Framework version doesn't have KFNewStuffWidgets available. Disabling support.")
+    set(KFNewStuffWidgetsIfAvailable "") # No such library
+else()
+    set(KFNewStuffWidgetsIfAvailable KF${KF_MAJOR_VERSION}::NewStuffWidgets)
+endif()
+
 target_link_libraries(
     codevis_lib
 
@@ -85,7 +97,7 @@ target_link_libraries(
     KF${KF_MAJOR_VERSION}::I18n
     KF${KF_MAJOR_VERSION}::Notifications
     KF${KF_MAJOR_VERSION}::NewStuffCore
-    KF${KF_MAJOR_VERSION}::NewStuffWidgets
+    ${KFNewStuffWidgetsIfAvailable}
 
     Codethink::lvtmdl
     Codethink::lvtprj
@@ -111,17 +123,17 @@ target_link_libraries(
     codevis_lib
 )
 
-install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUIDIR}/codevis)
-install( FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
-
-install(
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml
-  DESTINATION ${KDE_INSTALL_METAINFODIR}
-)
-
-install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
-install(FILES codevis.notifyrc  DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
+if (NOT KDE_FRAMEWORKS_IS_OLD)
+    install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+    install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUIDIR}/codevis)
+    install(FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
+    install(
+      FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml
+      DESTINATION ${KDE_INSTALL_METAINFODIR}
+    )
+    install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+    install(FILES codevis.notifyrc  DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
+endif()
 
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
 
@@ -190,7 +202,10 @@ add_dependencies(deploy_app_plugins ${DEPLOYED_PLUGINS})
 
 if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testcrash.lks ${CMAKE_CURRENT_BINARY_DIR}/testcrash.lks COPYONLY)
-    qt_wrap_cpp(test_desktopapp_SRCS
+
+    cmake_language(CALL
+        qt${QT_MAJOR_VERSION}_wrap_cpp
+        test_desktopapp_SRCS
         testmainwindow.h
     )
 

@@ -1,6 +1,8 @@
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
-qt_add_resources(db_res_SRCS
+cmake_language(CALL
+    qt${QT_MAJOR_VERSION}_add_resources
+    db_res_SRCS
     ../database-spec/databases.qrc
 )
 

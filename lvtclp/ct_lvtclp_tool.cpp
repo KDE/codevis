@@ -36,6 +36,7 @@
 #include <llvm/Support/GlobPattern.h>
 #include <mutex>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -608,7 +609,10 @@ bool Tool::processCompilationDatabase()
         for (const std::filesystem::path& path : d->compileCommandsJsons) {
             auto result = compDb.addCompilationDatabase(path);
             if (result.has_error()) {
-                std::cerr << "Error processing path " << path << " : " << result.error().message << "." << std::endl;
+                std::stringstream errorMessage;
+                errorMessage << "Error processing path " << path << " " << result.error().message << ".";
+                std::cerr << errorMessage.str() << std::endl;
+                Q_EMIT messageFromThread(QString::fromStdString(errorMessage.str()), 0);
                 return false;
             }
         }

@@ -299,7 +299,7 @@ if (BUILD_DESKTOP_APP)
     generate_export_header(lakospreferences)
 
     target_link_libraries(lakospreferences
-        Qt5::Widgets
+        Qt${QT_MAJOR_VERSION}::Widgets
         KF${KF_MAJOR_VERSION}::ConfigCore
         KF${KF_MAJOR_VERSION}::ConfigGui
     )

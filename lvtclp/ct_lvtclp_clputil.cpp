@@ -371,6 +371,16 @@ bool CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::
         return false;
     }
 
+    if (jsonDb->getAllCompileCommands().size() == 0) {
+        std::cerr << "Error processing " << path << ": compile_commands.json contains no cmds " << std::endl;
+        return false;
+    }
+
+    if (jsonDb->getAllFiles().size() == 0) {
+        std::cerr << "Error processing " << path << ": compile_commands.json contains no files " << std::endl;
+        return false;
+    }
+
     const std::filesystem::path buildDir = path.parent_path();
     addCompilationDatabase(*jsonDb, buildDir);
     return true;

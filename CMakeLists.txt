@@ -69,7 +69,7 @@ include(GetDate)
 include(FeatureSummary)
 find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
-find_package(Clang 17 REQUIRED)
+find_package(Clang REQUIRED)
 
 set(CMAKE_AUTOMOC FALSE)
 set(CMAKE_AUTOUIC FALSE)

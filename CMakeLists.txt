@@ -131,7 +131,7 @@ if (BUILD_DESKTOP_APP)
         DocTools
     )
     # KF5 doesn't have split version, so we build it here
-    string(REPLACE "." ";" VERSION_LIST ${KF5_VERSION})
+    string(REPLACE "." ";" VERSION_LIST "${KF${KF_MAJOR_VERSION}_VERSION}")
     list(GET VERSION_LIST 0 KF_VERSION_MAJOR)
     list(GET VERSION_LIST 1 KF_VERSION_MINOR)
     list(GET VERSION_LIST 2 KF_VERSION_PATCH)

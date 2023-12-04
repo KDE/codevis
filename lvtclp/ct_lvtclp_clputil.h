@@ -153,7 +153,7 @@ enum class CheckingMode : char {
     e_permissive, // Non-lakosian is ignored silently
 };
 
-class CombinedCompilationDatabase : public clang::tooling::CompilationDatabase {
+class LVTCLP_EXPORT CombinedCompilationDatabase : public clang::tooling::CompilationDatabase {
     // clang::ToolingCompilationDatabase formed from a combination of existing
     // compilation databases
   private:

@@ -21,6 +21,7 @@
 
 #include <catch2-local-includes.h>
 #include <llvm/Support/GlobPattern.h>
+#include <test-project-paths.h>
 
 using namespace Codethink;
 
@@ -77,4 +78,40 @@ TEST_CASE("is File Ignored")
     patterns.push_back(res.get());
 
     REQUIRE(lvtclp::ClpUtil::isFileIgnored("moc_katewaiter.cpp", patterns));
+}
+
+TEST_CASE("valid compile commands json")
+{
+    auto const mockFiles = std::string{TEST_PRJ_PATH} + "/mock_files";
+
+    {
+        // empty path
+        lvtclp::CombinedCompilationDatabase compDb;
+        auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase("");
+        REQUIRE(result.has_error());
+    }
+
+    {
+        // file doesn't exist
+        std::string path = "no_exist_compile_commands.json";
+        lvtclp::CombinedCompilationDatabase compDb;
+        auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase(mockFiles + path);
+        REQUIRE(result.has_error());
+    }
+
+    {
+        // exists but empty
+        std::string path = "empty_compile_commands.json";
+        lvtclp::CombinedCompilationDatabase compDb;
+        auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase(mockFiles + path);
+        REQUIRE(result.has_error());
+    }
+
+    {
+        // exists with valid json but no cmds or files
+        std::string path = "brackets_only_compile_commands.json";
+        lvtclp::CombinedCompilationDatabase compDb;
+        auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase(mockFiles + path);
+        REQUIRE(result.has_error());
+    }
 }

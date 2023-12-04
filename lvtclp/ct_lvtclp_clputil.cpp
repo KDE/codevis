@@ -359,7 +359,8 @@ CombinedCompilationDatabase::CombinedCompilationDatabase(): d(std::make_unique<P
 
 CombinedCompilationDatabase::~CombinedCompilationDatabase() noexcept = default;
 
-bool CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path& path)
+cpp::result<bool, CompilationDatabaseError>
+CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path& path)
 {
     std::string errorMessage;
     std::unique_ptr<clang::tooling::JSONCompilationDatabase> jsonDb =
@@ -367,23 +368,20 @@ bool CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::
                                                               errorMessage,
                                                               clang::tooling::JSONCommandLineSyntax::AutoDetect);
     if (!jsonDb) {
-        std::cerr << "Error processing " << path << ": " << errorMessage << std::endl;
-        return false;
+        return cpp::fail(CompilationDatabaseError{errorMessage});
     }
 
     if (jsonDb->getAllCompileCommands().size() == 0) {
-        std::cerr << "Error processing " << path << ": compile_commands.json contains no cmds " << std::endl;
-        return false;
+        return cpp::fail(CompilationDatabaseError{"contains no commands"});
     }
 
     if (jsonDb->getAllFiles().size() == 0) {
-        std::cerr << "Error processing " << path << ": compile_commands.json contains no files " << std::endl;
-        return false;
+        return cpp::fail(CompilationDatabaseError{"contains no files"});
     }
 
     const std::filesystem::path buildDir = path.parent_path();
     addCompilationDatabase(*jsonDb, buildDir);
-    return true;
+    return {};
 }
 
 void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::CompilationDatabase& db,

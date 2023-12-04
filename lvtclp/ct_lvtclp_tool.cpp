@@ -606,8 +606,9 @@ bool Tool::processCompilationDatabase()
     if (!d->compileCommandsJsons.empty()) {
         CombinedCompilationDatabase compDb;
         for (const std::filesystem::path& path : d->compileCommandsJsons) {
-            if (!compDb.addCompilationDatabase(path)) {
-                std::cerr << "Error processing " << path << std::endl;
+            auto result = compDb.addCompilationDatabase(path);
+            if (result.has_error()) {
+                std::cerr << "Error processing path " << path << " : " << result.error().message << "." << std::endl;
                 return false;
             }
         }

@@ -32,6 +32,8 @@
 #include <string>
 #include <vector>
 
+#include <result/result.hpp>
+
 #include <clang/Basic/SourceManager.h>
 #include <clang/Tooling/CompilationDatabase.h>
 #include <llvm/Support/GlobPattern.h>
@@ -66,6 +68,10 @@ enum class FileType : short {
     // which isn't a header or a source.
     e_UnknownUnknown,
     // A file type we don't recognise.
+};
+
+struct CompilationDatabaseError {
+    std::string message;
 };
 
 // ==============
@@ -163,9 +169,8 @@ class CombinedCompilationDatabase : public clang::tooling::CompilationDatabase {
     ~CombinedCompilationDatabase() noexcept override;
 
     // MODIFIERS
-    bool addCompilationDatabase(const std::filesystem::path& path);
+    cpp::result<bool, CompilationDatabaseError> addCompilationDatabase(const std::filesystem::path& path);
     // Read in a compile_commands.json file from path
-    // Returns true on success, false otherwise
 
     void addCompilationDatabase(const clang::tooling::CompilationDatabase& db, const std::filesystem::path& buildDir);
     // Add the contents of the compilation database given in as an argument

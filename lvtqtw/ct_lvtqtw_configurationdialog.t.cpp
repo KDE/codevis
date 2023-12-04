@@ -24,7 +24,11 @@
 #include <preferences.h>
 
 #include <catch2-local-includes.h>
+#ifdef KDE_FRAMEWORKS_IS_OLD
+#include <ui_ct_lvtqtw_configurationdialog_oldkf5.h>
+#else
 #include <ui_ct_lvtqtw_configurationdialog.h>
+#endif
 
 #include <QObject>
 

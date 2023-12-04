@@ -62,7 +62,7 @@ target_link_libraries(codevis_physicalloader
     Qt${QT_MAJOR_VERSION}::Core
     ${SQLite3_LIBRARIES}
 )
-if (NOT KDE_FRAMEWORKS_IS_OLD)
+if (NOT ${KDE_FRAMEWORKS_IS_OLD})
     install(TARGETS codevis_physicalloader ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 endif()
 target_include_directories(codevis_physicalloader

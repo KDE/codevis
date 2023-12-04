@@ -70,7 +70,7 @@ static RawDBData getDBData(soci::row& row, size_t pos)
     }
 
     throw std::runtime_error{"Unexpected data type"};
-};
+}
 
 } // namespace detail
 

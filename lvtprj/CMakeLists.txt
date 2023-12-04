@@ -32,7 +32,7 @@ target_include_directories(codevis_create_prj_from_db
     ${SQLite3_INCLUDE_DIRS}
 )
 
-if (NOT KDE_FRAMEWORKS_IS_OLD)
+if (NOT ${KDE_FRAMEWORKS_IS_OLD})
     install(TARGETS codevis_create_prj_from_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 endif()
 

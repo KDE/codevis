@@ -123,7 +123,7 @@ target_link_libraries(
     codevis_lib
 )
 
-if (NOT KDE_FRAMEWORKS_IS_OLD)
+if (NOT ${KDE_FRAMEWORKS_IS_OLD})
     install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
     install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUIDIR}/codevis)
     install(FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})

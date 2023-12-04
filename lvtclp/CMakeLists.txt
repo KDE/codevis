@@ -286,7 +286,7 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-if (NOT KDE_FRAMEWORKS_IS_OLD)
+if (NOT ${KDE_FRAMEWORKS_IS_OLD})
     install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
     install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
     install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

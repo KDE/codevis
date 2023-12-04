@@ -16,6 +16,7 @@ option(BUILD_PLUGINS "Compile all application plugins in the plugins/ directory"
 option(USE_QT_WEBENGINE "If set, will compile using Qt Webengine (preferred) to render HTML reports" ON)
 option(ENABLE_PYTHON_PLUGINS "If set, will consider plugins implemented in Python" ON)
 option(IGNORE_BROKEN_TESTS_KDE_CI "If set, ignores some broken tests on LLVM 16 / KDE CI." ON)
+option(WARNINGS_AS_ERRORS "If set, will force warnings as errors (enabled by default)" ON)
 
 set(QT_MIN_VERSION "5.12.0")
 set(KF5_MIN_VERSION "5.68.0")
@@ -135,7 +136,7 @@ if (BUILD_DESKTOP_APP)
     list(GET VERSION_LIST 0 KF_VERSION_MAJOR)
     list(GET VERSION_LIST 1 KF_VERSION_MINOR)
     list(GET VERSION_LIST 2 KF_VERSION_PATCH)
-    if (KF_VERSION_MAJOR LESS 5 OR (KF_VERSION_MINOR EQUAL 5 AND KF_VERSION_MINOR LESS 90))
+    if (KF_VERSION_MAJOR LESS 5 OR (KF_VERSION_MAJOR EQUAL 5 AND KF_VERSION_MINOR LESS 90))
         set(KDE_FRAMEWORKS_IS_OLD TRUE)
         add_compile_definitions(KDE_FRAMEWORKS_IS_OLD=1)
     endif()
@@ -222,14 +223,17 @@ if (DOXYGEN_FOUND)
     COMMENT "Doxygen ...")
 endif (DOXYGEN_FOUND)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT UBUNTU2004)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # warnings encountered in llvm/clang headers
     set(SKIP_CLANG_WARNINGS "-Wno-unused-parameter -Wno-comment -Wno-strict-aliasing -Wno-nonnull -Wno-deprecated-declarations")
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         SET(SKIP_CLANG_WARNINGS "${SKIP_CLANG_WARNINGS}  -Wno-error=maybe-uninitialized")
     endif()
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror -Wno-gnu-zero-variadic-macro-arguments ${SKIP_CLANG_WARNINGS}")
+        "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-gnu-zero-variadic-macro-arguments ${SKIP_CLANG_WARNINGS}")
+    if (WARNINGS_AS_ERRORS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    endif()
 endif()
 
 if (APPLE)
@@ -311,7 +315,7 @@ if (BUILD_DESKTOP_APP)
         $<INSTALL_INTERFACE:include/lakos/preferences>
     )
 
-    if (NOT KDE_FRAMEWORKS_IS_OLD)
+    if (NOT ${KDE_FRAMEWORKS_IS_OLD})
         install(TARGETS
             lakospreferences
             DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}

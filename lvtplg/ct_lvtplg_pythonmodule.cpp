@@ -68,7 +68,8 @@ auto pyUnregisterPluginData(T const& self, std::string const& id)
 } // namespace Codethink::lvtplg
 
 // clang-format off
-void exportDataTypes(auto& m)
+template<typename ModuleType>
+void exportDataTypes(ModuleType& m)
 {
     {
         using T = EntityType;

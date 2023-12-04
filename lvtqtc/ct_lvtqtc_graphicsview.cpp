@@ -598,7 +598,7 @@ void GraphicsView::dropEvent(QDropEvent *event)
 {
     const QString qualNames = event->mimeData()->data("codevis/qualifiednames");
 #ifdef KDE_FRAMEWORKS_IS_OLD
-    const QStringList qualNameList = qualNames.split(";");
+    QStringList qualNameList = qualNames.split(";");
     qualNameList.removeAll(QString(";"));
 #else
     const QStringList qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);

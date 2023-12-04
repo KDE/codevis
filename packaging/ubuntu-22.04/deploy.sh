@@ -1,18 +1,8 @@
-# TODO: Review llvm .so version
-ln -s /usr/lib/llvm-17/lib/libclang-17.so.17 /usr/lib/llvm-17/lib/libclang-17.so.1
-
-# Ubuntu CMake is way too old, so we download a newer version
-wget https://github.com/Kitware/CMake/releases/download/v3.26.6/cmake-3.26.6-linux-x86_64.sh
-chmod +x cmake-3.26.6-linux-x86_64.sh
-mkdir -p /cmake/
-./cmake-3.26.6-linux-x86_64.sh --skip-license --prefix=/cmake/
-export PATH=/cmake/bin:$PATH
-
 git clone https://invent.kde.org/sdk/codevis.git
 cd codevis/ || exit
 mkdir -p build/ && cd build/ || exit
-cmake .. -DQT_MAJOR_VERSION=5 -DWARNINGS_AS_ERRORS=OFF || exit
-cmake --build . -j"$(nproc)" || exit
+cmake ..
+cmake --build . -j"$(nproc)"
 # Make sure all plugin files are copied
 rm -rf ./desktopapp/lks-plugins/
 cmake .. && cmake --build . --target deploy_app_plugins

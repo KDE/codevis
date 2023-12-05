@@ -485,7 +485,7 @@ void LakosRelation::toggleRelationFlags(EdgeCollection::RelationFlags flags, boo
         }
         d->relationFlags |= flags;
     } else {
-        if (flags == EdgeCollection::RelationFlags::RelationIsSelected) {
+        if (flags | EdgeCollection::RelationFlags::RelationIsSelected) {
             d->selectedCounter -= 1;
             if (d->selectedCounter == 0) {
                 d->relationFlags &= ~flags;

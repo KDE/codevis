@@ -256,7 +256,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     legendAction->setText(tr("Information Panel"));
     legendAction->setIcon(IconHelpers::iconFrom(":/icons/help"));
     legendAction->setCheckable(true);
-    legendAction->setChecked(Preferences::showMinimap());
+    legendAction->setChecked(Preferences::showLegend());
     connect(legendAction, &QAction::triggered, d->graphicsView, &lvtqtc::GraphicsView::toggleLegend);
 
     auto *fitInViewAction = new QAction();

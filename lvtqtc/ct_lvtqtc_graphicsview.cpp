@@ -130,11 +130,13 @@ void GraphicsView::undoCommandReceived(QUndoCommand *command)
 void GraphicsView::toggleMinimap(bool toggle)
 {
     d->minimap->setVisible(toggle);
+    Preferences::setShowMinimap(toggle);
 }
 
 void GraphicsView::toggleLegend(bool toggle)
 {
     d->toolTipItem->setVisible(toggle);
+    Preferences::setShowLegend(toggle);
 }
 
 void GraphicsView::setUndoManager(UndoManager *undoManager)

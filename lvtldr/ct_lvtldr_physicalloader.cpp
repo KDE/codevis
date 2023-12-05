@@ -194,6 +194,10 @@ bool PhysicalLoader::isNodeFullyLoaded(LakosianNode *node, lvtldr::NodeLoadFlags
 
 void PhysicalLoader::visitVertex(LakosianNode *node, const unsigned distance, lvtldr::NodeLoadFlags flags)
 {
+    constexpr unsigned MAX_DISTANCE = 99;
+    if (distance == MAX_DISTANCE) {
+        return;
+    }
     assert(node);
 
     auto [it, inserted] = d->visited.emplace(node);
@@ -216,7 +220,6 @@ void PhysicalLoader::visitVertex(LakosianNode *node, const unsigned distance, lv
         // edges
         const bool hasParent = d->visited.find(VisitLog{node->parent()}) != std::end(d->visited);
         if (!hasParent) {
-            constexpr unsigned MAX_DISTANCE = 99;
             auto visitFlags = d->graphLoader->loadFlagsFor(node);
             visitVertex(node->parent(), MAX_DISTANCE, visitFlags);
         }

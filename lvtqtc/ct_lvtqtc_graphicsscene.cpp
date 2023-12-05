@@ -115,8 +115,8 @@ struct GraphicsScene::Private {
     Codethink::lvtmdl::CircularRelationshipsModel *circleModel = nullptr;
     // model to display the circle relationships.
 
-    LakosEntity *selectedEntity = nullptr;
-    // The selected entity is chosen by the user by selecting it on the view.
+    std::vector<LakosEntity *> selectedEntities;
+    // The selected entities is chosen by the user by selecting it on the view.
 
     QGraphicsSimpleTextItem *bgMessage = nullptr;
 
@@ -415,6 +415,11 @@ void GraphicsScene::setColorManagement(const std::shared_ptr<lvtclr::ColorManage
     d->colorManagement = colorManagement;
 }
 
+std::vector<LakosEntity *> GraphicsScene::selectedEntities() const
+{
+    return d->selectedEntities;
+}
+
 // TODO: Pass the entity that we don't want to collapse here.'
 void GraphicsScene::collapseSecondaryEntities()
 {
@@ -509,19 +514,16 @@ LakosEntity *addVertex(GraphicsScene *scene,
     }
 
     QObject::connect(entity, &LakosEntity::toggleSelection, scene, [scene, d, entity] {
-        if (d->selectedEntity) {
-            d->selectedEntity->setSelected(false);
-            d->selectedEntity->updateZLevel();
+        if (std::find(d->selectedEntities.begin(), d->selectedEntities.end(), entity) == d->selectedEntities.end()) {
+            d->selectedEntities.push_back(entity);
+            entity->setSelected(true);
+        } else {
+            std::erase(d->selectedEntities, entity);
+            entity->setSelected(false);
         }
+        entity->updateZLevel();
 
-        auto *oldSelectedEntity = d->selectedEntity;
-        d->selectedEntity = nullptr;
-        if (entity != oldSelectedEntity) {
-            d->selectedEntity = entity;
-            d->selectedEntity->setSelected(true);
-            d->selectedEntity->updateZLevel();
-        }
-        Q_EMIT scene->selectedEntityChanged(d->selectedEntity);
+        Q_EMIT scene->selectedEntityChanged(entity);
     });
 
     QObject::connect(entity, &LakosEntity::requestRemoval, scene, [scene, &nodeStorage, node, entity] {
@@ -1109,6 +1111,10 @@ void GraphicsScene::unloadEntity(lvtshr::UniqueId uuid, UnloadDepth depth)
         flags.loadChildren = false;
     } else {
         unloadEntity(entity);
+    }
+
+    if (std::find(d->selectedEntities.begin(), d->selectedEntities.end(), entity) != d->selectedEntities.end()) {
+        std::erase(d->selectedEntities, entity);
     }
 
     d->transitiveReductionAlg->reset();

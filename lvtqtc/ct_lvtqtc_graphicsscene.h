@@ -106,7 +106,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     void setColorManagement(const std::shared_ptr<lvtclr::ColorManagement>& colorManagement);
 
-    bool hasMainNodeSelected() const;
+    std::vector<LakosEntity *> selectedEntities() const;
 
     // This class defines what we need to implement on classes that load graphs visually
     void clearGraph() override;

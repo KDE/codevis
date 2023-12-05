@@ -734,11 +734,22 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(loadLocalClientsAction);
     }
 
-    if (!d->isMainNode) {
-        auto *unloadAction = new QAction();
-        unloadAction->setText(tr("Unload %1").arg(QString::fromStdString(name())));
-        connect(unloadAction, &QAction::triggered, this, &LakosEntity::unloadThis);
-        retValues.append(unloadAction);
+    auto *unloadAction = new QAction();
+    unloadAction->setText(tr("Unload %1").arg(QString::fromStdString(name())));
+    connect(unloadAction, &QAction::triggered, this, &LakosEntity::unloadThis);
+    retValues.append(unloadAction);
+
+    auto *thisScene = qobject_cast<GraphicsScene *>(scene());
+    if (thisScene) {
+        auto selectedEntities = thisScene->selectedEntities();
+        if (!selectedEntities.empty()) {
+            auto *unloadAllAction = new QAction();
+            unloadAllAction->setText(tr("Unload all selected entities"));
+            for (auto& e : selectedEntities) {
+                connect(unloadAllAction, &QAction::triggered, e, &LakosEntity::unloadThis);
+            }
+            retValues.append(unloadAllAction);
+        }
     }
 
     if (loaderInfo().isValid()) {

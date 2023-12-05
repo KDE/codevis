@@ -9,6 +9,8 @@ export CODEVIS_PKG_IMGNAME=codevis-${CODEVIS_PKG_DIST}
 mkdir -p ${CODEVIS_PKG_OUTDIR}
 docker build . -t ${CODEVIS_PKG_IMGNAME}
 docker run -v ${CODEVIS_PKG_OUTDIR}:/artifacts -t ${CODEVIS_PKG_IMGNAME} 
+cp codevis.sh ${CODEVIS_PKG_OUTDIR}
+cp install-dependencies.sh ${CODEVIS_PKG_OUTDIR}
 ```
 
 Notes:

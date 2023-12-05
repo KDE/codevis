@@ -1173,7 +1173,7 @@ void LakosEntity::mousePressEvent(QGraphicsSceneMouseEvent *ev)
     qDebug() << "LakosEntity MousePressEvent" << QString::fromStdString(name());
 
     if (isBlockingEvents()) {
-        // if it has a parent item, then it's an item inside of a container.
+        // If it has a parent item, then it's an item inside a container.
         if (parentItem()) {
             ev->ignore();
             return;

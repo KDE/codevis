@@ -686,11 +686,6 @@ void LakosEntity::setTooltipString(const std::string& tt)
 
 QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
 {
-    if (instanceType() == lvtshr::DiagramType::RepositoryType) {
-        // Do not show any action menu for repositories.
-        return {};
-    }
-
     if (parentItem()) {
         scenePosition = parentItem()->mapFromScene(scenePosition);
     }
@@ -703,41 +698,45 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(selectAction);
     }
 
-    if (d->loaderInfo.isValid()) {
-        auto *loadClientsAction = new QAction();
-        loadClientsAction->setText(tr("Load all clients"));
-        connect(loadClientsAction, &QAction::triggered, this, [this] {
-            Q_EMIT loadClients(/*onlyLocal=*/false);
-        });
+    if (instanceType() != lvtshr::DiagramType::RepositoryType) {
+        if (d->loaderInfo.isValid()) {
+            auto *loadClientsAction = new QAction();
+            loadClientsAction->setText(tr("Load all clients"));
+            connect(loadClientsAction, &QAction::triggered, this, [this] {
+                Q_EMIT loadClients(/*onlyLocal=*/false);
+            });
 
-        auto *loadLocalClientsAction = new QAction();
-        loadLocalClientsAction->setText(tr("Load local clients"));
-        connect(loadLocalClientsAction, &QAction::triggered, this, [this] {
-            Q_EMIT loadClients(/*onlyLocal=*/true);
-        });
+            auto *loadLocalClientsAction = new QAction();
+            loadLocalClientsAction->setText(tr("Load local clients"));
+            connect(loadLocalClientsAction, &QAction::triggered, this, [this] {
+                Q_EMIT loadClients(/*onlyLocal=*/true);
+            });
 
-        auto *loadProvidersAction = new QAction();
-        loadProvidersAction->setText(tr("Load all providers"));
-        connect(loadProvidersAction, &QAction::triggered, this, [this] {
-            Q_EMIT loadProviders(/*onlyLocal=*/false);
-        });
+            auto *loadProvidersAction = new QAction();
+            loadProvidersAction->setText(tr("Load all providers"));
+            connect(loadProvidersAction, &QAction::triggered, this, [this] {
+                Q_EMIT loadProviders(/*onlyLocal=*/false);
+            });
 
-        auto *loadLocalProvidersAction = new QAction();
-        loadLocalProvidersAction->setText(tr("Load local providers"));
-        connect(loadLocalProvidersAction, &QAction::triggered, this, [this] {
-            Q_EMIT loadProviders(/*onlyLocal=*/true);
-        });
+            auto *loadLocalProvidersAction = new QAction();
+            loadLocalProvidersAction->setText(tr("Load local providers"));
+            connect(loadLocalProvidersAction, &QAction::triggered, this, [this] {
+                Q_EMIT loadProviders(/*onlyLocal=*/true);
+            });
 
-        retValues.append(loadProvidersAction);
-        retValues.append(loadLocalProvidersAction);
-        retValues.append(loadClientsAction);
-        retValues.append(loadLocalClientsAction);
+            retValues.append(loadProvidersAction);
+            retValues.append(loadLocalProvidersAction);
+            retValues.append(loadClientsAction);
+            retValues.append(loadLocalClientsAction);
+        }
     }
 
-    auto *unloadAction = new QAction();
-    unloadAction->setText(tr("Unload %1").arg(QString::fromStdString(name())));
-    connect(unloadAction, &QAction::triggered, this, &LakosEntity::unloadThis);
-    retValues.append(unloadAction);
+    if (instanceType() != lvtshr::DiagramType::RepositoryType) {
+        auto *unloadAction = new QAction();
+        unloadAction->setText(tr("Unload %1").arg(QString::fromStdString(name())));
+        connect(unloadAction, &QAction::triggered, this, &LakosEntity::unloadThis);
+        retValues.append(unloadAction);
+    }
 
     auto *thisScene = qobject_cast<GraphicsScene *>(scene());
     if (thisScene) {
@@ -833,7 +832,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         });
         retValues.append(action);
     }
-    {
+    if (instanceType() != lvtshr::DiagramType::RepositoryType) {
         auto *action = new QAction();
         const QString toolTip = d->node->notes().empty() ? tr("Add Notes") : tr("Change Notes");
 

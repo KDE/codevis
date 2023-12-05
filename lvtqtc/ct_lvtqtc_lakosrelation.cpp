@@ -97,6 +97,10 @@ struct LakosRelation::Private {
     int relationFlags = EdgeCollection::RelationFlags::RelationFlagsNone;
     // We use the information below to paint the item.
 
+    int selectedCounter = 0;
+    // Keep track on how many selections this relation has.
+    // This is used to avoid unselecting something that should be selected.
+
     qreal thickness = 0.5;
     // thickness of the line being drawn.
 
@@ -476,10 +480,21 @@ LakosEntity *LakosRelation::to() const
 void LakosRelation::toggleRelationFlags(EdgeCollection::RelationFlags flags, bool toggle)
 {
     if (toggle) {
+        if (flags | EdgeCollection::RelationFlags::RelationIsSelected) {
+            d->selectedCounter += 1;
+        }
         d->relationFlags |= flags;
     } else {
-        d->relationFlags &= ~flags;
+        if (flags == EdgeCollection::RelationFlags::RelationIsSelected) {
+            d->selectedCounter -= 1;
+            if (d->selectedCounter == 0) {
+                d->relationFlags &= ~flags;
+            }
+        } else {
+            d->relationFlags &= ~flags;
+        }
     }
+
     update();
 }
 

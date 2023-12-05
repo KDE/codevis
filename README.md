@@ -5,13 +5,13 @@
 ## Prebuilt binaries
 
 - [**Windows (.exe)**](https://invent.kde.org/sdk/codevis/-/jobs/1392579/artifacts/raw/.kde-ci-packages/codevis-master-420-windows-cl-msvc2019-x86_64.exe)
-- [**Ubuntu 22.04 (.tar.gz)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/3d638af46b04db490f31871717e303c6/codevis-ubuntu-22.04.tar.gz)
+- [**Ubuntu 22.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/77fc53bdc32d671ce8d27162f6b409d1/codevis-ubuntu-22.04.zip)
 - [**Ubuntu 20.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/16c7045a6f17401a80652765bac3228a/codevis-ubuntu-20.04.zip)
 
 ## Prebuilt plugins
 
 - [**Windows plugins (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/de3522514134fbcd489bde3565ae8d0c/codevis-plugins.zip)
-- [**Ubuntu 22.04 plugins (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/24f145642e5676a9ad6415ab0c9b9df1/codevis-plugins-ubuntu-22.04.zip)
+- [**Ubuntu 22.04 plugins (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/ccb78617dec348ad130ccd9fca177ee7/codevis-plugins-ubuntu-22.04.zip)
 - [**Ubuntu 20.04 plugins (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/367f4bae7c3f3f2e6c0e43355ba272cc/codevis-plugins-ubuntu-20.04.zip)
 
 [![build status](https://invent.kde.org/sdk/codevis/badges/master/pipeline.svg)](https://invent.kde.org/sdk/codevis/-/pipelines/?ref=master)

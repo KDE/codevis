@@ -545,7 +545,7 @@ class SociDatabaseHandler : public DatabaseHandler {
                 dao.childUdtIds.emplace_back(i);
             }
         }
-        {
+        try {
             soci::rowset<RecordNumberType> files_rs =
                 (d_db.prepare << "select id from source_file where component_id = :k", soci::use(dao.id));
             for (auto const& source_id : files_rs) {
@@ -556,6 +556,8 @@ class SociDatabaseHandler : public DatabaseHandler {
                     dao.childGlobalFunctionIds.emplace_back(i);
                 }
             }
+        } catch (soci::sqlite3_soci_error const&) {
+            /* Ignore missing data on old databases */
         }
 
         return dao;

@@ -769,32 +769,34 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
             connect(childAction, &QAction::triggered, this, &LakosEntity::loadChildren);
             retValues.append(childAction);
         } else {
-            auto *noChildAction = new QAction();
-            const auto type = internalNode()->type();
-            const auto text = [type]() -> QString {
-                switch (type) {
-                case lvtshr::DiagramType::RepositoryType:
-                    return tr("Load packages");
-                case lvtshr::DiagramType::PackageType:
-                    return tr("Unload packages or components");
-                case lvtshr::DiagramType::ComponentType:
-                    return tr("Unload UDT's");
-                case lvtshr::DiagramType::ClassType:
-                    return tr("Unload Inner Classes and Structs");
-                case lvtshr::DiagramType::FreeFunctionType:
-                    // Currently, we do not expect types or functions inside free functions
+            if (!internalNode()->children().empty()) {
+                auto *noChildAction = new QAction();
+                const auto type = internalNode()->type();
+                const auto text = [type]() -> QString {
+                    switch (type) {
+                    case lvtshr::DiagramType::RepositoryType:
+                        return tr("Unload packages");
+                    case lvtshr::DiagramType::PackageType:
+                        return tr("Unload packages or components");
+                    case lvtshr::DiagramType::ComponentType:
+                        return tr("Unload UDT's");
+                    case lvtshr::DiagramType::ClassType:
+                        return tr("Unload Inner Classes and Structs");
+                    case lvtshr::DiagramType::FreeFunctionType:
+                        // Currently, we do not expect types or functions inside free functions
+                        return {};
+                    case lvtshr::DiagramType::NoneType:
+                        assert(false && "Should never hit.");
+                    }
                     return {};
-                case lvtshr::DiagramType::NoneType:
-                    assert(false && "Should never hit.");
-                }
-                return {};
-            }();
+                }();
 
-            noChildAction->setText(text);
-            connect(noChildAction, &QAction::triggered, this, [this] {
-                Q_EMIT unloadChildren();
-            });
-            retValues.append(noChildAction);
+                noChildAction->setText(text);
+                connect(noChildAction, &QAction::triggered, this, [this] {
+                    Q_EMIT unloadChildren();
+                });
+                retValues.append(noChildAction);
+            }
         }
     }
 

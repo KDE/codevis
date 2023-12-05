@@ -414,8 +414,9 @@ void LakosRelation::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         painter->restore();
     }
 
-    if (d->relationFlags & EdgeCollection::RelationFlags::RelationIsHighlighted) {
-        setZValue(1000);
+    if (d->relationFlags & EdgeCollection::RelationFlags::RelationIsHighlighted
+        || d->relationFlags & EdgeCollection::RelationFlags::RelationIsSelected) {
+        setZValue(99);
     } else {
         setZValue(1);
     }

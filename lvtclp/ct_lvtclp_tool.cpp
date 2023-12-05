@@ -609,10 +609,25 @@ bool Tool::processCompilationDatabase()
         for (const std::filesystem::path& path : d->compileCommandsJsons) {
             auto result = compDb.addCompilationDatabase(path);
             if (result.has_error()) {
-                std::stringstream errorMessage;
-                errorMessage << "Error processing path " << path << " " << result.error().message << ".";
-                std::cerr << errorMessage.str() << std::endl;
-                Q_EMIT messageFromThread(QString::fromStdString(errorMessage.str()), 0);
+                switch (result.error().kind) {
+                case CompilationDatabaseError::Kind::ErrorLoadingFromFile: {
+                    Q_EMIT messageFromThread(
+                        tr(("Error loading file " + path.string() + " with " + result.error().message).c_str()),
+                        0);
+                    break;
+                }
+                case CompilationDatabaseError::Kind::CompileCommandsContainsNoCommands: {
+                    Q_EMIT messageFromThread(
+                        tr(("Error processing " + path.string() + " contains no commands").c_str()),
+                        0);
+                    break;
+                }
+                case CompilationDatabaseError::Kind::CompileCommandsContainsNoFiles: {
+                    Q_EMIT messageFromThread(tr(("Error processing " + path.string() + " contains no files").c_str()),
+                                             0);
+                    break;
+                }
+                }
                 return false;
             }
         }

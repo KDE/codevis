@@ -368,15 +368,15 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
                                                               errorMessage,
                                                               clang::tooling::JSONCommandLineSyntax::AutoDetect);
     if (!jsonDb) {
-        return cpp::fail(CompilationDatabaseError{errorMessage});
+        return cpp::fail(CompilationDatabaseError{CompilationDatabaseError::Kind::ErrorLoadingFromFile, errorMessage});
     }
 
     if (jsonDb->getAllCompileCommands().size() == 0) {
-        return cpp::fail(CompilationDatabaseError{"contains no commands"});
+        return cpp::fail(CompilationDatabaseError{CompilationDatabaseError::Kind::CompileCommandsContainsNoCommands});
     }
 
     if (jsonDb->getAllFiles().size() == 0) {
-        return cpp::fail(CompilationDatabaseError{"contains no files"});
+        return cpp::fail(CompilationDatabaseError{CompilationDatabaseError::Kind::CompileCommandsContainsNoFiles});
     }
 
     const std::filesystem::path buildDir = path.parent_path();

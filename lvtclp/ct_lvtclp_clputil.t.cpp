@@ -82,36 +82,41 @@ TEST_CASE("is File Ignored")
 
 TEST_CASE("valid compile commands json")
 {
-    auto const mockFiles = std::string{TEST_PRJ_PATH} + "/mock_files";
+    auto const mockFiles = std::string{TEST_PRJ_PATH} + "/mock_compile_commands_json";
 
     {
         // empty path
         lvtclp::CombinedCompilationDatabase compDb;
         auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase("");
         REQUIRE(result.has_error());
+        REQUIRE(result.error().kind == lvtclp::CompilationDatabaseError::Kind::ErrorLoadingFromFile);
     }
 
     {
         // file doesn't exist
-        std::string path = "no_exist_compile_commands.json";
+        std::string path = "/no_exist_compile_commands.json";
         lvtclp::CombinedCompilationDatabase compDb;
         auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase(mockFiles + path);
         REQUIRE(result.has_error());
+        REQUIRE(result.error().kind == lvtclp::CompilationDatabaseError::Kind::ErrorLoadingFromFile);
     }
 
     {
         // exists but empty
-        std::string path = "empty_compile_commands.json";
+        std::string path = "/empty/compile_commands.json";
         lvtclp::CombinedCompilationDatabase compDb;
         auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase(mockFiles + path);
         REQUIRE(result.has_error());
+        REQUIRE(result.error().kind == lvtclp::CompilationDatabaseError::Kind::ErrorLoadingFromFile);
     }
 
     {
-        // exists with valid json but no cmds or files
-        std::string path = "brackets_only_compile_commands.json";
+        // exists with valid json but no commands or files
+        std::string path = "/brackets_only/compile_commands.json";
         lvtclp::CombinedCompilationDatabase compDb;
         auto result = compDb.CombinedCompilationDatabase::addCompilationDatabase(mockFiles + path);
         REQUIRE(result.has_error());
+        REQUIRE((result.error().kind == lvtclp::CompilationDatabaseError::Kind::CompileCommandsContainsNoCommands
+                 || result.error().kind == lvtclp::CompilationDatabaseError::Kind::CompileCommandsContainsNoFiles));
     }
 }

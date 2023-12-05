@@ -71,7 +71,10 @@ enum class FileType : short {
 };
 
 struct CompilationDatabaseError {
-    std::string message;
+    enum class Kind { ErrorLoadingFromFile, CompileCommandsContainsNoCommands, CompileCommandsContainsNoFiles };
+
+    Kind kind;
+    std::string message = "";
 };
 
 // ==============

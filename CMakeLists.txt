@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
 # KDE Applications version, managed by release script.
 set(RELEASE_SERVICE_VERSION_MAJOR "23")
@@ -27,10 +27,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(MIN_REQUIRED_LLVM_VERSION 16)
 if (ENABLE_FORTRAN_SCANNER)
     add_compile_definitions(CT_ENABLE_FORTRAN_SCANNER=1)
-    set(MIN_REQUIRED_LLVM_VERSION 17)
 endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -77,7 +75,11 @@ include(GetDate)
 include(FeatureSummary)
 find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
-find_package(LLVM ${MIN_REQUIRED_LLVM_VERSION} REQUIRED)
+
+find_package(LLVM 17)
+if (NOT LLVM_Found)
+    find_package(LLVM 16 REQUIRED)
+endif()
 find_package(Clang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/clang/" NO_DEFAULT_PATH)
 
 set(CMAKE_AUTOMOC FALSE)

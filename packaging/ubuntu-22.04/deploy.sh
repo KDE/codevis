@@ -1,11 +1,13 @@
+EXTRA_CMAKE_OPTIONS="$1"
+
 git clone https://invent.kde.org/sdk/codevis.git
 cd codevis/ || exit
 mkdir -p build/ && cd build/ || exit
-cmake ..
+cmake .. "$EXTRA_CMAKE_OPTIONS"
 cmake --build . -j"$(nproc)"
 # Make sure all plugin files are copied
 rm -rf ./desktopapp/lks-plugins/
-cmake .. && cmake --build . --target deploy_app_plugins
+cmake .. "$EXTRA_CMAKE_OPTIONS" && cmake --build . --target deploy_app_plugins
 
 export CODEVIS_PKG_ARTIFACTS_PATH=/artifacts
 mkdir -p $CODEVIS_PKG_ARTIFACTS_PATH

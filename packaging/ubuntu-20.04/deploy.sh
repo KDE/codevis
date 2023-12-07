@@ -1,3 +1,5 @@
+EXTRA_CMAKE_OPTIONS="$1"
+
 # TODO: Review llvm .so version
 ln -s /usr/lib/llvm-17/lib/libclang-17.so.17 /usr/lib/llvm-17/lib/libclang-17.so.1
 
@@ -11,11 +13,11 @@ export PATH=/cmake/bin:$PATH
 git clone https://invent.kde.org/sdk/codevis.git
 cd codevis/ || exit
 mkdir -p build/ && cd build/ || exit
-cmake .. -DQT_MAJOR_VERSION=5 -DWARNINGS_AS_ERRORS=OFF || exit
+cmake .. -DQT_MAJOR_VERSION=5 -DWARNINGS_AS_ERRORS=OFF "$EXTRA_CMAKE_OPTIONS" || exit
 cmake --build . -j"$(nproc)" || exit
 # Make sure all plugin files are copied
 rm -rf ./desktopapp/lks-plugins/
-cmake .. && cmake --build . --target deploy_app_plugins
+cmake .. -DQT_MAJOR_VERSION=5 -DWARNINGS_AS_ERRORS=OFF "$EXTRA_CMAKE_OPTIONS" && cmake --build . --target deploy_app_plugins
 
 export CODEVIS_PKG_ARTIFACTS_PATH=/artifacts
 mkdir -p $CODEVIS_PKG_ARTIFACTS_PATH

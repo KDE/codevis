@@ -26,7 +26,9 @@
 #include <ct_lvtprj_projectfile.h>
 #include <ct_lvtqtw_textview.h>
 #include <ct_lvtshr_iterator.h>
+#ifdef CT_ENABLE_FORTRAN_SCANNER
 #include <fortran/ct_lvtclp_tool.h>
+#endif
 
 #include <ui_ct_lvtqtw_parse_codebase.h>
 
@@ -224,7 +226,9 @@ struct ParseCodebaseDialog::Private {
     State dialogState = State::Idle;
     std::shared_ptr<lvtmdb::ObjectStore> sharedMemDb = nullptr;
     std::unique_ptr<lvtclp::Tool> tool_p = nullptr;
-    std::unique_ptr<lvtclp::fortran::Tool> fotran_tool_p = nullptr;
+#ifdef CT_ENABLE_FORTRAN_SCANNER
+    std::unique_ptr<lvtclp::fortran::Tool> fortran_tool_p = nullptr;
+#endif
     QThread *parseThread = nullptr;
     bool threadSuccess = false;
     int progress = 0;
@@ -735,11 +739,13 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
                                                    d->thirdPartyPathMapping,
                                                    catchCodeAnalysisOutput);
     }
-    if (!d->fotran_tool_p) {
-        d->fotran_tool_p = std::make_unique<lvtclp::fortran::Tool>(compileCommandsJson);
+#ifdef CT_ENABLE_FORTRAN_SCANNER
+    if (!d->fortran_tool_p) {
+        d->fortran_tool_p = std::make_unique<lvtclp::fortran::Tool>(compileCommandsJson);
     }
+    d->fortran_tool_p->setSharedMemDb(d->sharedMemDb);
+#endif
     d->tool_p->setSharedMemDb(d->sharedMemDb);
-    d->fotran_tool_p->setSharedMemDb(d->sharedMemDb);
 
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
     connect(d->tool_p.get(),
@@ -760,17 +766,28 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
             &ParseCodebaseDialog::receivedMessage,
             Qt::QueuedConnection);
 
+#ifdef CT_ENABLE_FORTRAN_SCANNER
     auto threadFn = [this]() {
         assert(d->tool_p);
-        assert(d->fotran_tool_p);
+        assert(d->fortran_tool_p);
         if (d->dialogState == State::RunPhysicalOnly || d->dialogState == State::RunAllPhysical) {
             d->threadSuccess = d->tool_p->runPhysical();
-            d->threadSuccess = d->fotran_tool_p->runPhysical();
+            d->threadSuccess = d->fortran_tool_p->runPhysical();
         } else if (d->dialogState == State::RunAllLogical) {
             d->threadSuccess = d->tool_p->runFull(/*skipPhysical=*/true);
-            d->threadSuccess = d->fotran_tool_p->runFull(/*skipPhysical=*/true);
+            d->threadSuccess = d->fortran_tool_p->runFull(/*skipPhysical=*/true);
         }
     };
+#else
+    auto threadFn = [this]() {
+        assert(d->tool_p);
+        if (d->dialogState == State::RunPhysicalOnly || d->dialogState == State::RunAllPhysical) {
+            d->threadSuccess = d->tool_p->runPhysical();
+        } else if (d->dialogState == State::RunAllLogical) {
+            d->threadSuccess = d->tool_p->runFull(/*skipPhysical=*/true);
+        }
+    };
+#endif
 
     d->parseThread = QThread::create(threadFn);
 
@@ -840,7 +857,7 @@ void ParseCodebaseDialog::updateDatabase()
         d->sharedMemDb->writeToDatabase(writer);
 
         //        {
-        //            auto& mdb = d->fotran_tool_p->getObjectStore();
+        //            auto& mdb = d->fortran_tool_p->getObjectStore();
         //            mdb.writeToDatabase(writer);
         //        }
     }
@@ -951,7 +968,9 @@ void ParseCodebaseDialog::endParse()
             d->sharedMemDb->clear();
         });
         d->tool_p = nullptr;
-        d->fotran_tool_p = nullptr;
+#ifdef CT_ENABLE_FORTRAN_SCANNER
+        d->fortran_tool_p = nullptr;
+#endif
         return;
     }
 
@@ -964,7 +983,9 @@ void ParseCodebaseDialog::endParse()
             d->sharedMemDb->clear();
         });
         d->tool_p = nullptr;
-        d->fotran_tool_p = nullptr;
+#ifdef CT_ENABLE_FORTRAN_SCANNER
+        d->fortran_tool_p = nullptr;
+#endif
         return;
     }
 
@@ -1008,7 +1029,9 @@ void ParseCodebaseDialog::endParse()
         d->sharedMemDb->clear();
     });
     d->tool_p = nullptr;
-    d->fotran_tool_p = nullptr;
+#ifdef CT_ENABLE_FORTRAN_SCANNER
+    d->fortran_tool_p = nullptr;
+#endif
     d->parseTimer.invalidate();
 
     if (d->pluginManager) {

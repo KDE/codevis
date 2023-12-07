@@ -19,7 +19,9 @@
 
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtclp_tool.h>
+#ifdef CT_ENABLE_FORTRAN_SCANNER
 #include <fortran/ct_lvtclp_tool.h>
+#endif
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
 #include <ct_lvtmdb_functionobject.h>
@@ -437,8 +439,8 @@ int main(int argc, char **argv)
 
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 
+#ifdef CT_ENABLE_FORTRAN_SCANNER
     auto flang_tool = std::make_unique<Codethink::lvtclp::fortran::Tool>(args.compilationDbPaths[0]);
-
     const bool success = [&]() {
         if (args.physicalOnly) {
             auto clang_result = clang_tool->runPhysical();
@@ -449,6 +451,16 @@ int main(int argc, char **argv)
         auto flang_result = flang_tool->runFull();
         return clang_result && flang_result;
     }();
+#else
+    const bool success = [&]() {
+        if (args.physicalOnly) {
+            auto clang_result = clang_tool->runPhysical();
+            return clang_result;
+        }
+        auto clang_result = clang_tool->runFull();
+        return clang_result;
+    }();
+#endif
 
     if (!success) {
         std::cerr << "Error generating database\n";
@@ -471,10 +483,12 @@ int main(int argc, char **argv)
             auto& mdb = clang_tool->getObjectStore();
             mdb.writeToDatabase(writer);
         }
+#ifdef CT_ENABLE_FORTRAN_SCANNER
         {
             auto& mdb = flang_tool->getObjectStore();
             mdb.writeToDatabase(writer);
         }
+#endif
     }
     {
         using namespace Codethink;

@@ -11,6 +11,12 @@ else()
     set(CONFIGURATION_DIALOG_UI ct_lvtqtw_configurationdialog.ui)
 endif()
 
+if (ENABLE_FORTRAN_SCANNER)
+    set(CTFortranLibsIfAvailable "lvtclp_fortran")
+else()
+    set(CTFortranLibsIfAvailable "")
+endif()
+
 AddTargetLibrary(
     LIBRARY_NAME
         lvtqtw
@@ -71,7 +77,7 @@ AddTargetLibrary(
         ${KFNewStuffWidgetsIfAvailable}
         Codethink::lvtmdl
         Codethink::lvtclp
-        Codethink::lvtclp_fortran
+        ${CTFortranLibsIfAvailable}
         Codethink::lvtqtc
         Codethink::lvtqtd
         Codethink::lvtprj

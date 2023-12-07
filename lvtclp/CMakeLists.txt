@@ -108,10 +108,16 @@ function(add_lvtclp_exec)
     )
 endfunction()
 
+if (ENABLE_FORTRAN_SCANNER)
+    set(CTFortranLibsIfAvailable "lvtclp_fortran")
+else()
+    set(CTFortranLibsIfAvailable "")
+endif()
+
 add_lvtclp_exec(
     NAME codevis_create_codebase_db
     SOURCES ct_lvtclp_create_codebase_db.m.cpp
-    LIBRARIES Qt${QT_MAJOR_VERSION}::Core lvtclp_fortran)
+    LIBRARIES Qt${QT_MAJOR_VERSION}::Core ${CTFortranLibsIfAvailable})
 
 add_lvtclp_exec(
     NAME codevis_merge_databases
@@ -329,13 +335,13 @@ if (ENABLE_FORTRAN_SCANNER)
             ${SYSTEM_EXTRA_LIBRARIES}
     )
     target_include_directories(lvtclp_fortran
-            PRIVATE
-            ${LLVM_INCLUDE_DIR}
-            )
+        PRIVATE
+        ${LLVM_INCLUDE_DIR}
+    )
     target_compile_definitions(lvtclp_fortran
-            PRIVATE
-            FLANG_LITTLE_ENDIAN=1
-            )
+        PRIVATE
+        FLANG_LITTLE_ENDIAN=1
+    )
 
     if (COMPILE_TESTS)
         function(add_lvtclp_fortran_test)
@@ -344,7 +350,12 @@ if (ENABLE_FORTRAN_SCANNER)
             set(multiValueArgs SOURCES LIBRARIES)
             cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-            add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp lvtclp_fortran lvtclp_test lvttst)
+            if (ENABLE_FORTRAN_SCANNER)
+                set(CTFortranLibsIfAvailable "lvtclp_fortran")
+            else()
+                set(CTFortranLibsIfAvailable "")
+            endif()
+            add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp lvtclp_test lvttst ${CTFortranLibsIfAvailable})
             add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
         endfunction()
 

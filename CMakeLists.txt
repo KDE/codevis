@@ -139,6 +139,8 @@ if (BUILD_DESKTOP_APP)
     if (KF_VERSION_MAJOR LESS 5 OR (KF_VERSION_MAJOR EQUAL 5 AND KF_VERSION_MINOR LESS 90))
         set(KDE_FRAMEWORKS_IS_OLD TRUE)
         add_compile_definitions(KDE_FRAMEWORKS_IS_OLD=1)
+    else()
+        set(KDE_FRAMEWORKS_IS_OLD FALSE)
     endif()
 
     if (USE_QT_WEBENGINE)

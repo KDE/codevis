@@ -404,7 +404,7 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // other nodes.
 
     Q_SIGNAL void toggleSelection();
-    // Toggle edge selection.
+    // Toggle selection.
 
     Q_SIGNAL void createReportActionClicked(std::string const& title, std::string const& htmlContents);
 

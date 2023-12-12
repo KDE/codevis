@@ -57,6 +57,13 @@ struct GraphicsView::Private {
     ITool *currentTool = nullptr;
     UndoManager *undoManager = nullptr;
 
+    // multiselect
+    bool isMultiSelectActive = false;
+    QPoint multiSelectStart;
+    QPoint multiSelectEnd;
+    QPen multiSelectPen;
+    QBrush multiSelectBrush;
+
     struct {
         QString text;
         lvtshr::SearchMode mode = lvtshr::SearchMode::CaseInsensitive;
@@ -114,6 +121,11 @@ GraphicsView::GraphicsView(NodeStorage& nodeStorage, lvtprj::ProjectFile const& 
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setAcceptDrops(true);
     setTransformationAnchor(ViewportAnchor::AnchorUnderMouse);
+
+    // multiselect
+    d->multiSelectBrush = QBrush(QColor(0, 0, 0, 30));
+    d->multiSelectPen = QPen(QBrush(Qt::black), 1);
+    d->multiSelectPen.setStyle(Qt::PenStyle::DashLine);
 }
 
 GraphicsView::~GraphicsView() noexcept = default;
@@ -249,6 +261,32 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
 {
     assert(event);
 
+    if (d->isMultiSelectActive) {
+        bool mouseHasNewPosition = d->multiSelectEnd != event->pos();
+        if (mouseHasNewPosition) {
+            d->multiSelectEnd = event->pos();
+            auto selection = QRectF(mapToScene(d->multiSelectStart), mapToScene(d->multiSelectEnd));
+
+            for (auto& entity : d->scene->allEntities()) {
+                auto entityRect = entity->sceneBoundingRect();
+
+                if (selection.contains(entityRect)) {
+                    // select
+                    if (!entity->isSelected()) {
+                        entity->setSelected(true);
+                    }
+                } else {
+                    // deselect
+                    if (entity->isSelected()) {
+                        entity->setSelected(false);
+                    }
+                }
+            }
+
+            viewport()->update();
+        }
+    }
+
     QList<QGraphicsItem *> underMouse = items(event->pos());
 
     d->toolTipItem->clear();
@@ -321,6 +359,18 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
     if (Preferences::enableDebugOutput()) {
         qDebug() << "GraphicsView mousePressEvent";
     }
+
+    QGraphicsItem *item = itemAt(event->pos());
+    if (!item) {
+        if (event->button() == Qt::LeftButton) {
+            d->multiSelectStart = event->pos();
+            d->multiSelectEnd = event->pos();
+            d->isMultiSelectActive = true;
+        } else {
+            d->isMultiSelectActive = false;
+        }
+    }
+
     if (event->button() == Qt::ForwardButton) {
         Q_EMIT requestNext();
         return;
@@ -355,6 +405,20 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
         qDebug() << "GraphicsView mouseReleaseEvent";
     }
 
+    for (auto& entity : d->scene->allEntities()) {
+        bool isSelected = entity->isSelected();
+        auto selectedEntities = d->scene->selectedEntities();
+        bool isContainedInSelectedEntities =
+            std::find(selectedEntities.begin(), selectedEntities.end(), entity) != selectedEntities.end();
+
+        if ((isSelected && !isContainedInSelectedEntities) || (!isSelected && isContainedInSelectedEntities)) {
+            entity->toggleSelection();
+        }
+    }
+    d->isMultiSelectActive = false;
+
+    viewport()->update();
+
     setDragMode(QGraphicsView::DragMode::NoDrag);
 
     QGraphicsView::mouseReleaseEvent(event);
@@ -383,6 +447,16 @@ void GraphicsView::drawForeground(QPainter *painter, const QRectF& rect)
 {
     if (d->currentTool) {
         d->currentTool->drawForeground(painter, rect);
+    }
+
+    if (d->isMultiSelectActive) {
+        painter->save();
+        painter->setWorldMatrixEnabled(false);
+        painter->setPen(d->multiSelectPen);
+        painter->setBrush(d->multiSelectBrush);
+        painter->drawRect(QRect(d->multiSelectStart, d->multiSelectEnd));
+        painter->setWorldMatrixEnabled(true);
+        painter->restore();
     }
 
     if (d->search.text.length() == 0) {

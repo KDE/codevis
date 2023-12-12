@@ -77,7 +77,7 @@ find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
 
 find_package(LLVM 17)
-if (NOT LLVM_Found)
+if (NOT LLVM_FOUND)
     find_package(LLVM 16 REQUIRED)
 endif()
 find_package(Clang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/clang/" NO_DEFAULT_PATH)

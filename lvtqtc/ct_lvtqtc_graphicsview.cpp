@@ -57,12 +57,15 @@ struct GraphicsView::Private {
     ITool *currentTool = nullptr;
     UndoManager *undoManager = nullptr;
 
-    // multiselect
-    bool isMultiSelectActive = false;
-    QPoint multiSelectStart;
-    QPoint multiSelectEnd;
-    QPen multiSelectPen;
-    QBrush multiSelectBrush;
+    struct {
+        bool isActive = false;
+        QPoint start;
+        QPoint end;
+        const QPen pen = QPen(QBrush(Qt::black), 1, Qt::PenStyle::DashLine);
+        const QBrush brush = QBrush(QColor(0, 0, 0, 30));
+    } multiSelect;
+
+    bool isMultiDragging = false;
 
     struct {
         QString text;
@@ -121,11 +124,6 @@ GraphicsView::GraphicsView(NodeStorage& nodeStorage, lvtprj::ProjectFile const& 
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setAcceptDrops(true);
     setTransformationAnchor(ViewportAnchor::AnchorUnderMouse);
-
-    // multiselect
-    d->multiSelectBrush = QBrush(QColor(0, 0, 0, 30));
-    d->multiSelectPen = QPen(QBrush(Qt::black), 1);
-    d->multiSelectPen.setStyle(Qt::PenStyle::DashLine);
 }
 
 GraphicsView::~GraphicsView() noexcept = default;
@@ -260,30 +258,40 @@ void GraphicsView::calculateCurrentZoomFactor()
 void GraphicsView::mouseMoveEvent(QMouseEvent *event)
 {
     assert(event);
+    const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
 
-    if (d->isMultiSelectActive) {
-        bool mouseHasNewPosition = d->multiSelectEnd != event->pos();
-        if (mouseHasNewPosition) {
-            d->multiSelectEnd = event->pos();
-            auto selection = QRectF(mapToScene(d->multiSelectStart), mapToScene(d->multiSelectEnd));
+    if (d->multiSelect.isActive && mouseHasNewPosition) {
+        d->multiSelect.end = event->pos();
+        auto selection = QRect(d->multiSelect.start, d->multiSelect.end).normalized();
+        QSet<LakosEntity *> currentSelection;
+        static QSet<LakosEntity *> oldSelection;
 
-            for (auto& entity : d->scene->allEntities()) {
-                auto entityRect = entity->sceneBoundingRect();
-
-                if (selection.contains(entityRect)) {
-                    // select
-                    if (!entity->isSelected()) {
-                        entity->setSelected(true);
-                    }
-                } else {
-                    // deselect
-                    if (entity->isSelected()) {
-                        entity->setSelected(false);
-                    }
-                }
+        // Fill currentSelection with all LakosEntities in selection
+        const auto itemsInSelection = items(selection, Qt::IntersectsItemBoundingRect);
+        for (QGraphicsItem *item : itemsInSelection) {
+            if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(item)) {
+                currentSelection.insert(lEntity);
             }
+        }
 
-            viewport()->update();
+        // Update selection
+        for (const auto lEntity : currentSelection) {
+            if (!lEntity->isSelected()) {
+                lEntity->setSelected(true);
+            }
+        }
+        auto toUnselect = oldSelection.subtract(currentSelection);
+        for (const auto lEntity : toUnselect) {
+            lEntity->setSelected(false);
+        }
+
+        oldSelection = currentSelection;
+        viewport()->update();
+    }
+
+    if (d->isMultiDragging && mouseHasNewPosition) {
+        for (const auto& entity : d->scene->selectedEntities()) {
+            entity->doDrag(mapToScene(event->pos()));
         }
     }
 
@@ -354,20 +362,52 @@ void GraphicsView::keyReleaseEvent(QKeyEvent *event)
     QGraphicsView::keyReleaseEvent(event);
 }
 
+namespace {
+template<typename T>
+T castUpToParent(QGraphicsItem *item)
+{
+    if (!item) {
+        return nullptr;
+    }
+    if (auto entity = dynamic_cast<T>(item)) {
+        return entity;
+    }
+    if (item->parentItem() == nullptr) {
+        return nullptr;
+    }
+    return castUpToParent<T>(item->parentItem());
+}
+} // namespace
+
 void GraphicsView::mousePressEvent(QMouseEvent *event)
 {
     if (Preferences::enableDebugOutput()) {
         qDebug() << "GraphicsView mousePressEvent";
     }
 
-    QGraphicsItem *item = itemAt(event->pos());
-    if (!item) {
+    if (!itemAt(event->pos())) {
         if (event->button() == Qt::LeftButton) {
-            d->multiSelectStart = event->pos();
-            d->multiSelectEnd = event->pos();
-            d->isMultiSelectActive = true;
+            d->multiSelect.start = event->pos();
+            d->multiSelect.end = event->pos();
+            d->multiSelect.isActive = true;
         } else {
-            d->isMultiSelectActive = false;
+            d->multiSelect.isActive = false;
+        }
+    }
+
+    if (QGraphicsItem *item = itemAt(event->pos())) {
+        if (d->scene->selectedEntities().size() > 1) {
+            if (const auto *entity = castUpToParent<LakosEntity *>(item)) {
+                if (entity->isSelected()) {
+                    d->isMultiDragging = true;
+                }
+            }
+        }
+    }
+
+    if (d->isMultiDragging) {
+        for (auto& entity : d->scene->selectedEntities()) {
+            entity->startDrag(mapToScene(event->pos()));
         }
     }
 
@@ -405,17 +445,26 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
         qDebug() << "GraphicsView mouseReleaseEvent";
     }
 
-    for (auto& entity : d->scene->allEntities()) {
-        bool isSelected = entity->isSelected();
-        auto selectedEntities = d->scene->selectedEntities();
-        bool isContainedInSelectedEntities =
+    // update selectedEntities using entity->toggleSelection()
+    for (const auto& entity : d->scene->allEntities()) {
+        const bool isSelected = entity->isSelected();
+        const auto selectedEntities = d->scene->selectedEntities();
+        const bool isContainedInSelectedEntities =
             std::find(selectedEntities.begin(), selectedEntities.end(), entity) != selectedEntities.end();
 
         if ((isSelected && !isContainedInSelectedEntities) || (!isSelected && isContainedInSelectedEntities)) {
             entity->toggleSelection();
         }
     }
-    d->isMultiSelectActive = false;
+
+    d->multiSelect.isActive = false;
+
+    if (d->isMultiDragging) {
+        for (const auto& entity : d->scene->selectedEntities()) {
+            entity->endDrag(mapToScene(event->pos()));
+        }
+        d->isMultiDragging = false;
+    }
 
     viewport()->update();
 
@@ -449,12 +498,12 @@ void GraphicsView::drawForeground(QPainter *painter, const QRectF& rect)
         d->currentTool->drawForeground(painter, rect);
     }
 
-    if (d->isMultiSelectActive) {
+    if (d->multiSelect.isActive) {
         painter->save();
         painter->setWorldMatrixEnabled(false);
-        painter->setPen(d->multiSelectPen);
-        painter->setBrush(d->multiSelectBrush);
-        painter->drawRect(QRect(d->multiSelectStart, d->multiSelectEnd));
+        painter->setPen(d->multiSelect.pen);
+        painter->setBrush(d->multiSelect.brush);
+        painter->drawRect(QRect(d->multiSelect.start, d->multiSelect.end));
         painter->setWorldMatrixEnabled(true);
         painter->restore();
     }
@@ -607,23 +656,6 @@ void GraphicsView::doSearch()
     Q_EMIT currentSearchItemHighlighted(d->search.current);
     viewport()->update();
 }
-
-namespace {
-template<typename T>
-T castUpToParent(QGraphicsItem *item)
-{
-    if (!item) {
-        return nullptr;
-    }
-    if (auto entity = dynamic_cast<T>(item)) {
-        return entity;
-    }
-    if (item->parentItem() == nullptr) {
-        return nullptr;
-    }
-    return castUpToParent<T>(item->parentItem());
-}
-} // namespace
 
 void GraphicsView::contextMenuEvent(QContextMenuEvent *event)
 {

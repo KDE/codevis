@@ -864,7 +864,7 @@ void GraphicsScene::setEntityPos(const lvtshr::UniqueId& uid, QPointF pos) const
     // triggers a recalculation of the parent's boundaries.
     Q_EMIT entity->moving();
 
-    // Tells the system tha the graph updated.
+    // Tells the system that the graph updated.
     Q_EMIT entity->graphUpdate();
 }
 

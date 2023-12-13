@@ -344,6 +344,10 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
 
     void setPluginManager(Codethink::lvtplg::PluginManager& pm);
 
+    void startDrag(QPointF startPosition);
+    void doDrag(QPointF movePosition);
+    void endDrag(QPointF endPosition);
+
   Q_SIGNALS:
     Q_SIGNAL void navigateRequested();
     // We want to load this node as the main node

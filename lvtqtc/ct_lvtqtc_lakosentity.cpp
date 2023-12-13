@@ -1159,10 +1159,6 @@ bool s_tooSlowToMove = false; // NOLINT
 std::optional<QPointF> s_originalPos; // NOLINT
 // holds the original position before a move starts.
 
-QVector2D s_movementDelta; // NOLINT
-// When in drag movement, this is the relative amount of
-// movement we did at each mouseMove event.
-
 QGraphicsSimpleTextItem *s_dragTextItem = nullptr; // NOLINT
 // if it's too slow to move, show a text to the new position.
 } // namespace
@@ -1173,6 +1169,88 @@ void LakosEntity::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *ev)
         Q_EMIT toggleSelection();
         ev->accept();
         return;
+    }
+}
+
+void LakosEntity::startDrag(QPointF startPosition)
+{
+    QLineF line(mapToParent(mapFromScene(startPosition)), pos());
+    s_isDraggingItem = true;
+    s_originalPos = pos();
+
+    // it isn't clear why Qt uses qreal (double) for QLineF, but float for
+    // QVector2D (decltype(d->movementDelta)). Anyway, float should be enough
+    // precision for this use case
+    d->movementDelta.setX(static_cast<float>(line.dx()));
+    d->movementDelta.setY(static_cast<float>(line.dy()));
+
+    Q_EMIT dragStarted();
+}
+
+void LakosEntity::doDrag(QPointF movePosition)
+{
+    const auto nextPos = mapToParent(mapFromScene(movePosition) + d->movementDelta.toPointF());
+
+    if (nextPos == pos()) {
+        return;
+    }
+
+    if (!s_tooSlowToMove) {
+        QElapsedTimer timer;
+        timer.start();
+        setPos(nextPos);
+        if (timer.elapsed() > 35) { // ~30 FPS
+            s_tooSlowToMove = true;
+            s_dragTextItem = new QGraphicsSimpleTextItem();
+            scene()->addItem(s_dragTextItem);
+            s_dragTextItem->setPos(mapToScene(movePosition));
+        } else {
+            Q_EMIT moving();
+        }
+        if (d->boundingRectDbg) {
+            d->boundingRectDbg->setPos(nextPos);
+        }
+        if (d->centerDbg) {
+            d->centerDbg->setPos(nextPos);
+        }
+    } else {
+        s_dragTextItem->setText(tr("Move Update is too slow\nFrom (%1, %2) to (%3, %4)")
+                                    .arg(s_originalPos->x())
+                                    .arg(s_originalPos->y())
+                                    .arg(movePosition.x())
+                                    .arg(movePosition.y()));
+        s_dragTextItem->setFlag(ItemIgnoresTransformations);
+        s_dragTextItem->setPos(mapToScene(movePosition));
+        s_dragTextItem->setZValue(QtcUtil::e_INFORMATION);
+    }
+}
+
+void LakosEntity::endDrag(QPointF endPosition)
+{
+    if (s_isDraggingItem) {
+        s_isDraggingItem = false;
+        const QPointF newPos = mapToParent(mapFromScene(endPosition) + d->movementDelta.toPointF());
+
+        // QFuzzyCompare fails here.
+        constexpr float EPISILON = 0.00001;
+
+        const bool xEqual = fabs(newPos.x() - s_originalPos.value().x()) < EPISILON;
+        const bool yEqual = fabs(newPos.y() - s_originalPos.value().y()) < EPISILON;
+        if (!xEqual || !yEqual) {
+            auto *thisScene = qobject_cast<GraphicsScene *>(scene());
+            Q_EMIT undoCommandCreated(new UndoMove(thisScene, d->qualifiedName, *s_originalPos, newPos));
+
+            recursiveEdgeRelayout();
+            Q_EMIT graphUpdate();
+        }
+        s_originalPos = {};
+        Q_EMIT dragFinished();
+
+        if (s_tooSlowToMove) {
+            s_tooSlowToMove = false;
+            delete s_dragTextItem;
+            s_dragTextItem = nullptr;
+        }
     }
 }
 
@@ -1197,17 +1275,7 @@ void LakosEntity::mousePressEvent(QGraphicsSceneMouseEvent *ev)
         return;
     }
 
-    QLineF line(mapToParent(ev->pos()), pos());
-    s_isDraggingItem = true;
-    s_originalPos = pos();
-
-    // it isn't clear why Qt uses qreal (double) for QLineF, but float for
-    // QVector2D (decltype(s_movementDelta)). Anyway, float should be enough
-    // precision for this use case
-    s_movementDelta.setX(static_cast<float>(line.dx()));
-    s_movementDelta.setY(static_cast<float>(line.dy()));
-
-    Q_EMIT dragStarted();
+    startDrag(mapToScene(ev->pos()));
 }
 
 void LakosEntity::mouseMoveEvent(QGraphicsSceneMouseEvent *ev)
@@ -1216,39 +1284,7 @@ void LakosEntity::mouseMoveEvent(QGraphicsSceneMouseEvent *ev)
         return;
     }
 
-    const auto nextPos = mapToParent(ev->pos() + s_movementDelta.toPointF());
-    if (nextPos == pos()) {
-        return;
-    }
-
-    if (!s_tooSlowToMove) {
-        QElapsedTimer timer;
-        timer.start();
-        setPos(nextPos);
-        if (timer.elapsed() > 35) { // ~30 FPS
-            s_tooSlowToMove = true;
-            s_dragTextItem = new QGraphicsSimpleTextItem();
-            scene()->addItem(s_dragTextItem);
-            s_dragTextItem->setPos(mapToScene(ev->pos()));
-        } else {
-            Q_EMIT moving();
-        }
-        if (d->boundingRectDbg) {
-            d->boundingRectDbg->setPos(nextPos);
-        }
-        if (d->centerDbg) {
-            d->centerDbg->setPos(nextPos);
-        }
-    } else {
-        s_dragTextItem->setText(tr("Move Update is too slow\nFrom (%1, %2) to (%3, %4)")
-                                    .arg(s_originalPos->x())
-                                    .arg(s_originalPos->y())
-                                    .arg(ev->pos().x())
-                                    .arg(ev->pos().y()));
-        s_dragTextItem->setFlag(ItemIgnoresTransformations);
-        s_dragTextItem->setPos(mapToScene(ev->pos()));
-        s_dragTextItem->setZValue(QtcUtil::e_INFORMATION);
-    }
+    doDrag(mapToScene(ev->pos()));
 }
 
 void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)
@@ -1257,31 +1293,7 @@ void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)
         qDebug() << "LakosEntity MouseReleaseEvent" << QString::fromStdString(name());
     }
 
-    if (s_isDraggingItem) {
-        s_isDraggingItem = false;
-        const QPointF newPos = mapToParent(ev->pos() + s_movementDelta.toPointF());
-
-        // QFuzzyCompare fails here.
-        constexpr float EPISILON = 0.00001;
-
-        const bool xEqual = fabs(newPos.x() - s_originalPos.value().x()) < EPISILON;
-        const bool yEqual = fabs(newPos.y() - s_originalPos.value().y()) < EPISILON;
-        if (!xEqual || !yEqual) {
-            auto *thisScene = qobject_cast<GraphicsScene *>(scene());
-            Q_EMIT undoCommandCreated(new UndoMove(thisScene, d->qualifiedName, *s_originalPos, newPos));
-
-            recursiveEdgeRelayout();
-            Q_EMIT graphUpdate();
-        }
-        s_originalPos = {};
-        Q_EMIT dragFinished();
-
-        if (s_tooSlowToMove) {
-            s_tooSlowToMove = false;
-            delete s_dragTextItem;
-            s_dragTextItem = nullptr;
-        }
-    }
+    endDrag(mapToScene(ev->pos()));
 
     if (s_lastClick != ev->scenePos()) {
         return;

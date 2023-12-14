@@ -205,6 +205,7 @@ void TabWidget::openNewGraphTab(std::optional<QSet<QString>> qualifiedNames)
     for (const auto& qualifiedName : qualifiedNames.value()) {
         scene->loadEntityByQualifiedName(qualifiedName, QPoint{});
     }
+    scene->reLayout();
 }
 
 lvtqtc::GraphicsView *TabWidget::graphicsView()

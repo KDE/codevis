@@ -186,6 +186,9 @@ lvtmdb::PackageObject *getPackageForPath(const std::filesystem::path& path,
                                  memDb,
                                  nullptr,
                                  nullptr);
+    if (pkgPath.filename().string().empty()) {
+        return grp;
+    }
 
     return getSourcePackage(topLevelPkgQualifiedName + "/" + pkgPath.filename().string(),
                             pkgPath.filename().string(),

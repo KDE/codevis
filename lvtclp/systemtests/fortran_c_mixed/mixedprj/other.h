@@ -2,5 +2,6 @@
 #define _OTHER_H
 
 void cal1_(double *a, double *b, double *c);
+void other_func();
 
 #endif

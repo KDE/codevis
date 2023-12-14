@@ -74,13 +74,13 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic tab widget workflow")
 
     // Now we need to load the graph, and send the data to the graphics scene.
     // it does not load directly anymore.
-    tab.openNewGraphTab(QStringLiteral("aaa"));
+    tab.openNewGraphTab(QSet<QString>({QStringLiteral("aaa")}));
     REQUIRE(tab.count() == 2);
     REQUIRE(tab.currentIndex() == 1);
 
     // Wrong tabs are accepted (won't crash), but the tab contents will be empty
     // TODO: Fix this test.
-    tab.openNewGraphTab("zzz");
+    tab.openNewGraphTab(QSet<QString>({QStringLiteral("zzz")}));
     REQUIRE(tab.count() == 3);
     REQUIRE(tab.currentIndex() == 2);
 

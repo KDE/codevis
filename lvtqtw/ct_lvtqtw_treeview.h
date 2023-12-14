@@ -60,10 +60,12 @@ class LVTQTW_EXPORT TreeView : public QTreeView
     Q_SIGNAL void leafMiddleClicked(const QModelIndex& idx);
     // User clicked on the leaf with the middle mouse click
 
-    Q_SIGNAL void branchRightClicked(const QModelIndex& idx, const QPoint& pos);
+    Q_SIGNAL void
+    branchRightClicked(const QModelIndexList& multiSelection, const QModelIndex& clickedOn, const QPoint& pos);
     // User clicked on the branch with the middle mouse click
 
-    Q_SIGNAL void leafRightClicked(const QModelIndex& idx, const QPoint& pos);
+    Q_SIGNAL void
+    leafRightClicked(const QModelIndexList& multiSelection, const QModelIndex& clickedOn, const QPoint& pos);
     // User clicked on the leaf with the middle mouse click
 
   protected:

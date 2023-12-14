@@ -191,18 +191,20 @@ void TabWidget::replaceGraphAt(int idx, const QString& qualifiedName)
     scene->loadEntityByQualifiedName(qualifiedName, QPoint{});
 }
 
-void TabWidget::openNewGraphTab(std::optional<QString> qualifiedName)
+void TabWidget::openNewGraphTab(std::optional<QSet<QString>> qualifiedNames)
 {
     auto *tabElement = createTabElement();
     int tabIdx = addTab(tabElement, tr("Unnamed %1").arg(count()));
     setCurrentIndex(tabIdx);
 
-    if (!qualifiedName.has_value()) {
+    if (!qualifiedNames || qualifiedNames.value().empty()) {
         return;
     }
 
     auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
-    scene->loadEntityByQualifiedName(qualifiedName.value(), QPoint{});
+    for (const auto& qualifiedName : qualifiedNames.value()) {
+        scene->loadEntityByQualifiedName(qualifiedName, QPoint{});
+    }
 }
 
 lvtqtc::GraphicsView *TabWidget::graphicsView()

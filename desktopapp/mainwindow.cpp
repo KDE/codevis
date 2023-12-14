@@ -142,14 +142,23 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     connect(ui.packagesFilter, &QLineEdit::textChanged, ui.packagesTree, &TreeView::setFilterText);
 
     connect(ui.namespaceTree, &TreeView::leafSelected, this, &MainWindow::setCurrentGraph);
-    connect(ui.namespaceTree, &TreeView::leafMiddleClicked, this, &MainWindow::newTabRequested);
+    connect(ui.namespaceTree,
+            &TreeView::leafMiddleClicked,
+            this,
+            qOverload<const QModelIndex&>(&MainWindow::newTabRequested));
     connect(ui.namespaceTree, &TreeView::branchRightClicked, this, &MainWindow::requestMenuNamespaceView);
     connect(ui.namespaceTree, &TreeView::leafRightClicked, this, &MainWindow::requestMenuNamespaceView);
 
     connect(ui.packagesTree, &TreeView::leafSelected, this, &MainWindow::setCurrentGraph);
-    connect(ui.packagesTree, &TreeView::leafMiddleClicked, this, &MainWindow::newTabRequested);
+    connect(ui.packagesTree,
+            &TreeView::leafMiddleClicked,
+            this,
+            qOverload<const QModelIndex&>(&MainWindow::newTabRequested));
     connect(ui.packagesTree, &TreeView::branchSelected, this, &MainWindow::setCurrentGraph);
-    connect(ui.packagesTree, &TreeView::branchMiddleClicked, this, &MainWindow::newTabRequested);
+    connect(ui.packagesTree,
+            &TreeView::branchMiddleClicked,
+            this,
+            qOverload<const QModelIndex&>(&MainWindow::newTabRequested));
     connect(ui.packagesTree, &TreeView::branchRightClicked, this, &MainWindow::requestMenuPackageView);
     connect(ui.packagesTree, &TreeView::leafRightClicked, this, &MainWindow::requestMenuPackageView);
 
@@ -782,8 +791,16 @@ void MainWindow::setCurrentGraph(const QModelIndex& idx)
 
 void MainWindow::newTabRequested(const QModelIndex& idx)
 {
-    const QString qualifiedName = idx.data(ModelRoles::e_QualifiedName).toString();
-    currentGraphTab->openNewGraphTab(qualifiedName);
+    newTabRequested(QModelIndexList({idx}));
+}
+
+void MainWindow::newTabRequested(const QModelIndexList& idxList)
+{
+    QSet<QString> qualifiedNames;
+    for (const auto idx : idxList) {
+        qualifiedNames.insert(idx.data(ModelRoles::e_QualifiedName).toString());
+    }
+    currentGraphTab->openNewGraphTab(QSet<QString>({qualifiedNames}));
 }
 
 void MainWindow::exportSvg()
@@ -1224,26 +1241,29 @@ Codethink::lvtprj::ProjectFile& MainWindow::projectFile()
     return d_projectFile;
 }
 
-void MainWindow::requestMenuPackageView(const QModelIndex& idx, const QPoint& pos)
+void MainWindow::requestMenuPackageView(const QModelIndexList& multiSelection,
+                                        const QModelIndex& clickedOn,
+                                        const QPoint& pos)
 {
     QMenu menu;
     QAction *act = menu.addAction(tr("Open in New Tab"));
-    connect(act, &QAction::triggered, this, [this, idx] {
-        newTabRequested(idx);
+    connect(act, &QAction::triggered, this, [this, multiSelection] {
+        newTabRequested(multiSelection);
     });
 
     act = menu.addAction(tr("Load on Current Scene"));
-    connect(act, &QAction::triggered, this, [this, idx] {
-        const QString qualName = idx.data(Codethink::lvtmdl::ModelRoles::e_QualifiedName).toString().toLocal8Bit();
+    connect(act, &QAction::triggered, this, [this, clickedOn] {
+        const QString qualName =
+            clickedOn.data(Codethink::lvtmdl::ModelRoles::e_QualifiedName).toString().toLocal8Bit();
         auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(currentGraphWidget->scene());
         scene->loadEntityByQualifiedName(qualName, QPoint());
         scene->reLayout();
     });
 
-    const NodeType::Enum type = static_cast<NodeType::Enum>(idx.data(ModelRoles::e_NodeType).toInt());
+    const NodeType::Enum type = static_cast<NodeType::Enum>(clickedOn.data(ModelRoles::e_NodeType).toInt());
     if (type == NodeType::e_Package) {
         auto *node =
-            sharedNodeStorage.findByQualifiedName(idx.data(ModelRoles::e_QualifiedName).toString().toStdString());
+            sharedNodeStorage.findByQualifiedName(clickedOn.data(ModelRoles::e_QualifiedName).toString().toStdString());
         auto *pkgNode = dynamic_cast<Codethink::lvtldr::PackageNode *>(node);
         QString filePath = QString::fromStdString(pkgNode->dirPath());
         filePath.replace("${SOURCE_DIR}", QString::fromStdString(projectFile().sourceCodePath().string()));
@@ -1264,22 +1284,25 @@ void MainWindow::requestMenuPackageView(const QModelIndex& idx, const QPoint& po
     menu.exec(pos);
 }
 
-void MainWindow::requestMenuNamespaceView(const QModelIndex& idx, const QPoint& pos)
+void MainWindow::requestMenuNamespaceView([[maybe_unused]] const QModelIndexList& multiSelection,
+                                          const QModelIndex& clickedOn,
+                                          const QPoint& pos)
 {
-    const NodeType::Enum type = static_cast<NodeType::Enum>(idx.data(ModelRoles::e_NodeType).toInt());
+    const NodeType::Enum type = static_cast<NodeType::Enum>(clickedOn.data(ModelRoles::e_NodeType).toInt());
     if (type != NodeType::e_Class) {
         return;
     }
 
     QMenu menu;
     QAction *act = menu.addAction(tr("Load on Empty Scene"));
-    connect(act, &QAction::triggered, this, [this, idx] {
-        setCurrentGraph(idx);
+    connect(act, &QAction::triggered, this, [this, clickedOn] {
+        setCurrentGraph(clickedOn);
     });
 
     act = menu.addAction(tr("Load on Current Scene"));
-    connect(act, &QAction::triggered, this, [this, idx] {
-        const QString qualName = idx.data(Codethink::lvtmdl::ModelRoles::e_QualifiedName).toString().toLocal8Bit();
+    connect(act, &QAction::triggered, this, [this, clickedOn] {
+        const QString qualName =
+            clickedOn.data(Codethink::lvtmdl::ModelRoles::e_QualifiedName).toString().toLocal8Bit();
         auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(currentGraphWidget->scene());
         scene->loadEntityByQualifiedName(qualName, QPoint());
         scene->reLayout();

@@ -54,18 +54,18 @@ class NamespaceTreeModel;
 class PackageTreeModel;
 class TreeFilterModel;
 class BaseTableModel;
-}
+} // namespace Codethink::lvtmdl
 
 namespace Codethink::lvtqtc {
 class GraphicsView;
 class UndoManager;
-}
+} // namespace Codethink::lvtqtc
 
 namespace Codethink::lvtqtw {
 class TabWidget;
 class ParseCodebaseDialog;
 class ConfigurationDialog;
-}
+} // namespace Codethink::lvtqtw
 
 class WrappedUiMainWindow : public Ui::MainWindow {
   public:
@@ -181,6 +181,7 @@ class MainWindow : public KXmlGuiWindow {
     // callback when something is selected in the tree view
 
     Q_SLOT void newTabRequested(const QModelIndex& idx);
+    Q_SLOT void newTabRequested(const QModelIndexList& idxList);
     // callback when a new tab is requested from the tree view
 
     Q_SLOT void changeCurrentGraphWidget(int graphTabIdx);
@@ -211,8 +212,11 @@ class MainWindow : public KXmlGuiWindow {
 
     Q_SIGNAL void databaseIdle();
 
-    Q_SLOT void requestMenuPackageView(const QModelIndex& idx, const QPoint& pos);
-    Q_SLOT void requestMenuNamespaceView(const QModelIndex& idx, const QPoint& pos);
+    Q_SLOT void
+    requestMenuPackageView(const QModelIndexList& multiSelection, const QModelIndex& clickedOn, const QPoint& pos);
+    Q_SLOT void requestMenuNamespaceView([[maybe_unused]] const QModelIndexList& multiSelection,
+                                         const QModelIndex& clickedOn,
+                                         const QPoint& pos);
     Q_SLOT void updatePluginData();
 
     void createReport(std::string const& title, std::string const& htmlContents);

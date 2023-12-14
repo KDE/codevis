@@ -97,11 +97,12 @@ void TreeView::mousePressEvent(QMouseEvent *ev)
         if (!idx.isValid()) {
             return;
         }
+
         auto isBranch = idx.data(lvtmdl::ModelRoles::e_IsBranch).value<bool>();
         if (isBranch) {
-            Q_EMIT branchRightClicked(idx, ev->globalPos());
+            Q_EMIT branchRightClicked(selectedIndexes(), idx, ev->globalPos());
         } else {
-            Q_EMIT leafRightClicked(idx, ev->globalPos());
+            Q_EMIT leafRightClicked(selectedIndexes(), idx, ev->globalPos());
         }
     }
     d->mousePressPos = ev->pos();

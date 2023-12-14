@@ -47,7 +47,7 @@ class ColorManagement;
 namespace Codethink::lvtqtc {
 class GraphicsView;
 class UndoManager;
-}
+} // namespace Codethink::lvtqtc
 namespace Codethink::lvtprj {
 class ProjectFile;
 }
@@ -73,7 +73,7 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
     // Destructor
 
     /* Opens a new tab and loads qualifiedName if it exist */
-    void openNewGraphTab(std::optional<QString> qualifiedName = std::nullopt);
+    void openNewGraphTab(std::optional<QSet<QString>> qualifiedNames = std::nullopt);
 
     /* Clears the current graph and loads the qualifiedName */
     void replaceGraphAt(int idx, const QString& qualifiedName);

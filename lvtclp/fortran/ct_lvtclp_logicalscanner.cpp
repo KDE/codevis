@@ -25,6 +25,7 @@
 #include <flang/Parser/parse-tree.h>
 
 #include <iostream>
+#include <type_traits>
 
 namespace Codethink::lvtclp::fortran {
 

@@ -692,7 +692,7 @@ bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
         lvtmdb::NamespaceObject *parentNamespace = nullptr;
         d_memDb.withRWLock([&] {
             parentNamespace = d_memDb.getNamespace(parentName);
-            function = d_memDb.getOrAddFunction(std::move(qualifiedName),
+            function = d_memDb.getOrAddFunction(qualifiedName,
                                                 std::move(name),
                                                 std::move(signature),
                                                 std::move(returnType),
@@ -704,13 +704,21 @@ bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
                 parentNamespace->addFunction(function);
             });
         }
-        const clang::SourceManager& srcMgr = Context->getSourceManager();
-        std::string sourceFile = ClpUtil::getRealPath(functionDecl->getLocation(), srcMgr);
-        lvtmdb::FileObject *filePtr =
-            ClpUtil::writeSourceFile(sourceFile, false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
-        filePtr->withRWLock([&] {
-            filePtr->addGlobalFunction(function);
-        });
+
+        // Heuristically assume that functions that have "_" suffix will have their definition in Fortran,
+        // so accept the C counterpart.
+        auto mayBeDefinedInFortran = qualifiedName.ends_with('_');
+        if (functionDecl->isDefined() || mayBeDefinedInFortran) {
+            // Only persist the associated file if it is where the function is _defined_
+            // (not if it is merely _declared_).
+            const clang::SourceManager& srcMgr = Context->getSourceManager();
+            std::string sourceFile = ClpUtil::getRealPath(functionDecl->getLocation(), srcMgr);
+            lvtmdb::FileObject *filePtr =
+                ClpUtil::writeSourceFile(sourceFile, false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+            filePtr->withRWLock([&] {
+                filePtr->addGlobalFunction(function);
+            });
+        }
         return function;
     };
 

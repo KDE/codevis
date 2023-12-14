@@ -324,10 +324,12 @@ if (ENABLE_FORTRAN_SCANNER)
             fortran/ct_lvtclp_logicalscanner.cpp
             fortran/ct_lvtclp_physicalscanner.cpp
             fortran/ct_lvtclp_tool.cpp
+            fortran/ct_lvtclp_fortran_c_interop.cpp
             HEADERS
             fortran/ct_lvtclp_logicalscanner.h
             fortran/ct_lvtclp_physicalscanner.h
             fortran/ct_lvtclp_tool.h
+            fortran/ct_lvtclp_fortran_c_interop.h
             LIBRARIES
             Codethink::lvtmdb
             flangFrontend

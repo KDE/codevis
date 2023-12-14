@@ -27,6 +27,7 @@
 #include <ct_lvtqtw_textview.h>
 #include <ct_lvtshr_iterator.h>
 #ifdef CT_ENABLE_FORTRAN_SCANNER
+#include <fortran/ct_lvtclp_fortran_c_interop.h>
 #include <fortran/ct_lvtclp_tool.h>
 #endif
 
@@ -776,6 +777,7 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
         } else if (d->dialogState == State::RunAllLogical) {
             d->threadSuccess = d->tool_p->runFull(/*skipPhysical=*/true);
             d->threadSuccess = d->fortran_tool_p->runFull(/*skipPhysical=*/true);
+            Codethink::lvtclp::fortran::solveFortranToCInteropDeps(*d->sharedMemDb);
         }
     };
 #else
@@ -855,63 +857,7 @@ void ParseCodebaseDialog::updateDatabase()
         lvtmdb::SociWriter writer;
         writer.createOrOpen(path);
         d->sharedMemDb->writeToDatabase(writer);
-
-        //        {
-        //            auto& mdb = d->fortran_tool_p->getObjectStore();
-        //            mdb.writeToDatabase(writer);
-        //        }
     }
-    //    {
-    //        // Heuristically find bindings from/to C/Fortran code
-    //        // TODO: Check where this should be moved to.
-    //
-    //        // TODO: We don't have a proper merge, so we need to get the merged data from disk.
-    //        lvtmdb::ObjectStore mergedStore;
-    //        {
-    //            lvtmdb::SociReader reader;
-    //            mergedStore.readFromDatabase(reader, path + ".tmp").expect("Unexpected error loading database.");
-    //        }
-    //
-    //        auto& all_functions = mergedStore.functions();
-    //        auto bindDependencies = std::vector<std::pair<lvtmdb::FunctionObject *, lvtmdb::FunctionObject *>>{};
-    //        for (auto const& [_, ownedCFuncObject] : all_functions) {
-    //            auto *cFunc = ownedCFuncObject.get();
-    //            auto cFuncName = std::string{};
-    //            cFunc->withROLock([&]() {
-    //                cFuncName = cFunc->name();
-    //            });
-    //            if (!cFuncName.ends_with('_')) {
-    //                continue;
-    //            }
-    //
-    //            // Check for possible Fortran binding
-    //            // TODO: Only take in consideration Fortran functions. There may be a C function that matches the
-    //            rules
-    //            //       below, and the output would be wrong.
-    //            auto fortranName = cFuncName.substr(0, cFuncName.size() - 1);
-    //            auto it = std::find_if(std::cbegin(all_functions), std::cend(all_functions), [&fortranName](auto
-    //            const& f) {
-    //                auto lock = f.second->readOnlyLock();
-    //                (void) lock;
-    //                return f.second->name() == fortranName;
-    //            });
-    //            if (it == std::end(all_functions)) {
-    //                continue; // Couldn't find.
-    //            }
-    //
-    //            auto *fortranFunc = it->second.get();
-    //            bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
-    //        }
-    //
-    //        mergedStore.withRWLock([&]() {
-    //            for (auto& [from, to] : bindDependencies) {
-    //                lvtmdb::FunctionObject::addDependency(from, to);
-    //            }
-    //        });
-    //        lvtmdb::SociWriter writer;
-    //        writer.createOrOpen(path);
-    //        mergedStore.writeToDatabase(writer);
-    //    }
 
     if (d->pluginManager) {
         auto& pm = (*d->pluginManager).get();

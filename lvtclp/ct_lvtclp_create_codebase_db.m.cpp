@@ -20,6 +20,7 @@
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtclp_tool.h>
 #ifdef CT_ENABLE_FORTRAN_SCANNER
+#include <fortran/ct_lvtclp_fortran_c_interop.h>
 #include <fortran/ct_lvtclp_tool.h>
 #endif
 
@@ -52,6 +53,8 @@
 
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_soci_writer.h>
+
+#include <memory>
 
 #pragma push_macro("slots")
 #undef slots
@@ -420,6 +423,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    auto sharedObjectStore = std::make_shared<Codethink::lvtmdb::ObjectStore>();
     auto clang_tool = !args.compilationDbPaths.empty()
         ? std::make_unique<Codethink::lvtclp::Tool>(args.sourcePath,
                                                     args.compilationDbPaths,
@@ -436,11 +440,12 @@ int main(int argc, char **argv)
                                                     args.nonLakosianDirs,
                                                     args.packageMappings,
                                                     !args.silent);
-
+    clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 
 #ifdef CT_ENABLE_FORTRAN_SCANNER
     auto flang_tool = std::make_unique<Codethink::lvtclp::fortran::Tool>(args.compilationDbPaths[0]);
+    flang_tool->setSharedMemDb(sharedObjectStore);
     const bool success = [&]() {
         if (args.physicalOnly) {
             auto clang_result = clang_tool->runPhysical();
@@ -479,66 +484,7 @@ int main(int argc, char **argv)
             std::cerr << "Error saving database file to disk\n";
             return EXIT_FAILURE;
         }
-        {
-            auto& mdb = clang_tool->getObjectStore();
-            mdb.writeToDatabase(writer);
-        }
-#ifdef CT_ENABLE_FORTRAN_SCANNER
-        {
-            auto& mdb = flang_tool->getObjectStore();
-            mdb.writeToDatabase(writer);
-        }
-#endif
-    }
-    {
-        using namespace Codethink;
-        auto path = args.dbPath.string();
-
-        // Heuristically find bindings from/to C/Fortran code
-        // TODO: Code duplicated with lvtqtw/ct_lvtqtw_parse_codebase.cpp - Move to somewhere else.
-        // TODO: Check where this should be moved to.
-
-        // TODO: We don't have a proper merge, so we need to get the merged data from disk.
-        lvtmdb::ObjectStore mergedStore;
-        {
-            lvtmdb::SociReader reader;
-            mergedStore.readFromDatabase(reader, path).expect("Unexpected error loading database.");
-        }
-
-        auto& all_functions = mergedStore.functions();
-        auto bindDependencies = std::vector<std::pair<lvtmdb::FunctionObject *, lvtmdb::FunctionObject *>>{};
-        for (auto const& [_, ownedCFuncObject] : all_functions) {
-            auto *cFunc = ownedCFuncObject.get();
-            auto cFuncLock = cFunc->readOnlyLock();
-            if (!cFunc->name().ends_with('_')) {
-                continue;
-            }
-
-            // Check for possible Fortran binding
-            // TODO: Only take in consideration Fortran functions. There may be a C function that matches the rules
-            //       below, and the output would be wrong.
-            auto fortranName = cFunc->name().substr(0, cFunc->name().size() - 1);
-            auto it = std::find_if(std::cbegin(all_functions), std::cend(all_functions), [&fortranName](auto const& f) {
-                return f.second->name() == fortranName;
-            });
-            if (it == std::end(all_functions)) {
-                continue; // Couldn't find.
-            }
-
-            auto *fortranFunc = it->second.get();
-            auto fortranFuncLock = fortranFunc->readOnlyLock();
-
-            bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
-        }
-
-        mergedStore.withRWLock([&]() {
-            for (auto& [from, to] : bindDependencies) {
-                lvtmdb::FunctionObject::addDependency(from, to);
-            }
-        });
-        lvtmdb::SociWriter writer;
-        writer.createOrOpen(path);
-        mergedStore.writeToDatabase(writer);
+        sharedObjectStore->writeToDatabase(writer);
     }
 
     return EXIT_SUCCESS;

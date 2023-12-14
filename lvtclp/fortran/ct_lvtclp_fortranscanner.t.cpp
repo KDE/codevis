@@ -18,19 +18,22 @@
 #include <catch2-local-includes.h>
 #include <ct_lvtclp_logicaldepscanner.h>
 #include <ct_lvtclp_testutil.h>
-#include <ct_lvtclp_toolexecutor.h>
+#include <ct_lvtclp_tool.h>
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_packageobject.h>
+#include <fortran/ct_lvtclp_fortran_c_interop.h>
 #include <fortran/ct_lvtclp_tool.h>
 #include <test-project-paths.h>
 
-TEST_CASE("simple fortran project")
-{
-    using namespace Codethink::lvtclp;
-    using namespace Codethink::lvtmdb;
+#include <memory>
 
+using namespace Codethink::lvtclp;
+using namespace Codethink::lvtmdb;
+
+TEST_CASE("Simple fortran project")
+{
     auto const PREFIX = std::string{TEST_PRJ_PATH};
     auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/fortran_basics/a.f"}};
     auto tool = fortran::Tool{fileList};
@@ -62,7 +65,7 @@ TEST_CASE("simple fortran project")
 
     REQUIRE(componentA->name() == "a");
     REQUIRE(componentB->name() == "b");
-    REQUIRE(package->name() == "Fortran");
+    REQUIRE(package->name() == "fortran_basics");
 
     auto *funcCal1 = memDb.getFunction(
         /*qualifiedName=*/"cal1",
@@ -70,6 +73,7 @@ TEST_CASE("simple fortran project")
         /*templateParameters=*/"",
         /*returnType=*/"");
     REQUIRE(funcCal1);
+    l(funcCal1->readOnlyLock());
 
     auto *funcCal2 = memDb.getFunction(
         /*qualifiedName=*/"cal2",
@@ -77,6 +81,7 @@ TEST_CASE("simple fortran project")
         /*templateParameters=*/"",
         /*returnType=*/"");
     REQUIRE(funcCal2);
+    l(funcCal2->readOnlyLock());
 
     auto *funcCal3 = memDb.getFunction(
         /*qualifiedName=*/"cal3",
@@ -84,6 +89,7 @@ TEST_CASE("simple fortran project")
         /*templateParameters=*/"",
         /*returnType=*/"");
     REQUIRE(funcCal3);
+    l(funcCal3->readOnlyLock());
 
     auto *funcCalF = memDb.getFunction(
         /*qualifiedName=*/"cal_f",
@@ -91,6 +97,7 @@ TEST_CASE("simple fortran project")
         /*templateParameters=*/"",
         /*returnType=*/"");
     REQUIRE(funcCalF);
+    l(funcCalF->readOnlyLock());
 
     REQUIRE(funcCal1->callees().size() == 3);
     REQUIRE(funcCal1->callers().size() == 0);
@@ -107,42 +114,100 @@ TEST_CASE("simple fortran project")
 
 TEST_CASE("Mixed fortran and C project")
 {
-    using namespace Codethink::lvtclp;
-    using namespace Codethink::lvtmdb;
     auto const PREFIX = std::string{TEST_PRJ_PATH} + "/fortran_c_mixed";
+    auto sharedMemDb = std::make_shared<ObjectStore>();
 
-    auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/a.f"},
-                                                       {PREFIX + "/b.f"},
+    auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/mixedprj/a.f"},
+                                                       {PREFIX + "/mixedprj/b.f"},
                                                        // C files will be ignored by Fortran parser.
-                                                       {PREFIX + "/c.c"},
-                                                       {PREFIX + "/main.c"}};
-    auto tool = fortran::Tool{fileList};
-    tool.runFull();
+                                                       {PREFIX + "/mixedprj/c.c"},
+                                                       {PREFIX + "/mixedprj/main.c"}};
+    auto fortranTool = fortran::Tool{fileList};
+    fortranTool.setSharedMemDb(sharedMemDb);
 
-    auto locks = std::vector<Lockable::ROLock>{};
-    auto l = [&](Lockable::ROLock&& lock) {
-        locks.emplace_back(std::move(lock));
+    auto staticCompilationDb =
+        StaticCompilationDatabase{{{PREFIX + "/mixedprj/c.c", "c.o"}, {PREFIX + "/mixedprj/main.c", "main.o"}},
+                                  "placeholder",
+                                  {"-I" + PREFIX + "/mixedprj/", "-std=c++17"},
+                                  PREFIX};
+    auto cTool = Tool(
+        /*sourcePath=*/PREFIX,
+        /*db=*/staticCompilationDb,
+        /*databasePath=*/"unused");
+    cTool.setSharedMemDb(sharedMemDb);
+
+    REQUIRE(cTool.runFull());
+    REQUIRE(fortranTool.runFull());
+
+    auto getAllFunctionsForComponent = [](auto *component) {
+        auto allFuncs = std::map<std::string, FunctionObject *>{};
+        for (auto *file : component->files()) {
+            auto _fileLock = file->readOnlyLock();
+            for (auto *func : file->globalFunctions()) {
+                auto _funcLock = func->readOnlyLock();
+                allFuncs[func->qualifiedName()] = func;
+            }
+        }
+        return allFuncs;
     };
-    auto& memDb = tool.getObjectStore();
-    l(memDb.readOnlyLock());
 
-    // '.c' files are ignored
-    REQUIRE(memDb.getAllFiles().size() == 2);
+    {
+        auto locks = std::vector<Lockable::ROLock>{};
+        auto l = [&](Lockable::ROLock&& lock) {
+            locks.emplace_back(std::move(lock));
+        };
+        l(sharedMemDb->readOnlyLock());
 
-    auto cdb = StaticCompilationDatabase{{{PREFIX + "/c.c", "c.o"}, {PREFIX + "/main.c", "main.o"}},
-                                         "placeholder",
-                                         {"-I" + PREFIX, "-std=c++17"},
-                                         PREFIX};
-    auto executor = ToolExecutor{cdb,
-                                 /*threadcount=*/1,
-                                 /*messageCallback=*/[](auto&& _1, auto&& _2) {},
-                                 memDb};
-    (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
-        memDb,
-        PREFIX,
-        /*nonLakosians=*/std::vector<std::filesystem::path>{},
-        /*d_thirdPartyDirs=*/std::vector<std::pair<std::string, std::string>>{},
-        /*filenameCallback=*/[](const std::string&) {},
-        /*messageCallback=*/std::nullopt,
-        /*catchCodeAnalysisOutput=*/false));
+        // All fortran files + C files
+        REQUIRE(sharedMemDb->getAllFiles().size() == 5);
+
+        auto cComponent = sharedMemDb->getComponent("mixedprj/c");
+        REQUIRE(cComponent);
+        l(cComponent->readOnlyLock());
+        auto cFuncs = getAllFunctionsForComponent(cComponent);
+        REQUIRE(cFuncs.size() == 2);
+        REQUIRE(cFuncs.at("cal_c"));
+        // c_func_ has the "_" suffix AND it is defined within C code.
+        REQUIRE(cFuncs.at("c_func_"));
+
+        auto otherComponent = sharedMemDb->getComponent("mixedprj/other");
+        REQUIRE(otherComponent);
+        l(otherComponent->readOnlyLock());
+        auto otherFuncs = getAllFunctionsForComponent(otherComponent);
+
+        // NOTE: 'other_func' is a function declared in 'other.h', but it is never defined.
+        //       'cal1_' is a also never defined, but since it has the '_' suffix, it is assumed to
+        //       be defined in Fortran, thus it is persisted on the 'other' component.
+        REQUIRE(otherFuncs.size() == 1);
+        REQUIRE(otherFuncs.at("cal1_"));
+        l(otherFuncs.at("cal1_")->readOnlyLock());
+
+        // Before Fortran <-> C interop solver run, there should be 0 callees.
+        REQUIRE(otherFuncs.at("cal1_")->callees().empty());
+    }
+
+    Codethink::lvtclp::fortran::solveFortranToCInteropDeps(*sharedMemDb);
+
+    {
+        auto locks = std::vector<Lockable::ROLock>{};
+        auto l = [&](Lockable::ROLock&& lock) {
+            locks.emplace_back(std::move(lock));
+        };
+        l(sharedMemDb->readOnlyLock());
+
+        auto otherComponent = sharedMemDb->getComponent("mixedprj/other");
+        REQUIRE(otherComponent);
+        l(otherComponent->readOnlyLock());
+        auto otherFuncs = getAllFunctionsForComponent(otherComponent);
+        REQUIRE(otherFuncs.size() == 1);
+        REQUIRE(otherFuncs.at("cal1_"));
+        l(otherFuncs.at("cal1_")->readOnlyLock());
+
+        // After Fortran <-> C interop solver run, the fortran dependency is resolved,
+        // so there is one callee dependency
+        REQUIRE(otherFuncs.at("cal1_")->callees().size() == 1);
+        auto *fortranCal1 = otherFuncs.at("cal1_")->callees()[0];
+        l(fortranCal1->readOnlyLock());
+        REQUIRE(fortranCal1->qualifiedName() == "cal1");
+    }
 }

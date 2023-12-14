@@ -24,6 +24,7 @@
 namespace Codethink::lvtclp::fortran {
 
 using namespace Fortran::parser;
+const char *const NON_LAKOSIAN_GROUP_NAME = "non-lakosian group";
 
 PhysicalParseAction::PhysicalParseAction(lvtmdb::ObjectStore& memDb): memDb(memDb)
 {
@@ -33,13 +34,22 @@ void PhysicalParseAction::executeAction()
 {
     auto currentInputPath = std::filesystem::path{getCurrentFileOrBufferName().str()};
     lvtmdb::ComponentObject *currentComponent = nullptr;
+
     memDb.withRWLock([&]() {
-        // TODO: Proper package handling (get package name instead of "Fortran")
-        auto *package = memDb.getOrAddPackage(
-            /*qualifiedName=*/"Fortran",
-            /*name=*/"Fortran",
+        auto qName = currentInputPath.parent_path().stem();
+
+        // TODO: Proper package handling. Currently assume all Fortran packages are "non-lakosian"
+        auto *grp = memDb.getOrAddPackage(
+            /*qualifiedName=*/NON_LAKOSIAN_GROUP_NAME,
+            /*name=*/NON_LAKOSIAN_GROUP_NAME,
             /*diskPath=*/"",
             /*parent=*/nullptr,
+            /*repository=*/nullptr);
+        auto *package = memDb.getOrAddPackage(
+            /*qualifiedName=*/qName,
+            /*name=*/qName,
+            /*diskPath=*/"",
+            /*parent=*/grp,
             /*repository=*/nullptr);
         currentComponent = memDb.getOrAddComponent(
             /*qualifiedName=*/currentInputPath.stem(),
@@ -66,14 +76,21 @@ void PhysicalParseAction::executeAction()
 
         lvtmdb::ComponentObject *targetComponent = nullptr;
         memDb.withRWLock([&]() {
-            // TODO: Proper package handling
-            auto *package = memDb.getOrAddPackage(
-                /*qualifiedName=*/"Fortran",
-                /*name=*/"Fortran",
+            auto dependencyPath = std::filesystem::path{srcFile->path()};
+            auto qName = dependencyPath.parent_path().stem();
+            // TODO: Proper package handling. Currently assume all Fortran packages are "non-lakosian"
+            auto *grp = memDb.getOrAddPackage(
+                /*qualifiedName=*/NON_LAKOSIAN_GROUP_NAME,
+                /*name=*/NON_LAKOSIAN_GROUP_NAME,
                 /*diskPath=*/"",
                 /*parent=*/nullptr,
                 /*repository=*/nullptr);
-            auto dependencyPath = std::filesystem::path{srcFile->path()};
+            auto *package = memDb.getOrAddPackage(
+                /*qualifiedName=*/qName,
+                /*name=*/qName,
+                /*diskPath=*/"",
+                /*parent=*/grp,
+                /*repository=*/nullptr);
             targetComponent = memDb.getOrAddComponent(
                 /*qualifiedName=*/dependencyPath.stem(),
                 /*name=*/dependencyPath.stem(),

@@ -456,6 +456,7 @@ int main(int argc, char **argv)
         auto flang_result = flang_tool->runFull();
         return clang_result && flang_result;
     }();
+    Codethink::lvtclp::fortran::solveFortranToCInteropDeps(*sharedObjectStore);
 #else
     const bool success = [&]() {
         if (args.physicalOnly) {

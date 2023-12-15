@@ -174,7 +174,9 @@ bool run(FrontendAction& act, std::string const& filename)
             std::smatch sm;
             if (regex_search(message, sm, r) && sm.size() == 2) {
                 // Create an empty file, it just needs to exist.
-                std::ofstream{tmpIncludePath.string() + "/" + sm[1].str()};
+                auto tmpFile = std::filesystem::path{tmpIncludePath.string() + "/" + sm[1].str()};
+                std::filesystem::create_directories(tmpFile.parent_path());
+                std::ofstream{tmpFile.string()};
             }
         }
         auto tmpIncludes = std::string{"-I"} + tmpIncludePath.string();

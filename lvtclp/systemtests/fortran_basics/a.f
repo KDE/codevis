@@ -14,7 +14,10 @@
       end subroutine cal1
 
       INCLUDE 'b.f'
+      INCLUDE 'internal/unknown/path/other_unknown_file.f'
       INCLUDE 'UNKNOWNFILE.f'
+c     Same file again
+      INCLUDE 'internal/unknown/path/other_unknown_file.f'
 
       function cal_f(A)
       real*8 A

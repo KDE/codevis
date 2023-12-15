@@ -14,6 +14,7 @@
       end subroutine cal1
 
       INCLUDE 'b.f'
+      INCLUDE 'UNKNOWNFILE.f'
 
       function cal_f(A)
       real*8 A

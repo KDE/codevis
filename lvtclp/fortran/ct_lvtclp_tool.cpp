@@ -28,16 +28,42 @@
 #include <flang/Frontend/CompilerInvocation.h>
 #include <flang/Frontend/TextDiagnosticBuffer.h>
 #include <flang/FrontendTool/Utils.h>
+#include <flang/Parser/message.h>
 #include <flang/Parser/parse-tree-visitor.h>
 #include <llvm/Option/Arg.h>
 #include <llvm/Option/ArgList.h>
 #include <llvm/Option/OptTable.h>
 #include <llvm/Support/TargetSelect.h>
 
+#include <exception>
+#include <fstream>
 #include <iostream>
 #include <memory>
+#include <random>
+#include <regex>
 
 namespace {
+
+std::filesystem::path createTemporaryDirectory()
+{
+    auto tmp_dir = std::filesystem::temp_directory_path();
+    std::random_device dev;
+    std::mt19937 prng(dev());
+    std::uniform_int_distribution<uint64_t> rand(0);
+    std::filesystem::path path;
+    int tries = 100;
+    while (tries > 0) {
+        std::stringstream ss;
+        ss << std::hex << rand(prng);
+        path = tmp_dir / ss.str();
+        if (std::filesystem::create_directory(path)) {
+            return path;
+        }
+        tries--;
+    }
+    throw std::runtime_error("Could not find non-existing directory");
+    return {};
+}
 
 std::vector<std::filesystem::path> filterFortranFiles(std::vector<std::filesystem::path> const& files)
 {
@@ -87,47 +113,85 @@ Tool::Tool(std::vector<std::filesystem::path> const& files): files(filterFortran
 {
 }
 
-void run(FrontendAction& act, std::string const& filename)
+std::tuple<bool, std::list<Fortran::parser::Message>> _runHelper(FrontendAction& act,
+                                                                 llvm::ArrayRef<const char *> commandLineArgs)
 {
     std::unique_ptr<CompilerInstance> flang(new CompilerInstance());
     flang->createDiagnostics();
     if (!flang->hasDiagnostics()) {
         // TODO: Proper error management
         std::cout << "Could not create flang diagnostics.\n";
-        return;
+        return {false, {}};
     }
 
-    auto *diagsBuffer = new TextDiagnosticBuffer;
+    auto *diagsBuffer = new TextDiagnosticBuffer{};
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagID(new clang::DiagnosticIDs());
     llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = new clang::DiagnosticOptions();
     clang::DiagnosticsEngine diags(diagID, &*diagOpts, diagsBuffer);
 
-    auto args = std::array<const char *, 1>{filename.c_str()};
-    auto commandLineArgs = llvm::ArrayRef<const char *>(args);
     bool success = CompilerInvocation::createFromArgs(flang->getInvocation(), commandLineArgs, diags);
-
     // Initialize targets first, so that --version shows registered targets.
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
     llvm::InitializeAllAsmPrinters();
 
     diagsBuffer->flushDiagnostics(flang->getDiagnostics());
-
     if (!success) {
         // TODO: Proper error management
         std::cout << "Could not prepare the flang object.\n";
-        return;
+        return {false, {}};
     }
 
     success = flang->executeAction(act);
+    flang->clearOutputFiles(/*EraseFiles=*/false);
+    return {success, flang->getParsing().messages().messages()};
+}
+
+bool run(FrontendAction& act, std::string const& filename)
+{
+    auto args = std::array<const char *, 1>{filename.c_str()};
+    auto commandLineArgs = llvm::ArrayRef<const char *>(args);
+    auto [success, messages] = _runHelper(act, commandLineArgs);
+
+    /**
+     * As of the date of this change, in LLVM17, Flang doesn't give any way to
+     * intercept the preprocessor to recover from errors. Also, there doesn't seem
+     * to be any way of intercepting the error messages. The hack below will steal
+     * all messages looking for those that we may be able to recover from.
+     * TODO: Overhaul this solution. One idea is to propose changes in the Flang preprocessor.
+     *       We do have some related discussion here:
+     *       https://github.com/llvm/llvm-project/issues/71554
+     */
+    if (!success) {
+        // TODO: Proper error management
+        std::cout << "Could not parse " << filename << ".\nTrying to recover...\n";
+        auto tmpIncludePath = createTemporaryDirectory();
+        for (auto const& m : messages) {
+            auto message = m.ToString();
+
+            // Search for missing INCLUDE messages
+            const std::regex r("INCLUDE: Source file '(.+)' was not found");
+            std::smatch sm;
+            if (regex_search(message, sm, r) && sm.size() == 2) {
+                // Create an empty file, it just needs to exist.
+                std::ofstream{tmpIncludePath.string() + "/" + sm[1].str()};
+            }
+        }
+        auto tmpIncludes = std::string{"-I"} + tmpIncludePath.string();
+        auto fixupArgs = std::array<const char *, 2>{filename.c_str(), tmpIncludes.c_str()};
+        auto [s, _] = _runHelper(act, fixupArgs);
+        success = s;
+    }
+
     if (!success) {
         // TODO: Proper error management
         std::cout << "Action failed.\n";
-        return;
+        return false;
     }
 
-    // Delete output files to free Compiler Instance
-    flang->clearOutputFiles(/*EraseFiles=*/false);
+    // TODO: Proper debug
+    std::cout << "Successfully parsed " << filename << ".\n";
+    return true;
 }
 
 bool Tool::runPhysical(bool skipScan)

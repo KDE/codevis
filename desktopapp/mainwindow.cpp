@@ -1252,11 +1252,12 @@ void MainWindow::requestMenuPackageView(const QModelIndexList& multiSelection,
     });
 
     act = menu.addAction(tr("Load on Current Scene"));
-    connect(act, &QAction::triggered, this, [this, clickedOn] {
-        const QString qualName =
-            clickedOn.data(Codethink::lvtmdl::ModelRoles::e_QualifiedName).toString().toLocal8Bit();
+    connect(act, &QAction::triggered, this, [this, multiSelection] {
         auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(currentGraphWidget->scene());
-        scene->loadEntityByQualifiedName(qualName, QPoint());
+        for (const auto idx : multiSelection) {
+            const QString qualName = idx.data(Codethink::lvtmdl::ModelRoles::e_QualifiedName).toString().toLocal8Bit();
+            scene->loadEntityByQualifiedName(qualName, QPoint());
+        }
         scene->reLayout();
     });
 

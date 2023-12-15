@@ -26,7 +26,7 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
     auto& all_functions = sharedMemDb.functions();
     auto bindDependencies = std::vector<std::pair<FunctionObject *, FunctionObject *>>{};
     for (auto const& [_, ownedCFuncObject] : all_functions) {
-        // C functions have a "_" prefix (e.g.: "myFunc_" in C is the function "myFunc" in Fortran)
+        // C functions have a "_" suffix (e.g.: "myFunc_" in C is the function "myFunc" in Fortran)
         auto *cFunc = ownedCFuncObject.get();
         auto cFuncName = std::string{};
         cFunc->withROLock([&]() {

@@ -4,5 +4,6 @@ enable_language(Fortran)
 enable_language(C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+include_directories(otherprj)
 
 add_subdirectory(mixedprj)

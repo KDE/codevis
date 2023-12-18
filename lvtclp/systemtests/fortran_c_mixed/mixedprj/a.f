@@ -14,3 +14,4 @@
       end subroutine cal1
 
       INCLUDE 'b.f'
+      INCLUDE 'external.f'

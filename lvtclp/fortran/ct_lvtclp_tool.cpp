@@ -37,58 +37,18 @@
 #include <iostream>
 #include <memory>
 
+using namespace Fortran::frontend;
+using namespace clang::tooling;
+
 namespace {
 
-std::vector<std::filesystem::path> filterFortranFiles(std::vector<std::filesystem::path> const& files)
+void run(FrontendAction& act, CompileCommand const& cmd)
 {
-    auto fortranFiles = std::vector<std::filesystem::path>{};
-    for (auto const& file : files) {
-        auto ext = file.extension().string();
-        if (ext != ".f" && ext != ".for" && ext != ".f90" && ext != ".inc") {
-            continue;
-        }
-        fortranFiles.emplace_back(file);
+    auto ext = std::filesystem::path{cmd.Filename}.extension().string();
+    if (ext != ".f" && ext != ".for" && ext != ".f90" && ext != ".inc") {
+        return;
     }
-    return fortranFiles;
-}
 
-std::vector<std::filesystem::path> extractFilesFromCompileCommands(std::filesystem::path const& compileCommandsJson)
-{
-    auto errorMessage = std::string{};
-    auto jsonDb =
-        clang::tooling::JSONCompilationDatabase::loadFromFile(compileCommandsJson.string(),
-                                                              errorMessage,
-                                                              clang::tooling::JSONCommandLineSyntax::AutoDetect);
-
-    auto fortranFiles = std::vector<std::filesystem::path>{};
-    for (auto const& cmd : jsonDb->getAllCompileCommands()) {
-        auto filename = std::filesystem::path{cmd.Filename};
-        if (filename.is_relative()) {
-            std::cout << "Warning: Relative path is not currently handled. Skipping " << filename << "\n";
-            continue;
-        }
-        fortranFiles.emplace_back(filename);
-    }
-    return fortranFiles;
-}
-
-} // namespace
-
-namespace Codethink::lvtclp::fortran {
-
-using namespace Fortran::frontend;
-
-Tool::Tool(std::filesystem::path const& compileCommandsJson):
-    files(filterFortranFiles(extractFilesFromCompileCommands(compileCommandsJson)))
-{
-}
-
-Tool::Tool(std::vector<std::filesystem::path> const& files): files(filterFortranFiles(files))
-{
-}
-
-void run(FrontendAction& act, std::string const& filename)
-{
     std::unique_ptr<CompilerInstance> flang(new CompilerInstance());
     flang->createDiagnostics();
     if (!flang->hasDiagnostics()) {
@@ -102,9 +62,15 @@ void run(FrontendAction& act, std::string const& filename)
     llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = new clang::DiagnosticOptions();
     clang::DiagnosticsEngine diags(diagID, &*diagOpts, diagsBuffer);
 
-    auto args = std::array<const char *, 1>{filename.c_str()};
-    auto commandLineArgs = llvm::ArrayRef<const char *>(args);
-    bool success = CompilerInvocation::createFromArgs(flang->getInvocation(), commandLineArgs, diags);
+    auto args = std::vector<const char *>{};
+    args.push_back(cmd.Filename.c_str());
+    for (auto const& cmdLine : cmd.CommandLine) {
+        if (cmdLine.starts_with("-I")) {
+            args.push_back(cmdLine.c_str());
+        }
+    }
+    bool success =
+        CompilerInvocation::createFromArgs(flang->getInvocation(), llvm::ArrayRef<const char *>(args), diags);
 
     // Initialize targets first, so that --version shows registered targets.
     llvm::InitializeAllTargets();
@@ -130,11 +96,35 @@ void run(FrontendAction& act, std::string const& filename)
     flang->clearOutputFiles(/*EraseFiles=*/false);
 }
 
+} // namespace
+
+namespace Codethink::lvtclp::fortran {
+
+Tool::Tool(std::unique_ptr<CompilationDatabase> compilationDatabase):
+    compilationDatabase(std::move(compilationDatabase))
+{
+}
+
+std::unique_ptr<Tool> Tool::fromCompileCommands(std::filesystem::path const& compileCommandsJson)
+{
+    auto errorMessage = std::string{};
+    auto jsonDb = JSONCompilationDatabase::loadFromFile(compileCommandsJson.string(),
+                                                        errorMessage,
+                                                        clang::tooling::JSONCommandLineSyntax::AutoDetect);
+    // TODO: Proper error management
+    if (!errorMessage.empty()) {
+        std::cout << "Tool::fromCompileCommands error: " << errorMessage;
+        return nullptr;
+    }
+
+    return std::make_unique<Tool>(std::move(jsonDb));
+}
+
 bool Tool::runPhysical(bool skipScan)
 {
     auto action = PhysicalParseAction{this->memDb()};
-    for (auto const& f : files) {
-        run(action, f.string());
+    for (auto const& cmd : this->compilationDatabase->getAllCompileCommands()) {
+        run(action, cmd);
     }
 
     return true;
@@ -146,8 +136,8 @@ bool Tool::runFull(bool skipPhysical)
         runPhysical(/*skipScan=*/false);
     }
     auto action = LogicalParseAction{this->memDb()};
-    for (auto const& f : files) {
-        run(action, f);
+    for (auto const& cmd : this->compilationDatabase->getAllCompileCommands()) {
+        run(action, cmd);
     }
 
     return true;

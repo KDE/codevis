@@ -742,7 +742,7 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
     }
 #ifdef CT_ENABLE_FORTRAN_SCANNER
     if (!d->fortran_tool_p) {
-        d->fortran_tool_p = std::make_unique<lvtclp::fortran::Tool>(compileCommandsJson);
+        d->fortran_tool_p = lvtclp::fortran::Tool::fromCompileCommands(compileCommandsJson);
     }
     d->fortran_tool_p->setSharedMemDb(d->sharedMemDb);
 #endif

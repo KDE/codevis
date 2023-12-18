@@ -20,7 +20,6 @@
 #include <ct_lvtclp_testutil.h>
 #include <ct_lvtclp_tool.h>
 #include <ct_lvtmdb_componentobject.h>
-#include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
@@ -31,12 +30,61 @@
 
 using namespace Codethink::lvtclp;
 using namespace Codethink::lvtmdb;
+using namespace clang::tooling;
+
+class CompilationDatabaseForTesting : public CompilationDatabase {
+  public:
+    CompilationDatabaseForTesting(std::vector<std::filesystem::path> const& files,
+                                  std::vector<std::filesystem::path> const& includePaths = {}):
+        files(files), includePaths(includePaths)
+    {
+    }
+
+    ~CompilationDatabaseForTesting() = default;
+
+    std::vector<CompileCommand> getCompileCommands(clang::StringRef FilePath) const
+    {
+        throw std::runtime_error("Not implemented.");
+    }
+
+    std::vector<std::string> getAllFiles() const
+    {
+        auto rawFilesAsStr = std::vector<std::string>{};
+        for (auto const& f : this->files) {
+            rawFilesAsStr.push_back(f.string());
+        }
+        return rawFilesAsStr;
+    }
+
+    std::vector<CompileCommand> getAllCompileCommands() const
+    {
+        auto cmds = std::vector<CompileCommand>{};
+        auto defaultCommandLine = std::vector<std::string>{};
+        for (auto const& includePath : this->includePaths) {
+            defaultCommandLine.push_back("-I" + includePath.string());
+        }
+        for (auto const& f : this->files) {
+            auto cmd = CompileCommand{};
+            cmd.Directory = ""; // Intentionally left blank
+            cmd.Filename = f;
+            cmd.CommandLine = defaultCommandLine;
+            cmd.Output = f.string() + ".o";
+            cmd.Heuristic = "Test cmd generated with CompilationDatabaseForTesting";
+            cmds.push_back(cmd);
+        }
+        return cmds;
+    }
+
+  private:
+    std::vector<std::filesystem::path> files;
+    std::vector<std::filesystem::path> includePaths;
+};
 
 TEST_CASE("Simple fortran project")
 {
     auto const PREFIX = std::string{TEST_PRJ_PATH};
     auto fileList = std::vector<std::filesystem::path>{{PREFIX + "/fortran_basics/a.f"}};
-    auto tool = fortran::Tool{fileList};
+    auto tool = fortran::Tool{std::make_unique<CompilationDatabaseForTesting>(fileList)};
     tool.runFull();
 
     auto locks = std::vector<Lockable::ROLock>{};
@@ -122,7 +170,8 @@ TEST_CASE("Mixed fortran and C project")
                                                        // C files will be ignored by Fortran parser.
                                                        {PREFIX + "/mixedprj/c.c"},
                                                        {PREFIX + "/mixedprj/main.c"}};
-    auto fortranTool = fortran::Tool{fileList};
+    auto includePaths = std::vector<std::filesystem::path>{{PREFIX + "/otherprj"}};
+    auto fortranTool = fortran::Tool{std::make_unique<CompilationDatabaseForTesting>(fileList, includePaths)};
     fortranTool.setSharedMemDb(sharedMemDb);
 
     auto staticCompilationDb =

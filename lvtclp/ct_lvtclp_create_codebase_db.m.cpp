@@ -354,6 +354,8 @@ void signal_callback_handler(int signum)
 
 int main(int argc, char **argv)
 {
+    using namespace Codethink::lvtclp;
+
     QCoreApplication app(argc, argv);
 #ifdef Q_OS_WINDOWS
     SetConsoleCtrlHandler(CtrlHandler, TRUE);
@@ -381,7 +383,7 @@ int main(int argc, char **argv)
         parser.showHelp();
         Q_UNREACHABLE();
     case CommandLineParseResult::Query:
-        const bool useSystemHeaders = Codethink::lvtclp::CompilerUtil::weNeedSystemHeaders();
+        const bool useSystemHeaders = CompilerUtil::weNeedSystemHeaders();
         std::cout << "We need system headers? " << (useSystemHeaders ? "yes" : "no") << "\n";
         return useSystemHeaders ? 1 : 0;
     }
@@ -424,27 +426,26 @@ int main(int argc, char **argv)
     }
 
     auto sharedObjectStore = std::make_shared<Codethink::lvtmdb::ObjectStore>();
-    auto clang_tool = !args.compilationDbPaths.empty()
-        ? std::make_unique<Codethink::lvtclp::Tool>(args.sourcePath,
-                                                    args.compilationDbPaths,
-                                                    args.dbPath,
-                                                    args.numThreads,
-                                                    args.ignoreList,
-                                                    args.nonLakosianDirs,
-                                                    args.packageMappings,
-                                                    !args.silent)
-        : std::make_unique<Codethink::lvtclp::Tool>(args.sourcePath,
-                                                    compileCommand.value(),
-                                                    args.dbPath,
-                                                    args.ignoreList,
-                                                    args.nonLakosianDirs,
-                                                    args.packageMappings,
-                                                    !args.silent);
+    auto clang_tool = !args.compilationDbPaths.empty() ? std::make_unique<Tool>(args.sourcePath,
+                                                                                args.compilationDbPaths,
+                                                                                args.dbPath,
+                                                                                args.numThreads,
+                                                                                args.ignoreList,
+                                                                                args.nonLakosianDirs,
+                                                                                args.packageMappings,
+                                                                                !args.silent)
+                                                       : std::make_unique<Tool>(args.sourcePath,
+                                                                                compileCommand.value(),
+                                                                                args.dbPath,
+                                                                                args.ignoreList,
+                                                                                args.nonLakosianDirs,
+                                                                                args.packageMappings,
+                                                                                !args.silent);
     clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 
 #ifdef CT_ENABLE_FORTRAN_SCANNER
-    auto flang_tool = std::make_unique<Codethink::lvtclp::fortran::Tool>(args.compilationDbPaths[0]);
+    auto flang_tool = fortran::Tool::fromCompileCommands(args.compilationDbPaths[0]);
     flang_tool->setSharedMemDb(sharedObjectStore);
     const bool success = [&]() {
         if (args.physicalOnly) {
@@ -456,7 +457,7 @@ int main(int argc, char **argv)
         auto flang_result = flang_tool->runFull();
         return clang_result && flang_result;
     }();
-    Codethink::lvtclp::fortran::solveFortranToCInteropDeps(*sharedObjectStore);
+    fortran::solveFortranToCInteropDeps(*sharedObjectStore);
 #else
     const bool success = [&]() {
         if (args.physicalOnly) {

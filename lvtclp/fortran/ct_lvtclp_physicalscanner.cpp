@@ -16,10 +16,12 @@
 */
 
 #include <ct_lvtmdb_componentobject.h>
+#include <ct_lvtmdb_packageobject.h>
 #include <flang/Frontend/CompilerInstance.h>
 #include <fortran/ct_lvtclp_physicalscanner.h>
 
 #include <filesystem>
+#include <unordered_set>
 
 namespace Codethink::lvtclp::fortran {
 
@@ -30,13 +32,11 @@ PhysicalParseAction::PhysicalParseAction(lvtmdb::ObjectStore& memDb): memDb(memD
 {
 }
 
-void PhysicalParseAction::executeAction()
+lvtmdb::ComponentObject *addComponentForFile(lvtmdb::ObjectStore& memDb, std::filesystem::path const& filePath)
 {
-    auto currentInputPath = std::filesystem::path{getCurrentFileOrBufferName().str()};
     lvtmdb::ComponentObject *currentComponent = nullptr;
-
     memDb.withRWLock([&]() {
-        auto qName = currentInputPath.parent_path().stem();
+        auto qName = filePath.parent_path().stem();
 
         // TODO: Proper package handling. Currently assume all Fortran packages are "non-lakosian"
         auto *grp = memDb.getOrAddPackage(
@@ -51,59 +51,61 @@ void PhysicalParseAction::executeAction()
             /*diskPath=*/"",
             /*parent=*/grp,
             /*repository=*/nullptr);
-        currentComponent = memDb.getOrAddComponent(
-            /*qualifiedName=*/currentInputPath.stem(),
-            /*name=*/currentInputPath.stem(),
+        auto component = memDb.getOrAddComponent(
+            /*qualifiedName=*/qName.string() + "/" + filePath.stem().string(),
+            /*name=*/filePath.stem(),
             /*package=*/package);
         auto *file = memDb.getOrAddFile(
-            /*qualifiedName=*/currentInputPath.string(),
-            /*name=*/currentInputPath.string(),
+            /*qualifiedName=*/filePath.string(),
+            /*name=*/filePath.string(),
             /*isHeader=*/false,
             /*hash=*/"", // TODO: Properly generate hash, if ever necessary
             /*package=*/package,
-            /*component=*/currentComponent);
-        (void) file;
+            /*component=*/component);
         assert(file);
+
+        component->withRWLock([&] {
+            component->addFile(file);
+        });
+        package->withRWLock([&] {
+            package->addComponent(component);
+        });
+
+        currentComponent = component;
     });
     assert(currentComponent);
+    return currentComponent;
+}
+
+void PhysicalParseAction::executeAction()
+{
+    auto currentInputPath = std::filesystem::path{getCurrentFileOrBufferName().str()};
+    auto currentComponent = addComponentForFile(memDb, currentInputPath);
 
     auto& allSources = getInstance().getAllCookedSources().allSources();
-    auto showSourceFileFrom = [&](Provenance const& p) {
+    auto processSourceFileFrom = [&](Provenance const& p) {
         auto srcFile = allSources.GetSourceFile(p);
         if (srcFile == nullptr) {
             return; // Doesn't have associated source file
         }
 
-        lvtmdb::ComponentObject *targetComponent = nullptr;
-        memDb.withRWLock([&]() {
-            auto dependencyPath = std::filesystem::path{srcFile->path()};
-            auto qName = dependencyPath.parent_path().stem();
-            // TODO: Proper package handling. Currently assume all Fortran packages are "non-lakosian"
-            auto *grp = memDb.getOrAddPackage(
-                /*qualifiedName=*/NON_LAKOSIAN_GROUP_NAME,
-                /*name=*/NON_LAKOSIAN_GROUP_NAME,
-                /*diskPath=*/"",
-                /*parent=*/nullptr,
-                /*repository=*/nullptr);
-            auto *package = memDb.getOrAddPackage(
-                /*qualifiedName=*/qName,
-                /*name=*/qName,
-                /*diskPath=*/"",
-                /*parent=*/grp,
-                /*repository=*/nullptr);
-            targetComponent = memDb.getOrAddComponent(
-                /*qualifiedName=*/dependencyPath.stem(),
-                /*name=*/dependencyPath.stem(),
-                /*package=*/package);
-        });
-        assert(targetComponent);
+        auto dependencyPath = std::filesystem::path{srcFile->path()};
+        auto targetComponent = addComponentForFile(memDb, dependencyPath);
         lvtmdb::ComponentObject::addDependency(currentComponent, targetComponent);
     };
 
     auto interval = *allSources.GetFirstFileProvenance();
     auto currProvenance = interval.start();
+    auto alreadyProcessed = std::unordered_set<const SourceFile *>{};
     while (allSources.IsValid(currProvenance)) {
-        showSourceFileFrom(interval.start());
+        auto provenance = interval.start();
+        auto srcFile = allSources.GetSourceFile(provenance);
+
+        if (!alreadyProcessed.contains(srcFile)) {
+            processSourceFileFrom(provenance);
+            alreadyProcessed.insert(srcFile);
+        }
+
         // TODO: NextAfter doesn't properly get the next interval, just the next position
         //       with size 1. This means after the first interval, positions are incremented
         //       by 1, and thus this algorithm is extremely dummy.

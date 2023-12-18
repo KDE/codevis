@@ -17,6 +17,7 @@
 
 #include <fortran/ct_lvtclp_logicalscanner.h>
 
+#include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_objectstore.h>
@@ -24,8 +25,30 @@
 #include <flang/Parser/parse-tree-visitor.h>
 #include <flang/Parser/parse-tree.h>
 
+#include <fstream>
 #include <iostream>
 #include <type_traits>
+
+namespace {
+bool srcFileContainsSrcCode(std::string const& guessedSrcFile, std::string const& targetSrcCode)
+{
+    auto ifs = std::ifstream(guessedSrcFile);
+    auto contents = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+
+    // Transforms the file contents, as if it was processed by the lexer.
+    contents.erase(std::remove_if(contents.begin(),
+                                  contents.end(),
+                                  [](unsigned char c) {
+                                      return std::isspace(c);
+                                  }),
+                   contents.end());
+    std::transform(contents.begin(), contents.end(), contents.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
+
+    return (contents.find(targetSrcCode) != std::string::npos);
+};
+} // namespace
 
 namespace Codethink::lvtclp::fortran {
 
@@ -117,7 +140,42 @@ struct ParseTreeVisitor {
                 /*parent=*/nullptr);
             assert(function);
 
-            auto *file = memDb.getFile(currentFilePath);
+            // Find where the function was really defined.
+            //
+            // TODO: This approach is extremely inefficient, and must be reworked when we have
+            //       provenience mapping in the AST or another way of finding out where the INCLUDEs
+            //       come from.
+            auto guessedDefinitionFilePath = [&]() {
+                auto srcCode = ss.source.ToString();
+
+                if (srcFileContainsSrcCode(currentFilePath.string(), srcCode)) {
+                    return currentFilePath.string();
+                }
+
+                auto *file = memDb.getFile(currentFilePath.string());
+                auto fileLock = file->readOnlyLock();
+                auto *component = file->component();
+                auto componentLock = component->readOnlyLock();
+                for (auto *depComponent : component->forwardDependencies()) {
+                    auto depComponentLock = depComponent->readOnlyLock();
+                    for (auto *depFile : depComponent->files()) {
+                        auto depFileLock = depFile->readOnlyLock();
+                        auto depFilePath = depFile->qualifiedName();
+                        if (srcFileContainsSrcCode(depFilePath, srcCode)) {
+                            return depFilePath;
+                        }
+                    }
+                }
+
+                // If the definition file is not found, returns the "current" (in process) file, to avoid
+                // missing source.
+                // TODO: Proper warning message propagation.
+                std::cout << "WARNING: Could not find proper source code for function " << functionName
+                          << " - Will fallback to " << currentFilePath.string() << "\n";
+                return currentFilePath.string();
+            }();
+
+            auto *file = memDb.getFile(guessedDefinitionFilePath);
             file->withRWLock([&] {
                 file->addGlobalFunction(function);
             });

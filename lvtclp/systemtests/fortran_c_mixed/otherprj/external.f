@@ -3,3 +3,5 @@
       call some_c_func()
       return
       end subroutine calExternal
+
+      INCLUDE "inner.inc"

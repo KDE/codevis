@@ -94,16 +94,14 @@ TEST_CASE("Simple fortran project")
     auto& memDb = tool.getObjectStore();
     l(memDb.readOnlyLock());
 
-    // Although only one file is being parsed, we do get information from the others, but
-    // don't save their files. Only parsed files are currently added to the database. This
-    // may be changed in the future, but for now, this is the expected behavior.
-    REQUIRE(memDb.getAllFiles().size() == 1);
+    // Although only one file is being parsed, we do get information from the others.
+    REQUIRE(memDb.getAllFiles().size() == 2);
 
-    auto *componentA = memDb.getComponent("a");
+    auto *componentA = memDb.getComponent("fortran_basics/a");
     REQUIRE(componentA);
     l(componentA->readOnlyLock());
 
-    auto *componentB = memDb.getComponent("b");
+    auto *componentB = memDb.getComponent("fortran_basics/b");
     REQUIRE(componentB);
     l(componentB->readOnlyLock());
 
@@ -208,7 +206,7 @@ TEST_CASE("Mixed fortran and C project")
         l(sharedMemDb->readOnlyLock());
 
         // All fortran files + C files
-        REQUIRE(sharedMemDb->getAllFiles().size() == 5);
+        REQUIRE(sharedMemDb->getAllFiles().size() == 7);
 
         auto cComponent = sharedMemDb->getComponent("mixedprj/c");
         REQUIRE(cComponent);
@@ -233,6 +231,28 @@ TEST_CASE("Mixed fortran and C project")
 
         // Before Fortran <-> C interop solver run, there should be 0 callees.
         REQUIRE(otherFuncs.at("cal1_")->callees().empty());
+
+        auto aComponent = sharedMemDb->getComponent("mixedprj/a");
+        REQUIRE(aComponent);
+        l(aComponent->readOnlyLock());
+        auto aFuncs = getAllFunctionsForComponent(aComponent);
+        REQUIRE(aFuncs.size() == 2);
+        REQUIRE(aFuncs.contains("cal1"));
+        REQUIRE(aFuncs.contains("cal2"));
+
+        auto bComponent = sharedMemDb->getComponent("mixedprj/b");
+        REQUIRE(bComponent);
+        l(bComponent->readOnlyLock());
+        auto bFuncs = getAllFunctionsForComponent(bComponent);
+        REQUIRE(bFuncs.size() == 1);
+        REQUIRE(bFuncs.contains("cal3"));
+
+        auto innerComponent = sharedMemDb->getComponent("otherprj/inner");
+        REQUIRE(innerComponent);
+        l(innerComponent->readOnlyLock());
+        auto innerFuncs = getAllFunctionsForComponent(innerComponent);
+        REQUIRE(innerFuncs.size() == 1);
+        REQUIRE(innerFuncs.contains("innersubroutine"));
     }
 
     Codethink::lvtclp::fortran::solveFortranToCInteropDeps(*sharedMemDb);

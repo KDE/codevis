@@ -82,10 +82,17 @@ include(FeatureSummary)
 find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
 
-find_package(LLVM 17)
+foreach(LLVM_VER 18 17 16 15 14)
+    find_package(LLVM ${LLVM_VER})
+    if (LLVM_FOUND)
+        break()
+    endif()
+endforeach()
+
 if (NOT LLVM_FOUND)
-    find_package(LLVM 16 REQUIRED)
+    MESSAGE(FATAL "LLVM Not Found")
 endif()
+
 find_package(Clang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/clang/" NO_DEFAULT_PATH)
 
 set(CMAKE_AUTOMOC FALSE)

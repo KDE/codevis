@@ -85,8 +85,13 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
                 auto toComponentLock = toComponent->rwLock();
                 auto fromPackage = fromComponent->package();
                 auto toPackage = toComponent->package();
-                if (fromPackage && toPackage && fromPackage != toPackage) {
-                    PackageObject::addDependency(fromPackage, toPackage);
+                while (fromPackage && toPackage && fromPackage != toPackage) {
+                    lvtmdb::PackageObject::addDependency(fromPackage, toPackage);
+
+                    auto srcParentLock = fromPackage->readOnlyLock();
+                    auto trgParentLock = toPackage->readOnlyLock();
+                    fromPackage = fromPackage->parent();
+                    toPackage = toPackage->parent();
                 }
             }
         }

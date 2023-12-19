@@ -92,6 +92,19 @@ void PhysicalParseAction::executeAction()
         auto dependencyPath = std::filesystem::path{srcFile->path()};
         auto targetComponent = addComponentForFile(memDb, dependencyPath);
         lvtmdb::ComponentObject::addDependency(currentComponent, targetComponent);
+
+        auto srcLock = currentComponent->readOnlyLock();
+        auto trgLock = targetComponent->readOnlyLock();
+        auto srcParent = currentComponent->package();
+        auto trgParent = targetComponent->package();
+        while (srcParent && trgParent && srcParent != trgParent) {
+            lvtmdb::PackageObject::addDependency(srcParent, trgParent);
+
+            auto srcParentLock = srcParent->readOnlyLock();
+            auto trgParentLock = trgParent->readOnlyLock();
+            srcParent = srcParent->parent();
+            trgParent = trgParent->parent();
+        }
     };
 
     auto interval = *allSources.GetFirstFileProvenance();

@@ -251,6 +251,15 @@ TEST_CASE("Mixed fortran and C project")
         REQUIRE(innerFuncs.size() == 1);
         REQUIRE(innerFuncs.contains("innersubroutine"));
 
+        auto mixedprjPackage = sharedMemDb->getPackage("mixedprj");
+        auto otherprjPackage = sharedMemDb->getPackage("otherprj");
+        l(mixedprjPackage->readOnlyLock());
+        l(otherprjPackage->readOnlyLock());
+        auto& mixedprjFwdDeps = mixedprjPackage->forwardDependencies();
+        auto& otherprjRevDeps = otherprjPackage->reverseDependencies();
+        REQUIRE(std::find(mixedprjFwdDeps.begin(), mixedprjFwdDeps.end(), otherprjPackage) != mixedprjFwdDeps.end());
+        REQUIRE(std::find(otherprjRevDeps.begin(), otherprjRevDeps.end(), mixedprjPackage) != otherprjRevDeps.end());
+
         // Checks BEFORE Fortran <-> C interop solver run
         {
             // There should be 0 callees from C to Fortran code

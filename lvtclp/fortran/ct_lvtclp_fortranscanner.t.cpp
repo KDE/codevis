@@ -229,9 +229,6 @@ TEST_CASE("Mixed fortran and C project")
         REQUIRE(otherFuncs.at("cal1_"));
         l(otherFuncs.at("cal1_")->readOnlyLock());
 
-        // Before Fortran <-> C interop solver run, there should be 0 callees.
-        REQUIRE(otherFuncs.at("cal1_")->callees().empty());
-
         auto aComponent = sharedMemDb->getComponent("mixedprj/a");
         REQUIRE(aComponent);
         l(aComponent->readOnlyLock());
@@ -253,6 +250,18 @@ TEST_CASE("Mixed fortran and C project")
         auto innerFuncs = getAllFunctionsForComponent(innerComponent);
         REQUIRE(innerFuncs.size() == 1);
         REQUIRE(innerFuncs.contains("innersubroutine"));
+
+        // Checks BEFORE Fortran <-> C interop solver run
+        {
+            // There should be 0 callees from C to Fortran code
+            REQUIRE(otherFuncs.at("cal1_")->callees().empty());
+
+            // No dependency between external Fortran to C components
+            auto& otherFwdDeps = otherComponent->forwardDependencies();
+            REQUIRE(std::find(otherFwdDeps.begin(), otherFwdDeps.end(), aComponent) == otherFwdDeps.end());
+            auto& aRevDeps = aComponent->reverseDependencies();
+            REQUIRE(std::find(aRevDeps.begin(), aRevDeps.end(), otherComponent) == aRevDeps.end());
+        }
     }
 
     Codethink::lvtclp::fortran::solveFortranToCInteropDeps(*sharedMemDb);
@@ -272,11 +281,23 @@ TEST_CASE("Mixed fortran and C project")
         REQUIRE(otherFuncs.at("cal1_"));
         l(otherFuncs.at("cal1_")->readOnlyLock());
 
-        // After Fortran <-> C interop solver run, the fortran dependency is resolved,
-        // so there is one callee dependency
-        REQUIRE(otherFuncs.at("cal1_")->callees().size() == 1);
-        auto *fortranCal1 = otherFuncs.at("cal1_")->callees()[0];
-        l(fortranCal1->readOnlyLock());
-        REQUIRE(fortranCal1->qualifiedName() == "cal1");
+        auto aComponent = sharedMemDb->getComponent("mixedprj/a");
+        REQUIRE(aComponent);
+        l(aComponent->readOnlyLock());
+
+        // Checks AFTER Fortran <-> C interop solver run
+        {
+            // The fortran dependency is resolved, so there is one callee dependency
+            REQUIRE(otherFuncs.at("cal1_")->callees().size() == 1);
+            auto *fortranCal1 = otherFuncs.at("cal1_")->callees()[0];
+            l(fortranCal1->readOnlyLock());
+            REQUIRE(fortranCal1->qualifiedName() == "cal1");
+
+            // Check component dependency propagation
+            auto& otherFwdDeps = otherComponent->forwardDependencies();
+            REQUIRE(std::find(otherFwdDeps.begin(), otherFwdDeps.end(), aComponent) != otherFwdDeps.end());
+            auto& aRevDeps = aComponent->reverseDependencies();
+            REQUIRE(std::find(aRevDeps.begin(), aRevDeps.end(), otherComponent) != aRevDeps.end());
+        }
     }
 }

@@ -15,7 +15,10 @@
 // limitations under the License.
 */
 
+#include <ct_lvtmdb_componentobject.h>
+#include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_functionobject.h>
+#include <ct_lvtmdb_packageobject.h>
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
 
 using namespace Codethink::lvtmdb;
@@ -57,6 +60,39 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
     sharedMemDb.withRWLock([&]() {
         for (auto& [from, to] : bindDependencies) {
             FunctionObject::addDependency(from, to);
+
+            // There is no back-mapping from functions to the components in the database, so we need to
+            // inspect all available components searching for the just-added dependency.
+            ComponentObject *fromComponent = nullptr;
+            ComponentObject *toComponent = nullptr;
+            for (auto const& [_, component] : sharedMemDb.components()) {
+                {
+                    auto componentLock = component->readOnlyLock();
+                    for (auto *file : component->files()) {
+                        auto fileLock = file->readOnlyLock();
+                        auto const& globalFuncs = file->globalFunctions();
+                        if (std::find(globalFuncs.cbegin(), globalFuncs.cend(), from) != globalFuncs.cend()) {
+                            fromComponent = component.get();
+                        }
+                        if (std::find(globalFuncs.cbegin(), globalFuncs.cend(), to) != globalFuncs.cend()) {
+                            toComponent = component.get();
+                        }
+                    }
+                }
+                // Propagate dependency to parents
+                if (fromComponent && toComponent && fromComponent != toComponent) {
+                    ComponentObject::addDependency(fromComponent, toComponent);
+
+                    auto fromComponentLock = fromComponent->rwLock();
+                    auto toComponentLock = toComponent->rwLock();
+                    auto fromPackage = fromComponent->package();
+                    auto toPackage = toComponent->package();
+                    if (fromPackage && toPackage && fromPackage != toPackage) {
+                        PackageObject::addDependency(fromPackage, toPackage);
+                    }
+                    break;
+                }
+            }
         }
     });
 }

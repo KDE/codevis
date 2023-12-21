@@ -1,4 +1,4 @@
-// ct_lvtclp_tool.h                                                   -*-C++-*-
+// ct_lvtclp_cpp_tool.h                                                   -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
@@ -47,10 +47,10 @@
 namespace Codethink::lvtclp {
 
 // =======================
-// class Tool
+// class CppTool
 // =======================
 
-class LVTCLP_EXPORT Tool : public QObject {
+class LVTCLP_EXPORT CppTool : public QObject {
     Q_OBJECT
 
   private:
@@ -64,33 +64,33 @@ class LVTCLP_EXPORT Tool : public QObject {
     enum class UseSystemHeaders { e_Yes, e_No, e_Query };
 
     // CREATORS
-    Tool(std::filesystem::path sourcePath,
-         const std::vector<std::filesystem::path>& compileCommandsJsons,
-         const std::filesystem::path& databasePath,
-         unsigned numThreads = 1,
-         const std::vector<std::string>& ignoreList = {},
-         const std::vector<std::filesystem::path>& nonLakosianDirs = {},
-         std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
-         bool printToConsole = false);
+    CppTool(std::filesystem::path sourcePath,
+            const std::vector<std::filesystem::path>& compileCommandsJsons,
+            const std::filesystem::path& databasePath,
+            unsigned numThreads = 1,
+            const std::vector<std::string>& ignoreList = {},
+            const std::vector<std::filesystem::path>& nonLakosianDirs = {},
+            std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
+            bool printToConsole = false);
 
-    Tool(std::filesystem::path sourcePath,
-         const clang::tooling::CompileCommand& compileCommand,
-         const std::filesystem::path& databasePath,
-         const std::vector<std::string>& ignoreList = {},
-         const std::vector<std::filesystem::path>& nonLakosianDirs = {},
-         std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
-         bool printToConsole = false);
+    CppTool(std::filesystem::path sourcePath,
+            const clang::tooling::CompileCommand& compileCommand,
+            const std::filesystem::path& databasePath,
+            const std::vector<std::string>& ignoreList = {},
+            const std::vector<std::filesystem::path>& nonLakosianDirs = {},
+            std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
+            bool printToConsole = false);
 
-    Tool(std::filesystem::path sourcePath,
-         const clang::tooling::CompilationDatabase& db,
-         const std::filesystem::path& databasePath,
-         unsigned numThreads = 1,
-         const std::vector<std::string>& ignoreList = {},
-         const std::vector<std::filesystem::path>& nonLakosianDirs = {},
-         std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
-         bool printToConsole = false);
+    CppTool(std::filesystem::path sourcePath,
+            const clang::tooling::CompilationDatabase& db,
+            const std::filesystem::path& databasePath,
+            unsigned numThreads = 1,
+            const std::vector<std::string>& ignoreList = {},
+            const std::vector<std::filesystem::path>& nonLakosianDirs = {},
+            std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
+            bool printToConsole = false);
 
-    ~Tool() noexcept override;
+    ~CppTool() noexcept override;
 
     // MANIPULATORS
     lvtmdb::ObjectStore& getObjectStore();

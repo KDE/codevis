@@ -18,10 +18,10 @@
 */
 
 #include <ct_lvtclp_compilerutil.h>
-#include <ct_lvtclp_tool.h>
+#include <ct_lvtclp_cpp_tool.h>
 #ifdef CT_ENABLE_FORTRAN_SCANNER
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
-#include <fortran/ct_lvtclp_tool.h>
+#include <fortran/ct_lvtclp_fortran_tool.h>
 #endif
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
@@ -82,7 +82,8 @@ struct CommandLineArgs {
     bool update = false;
     bool physicalOnly = false;
     bool silent = false;
-    Codethink::lvtclp::Tool::UseSystemHeaders useSystemHeaders = Codethink::lvtclp::Tool::UseSystemHeaders::e_Query;
+    Codethink::lvtclp::CppTool::UseSystemHeaders useSystemHeaders =
+        Codethink::lvtclp::CppTool::UseSystemHeaders::e_Query;
 };
 
 enum class CommandLineParseResult {
@@ -263,12 +264,12 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
     }
 
     if (!parser.isSet(useSystemHeaders)) {
-        args.useSystemHeaders = Codethink::lvtclp::Tool::UseSystemHeaders::e_Query;
+        args.useSystemHeaders = Codethink::lvtclp::CppTool::UseSystemHeaders::e_Query;
     } else {
         const QString val = parser.value(useSystemHeaders).toLower();
-        args.useSystemHeaders = val == "yes" ? Codethink::lvtclp::Tool::UseSystemHeaders::e_Yes
-            : val == "no"                    ? Codethink::lvtclp::Tool::UseSystemHeaders::e_No
-                                             : Codethink::lvtclp::Tool::UseSystemHeaders::e_Query;
+        args.useSystemHeaders = val == "yes" ? Codethink::lvtclp::CppTool::UseSystemHeaders::e_Yes
+            : val == "no"                    ? Codethink::lvtclp::CppTool::UseSystemHeaders::e_No
+                                             : Codethink::lvtclp::CppTool::UseSystemHeaders::e_Query;
     }
 
     // physicalOnly
@@ -426,21 +427,21 @@ int main(int argc, char **argv)
     }
 
     auto sharedObjectStore = std::make_shared<Codethink::lvtmdb::ObjectStore>();
-    auto clang_tool = !args.compilationDbPaths.empty() ? std::make_unique<Tool>(args.sourcePath,
-                                                                                args.compilationDbPaths,
-                                                                                args.dbPath,
-                                                                                args.numThreads,
-                                                                                args.ignoreList,
-                                                                                args.nonLakosianDirs,
-                                                                                args.packageMappings,
-                                                                                !args.silent)
-                                                       : std::make_unique<Tool>(args.sourcePath,
-                                                                                compileCommand.value(),
-                                                                                args.dbPath,
-                                                                                args.ignoreList,
-                                                                                args.nonLakosianDirs,
-                                                                                args.packageMappings,
-                                                                                !args.silent);
+    auto clang_tool = !args.compilationDbPaths.empty() ? std::make_unique<CppTool>(args.sourcePath,
+                                                                                   args.compilationDbPaths,
+                                                                                   args.dbPath,
+                                                                                   args.numThreads,
+                                                                                   args.ignoreList,
+                                                                                   args.nonLakosianDirs,
+                                                                                   args.packageMappings,
+                                                                                   !args.silent)
+                                                       : std::make_unique<CppTool>(args.sourcePath,
+                                                                                   compileCommand.value(),
+                                                                                   args.dbPath,
+                                                                                   args.ignoreList,
+                                                                                   args.nonLakosianDirs,
+                                                                                   args.packageMappings,
+                                                                                   !args.silent);
     clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 

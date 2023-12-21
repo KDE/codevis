@@ -23,8 +23,8 @@
 
 #include <ct_lvtmdb_soci_writer.h>
 
+#include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtclp_testutil.h>
-#include <ct_lvtclp_tool.h>
 
 #include <ct_lvtshr_graphenums.h>
 #include <ct_lvtshr_uniqueid.h>
@@ -393,7 +393,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "Lakosian nodes test")
 
     auto tmpDir = TmpDir{"lakosian_nodes_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    Tool tool(topLevel, cmds, dbPath);
+    CppTool tool(topLevel, cmds, dbPath);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -419,7 +419,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "find entities")
 
     auto tmpDir = TmpDir{"find_entities_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    Tool tool(topLevel, cmds, dbPath);
+    CppTool tool(topLevel, cmds, dbPath);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -461,7 +461,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "retrieve child structures")
                                    topLevel);
     auto tmpDir = TmpDir{"find_entities_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    Tool tool(topLevel, cmds, dbPath);
+    CppTool tool(topLevel, cmds, dbPath);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -497,7 +497,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "parent hierarchy")
 
     auto tmpDir = TmpDir{"parent_hierarchy_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    Tool tool(topLevel, cmds, dbPath);
+    CppTool tool(topLevel, cmds, dbPath);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -546,7 +546,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "changing node storage")
 
     auto tmpDir = TmpDir{"changing_node_storage_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    Tool tool(topLevel, cmds, dbPath);
+    CppTool tool(topLevel, cmds, dbPath);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;

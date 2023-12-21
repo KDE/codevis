@@ -51,7 +51,7 @@ AddTargetLibrary(
         ct_lvtclp_logicalpostprocessutil.cpp
         ct_lvtclp_physicaldepscanner.cpp
         ct_lvtclp_staticfnhandler.cpp
-        ct_lvtclp_tool.cpp
+        ct_lvtclp_cpp_tool.cpp
         ct_lvtclp_toolexecutor.cpp
         ct_lvtclp_visitlog.cpp
     HEADERS
@@ -69,7 +69,7 @@ AddTargetLibrary(
         ct_lvtclp_toolexecutor.h
         ct_lvtclp_visitlog.h
     QT_HEADERS
-        ct_lvtclp_tool.h
+        ct_lvtclp_cpp_tool.h
     LIBRARIES
         Codethink::lvtmdb
         Codethink::lvtprj
@@ -110,8 +110,6 @@ endfunction()
 
 if (ENABLE_FORTRAN_SCANNER)
     set(CTFortranLibsIfAvailable "lvtclp_fortran")
-else()
-    set(CTFortranLibsIfAvailable "")
 endif()
 
 add_lvtclp_exec(
@@ -214,11 +212,11 @@ if (COMPILE_TESTS)
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_tool
+        NAME test_ct_lvtclp_cpp_tool
         SOURCES
-            ct_lvtclp_tool.t.cpp
+            ct_lvtclp_cpp_tool.t.cpp
     )
-    set_property(TEST test_ct_lvtclp_tool PROPERTY ENVIRONMENT "TEST_PRJ_PATH=${CMAKE_CURRENT_SOURCE_DIR}/systemtests/")
+    set_property(TEST test_ct_lvtclp_cpp_tool PROPERTY ENVIRONMENT "TEST_PRJ_PATH=${CMAKE_CURRENT_SOURCE_DIR}/systemtests/")
 
     add_lvtclp_test(
         NAME test_ct_lvtclp_logicalpostprocessutil
@@ -323,12 +321,12 @@ if (ENABLE_FORTRAN_SCANNER)
             SOURCES
             fortran/ct_lvtclp_logicalscanner.cpp
             fortran/ct_lvtclp_physicalscanner.cpp
-            fortran/ct_lvtclp_tool.cpp
+            fortran/ct_lvtclp_fortran_tool.cpp
             fortran/ct_lvtclp_fortran_c_interop.cpp
             HEADERS
             fortran/ct_lvtclp_logicalscanner.h
             fortran/ct_lvtclp_physicalscanner.h
-            fortran/ct_lvtclp_tool.h
+            fortran/ct_lvtclp_fortran_tool.h
             fortran/ct_lvtclp_fortran_c_interop.h
             LIBRARIES
             Codethink::lvtmdb

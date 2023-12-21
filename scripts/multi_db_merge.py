@@ -48,9 +48,9 @@ if __name__ == "__main__":
         print("Point the source path to a directory containing reall")
         validate = False
 
-    found = distutils.spawn.find_executable("create_codebase_db")
+    found = distutils.spawn.find_executable("codevis_create_codebase_db")
     if not found:
-        print("Please set your PATH environment to a place that has create_codebase_db")
+        print("Please set your PATH environment to a place that has codevis_create_codebase_db")
         validate = False
 
     if not validate:
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     # Script Logic Starts Here
     ############################
 
-    cmd_str = f"create_codebase_db --query-system-headers"
+    cmd_str = f"codevis_create_codebase_db --query-system-headers"
     result = subprocess.run(cmd_str, shell=True)
     use_system_headers = "yes" if result.returncode == 1 else "no"
 
@@ -160,7 +160,19 @@ if __name__ == "__main__":
         single_names.sort()
         multi_names.sort()
         if (single_names != multi_names):
+            single_names_set = set(single_names)
+            multi_names_set = set(multi_names)
+
+            not_in_multi_db = single_names_set.difference(multi_names_set)
+            not_in_single_db = multi_names_set.difference(single_names_set)
+
+            print("\n")
+            print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
             print(f"FAIL: {query}")
+            print(f"Entities not in the single database:\n {not_in_single_db}")
+            print(f"Entities not in the joined database:\n {not_in_multi_db}")
+            print(f"Single database:\n {single_names}")
+            print(f"Joined database:\n {multi_names}")
             has_error = True
         else:
             print(f"OK: {query} ")

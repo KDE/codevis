@@ -68,6 +68,7 @@ class LVTMDB_EXPORT FileObject : public DatabaseObject {
 
   public:
     // CREATORS
+    // TODO: Component already has "package", remove this from the constructor.
     FileObject(std::string qualifiedName,
                std::string name,
                bool isHeader,

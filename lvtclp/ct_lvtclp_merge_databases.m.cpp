@@ -172,25 +172,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    Codethink::lvtmdb::ObjectStore inMemoryDb;
-    Codethink::lvtmdb::SociReader dbReader;
-    Codethink::lvtmdb::SociWriter dbWriter;
-
     const int database_size = args.databases.count();
     int idx = 0;
-
-    for (const QString& db : std::as_const(args.databases)) {
-        auto loaded = inMemoryDb.readFromDatabase(dbReader, db.toStdString());
-        if (loaded.has_error()) {
-            std::cout << "Error opening database " << loaded.error().what << "\n";
-            return EXIT_FAILURE;
-        }
-        if (!args.silent) {
-            idx += 1;
-
-            std::cout << "[" << idx << " of " << database_size << ": Loading data from" << db.toStdString() << "\n";
-        }
-    }
 
     if (args.force) {
         if (std::filesystem::exists(outputDbPath)) {
@@ -198,12 +181,30 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!dbWriter.createOrOpen(outputDbPath.string())) {
-        std::cerr << "Could not open resulting database\n";
-        return EXIT_FAILURE;
-    }
+    for (const QString& db : std::as_const(args.databases)) {
+        Codethink::lvtmdb::SociReader dbReader;
+        Codethink::lvtmdb::SociWriter dbWriter;
 
-    inMemoryDb.writeToDatabase(dbWriter);
+        Codethink::lvtmdb::ObjectStore inMemoryDb;
+
+        auto loaded = inMemoryDb.readFromDatabase(dbReader, db.toStdString());
+        if (loaded.has_error()) {
+            std::cout << "Error opening database " << loaded.error().what << "\n";
+            return EXIT_FAILURE;
+        }
+
+        if (!args.silent) {
+            idx += 1;
+            std::cout << "[" << idx << " of " << database_size << ": Loading data from" << db.toStdString() << "\n";
+        }
+
+        if (!dbWriter.createOrOpen(outputDbPath.string())) {
+            std::cerr << "Could not open resulting database\n";
+            return EXIT_FAILURE;
+        }
+
+        inMemoryDb.writeToDatabase(dbWriter);
+    }
 
     std::cout << "Database file saved correctly in " << outputDbPath << "\n";
     return EXIT_SUCCESS;

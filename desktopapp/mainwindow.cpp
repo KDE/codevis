@@ -192,8 +192,6 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     configurePluginDocks();
 
-    loadSettings();
-
 #ifdef Q_OS_MACOS
     setDocumentMode(true);
 #endif
@@ -350,7 +348,6 @@ void MainWindow::setupActions()
 
 void MainWindow::closeEvent(QCloseEvent *ev)
 {
-    saveSettings();
     if (d_projectFile.isOpen() && d_projectFile.isDirty()) {
         const auto choice = QMessageBox::warning(this,
                                                  tr("Save changes?"),
@@ -747,31 +744,6 @@ void MainWindow::selectLeftSplitView() const
 void MainWindow::selectRightSplitView() const
 {
     ui.mainSplitter->setCurrentIndex(1);
-}
-
-void MainWindow::loadSettings()
-{
-    QSettings s;
-    s.beginGroup("Application");
-    bool isFirstRun = s.value("firstRun", true).toBool();
-
-    if (isFirstRun) {
-        tabifyDockWidget(ui.fieldsDock, ui.methodsDock);
-        tabifyDockWidget(ui.fieldsDock, ui.usesInTheImplDock);
-        tabifyDockWidget(ui.fieldsDock, ui.usesInTheInterfaceDock);
-        return;
-    }
-    restoreGeometry(s.value("applicationGeometry").toByteArray());
-    restoreState(s.value("applicationState").toByteArray());
-}
-
-void MainWindow::saveSettings()
-{
-    QSettings s;
-    s.beginGroup("Application");
-    s.setValue("firstRun", false);
-    s.setValue("applicationGeometry", saveGeometry());
-    s.setValue("applicationState", saveState());
 }
 
 void MainWindow::setCurrentGraphFromString(Codethink::lvtmdl::NodeType::Enum type, const QString& qualifiedName)

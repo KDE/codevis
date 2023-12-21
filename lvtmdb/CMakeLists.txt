@@ -66,4 +66,8 @@ if (COMPILE_TESTS)
     add_executable(test_lvtmdb_soci_helper ct_lvtmdb_soci_helper.t.cpp)
     target_link_libraries(test_lvtmdb_soci_helper Codethink::lvtprj lvttst)
     add_test(NAME test_lvtmdb_soci_helper COMMAND test_lvtmdb_soci_helper)
+
+    add_executable(test_lvtmdb_merge_multiple_db ct_lvtmdb_merge_multiple_db.t.cpp)
+    target_link_libraries(test_lvtmdb_merge_multiple_db Codethink::lvtprj lvttst)
+    add_test(NAME test_lvtmdb_merge_multiple_db COMMAND test_lvtmdb_merge_multiple_db)
 endif()

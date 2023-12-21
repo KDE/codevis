@@ -773,7 +773,7 @@ auto getFieldsById<FreeFunctionNode>(DatabaseHandler& dbHandler, RecordNumberTyp
 }
 
 template<typename LDR_TYPE>
-LakosianNode *NodeStorage::fetchFromDBById(const lvtshr::UniqueId& uid)
+LakosianNode *NodeStorage::fetchFromDBById(const Codethink::lvtshr::UniqueId& uid)
 {
     auto dao = getFieldsById<LDR_TYPE>(*d->dbHandler, uid.recordNumber());
     if (dao.id == -1) {

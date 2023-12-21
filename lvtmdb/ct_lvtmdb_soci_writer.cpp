@@ -234,6 +234,9 @@ get_or_add_thing(DbObject *dbobj, soci::session& db, const std::string& table_na
 void exportRepository(RepositoryObject *obj, soci::session& db)
 {
     auto lock = obj->readOnlyLock();
+    if (obj->qualifiedName().empty()) {
+        return;
+    }
 
     if (query_id_from_qual_name(db, "source_repository", obj->qualifiedName()).has_value()) {
         return;

@@ -19,20 +19,17 @@
 
 #include <mainwindow.h>
 
-#include <QDirIterator>
-#include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QModelIndex>
 #include <QPushButton>
-#include <QSettings>
 #include <QStandardPaths>
 #include <QStatusBar>
 
-#include <ct_lvtmdl_circular_relationships_model.h>
 #include <ct_lvtmdl_errorsmodel.h>
 #include <ct_lvtmdl_fieldstablemodel.h>
 #include <ct_lvtmdl_methodstablemodel.h>
@@ -61,8 +58,6 @@
 #include <ct_lvtqtw_parse_codebase.h>
 #include <ct_lvtqtw_splitterview.h>
 #include <ct_lvtqtw_tabwidget.h>
-
-#include <ct_lvtqtc_lakosentity.h>
 
 #include <ct_lvtcgn_app_adapter.h>
 

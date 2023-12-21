@@ -778,7 +778,7 @@ void SociWriter::writeFrom(const ObjectStore& store)
     assert(!d_path.empty());
     assert(d_db.is_connected());
 
-    std::cout << "Starting to write to the database\n";
+    std::cout << "Starting to write to the database at " << d_path << "\n";
     soci::transaction tr(d_db);
 
     // TODO: To optimize this call, we need to create the queries outside of the

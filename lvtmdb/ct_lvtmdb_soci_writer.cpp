@@ -471,8 +471,6 @@ void exportPkgRelations(PackageObject *pkg, soci::session& db)
         }
 
         db << "insert into dependencies(source_id, target_id) values (:s, :t)", soci::use(this_id), soci::use(dep_id);
-
-        std::cout << "Adding a connection between" << this_id << " and " << dep_id << "\n";
     }
 }
 
@@ -755,6 +753,8 @@ bool SociWriter::updateDbSchema(const std::string& path, const std::string& sche
 bool SociWriter::createOrOpen(const std::string& path, const std::string& schemaPath)
 {
     const bool create_db = path == ":memory:" || !std::filesystem::exists(path);
+
+    std::cout << "Trying to open database at " << path << "\n";
 
     d_db.open(*soci::factory_sqlite3(), path);
     if (create_db) {

@@ -20,8 +20,8 @@
 #include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_objectstore.h>
 
+#include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtclp_testutil.h>
-#include <ct_lvtclp_tool.h>
 
 #include <filesystem>
 #include <initializer_list>
@@ -324,7 +324,7 @@ TEST_CASE_METHOD(PhysicalFileUpdateManagerFixture, "File update manager physical
                                    topLevel);
 
     INFO("Using top level tmp path = '" << topLevel.string() << "'");
-    Tool tool(topLevel, cmds, ":memory:");
+    CppTool tool(topLevel, cmds, ":memory:");
     REQUIRE(tool.runFull());
 
     ObjectStore& session = tool.getObjectStore();

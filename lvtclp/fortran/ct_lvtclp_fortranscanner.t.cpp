@@ -16,14 +16,14 @@
 */
 
 #include <catch2-local-includes.h>
+#include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtclp_logicaldepscanner.h>
 #include <ct_lvtclp_testutil.h>
-#include <ct_lvtclp_tool.h>
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
-#include <fortran/ct_lvtclp_tool.h>
+#include <fortran/ct_lvtclp_fortran_tool.h>
 #include <test-project-paths.h>
 
 #include <memory>
@@ -177,7 +177,7 @@ TEST_CASE("Mixed fortran and C project")
                                   "placeholder",
                                   {"-I" + PREFIX + "/mixedprj/", "-std=c++17"},
                                   PREFIX};
-    auto cTool = Tool(
+    auto cTool = CppTool(
         /*sourcePath=*/PREFIX,
         /*db=*/staticCompilationDb,
         /*databasePath=*/"unused");

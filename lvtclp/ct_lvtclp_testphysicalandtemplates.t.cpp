@@ -23,8 +23,8 @@
 #include <ct_lvtmdb_packageobject.h>
 #include <ct_lvtmdb_typeobject.h>
 
+#include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtclp_testutil.h>
-#include <ct_lvtclp_tool.h>
 
 #include <filesystem>
 
@@ -295,7 +295,7 @@ TEST_CASE_METHOD(PhysicalAndTemplatesFixture, "Physical and Templates")
                                    {"-Igroups/bsl/bslma", "-Igroups/foo/foobar"},
                                    topLevel);
 
-    Tool tool(topLevel, cmds, ":memory:");
+    CppTool tool(topLevel, cmds, ":memory:");
     REQUIRE(tool.runFull());
     ObjectStore& session = tool.getObjectStore();
     testFilesExist(session);
@@ -454,7 +454,7 @@ TEST_CASE_METHOD(NonLakosianFixture, "Non-lakosian extra levels of hierarchy")
         {"-Ithirdparty"},
         d_topLevel);
 
-    Tool tool(d_topLevel, cmds, ":memory:");
+    CppTool tool(d_topLevel, cmds, ":memory:");
     REQUIRE(tool.runFull());
     ObjectStore& session = tool.getObjectStore();
 

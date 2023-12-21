@@ -1,4 +1,4 @@
-// ct_lvtclp_tool.cpp                                                 -*-C++-*-
+// ct_lvtclp_cpp_tool.cpp                                                 -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
@@ -17,7 +17,7 @@
 // limitations under the License.
 */
 
-#include <ct_lvtclp_tool.h>
+#include <ct_lvtclp_cpp_tool.h>
 
 #include <ct_lvtclp_clputil.h>
 #include <ct_lvtclp_compilerutil.h>
@@ -44,7 +44,7 @@
 
 #include <QDebug>
 
-Q_LOGGING_CATEGORY(LogTool, "log.tool")
+Q_LOGGING_CATEGORY(LogTool, "log.cpp_tool")
 
 namespace {
 
@@ -189,15 +189,15 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
     }
 
     // MANIPULATORS
-    void setup(Codethink::lvtclp::Tool::UseSystemHeaders useSystemHeaders, bool printToConsole)
+    void setup(Codethink::lvtclp::CppTool::UseSystemHeaders useSystemHeaders, bool printToConsole)
     {
         using Codethink::lvtclp::CompilerUtil;
         std::vector<std::string> sysIncludes;
 
         std::optional<std::string> bundledHeaders = CompilerUtil::findBundledHeaders(printToConsole);
         if (!bundledHeaders) {
-            const bool searchForHeaders = useSystemHeaders == Codethink::lvtclp::Tool::UseSystemHeaders::e_Yes
-                || ((useSystemHeaders == Codethink::lvtclp::Tool::UseSystemHeaders::e_Query)
+            const bool searchForHeaders = useSystemHeaders == Codethink::lvtclp::CppTool::UseSystemHeaders::e_Yes
+                || ((useSystemHeaders == Codethink::lvtclp::CppTool::UseSystemHeaders::e_Query)
                     && CompilerUtil::weNeedSystemHeaders());
 
             if (searchForHeaders) {
@@ -367,7 +367,7 @@ class SubsetCompilationDatabase : public LvtCompilationDatabaseImpl {
 
 namespace Codethink::lvtclp {
 
-struct Tool::Private {
+struct CppTool::Private {
     std::filesystem::path sourcePath;
     std::optional<clang::tooling::CompileCommand> compileCommand;
     std::function<void(const std::string&, long)> messageCallback;
@@ -457,7 +457,7 @@ struct Tool::Private {
                        });
     }
 
-    Private(Tool *tool,
+    Private(CppTool *tool,
             std::filesystem::path inSourcePath,
             std::vector<std::filesystem::path> inCompileCommandsJsons,
             std::filesystem::path inDatabasePath,
@@ -480,7 +480,7 @@ struct Tool::Private {
         setNonLakosianDirs(nonLakosians);
     }
 
-    Private(Tool *tool,
+    Private(CppTool *tool,
             std::filesystem::path inSourcePath,
             clang::tooling::CompileCommand compileCommand,
             std::filesystem::path inDatabasePath,
@@ -502,7 +502,7 @@ struct Tool::Private {
         setNonLakosianDirs(nonLakosians);
     }
 
-    Private(Tool *tool,
+    Private(CppTool *tool,
             std::filesystem::path inSourcePath,
             const std::vector<clang::tooling::CompileCommand>& compileCommands,
             std::filesystem::path inDatabasePath,
@@ -526,83 +526,83 @@ struct Tool::Private {
     }
 };
 
-Tool::Tool(std::filesystem::path sourcePath,
-           const std::vector<std::filesystem::path>& compileCommandsJsons,
-           const std::filesystem::path& databasePath,
-           unsigned numThreads,
-           const std::vector<std::string>& ignoreList,
-           const std::vector<std::filesystem::path>& nonLakosianDirs,
-           std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-           bool printToConsole):
-    d(std::make_unique<Tool::Private>(this,
-                                      std::move(sourcePath),
-                                      compileCommandsJsons,
-                                      databasePath,
-                                      numThreads,
-                                      ignoreList,
-                                      nonLakosianDirs,
-                                      std::move(thirdPartyDirs),
-                                      printToConsole))
+CppTool::CppTool(std::filesystem::path sourcePath,
+                 const std::vector<std::filesystem::path>& compileCommandsJsons,
+                 const std::filesystem::path& databasePath,
+                 unsigned numThreads,
+                 const std::vector<std::string>& ignoreList,
+                 const std::vector<std::filesystem::path>& nonLakosianDirs,
+                 std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 bool printToConsole):
+    d(std::make_unique<CppTool::Private>(this,
+                                         std::move(sourcePath),
+                                         compileCommandsJsons,
+                                         databasePath,
+                                         numThreads,
+                                         ignoreList,
+                                         nonLakosianDirs,
+                                         std::move(thirdPartyDirs),
+                                         printToConsole))
 {
 }
 
-Tool::Tool(std::filesystem::path sourcePath,
-           const clang::tooling::CompileCommand& compileCommand,
-           const std::filesystem::path& databasePath,
-           const std::vector<std::string>& ignoreList,
-           const std::vector<std::filesystem::path>& nonLakosianDirs,
-           std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-           bool printToConsole):
-    d(std::make_unique<Tool::Private>(this,
-                                      std::move(sourcePath),
-                                      compileCommand,
-                                      databasePath,
-                                      ignoreList,
-                                      nonLakosianDirs,
-                                      std::move(thirdPartyDirs),
-                                      printToConsole))
+CppTool::CppTool(std::filesystem::path sourcePath,
+                 const clang::tooling::CompileCommand& compileCommand,
+                 const std::filesystem::path& databasePath,
+                 const std::vector<std::string>& ignoreList,
+                 const std::vector<std::filesystem::path>& nonLakosianDirs,
+                 std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 bool printToConsole):
+    d(std::make_unique<CppTool::Private>(this,
+                                         std::move(sourcePath),
+                                         compileCommand,
+                                         databasePath,
+                                         ignoreList,
+                                         nonLakosianDirs,
+                                         std::move(thirdPartyDirs),
+                                         printToConsole))
 {
 }
 
-Tool::Tool(std::filesystem::path sourcePath,
-           const clang::tooling::CompilationDatabase& db,
-           const std::filesystem::path& databasePath,
-           unsigned numThreads,
-           const std::vector<std::string>& ignoreList,
-           const std::vector<std::filesystem::path>& nonLakosianDirs,
-           std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-           bool printToConsole):
-    d(std::make_unique<Tool::Private>(this,
-                                      std::move(sourcePath),
-                                      db.getAllCompileCommands(),
-                                      databasePath,
-                                      numThreads,
-                                      ignoreList,
-                                      nonLakosianDirs,
-                                      std::move(thirdPartyDirs),
-                                      printToConsole))
+CppTool::CppTool(std::filesystem::path sourcePath,
+                 const clang::tooling::CompilationDatabase& db,
+                 const std::filesystem::path& databasePath,
+                 unsigned numThreads,
+                 const std::vector<std::string>& ignoreList,
+                 const std::vector<std::filesystem::path>& nonLakosianDirs,
+                 std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 bool printToConsole):
+    d(std::make_unique<CppTool::Private>(this,
+                                         std::move(sourcePath),
+                                         db.getAllCompileCommands(),
+                                         databasePath,
+                                         numThreads,
+                                         ignoreList,
+                                         nonLakosianDirs,
+                                         std::move(thirdPartyDirs),
+                                         printToConsole))
 {
     d->compilationDb->setup(UseSystemHeaders::e_Query, !printToConsole);
 }
 
-Tool::~Tool() noexcept = default;
+CppTool::~CppTool() noexcept = default;
 
-void Tool::setSharedMemDb(std::shared_ptr<lvtmdb::ObjectStore> const& sharedMemDb)
+void CppTool::setSharedMemDb(std::shared_ptr<lvtmdb::ObjectStore> const& sharedMemDb)
 {
     d->sharedMemDb = sharedMemDb;
 }
 
-lvtmdb::ObjectStore& Tool::getObjectStore()
+lvtmdb::ObjectStore& CppTool::getObjectStore()
 {
     return d->memDb();
 }
 
-void Tool::setUseSystemHeaders(UseSystemHeaders value)
+void CppTool::setUseSystemHeaders(UseSystemHeaders value)
 {
     d->useSystemHeaders = value;
 }
 
-bool Tool::ensureSetup()
+bool CppTool::ensureSetup()
 {
     if (!processCompilationDatabase()) {
         return false;
@@ -612,7 +612,7 @@ bool Tool::ensureSetup()
     return true;
 }
 
-bool Tool::processCompilationDatabase()
+bool CppTool::processCompilationDatabase()
 {
     if (d->compilationDb) {
         return true;
@@ -658,7 +658,7 @@ bool Tool::processCompilationDatabase()
     return true;
 }
 
-void Tool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, bool doIncremental)
+void CppTool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, bool doIncremental)
 // Processes what changes the filesystem scanner found, populating
 // d->incrementalCdb with a code database containing only the files we need
 // to re-parse later
@@ -743,7 +743,7 @@ void Tool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, boo
     d->incrementalCdb.emplace(*d->compilationDb, newPaths, d->compilationDb->commonParent());
 }
 
-bool Tool::findPhysicalEntities(bool doIncremental)
+bool CppTool::findPhysicalEntities(bool doIncremental)
 {
     if (!ensureSetup()) {
         return false;
@@ -820,12 +820,12 @@ bool Tool::findPhysicalEntities(bool doIncremental)
     return true;
 }
 
-void Tool::setPrintToConsole(bool b)
+void CppTool::setPrintToConsole(bool b)
 {
     d->printToConsole = b;
 }
 
-bool Tool::runPhysical(bool skipScan)
+bool CppTool::runPhysical(bool skipScan)
 {
     if (!ensureSetup()) {
         return false;
@@ -904,7 +904,7 @@ bool Tool::runPhysical(bool skipScan)
     return !err;
 }
 
-bool Tool::runFull(bool skipPhysical)
+bool CppTool::runFull(bool skipPhysical)
 {
     if (!ensureSetup()) {
         return false;
@@ -1012,22 +1012,22 @@ bool Tool::runFull(bool skipPhysical)
     return !err;
 }
 
-bool Tool::lastRunMadeChanges() const
+bool CppTool::lastRunMadeChanges() const
 {
     return d->lastRunMadeChanges;
 }
 
-void Tool::setHeaderLocationCallback(HeaderCallbacks::HeaderLocationCallback_f const& headerLocationCallback)
+void CppTool::setHeaderLocationCallback(HeaderCallbacks::HeaderLocationCallback_f const& headerLocationCallback)
 {
     d->headerLocationCallback = headerLocationCallback;
 }
 
-void Tool::setHandleCppCommentsCallback(HandleCppCommentsCallback_f const& handleCppCommentsCallback)
+void CppTool::setHandleCppCommentsCallback(HandleCppCommentsCallback_f const& handleCppCommentsCallback)
 {
     d->handleCppCommentsCallback = handleCppCommentsCallback;
 }
 
-void Tool::cancelRun()
+void CppTool::cancelRun()
 {
     std::unique_lock<std::mutex> lock(d->executorMutex);
     d->executorCancelled = true;
@@ -1039,17 +1039,17 @@ void Tool::cancelRun()
     d->toolExecutor->cancelRun();
 }
 
-void Tool::setShowDatabaseErrors(bool value)
+void CppTool::setShowDatabaseErrors(bool value)
 {
     d->showDatabaseErrors = value;
 }
 
-bool Tool::finalizingThreads() const
+bool CppTool::finalizingThreads() const
 {
     return d->executorCancelled;
 }
 
-void Tool::messageCallback(const std::string& message, long threadId)
+void CppTool::messageCallback(const std::string& message, long threadId)
 {
     if (d->printToConsole) {
         qDebug() << message;

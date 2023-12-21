@@ -171,8 +171,6 @@ if __name__ == "__main__":
             print(f"FAIL: {query}")
             print(f"Entities not in the single database:\n {not_in_single_db}")
             print(f"Entities not in the joined database:\n {not_in_multi_db}")
-            print(f"Single database:\n {single_names}")
-            print(f"Joined database:\n {multi_names}")
             has_error = True
         else:
             print(f"OK: {query} ")

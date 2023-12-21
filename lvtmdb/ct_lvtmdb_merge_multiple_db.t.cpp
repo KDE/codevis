@@ -35,11 +35,11 @@ using namespace Codethink::lvtmdb;
 
 namespace {
 const fs::path project_path = fs::temp_directory_path();
-const auto tmpDBPathA = project_path / "database_1.db";
-const auto tmpDbPathB = project_path / "database_2.db";
-const auto tmpDbPathC = project_path / "database_3.db";
-const auto tmpDbPathD = project_path / "database_4.db";
-const auto resulting_db = project_path / "resulting.db";
+const auto tmpDBPathA = (project_path / "database_1.db").string();
+const auto tmpDbPathB = (project_path / "database_2.db").string();
+const auto tmpDbPathC = (project_path / "database_3.db").string();
+const auto tmpDbPathD = (project_path / "database_4.db").string();
+const auto resulting_db = (project_path / "resulting.db").string();
 } // namespace
 
 void remove_temporary_files()

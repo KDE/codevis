@@ -39,18 +39,16 @@ CREATE TABLE IF NOT EXISTS "source_package" (
 	CONSTRAINT "fk_source_package_source_repository" FOREIGN KEY("source_repository_id") REFERENCES "source_repository"("id") deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "class_hierarchy" (
-	"id"	integer,
 	"target_id"	bigint,
 	"source_id"	bigint,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("target_id", "source_id"),
 	CONSTRAINT "fk_class_hierarchy_target" FOREIGN KEY("target_id") REFERENCES "class_declaration"("id") deferrable initially deferred,
 	CONSTRAINT "fk_class_hierarchy_source" FOREIGN KEY("source_id") REFERENCES "class_declaration"("id") deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "includes" (
-	"id"	integer,
 	"target_id"	bigint,
 	"source_id"	bigint,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("target_id", "source_id"),
 	CONSTRAINT "fk_includes_target" FOREIGN KEY("target_id") REFERENCES "source_file"("id") deferrable initially deferred,
 	CONSTRAINT "fk_includes_source" FOREIGN KEY("source_id") REFERENCES "source_file"("id") deferrable initially deferred
 );
@@ -99,11 +97,10 @@ CREATE TABLE IF NOT EXISTS "source_repository" (
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 CREATE TABLE IF NOT EXISTS "component_relation" (
-	"id"	integer,
 	"target_id"	bigint,
 	"source_id"	bigint,
 	CONSTRAINT "fk_component_relation_target" FOREIGN KEY("target_id") REFERENCES "source_component"("id") deferrable initially deferred,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("target_id", "source_id"),
 	CONSTRAINT "fk_component_relation_source" FOREIGN KEY("source_id") REFERENCES "source_component"("id") deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "method_declaration" (
@@ -156,34 +153,30 @@ CREATE TABLE IF NOT EXISTS "namespace_declaration" (
 	CONSTRAINT "fk_namespace_declaration_parent" FOREIGN KEY("parent_id") REFERENCES "namespace_declaration"("id") deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "uses_in_the_interface" (
-	"id"	integer,
 	"target_id"	bigint,
 	"source_id"	bigint,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("target_id", "source_id"),
 	CONSTRAINT "fk_uses_in_the_interface_target" FOREIGN KEY("target_id") REFERENCES "class_declaration"("id") deferrable initially deferred,
 	CONSTRAINT "fk_uses_in_the_interface_source" FOREIGN KEY("source_id") REFERENCES "class_declaration"("id") deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "dependencies" (
-	"id"	integer,
 	"target_id"	bigint,
 	"source_id"	bigint,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("source_id", "target_id"),
 	CONSTRAINT "fk_dependencies_target" FOREIGN KEY("target_id") REFERENCES "source_package"("id") deferrable initially deferred,
 	CONSTRAINT "fk_dependencies_source" FOREIGN KEY("source_id") REFERENCES "source_package"("id") deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "uses_in_the_implementation" (
-	"id"	integer,
 	"target_id"	bigint,
 	"source_id"	bigint,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("target_id", "source_id"),
 	CONSTRAINT "fk_uses_in_the_implementation_target" FOREIGN KEY("target_id") REFERENCES "class_declaration"("id") deferrable initially deferred,
 	CONSTRAINT "fk_uses_in_the_implementation_source" FOREIGN KEY("source_id") REFERENCES "class_declaration"("id") deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "function_calls" (
-    "id"	integer,
     "caller_id"	bigint,
     "callee_id"	bigint,
-    PRIMARY KEY("id" AUTOINCREMENT),
+    PRIMARY KEY("caller_id", "callee_id"),
     CONSTRAINT "fk_function_calls_caller" FOREIGN KEY("caller_id") REFERENCES "function_declaration"("id") deferrable initially deferred,
     CONSTRAINT "fk_function_calls_cellee" FOREIGN KEY("callee_id") REFERENCES "function_declaration"("id") deferrable initially deferred
 );
@@ -223,10 +216,9 @@ CREATE TABLE IF NOT EXISTS "field_type" (
 	CONSTRAINT "fk_field_type_key2" FOREIGN KEY("field_id") REFERENCES "field_declaration"("id") on delete cascade deferrable initially deferred
 );
 CREATE TABLE IF NOT EXISTS "global_function_source_file" (
-    "id"	integer,
     "source_file_id"	bigint,
     "function_id"	bigint,
-    PRIMARY KEY("id" AUTOINCREMENT),
+    PRIMARY KEY("source_file_id", "function_id"),
     CONSTRAINT "fk_global_function_source_file_source_id" FOREIGN KEY("source_file_id") REFERENCES "source_file"("id") deferrable initially deferred,
     CONSTRAINT "fk_global_function_source_file_function_id" FOREIGN KEY("function_id") REFERENCES "function_declaration"("id") deferrable initially deferred
 );
@@ -334,7 +326,7 @@ CREATE INDEX IF NOT EXISTS "variable_declaration_qualified_name" ON "variable_de
 	"qualified_name"
 );
 CREATE INDEX IF NOT EXISTS "global_function_source_file_id" ON "global_function_source_file" (
-    "id"
+    "source_file_id"
 );
 
 CREATE TABLE IF NOT EXISTS "cad_notes" (

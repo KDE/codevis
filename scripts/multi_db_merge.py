@@ -10,6 +10,81 @@ import sqlite3
 from pathlib import Path
 import json
 
+##################################
+# Compare both databases
+##################################
+def compare_database_results():
+    multi_db_sqlite = sqlite3.connect("multi.db");
+    single_db_sqlite = sqlite3.connect("single.db");
+
+    multi_cur = multi_db_sqlite.cursor()
+    single_cur = single_db_sqlite.cursor()
+
+    queries = [
+        "SELECT qualified_name FROM class_declaration",
+        "SELECT qualified_name FROM field_declaration",
+        "SELECT qualified_name FROM function_declaration",
+        "SELECT qualified_name FROM method_declaration",
+        "SELECT qualified_name FROM namespace_declaration",
+        "SELECT qualified_name FROM source_component",
+        "SELECT qualified_name FROM source_file",
+        "SELECT qualified_name FROM source_package",
+        "SELECT qualified_name FROM source_repository",
+        "SELECT qualified_name FROM variable_declaration",
+    ]
+
+    has_error = False
+    for query in queries:
+        single_names = []
+        multi_names = []
+        for row in multi_cur.execute(query):
+            multi_names.append(row[0])
+        for row in single_cur.execute(query):
+            single_names.append(row[0])
+
+        single_names.sort()
+        multi_names.sort()
+        if (single_names != multi_names):
+            single_names_set = set(single_names)
+            multi_names_set = set(multi_names)
+
+            not_in_multi_db = single_names_set.difference(multi_names_set)
+            not_in_single_db = multi_names_set.difference(single_names_set)
+
+            print("\n")
+            print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+            print(f"FAIL: {query}")
+            print(f"Entities not in the single database:\n {not_in_single_db}")
+            print(f"Entities not in the joined database:\n {not_in_multi_db}")
+            has_error = True
+        else:
+            print(f"OK: {query} ")
+
+    if has_error:
+        sys.exit(1)
+
+############################################################################
+# Delete the possible stray files on the disk, to re-generate them.
+############################################################################
+def clean_temp_files():
+    if os.path.exists("single.db"):
+        os.remove("single.db")
+    if os.path.exists("multi.db"):
+        os.remove("multi.db")
+
+############################################################################
+# Generate the single database by re-scanning the entire codebase
+# using our multithreaded code
+############################################################################
+def parse_with_single_db(source_path, compile_commands_path, use_system_headers):
+    cmd_str = f"codevis_create_codebase_db --source-path {source_path} --output single.db --compile-commands-json {compile_commands_path} --use-system-headers {use_system_headers} --replace --silent"
+    result = subprocess.run(cmd_str, shell=True)
+    if (result.returncode != 0):
+        print(f"Trying to save database file {output}")
+        print("Error running the script, see output")
+    else:
+        print("Generating db from multithreaded calls successfully")
+
 ########################
 # Argument Management  #
 ########################
@@ -18,6 +93,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--compile-commands', help='The path of the compile commands file.')
     parser.add_argument('--source-path', help='the source path of the project)')
+    parser.add_argument('--test-single-and-multi', help='does a single and a multipass, comparing the reuslts')
 
     args = parser.parse_args()
     print(args.__dict__)
@@ -98,14 +174,7 @@ if __name__ == "__main__":
     for gen_file in generated_files:
         database_str += "--database " + str(resolved_path / gen_file) + " "
 
-
-    ############################################################################
-    # Delete the possible stray files on the disk, to re-generate them.
-    ############################################################################
-    if os.path.exists("single.db"):
-        os.remove("single.db")
-    if os.path.exists("multi.db"):
-        os.remove("multi.db")
+    clean_temp_files()
 
     ############################################################################
     # Generate the single database from the multiple db parts
@@ -114,66 +183,6 @@ if __name__ == "__main__":
     subprocess.run(cmd_str, shell=True)
     print("Generating single db from merged databases successfully")
 
-    ############################################################################
-    # Generate the single database by re-scanning the entire codebase
-    # using our multithreaded code
-    ############################################################################
-    cmd_str = f"codevis_create_codebase_db --source-path {source_path} --output single.db --compile-commands-json {compile_commands_path} --use-system-headers {use_system_headers} --replace --silent"
-    result = subprocess.run(cmd_str, shell=True)
-    if (result.returncode != 0):
-        print(f"Trying to save database file {output}")
-        print("Error running the script, see output")
-    else:
-        print("Generating db from multithreaded calls successfully")
-
-    ##################################
-    # Compare both databases
-    ##################################
-    multi_db_sqlite = sqlite3.connect("multi.db");
-    single_db_sqlite = sqlite3.connect("single.db");
-
-    multi_cur = multi_db_sqlite.cursor()
-    single_cur = single_db_sqlite.cursor()
-
-    queries = [
-        "SELECT qualified_name FROM class_declaration",
-        "SELECT qualified_name FROM field_declaration",
-        "SELECT qualified_name FROM function_declaration",
-        "SELECT qualified_name FROM method_declaration",
-        "SELECT qualified_name FROM namespace_declaration",
-        "SELECT qualified_name FROM source_component",
-        "SELECT qualified_name FROM source_file",
-        "SELECT qualified_name FROM source_package",
-        "SELECT qualified_name FROM source_repository",
-        "SELECT qualified_name FROM variable_declaration",
-    ]
-
-    has_error = False
-    for query in queries:
-        single_names = []
-        multi_names = []
-        for row in multi_cur.execute(query):
-            multi_names.append(row[0])
-        for row in single_cur.execute(query):
-            single_names.append(row[0])
-
-        single_names.sort()
-        multi_names.sort()
-        if (single_names != multi_names):
-            single_names_set = set(single_names)
-            multi_names_set = set(multi_names)
-
-            not_in_multi_db = single_names_set.difference(multi_names_set)
-            not_in_single_db = multi_names_set.difference(single_names_set)
-
-            print("\n")
-            print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-            print(f"FAIL: {query}")
-            print(f"Entities not in the single database:\n {not_in_single_db}")
-            print(f"Entities not in the joined database:\n {not_in_multi_db}")
-            has_error = True
-        else:
-            print(f"OK: {query} ")
-
-    if has_error:
-        sys.exit(1)
+    if (args.test_single_and_multi):
+        parse_with_single_db(source_path, compile_commands_path, use_system_headers)
+        compare_database_results()

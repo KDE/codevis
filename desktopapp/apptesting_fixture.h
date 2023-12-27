@@ -72,7 +72,6 @@ using ClickableFeature = std::variant<Sidebar::ManipulationTool::NewPackage,
                                       Sidebar::ManipulationTool::AddDependency,
                                       Sidebar::ManipulationTool::AddIsA,
                                       Sidebar::VisualizationTool::ResetZoom,
-                                      Sidebar::ToggleApplicationMode,
                                       Menubar::File::NewProject,
                                       Menubar::File::CloseProject,
                                       PackageTreeView::Package,
@@ -110,13 +109,13 @@ class CodeVisApplicationTestFixture : public QTApplicationFixture {
     bool isAnyToolSelected();
     TestMainWindow& window()
     {
-        return mainWindow;
+        return *mainWindow;
     };
 
   private:
     Codethink::lvtqtc::UndoManager undoManager;
     NodeStorage sharedNodeStorage;
-    TestMainWindow mainWindow;
+    TestMainWindow *mainWindow;
 };
 
 #endif // DIAGRAM_SERVER_APPTESTING_FIXTURE_H

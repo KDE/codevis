@@ -200,7 +200,7 @@ add_custom_target(
 )
 add_dependencies(deploy_app_plugins ${DEPLOYED_PLUGINS})
 
-if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
+if (COMPILE_TESTS)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testcrash.lks ${CMAKE_CURRENT_BINARY_DIR}/testcrash.lks COPYONLY)
 
     cmake_language(CALL
@@ -209,24 +209,37 @@ if (COMPILE_TESTS AND NOT IGNORE_BROKEN_TESTS_KDE_CI)
         testmainwindow.h
     )
 
-    add_executable(test_desktopapp
-        ${test_desktopapp_SRCS}
-        mainwindow.t.cpp
-        apptesting_fixture.cpp
-        testmainwindow.cpp
-        apptesting_fixture.h
-    )
+    macro(ADD_DESKTOP_TEST TEST_NAME FILE_NAME)
+        add_executable(${TEST_NAME}
+            ${test_desktopapp_SRCS}
+            ${FILE_NAME}
+            apptesting_fixture.cpp
+            testmainwindow.cpp
+            apptesting_fixture.h
+        )
 
-    target_link_libraries(test_desktopapp
-        Codethink::lvttst
-        Codethink::lvttst_fixture_qt
-        Codethink::lvttst_tmpdir
-        codevis_lib
-        ${SYSTEM_EXTRA_LIBRARIES}
-        Qt::Test
-    )
+        target_link_libraries(${TEST_NAME}
+            Codethink::lvttst
+            Codethink::lvttst_fixture_qt
+            Codethink::lvttst_tmpdir
+            codevis_lib
+            ${SYSTEM_EXTRA_LIBRARIES}
+            Qt::Test
+        )
+        add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    endmacro()
 
-    add_test(NAME test_desktopapp COMMAND test_desktopapp)
+    ADD_DESKTOP_TEST(mainwindow_auto_add_edges_from_classes mainwindow_auto_add_edges_from_classes.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_auto_add_edges_from_components mainwindow_auto_add_edges_from_components.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_auto_add_edges_from_packages mainwindow_auto_add_edges_from_packages.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_basic_application_workflow mainwindow_basic_application_workflow.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_load_project_test mainwindow_load_test_crash.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_show_error_on_add_edge_failure mainwindow_show_error_on_add_edge_failure.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_test mainwindow.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_test_autosave mainwindow_test_autosave.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_test_element_move mainwindow_test_element_move.t.cpp)
+    ADD_DESKTOP_TEST(mainwindow_test_tool_selection mainwindow_test_tool_selection.t.cpp)
+
     if (WIN32)
         add_custom_command(TARGET test_desktopapp POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different

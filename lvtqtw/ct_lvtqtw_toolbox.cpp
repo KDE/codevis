@@ -442,6 +442,8 @@ QToolButton *ToolBox::createToolButton(const QString& category, QAction *action)
     button->setIconSize(QSize(22, 22));
     button->setDefaultAction(action);
     button->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
+    button->setObjectName(action->text());
+
     d->toolButtons.append(button);
     d->layout->addWidget(button);
     d->buttonsInCategory[category].append(button);
@@ -500,9 +502,10 @@ void ToolBox::showElements(const QString& category)
 QToolButton *ToolBox::getButtonNamed(const std::string& title) const
 {
     auto it = std::find_if(d->toolButtons.begin(), d->toolButtons.end(), [&title](QToolButton *btn) {
-        auto txt = btn->text().toStdString();
+        auto txt = btn->objectName().toStdString();
         return txt == title;
     });
+
     if (it == d->toolButtons.end()) {
         return nullptr;
     }

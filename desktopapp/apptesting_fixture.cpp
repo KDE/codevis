@@ -28,10 +28,14 @@
 #include <KActionCollection>
 #include <QComboBox>
 
-CodeVisApplicationTestFixture::CodeVisApplicationTestFixture():
-    mainWindow{new TestMainWindow(sharedNodeStorage, &undoManager)}
+CodeVisApplicationTestFixture::CodeVisApplicationTestFixture()
 {
     Q_INIT_RESOURCE(resources);
+    Q_INIT_RESOURCE(desktopapp);
+
+    // Resources must be initialized before mainwindow, so I can't initialize this on
+    // the initialization list.
+    mainWindow = new TestMainWindow(sharedNodeStorage, &undoManager);
     mainWindow->show();
 }
 

@@ -16,6 +16,13 @@ cmake_language(CALL
     projectsettingsdialog.h
     codevis_dbus_interface.h
 )
+
+cmake_language(CALL
+    qt${QT_MAJOR_VERSION}_add_resources
+    CodeVisDesktop_SRCS
+    desktopapp.qrc
+)
+
 cmake_language(CALL
     qt${QT_MAJOR_VERSION}_wrap_ui
     CodeVisDesktop_SRCS
@@ -28,6 +35,7 @@ set(CODEVIS_DESKTOP_QT_LIBRARIES
     Qt${QT_MAJOR_VERSION}::Gui
     Qt${QT_MAJOR_VERSION}::Widgets
 )
+
 if (USE_QT_WEBENGINE)
     set(CODEVIS_DESKTOP_QT_LIBRARIES "${CODEVIS_DESKTOP_QT_LIBRARIES}" Qt${QT_MAJOR_VERSION}::WebEngineWidgets)
 endif()
@@ -119,13 +127,11 @@ add_executable(codevis_desktop
 
 target_link_libraries(
     codevis_desktop
-
     codevis_lib
 )
 
 if (NOT ${KDE_FRAMEWORKS_IS_OLD})
     install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-    install(FILES codevisui.rc DESTINATION ${KDE_INSTALL_KXMLGUIDIR}/codevis)
     install(FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
     install(
       FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml
@@ -143,6 +149,7 @@ set(DEPLOYED_PLUGINS
     cycle_detection_plugin
     lakosian_test_rules_plugin
 )
+
 add_dependencies(codevis_desktop deploy_app_plugins)
 function (add_plugin_file SOURCE_FILE TARGET_FILE LIST_PROCESSED_PLUGINS IS_REQUIRED)
     if ((EXISTS "${SOURCE_FILE}") OR ("${REQUIRED}" STREQUAL "REQUIRED"))

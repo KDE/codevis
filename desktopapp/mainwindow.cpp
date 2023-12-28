@@ -99,6 +99,14 @@ using namespace Codethink::lvtqtd;
 using namespace Codethink::lvtprj;
 using namespace Codethink::lvtplg;
 
+void MainWindow::initializeResource()
+{
+    static auto initialized = false;
+    if (!initialized) {
+        Q_INIT_RESOURCE(desktopapp);
+    }
+}
+
 MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
                        PluginManager *pluginManager,
                        UndoManager *undoManager,
@@ -337,7 +345,7 @@ void MainWindow::setupActions()
     KStandardAction::open(this, &MainWindow::openProjectAction, actionCollection());
     KStandardAction::quit(qApp, &QCoreApplication::quit, actionCollection());
 
-    setupGUI(Default, QStringLiteral("codevisui.rc"));
+    setupGUI(Default, QStringLiteral(":/ui_files/codevisui.rc"));
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev)

@@ -85,6 +85,8 @@ class MainWindow : public KXmlGuiWindow {
   public:
     friend class ::CodeVisApplicationTestFixture;
 
+    // initializes the qrc file, should be called before the mainwindow is build.
+    static void initializeResource();
     explicit MainWindow(Codethink::lvtldr::NodeStorage& sharedNodeStorage,
                         Codethink::lvtplg::PluginManager *pluginManager = nullptr,
                         Codethink::lvtqtc::UndoManager *undoManager = nullptr,

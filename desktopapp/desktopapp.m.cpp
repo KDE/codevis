@@ -85,6 +85,8 @@ int main(int argc, char *argv[])
     // set the application metadata
     KAboutData::setApplicationData(aboutData);
 
+    MainWindow::initializeResource();
+
     // in GUI apps set the window icon manually, not covered by KAboutData
     // needed for environments where the icon name is not extracted from
     // the information in the application's desktop file

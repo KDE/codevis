@@ -48,13 +48,11 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Element Move")
     clickOn(CurrentGraph{100, 400});
     QTest::qWait(100);
 
-    // auto point = findElementTopLeftPosition("abc");
+    auto point = findElementTopLeftPosition("abc");
     auto element = findElement("abc");
     auto initialPos = element->pos();
 
-    // TODO: Implement this test method.
-    // graphPressMoveRelease(point, QPoint(point.x() + 200, point.y()));
-    QTest::qWait(100);
+    graphPressMoveRelease(point, QPoint(point.x() + 200, point.y()));
 
     auto resultingPos = element->pos();
 

@@ -62,6 +62,24 @@ void CodeVisApplicationTestFixture::forceRelayout()
     QTest::qWait(500);
 }
 
+void CodeVisApplicationTestFixture::graphPressMoveRelease(QPoint source, QPoint destiny)
+{
+    auto *graphTab = qobject_cast<GraphTabElement *>(mainWindow->currentGraphTab->currentWidget());
+
+    QTest::mousePress(graphTab->graphicsView()->viewport(),
+                      Qt::MouseButton::LeftButton,
+                      Qt::KeyboardModifier::NoModifier,
+                      source);
+    QTest::qWait(1000);
+    QTest::mouseMove(graphTab->graphicsView()->viewport(), destiny);
+    QTest::qWait(1000);
+    QTest::mouseRelease(graphTab->graphicsView()->viewport(),
+                        Qt::MouseButton::LeftButton,
+                        Qt::KeyboardModifier::NoModifier,
+                        destiny);
+    QTest::qWait(1000);
+}
+
 void CodeVisApplicationTestFixture::clickOn(ClickableFeature const& feature)
 {
     auto *graphTab = qobject_cast<GraphTabElement *>(mainWindow->currentGraphTab->currentWidget());
@@ -128,7 +146,7 @@ void CodeVisApplicationTestFixture::clickOn(ClickableFeature const& feature)
     };
 
     auto closeProjectVisitor = [&](Menubar::File::CloseProject) {
-        mainWindow->actionCollection()->action(KStandardAction::StandardAction::Close)->trigger();
+        mainWindow->actionCollection()->action("file_close")->trigger();
     };
 
     auto currentGraphInfoVisitor = [&](CurrentGraph info) {
@@ -230,7 +248,7 @@ QPoint CodeVisApplicationTestFixture::findElementTopLeftPosition(const std::stri
     auto *currentTab = qobject_cast<GraphTabElement *>(mainWindow->currentGraphTab->currentWidget());
     auto *view = currentTab->graphicsView();
 
-    const auto offset = QPointF(5, 5);
+    const auto offset = QPointF(10, 10);
     const auto p = entity->scenePos() + offset;
     return view->mapFromScene(p);
 }

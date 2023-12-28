@@ -102,6 +102,7 @@ class CodeVisApplicationTestFixture : public QTApplicationFixture {
     [[nodiscard]] bool isShowingGraphPage() const;
     void forceRelayout();
     void clickOn(ClickableFeature const& feature);
+    void graphPressMoveRelease(QPoint source, QPoint destiny);
     QPoint findElementTopLeftPosition(const std::string& qname);
     LakosEntity *findElement(const std::string& qualifiedName);
     void ctrlZ();

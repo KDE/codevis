@@ -130,6 +130,9 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Basic application workflow")
     // Wait just for be human-noticeable
     QTest::qWait(100);
     clickOn(Menubar::File::CloseProject{});
+
+    QTest::qWait(100);
+
     REQUIRE(isShowingWelcomePage());
     REQUIRE_FALSE(isShowingGraphPage());
 }

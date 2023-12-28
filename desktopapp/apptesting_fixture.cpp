@@ -124,7 +124,7 @@ void CodeVisApplicationTestFixture::clickOn(ClickableFeature const& feature)
     };
 
     auto newProjectVisitor = [&](Menubar::File::NewProject) {
-        mainWindow->actionCollection()->action(KStandardAction::StandardAction::New)->trigger();
+        mainWindow->actionCollection()->action("file_new")->trigger();
     };
 
     auto closeProjectVisitor = [&](Menubar::File::CloseProject) {

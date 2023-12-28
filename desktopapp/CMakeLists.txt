@@ -234,14 +234,6 @@ if (COMPILE_TESTS)
             Qt::Test
         )
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
-
-        if (WIN32)
-        add_custom_command(TARGET ${TEST_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CONAN_QT_ROOT}/bin/Qt${QT_MAJOR_VERSION}Test.dll"
-                $<TARGET_FILE_DIR:${TEST_NAME}>)
-        endif()
-
     endmacro()
 
     ADD_DESKTOP_TEST(mainwindow_auto_add_edges_from_classes mainwindow_auto_add_edges_from_classes.t.cpp)
@@ -252,8 +244,12 @@ if (COMPILE_TESTS)
     ADD_DESKTOP_TEST(mainwindow_show_error_on_add_edge_failure mainwindow_show_error_on_add_edge_failure.t.cpp)
     ADD_DESKTOP_TEST(mainwindow_test mainwindow.t.cpp)
     ADD_DESKTOP_TEST(mainwindow_test_autosave mainwindow_test_autosave.t.cpp)
-    ADD_DESKTOP_TEST(mainwindow_test_element_move mainwindow_test_element_move.t.cpp)
     ADD_DESKTOP_TEST(mainwindow_test_tool_selection mainwindow_test_tool_selection.t.cpp)
+
+    # This test doesn't work on Qt5 because of Bad API'
+    if (QT_MAJOR_VERSION STREQUAL "6")
+        ADD_DESKTOP_TEST(mainwindow_test_element_move mainwindow_test_element_move.t.cpp)
+    endif()
 
     add_executable(test_projectsettingsdialog projectsettingsdialog.t.cpp)
     target_link_libraries(test_projectsettingsdialog

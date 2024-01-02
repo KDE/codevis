@@ -277,6 +277,16 @@ void LakosRelation::setLine(const QLineF& line)
     d->adjustedLine.setP1(hitPoint1);
     d->adjustedLine.setP2(hitPoint2);
 
+    const float headLength = d->head ? d->head->boundingRect().width() : 0;
+    const float tailLength = d->tail ? d->tail->boundingRect().width() : 0;
+
+    // Shorten line to give space for head
+    if (d->adjustedLine.length() <= headLength) {
+        d->adjustedLine.setLength(0.01);
+    } else {
+        d->adjustedLine.setLength(d->adjustedLine.length() - headLength);
+    }
+
     static const qreal kClickTolerance = 10;
 
     QPointF vec = d->adjustedLine.p2() - d->adjustedLine.p1();
@@ -294,12 +304,16 @@ void LakosRelation::setLine(const QLineF& line)
     d->boundingRect = d->shape.boundingRect();
 
     if (d->head) {
-        d->head->setPos(d->adjustedLine.p2());
-        d->head->setRotation(-d->line.angle());
+        QLineF headVector = QLineF::fromPolar(headLength, d->adjustedLine.angle());
+        headVector.setAngle(d->adjustedLine.angle());
+        d->head->setPos(d->adjustedLine.p2().x() + headVector.x2(), d->adjustedLine.p2().y() + headVector.y2());
+        d->head->setRotation(-d->adjustedLine.angle());
     }
+
     if (d->tail) {
-        d->tail->setPos(d->adjustedLine.p1());
-        d->tail->setRotation(-d->line.angle());
+        QLineF tailVector = QLineF::fromPolar(tailLength, d->adjustedLine.angle());
+        d->tail->setPos(d->adjustedLine.p1().x() + tailVector.x2(), d->adjustedLine.p1().y() + tailVector.y2());
+        d->tail->setRotation(-d->adjustedLine.angle());
     }
 
     updateTooltip();

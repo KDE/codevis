@@ -61,11 +61,12 @@ std::unique_ptr<AbstractLibraryDispatcher> PythonLibraryDispatcher::loadSinglePl
         pyLib->pluginFolder = pluginDir.path().toStdString();
     } catch (py::error_already_set const& e) {
         // Setting the sys.attr can also cause another throw.
+        std::cout << "Invalid plugin (" << pluginDir.path().toStdString() << "): " << e.what() << "\n";
         try {
             // Could not load python module - Cleanup sys path and early return.
-            pySys.attr("path").attr("remove")(pluginDir.path());
+            pySys.attr("path").attr("remove")(pluginDir.path().toStdString());
         } catch (std::exception& e) {
-            std::cout << "Invalid plugin" << e.what() << "\n";
+            std::cout << "+ Cleanup error: " << e.what() << "\n";
         }
         return nullptr;
     }

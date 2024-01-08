@@ -209,16 +209,18 @@ void CodeVisApplicationTestFixture::clickOn(ClickableFeature const& feature)
 
 void CodeVisApplicationTestFixture::ctrlZ()
 {
-    QTest::keySequence(mainWindow, QKeySequence(Qt::CTRL | Qt::Key_Z));
+    QTest::keySequence(mainWindow, static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_Z)));
     QTest::qWait(100);
 }
 
 void CodeVisApplicationTestFixture::ctrlShiftZ()
 {
 #if defined(Q_OS_WINDOWS)
-    QTest::keySequence(mainWindow, QKeySequence(Qt::CTRL | Qt::Key_Y));
+    QTest::keySequence(mainWindow, static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_Y)));
 #else
-    QTest::keySequence(mainWindow, QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z));
+    QTest::keySequence(mainWindow,
+                       static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::SHIFT)
+                                                 | static_cast<int>(Qt::Key_Z)));
 #endif
     QTest::qWait(100);
 }

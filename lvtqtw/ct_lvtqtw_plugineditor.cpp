@@ -319,8 +319,7 @@ void PluginEditor::load()
         return;
     }
 
-    const QString pluginPath = fName.split(QDir::separator()).last();
-    loadByPath(pluginPath);
+    loadByPath(fName);
 }
 
 void PluginEditor::loadByPath(const QString& pluginPath)

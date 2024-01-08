@@ -103,7 +103,9 @@ void exportDataTypes(ModuleType& m)
             .def("getDependencies", [](T const& self) { return self.getDependencies(); })
             .def("unloadFromScene", [](T const& self) { return self.unloadFromScene(); })
             .def("getDbChildrenQualifiedNames", [](T const& self) { return self.getDbChildrenQualifiedNames(); })
-            .def("getParent", [](T const& self) { return self.getParent(); });
+            .def("getParent", [](T const& self) { return self.getParent(); })
+            .def("setSelected", [](T const& self, bool v) { return self.setSelected(v); })
+            .def("isSelected", [](T const& self) -> bool { return self.isSelected(); });
     }
 
     {

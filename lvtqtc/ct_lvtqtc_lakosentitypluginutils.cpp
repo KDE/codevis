@@ -83,6 +83,12 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
         }
         return createWrappedEntityFromLakosEntity(parent);
     };
+    auto setSelected = [e](bool v) {
+        e->setSelected(v);
+    };
+    auto isSelected = [e]() -> bool {
+        return e->isSelected();
+    };
     return Entity{getName,
                   getQualifiedName,
                   getType,
@@ -91,7 +97,9 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
                   getDependencies,
                   unloadFromScene,
                   getDbChildrenQualifiedNames,
-                  getParent};
+                  getParent,
+                  setSelected,
+                  isSelected};
 }
 
 Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to)

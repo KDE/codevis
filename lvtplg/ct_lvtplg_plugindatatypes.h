@@ -60,6 +60,9 @@ struct Entity {
     std::function<std::vector<std::string>()> const getDbChildrenQualifiedNames;
 
     std::function<std::optional<Entity>()> const getParent;
+
+    std::function<void(bool v)> const setSelected;
+    std::function<bool()> const isSelected;
 };
 
 struct Edge {

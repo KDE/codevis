@@ -395,11 +395,13 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
         }
     }
 
-    if (QGraphicsItem *item = itemAt(event->pos())) {
-        if (d->scene->selectedEntities().size() > 1) {
-            if (const auto *entity = castUpToParent<LakosEntity *>(item)) {
-                if (entity->isSelected()) {
-                    d->isMultiDragging = true;
+    if (event->button() == Qt::LeftButton) {
+        if (QGraphicsItem *item = itemAt(event->pos())) {
+            if (d->scene->selectedEntities().size() > 1) {
+                if (const auto *entity = castUpToParent<LakosEntity *>(item)) {
+                    if (entity->isSelected()) {
+                        d->isMultiDragging = true;
+                    }
                 }
             }
         }

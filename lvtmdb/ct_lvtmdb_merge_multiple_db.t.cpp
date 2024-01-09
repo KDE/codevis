@@ -17,9 +17,11 @@
  * // limitations under the License.
  */
 
+#include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_namespaceobject.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_packageobject.h>
+
 #include <ct_lvtmdb_soci_helper.h>
 #include <ct_lvtmdb_soci_reader.h>
 #include <ct_lvtmdb_soci_writer.h>
@@ -130,11 +132,21 @@ void create_temporary_dataases()
                        pkg_a_pkga,
                        pkg_b_pkgb_comp_b);
 
+    auto external_dep =
+        store.getOrAddPackage("external_dep", "external_dep", "/home/ble/projects/external_dep", nullptr, nullptr);
+
+    auto external_dep_comp_common = store.getOrAddComponent("external_dep/comp_common", "comp_common", external_dep);
+    ComponentObject::addDependency(pkg_a_pkga_comp_a, external_dep_comp_common);
+
     { // Save one db.
         SociWriter writer;
         writer.createOrOpen(tmpDBPathA);
         store.writeToDatabase(writer);
     }
+
+    auto external_dep_comp_common_private =
+        store.getOrAddComponent("external_dep/comp_common_private", "comp_common_private", external_dep);
+    ComponentObject::addDependency(external_dep_comp_common, external_dep_comp_common_private);
 
     // Add more data on the ObjectStore, save it somewhere else.
     auto repo2 = store.getOrAddRepository("test_another_repo", "/home/ble/projects/repo2");
@@ -161,6 +173,7 @@ void create_temporary_dataases()
 
     ObjectStore
         store2; // smaller store, with a few of the same values - same packages as the first db but has a new component.
+
     auto lock2 = store2.rwLock();
     auto repo_3 = store2.getOrAddRepository("test_repository", "/home/ble/projects/repo");
     auto pkg3_a = store2.getOrAddPackage("root_pkg_a", "root_a", "/home/ble/projects/repo/root_a", nullptr, repo_3);
@@ -230,7 +243,14 @@ void validate_in_disk_db()
     auto packages = readerStore.getAllPackages();
     auto files = readerStore.getAllFiles();
 
-    REQUIRE(packages.size() == 9);
+    auto comp_common = readerStore.getComponent("external_dep/comp_common");
+    auto comp_a = readerStore.getComponent("root_pkg_a/pkga/comp_a");
+    comp_a->withROLock([comp_a, comp_common] {
+        REQUIRE(comp_a->forwardDependencies().size() == 1);
+        REQUIRE(comp_a->forwardDependencies()[0] == comp_common);
+    });
+
+    REQUIRE(packages.size() == 10);
     REQUIRE(files.size() == 10);
 }
 

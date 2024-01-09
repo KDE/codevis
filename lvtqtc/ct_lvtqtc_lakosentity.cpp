@@ -748,6 +748,17 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
                 connect(unloadAllAction, &QAction::triggered, e, &LakosEntity::unloadThis);
             }
             retValues.append(unloadAllAction);
+
+            auto *loadAllInNewTabAction = new QAction();
+            loadAllInNewTabAction->setText(tr("Load selected entities in new tab"));
+            connect(loadAllInNewTabAction, &QAction::triggered, this, [this, selectedEntities] {
+                QSet<QString> qualifiedNames;
+                for (const auto& entity : selectedEntities) {
+                    qualifiedNames.insert(QString::fromStdString(entity->qualifiedName()));
+                }
+                Q_EMIT requestNewTab(qualifiedNames);
+            });
+            retValues.append(loadAllInNewTabAction);
         }
     }
 

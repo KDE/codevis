@@ -412,6 +412,8 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
 
     Q_SIGNAL void createReportActionClicked(std::string const& title, std::string const& htmlContents);
 
+    Q_SIGNAL void requestNewTab(const QSet<QString> qualifiedNames);
+
   protected:
     [[nodiscard]] bool layoutUpdatesEnabled() const;
     // See enableLayoutUpdates()

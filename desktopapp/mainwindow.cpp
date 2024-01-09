@@ -775,6 +775,11 @@ void MainWindow::newTabRequested(const QModelIndexList& idxList)
     for (const auto idx : idxList) {
         qualifiedNames.insert(idx.data(ModelRoles::e_QualifiedName).toString());
     }
+    newTabRequested(qualifiedNames);
+}
+
+void MainWindow::newTabRequested(const QSet<QString> qualifiedNames)
+{
     currentGraphTab->openNewGraphTab(QSet<QString>({qualifiedNames}));
 }
 
@@ -856,6 +861,8 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestEnableWindow, &MainWindow::enableWindow);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestDisableWindow, &MainWindow::disableWindow);
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::createReportActionClicked, &MainWindow::createReport);
+    addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestNewTab,
+                    qOverload<const QSet<QString>>(&MainWindow::newTabRequested));
 
     if (d_pluginManager_p) {
         auto getSceneName = [&graphicsScene]() {

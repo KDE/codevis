@@ -182,6 +182,7 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void newTabRequested(const QModelIndex& idx);
     Q_SLOT void newTabRequested(const QModelIndexList& idxList);
     // callback when a new tab is requested from the tree view
+    Q_SLOT void newTabRequested(const QSet<QString> qualifiedNames);
 
     Q_SLOT void changeCurrentGraphWidget(int graphTabIdx);
     // callback for when the tab we update the title.

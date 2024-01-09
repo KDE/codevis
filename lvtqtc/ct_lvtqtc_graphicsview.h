@@ -28,6 +28,8 @@
 #include <ct_lvtqtc_itool.h>
 #include <ct_lvtshr_graphenums.h>
 
+#include <ct_lvtldr_lakosiannode.h>
+
 #include <QGraphicsView>
 #include <QUndoCommand>
 
@@ -116,6 +118,8 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
     Q_SIGNAL void onUndoCommandReceived(Codethink::lvtqtc::GraphicsView *, QUndoCommand *);
 
     Q_SIGNAL void errorMessage(const QString& message);
+
+    Q_SIGNAL void newSelectionMade(std::deque<Codethink::lvtldr::LakosianNode *> selectedNodes);
 
     void debugVisibleScreen();
 

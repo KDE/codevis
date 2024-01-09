@@ -505,6 +505,22 @@ class SociDatabaseHandler : public DatabaseHandler {
             }
         }
 
+        {
+            soci::rowset<RecordNumberType> rs =
+                (d_db.prepare << "select id from field_declaration where class_id = :k", soci::use(dao.id));
+            for (auto&& i : rs) {
+                dao.fieldIds.emplace_back(i);
+            }
+        }
+
+        {
+            soci::rowset<std::string> rs =
+                (d_db.prepare << "select name from field_declaration where class_id = :k", soci::use(dao.id));
+            for (auto&& i : rs) {
+                dao.fieldNames.emplace_back(i);
+            }
+        }
+
         return dao;
     }
 

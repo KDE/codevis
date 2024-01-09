@@ -261,6 +261,27 @@ void TypeNode::loadClients()
     }
 }
 
+void TypeNode::invalidateFieldNames()
+{
+    d->fields.clear();
+    d->fieldsLoaded = false;
+}
+
+void TypeNode::loadFields() // naming is bad hear field refers to two different things :O
+{
+    if (d->fieldsLoaded) {
+        return;
+    }
+    d_fields = d_dbHandler->get().getUdtFieldsById(d_fields.id);
+    d->fieldsLoaded = true;
+
+    d->fields.clear();
+    d->fields.reserve(d_fields.fieldNames.size()); // fieldIds
+    for (auto&& name : d_fields.fieldNames) {
+        d->fields.push_back(name);
+    }
+}
+
 bool TypeNode::hasClassNamespace() const
 {
     return d_fields.classNamespaceId.has_value();

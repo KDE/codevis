@@ -1,4 +1,4 @@
-// ct_lvtmdl_fieldstablemodel.h                                         -*-C++-*-
+// ct_lvtmdl_fieldstreemodel.h                                         -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
@@ -17,27 +17,31 @@
 // limitations under the License.
 */
 
-#ifndef DEFINED_CT_LVTMDL_FIELDSTABLEMODEL
-#define DEFINED_CT_LVTMDL_FIELDSTABLEMODEL
+#ifndef DEFINED_CT_LVTMDL_FIELDSTREEMODEL
+#define DEFINED_CT_LVTMDL_FIELDSTREEMODEL
 
 #include <lvtmdl_export.h>
 
+#include <ct_lvtldr_lakosiannode.h>
+#include <ct_lvtldr_nodestorage.h>
 #include <ct_lvtmdl_basetablemodel.h>
 
+#include <QStandardItemModel>
+
+#include <deque>
 #include <memory>
 
 namespace Codethink::lvtmdl {
 
-class LVTMDL_EXPORT FieldsTableModel : public BaseTableModel {
+using LakosianNodes = std::deque<Codethink::lvtldr::LakosianNode *>;
+
+class LVTMDL_EXPORT FieldsTreeModel : public QStandardItemModel {
     Q_OBJECT
   public:
-    FieldsTableModel();
-    ~FieldsTableModel() override;
-    void refreshData() override;
+    FieldsTreeModel();
+    ~FieldsTreeModel() override;
 
-  private:
-    struct Private;
-    std::unique_ptr<Private> d;
+    void refreshData(LakosianNodes selectedNodes);
 };
 
 } // end namespace Codethink::lvtmdl

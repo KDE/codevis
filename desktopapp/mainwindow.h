@@ -31,6 +31,8 @@
 #include <ct_lvtqtw_splitterview.h>
 #include <ct_lvtqtw_statusbar.h>
 
+#include <ct_lvtmdl_fieldstreemodel.h>
+
 #include <ct_lvtprj_projectfile.h>
 
 #include <ui_mainwindow.h>
@@ -219,6 +221,8 @@ class MainWindow : public KXmlGuiWindow {
                                          const QPoint& pos);
     Q_SLOT void updatePluginData();
 
+    Q_SLOT void updateTableModels(std::deque<Codethink::lvtldr::LakosianNode *> selectedNodes);
+
     void createReport(std::string const& title, std::string const& htmlContents);
 
     WrappedUiMainWindow ui;
@@ -233,6 +237,7 @@ class MainWindow : public KXmlGuiWindow {
     Codethink::lvtmdl::ErrorsModel *d_errorModel_p = nullptr;
 
     QList<Codethink::lvtmdl::BaseTableModel *> tableModels;
+    Codethink::lvtmdl::FieldsTreeModel *fieldsModel;
 
     // TODO: Maybe we should move these variables to a GraphWidgetManager of sorts.
     Codethink::lvtqtc::GraphicsView *currentGraphWidget = nullptr;

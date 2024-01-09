@@ -1,4 +1,4 @@
-// ct_lvtmdl_fieldstablemodel.h                                         -*-C++-*-
+// ct_lvtmdl_usesintheimpltablemodel.h                                         -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>

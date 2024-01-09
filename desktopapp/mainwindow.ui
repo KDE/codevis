@@ -402,18 +402,15 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTableView" name="fieldsTable">
+      <widget class="QTreeView" name="fieldsTree">
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
        </property>
-       <attribute name="horizontalHeaderVisible">
+       <attribute name="headerVisible">
         <bool>false</bool>
        </attribute>
-       <attribute name="horizontalHeaderStretchLastSection">
+       <attribute name="headerStretchLastSection">
         <bool>true</bool>
-       </attribute>
-       <attribute name="verticalHeaderVisible">
-        <bool>false</bool>
        </attribute>
       </widget>
      </item>

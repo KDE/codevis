@@ -48,6 +48,7 @@ class LVTLDR_EXPORT TypeNode : public LakosianNode {
     void loadChildren() override;
     void loadProviders() override;
     void loadClients() override;
+    void loadFields();
 
   public:
     explicit TypeNode(NodeStorage& store,
@@ -63,8 +64,11 @@ class LVTLDR_EXPORT TypeNode : public LakosianNode {
 
     inline TypeNodeFields const& getFields()
     {
+        loadFields();
         return d_fields;
     }
+
+    void invalidateFieldNames();
 
     // ACCESSORS
     void setParentPackageId(Codethink::lvtshr::UniqueId::RecordNumberType id);

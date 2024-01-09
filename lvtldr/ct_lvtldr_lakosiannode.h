@@ -89,12 +89,14 @@ class LVTLDR_EXPORT LakosianNode : public QObject {
         bool childrenLoaded = false;
         bool providersLoaded = false;
         bool clientsLoaded = false;
+        bool fieldsLoaded = false;
 
         LakosianNode *parent = nullptr;
         std::vector<LakosianNode *> children;
         std::vector<LakosianNode *> innerPackages;
         std::vector<LakosianEdge> providers;
         std::vector<LakosianEdge> clients;
+        std::vector<std::string> fields;
 
         explicit Private(NodeStorage& store, std::optional<std::reference_wrapper<DatabaseHandler>> dbHandler):
             store(store), dbHandler(dbHandler)
@@ -175,6 +177,8 @@ class LVTLDR_EXPORT LakosianNode : public QObject {
 
     const std::vector<LakosianEdge>& providers();
     const std::vector<LakosianEdge>& clients();
+
+    const std::vector<std::string>& fields();
 
     std::string notes() const;
     void setNotes(const std::string& setNotes);

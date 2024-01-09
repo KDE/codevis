@@ -258,6 +258,7 @@ void GraphicsView::calculateCurrentZoomFactor()
 void GraphicsView::mouseMoveEvent(QMouseEvent *event)
 {
     assert(event);
+
     const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
 
     if (d->multiSelect.isActive && mouseHasNewPosition) {
@@ -280,12 +281,22 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
                 lEntity->setSelected(true);
             }
         }
-        auto toUnselect = oldSelection.subtract(currentSelection);
+
+        auto toUnselect = oldSelection;
+        toUnselect.subtract(currentSelection);
         for (const auto lEntity : toUnselect) {
             lEntity->setSelected(false);
         }
 
-        oldSelection = currentSelection;
+        if (oldSelection != currentSelection) {
+            std::deque<LakosianNode *> selectedNodes;
+            for (const auto& lEntity : currentSelection) {
+                selectedNodes.push_back(lEntity->internalNode());
+            }
+            Q_EMIT newSelectionMade(selectedNodes);
+            oldSelection = currentSelection;
+        }
+
         viewport()->update();
     }
 

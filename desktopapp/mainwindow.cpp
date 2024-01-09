@@ -31,7 +31,6 @@
 #include <QStatusBar>
 
 #include <ct_lvtmdl_errorsmodel.h>
-#include <ct_lvtmdl_fieldstablemodel.h>
 #include <ct_lvtmdl_methodstablemodel.h>
 #include <ct_lvtmdl_modelhelpers.h>
 #include <ct_lvtmdl_namespacetreemodel.h>
@@ -123,15 +122,14 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     ui.setupUi(this);
 
-    auto *fieldsModel = new FieldsTableModel();
+    fieldsModel = new FieldsTreeModel();
     auto *usesInTheImplTableModel = new UsesInTheImplTableModel();
     auto *usesInTheInterfaceTableModel = new UsesInTheInterfaceTableModel();
     auto *methodsTableModel = new MethodsTableModel();
     auto *providersTableModel = new PhysicalProvidersTableModel();
     auto *clientsTableModel = new PhysicalClientsTableModel();
 
-    tableModels.append({fieldsModel,
-                        usesInTheImplTableModel,
+    tableModels.append({usesInTheImplTableModel,
                         usesInTheInterfaceTableModel,
                         methodsTableModel,
                         providersTableModel,
@@ -169,7 +167,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     ui.packagesTree->setModel(packageModel);
     ui.packagesTree->setItemDelegateForColumn(0, new PackageViewDelegate());
 
-    ui.fieldsTable->setModel(fieldsModel);
+    ui.fieldsTree->setModel(fieldsModel);
     ui.usesInTheImplTable->setModel(usesInTheImplTableModel);
     ui.usesInTheInterfaceTable->setModel(usesInTheInterfaceTableModel);
     ui.methodsTable->setModel(methodsTableModel);
@@ -848,6 +846,7 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     addGWdgConnection(&Codethink::lvtqtc::GraphicsView::graphLoadStarted, &MainWindow::graphLoadStarted);
     addGWdgConnection(&Codethink::lvtqtc::GraphicsView::graphLoadFinished, &MainWindow::graphLoadFinished);
     addGWdgConnection(&Codethink::lvtqtc::GraphicsView::errorMessage, &MainWindow::showErrorMessage);
+    addGWdgConnection(&Codethink::lvtqtc::GraphicsView::newSelectionMade, &MainWindow::updateTableModels);
 
     // connect everything related to the new graph scene and the window
     auto *graphicsScene = qobject_cast<GraphicsScene *>(currentGraphWidget->scene());
@@ -915,6 +914,11 @@ void MainWindow::updatePluginData()
     };
 
     d_pluginManager_p->callHooksGraphChanged(getSceneName, getVisibleEntities, getEdgeByQualifiedName, getProjectData);
+}
+
+void MainWindow::updateTableModels(std::deque<Codethink::lvtldr::LakosianNode *> selectedNodes)
+{
+    fieldsModel->refreshData(selectedNodes);
 }
 
 void MainWindow::createReport(std::string const& title, std::string const& htmlContents)

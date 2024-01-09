@@ -1,4 +1,4 @@
-// ct_lvtmdl_fieldstablemodel.cpp                                         -*-C++-*-
+// ct_lvtmdl_methodstablemodel.cpp                                         -*-C++-*-
 
 /*
 // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>

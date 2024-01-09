@@ -48,6 +48,8 @@ struct TypeNodeFields {
     std::vector<RecordNumberType> isBaseOfIds;
     std::vector<RecordNumberType> usedByInterfaceIds;
     std::vector<RecordNumberType> usedByImplementationIds;
+    std::vector<RecordNumberType> fieldIds;
+    std::vector<std::string> fieldNames;
 };
 
 } // namespace Codethink::lvtldr

@@ -96,7 +96,7 @@ class LVTLDR_EXPORT LakosianNode : public QObject {
         std::vector<LakosianNode *> innerPackages;
         std::vector<LakosianEdge> providers;
         std::vector<LakosianEdge> clients;
-        std::vector<std::string> fields;
+        std::vector<std::string> fieldNames;
 
         explicit Private(NodeStorage& store, std::optional<std::reference_wrapper<DatabaseHandler>> dbHandler):
             store(store), dbHandler(dbHandler)

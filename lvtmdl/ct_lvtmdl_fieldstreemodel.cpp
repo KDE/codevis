@@ -25,15 +25,6 @@
 #include <ct_lvtldr_typenode.h>
 #include <ct_lvtshr_stringhelpers.h>
 
-#include <ct_lvtldr_componentnode.h>
-#include <ct_lvtldr_componentnodefields.h>
-#include <ct_lvtldr_freefunctionnode.h>
-#include <ct_lvtldr_freefunctionnodefields.h>
-#include <ct_lvtldr_packagenode.h>
-#include <ct_lvtldr_packagenodefields.h>
-#include <ct_lvtldr_repositorynode.h>
-#include <ct_lvtldr_repositorynodefields.h>
-
 namespace Codethink::lvtmdl {
 
 FieldsTreeModel::FieldsTreeModel(){};
@@ -52,17 +43,11 @@ void FieldsTreeModel::refreshData(LakosianNodes selectedNodes)
 
     QStandardItem *root = invisibleRootItem();
 
-    // sort by number of parents?
-
     auto createItemFromClassNode = [](LakosianNode *node) {
         auto *item = new QStandardItem();
         item->setText(QString::fromStdString(node->name()));
         item->setEditable(false);
-        item->setIcon(QIcon(":/icons/class")); // getIconFor isn't found?
-        // not sure if bellow is needed
-        //   item->setData(node.id(), ModelRoles::e_Id);
-        //   item->setData((int) NodeType::fromDiagramType(node.type()), ModelRoles::e_NodeType);
-        //   item->setData(QString::fromStdString(node.qualifiedName()), ModelRoles::e_QualifiedName);
+        item->setIcon(QIcon(":/icons/class"));
         return item;
     };
 
@@ -78,9 +63,7 @@ void FieldsTreeModel::refreshData(LakosianNodes selectedNodes)
             const auto classNode = dynamic_cast<TypeNode *>(lakosianNode);
             auto classItem = createItemFromClassNode(classNode);
 
-            classNode->invalidateFieldNames(); // probable needs moving to where the database reloads?
             auto fields = classNode->getFields();
-
             for (auto name : fields.fieldNames) {
                 classItem->appendRow(createItemFromString(name));
             }

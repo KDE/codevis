@@ -70,6 +70,8 @@ class LVTLDR_EXPORT TypeNode : public LakosianNode {
 
     void invalidateFieldNames();
 
+    void addFieldName(std::string fieldName);
+
     // ACCESSORS
     void setParentPackageId(Codethink::lvtshr::UniqueId::RecordNumberType id);
 

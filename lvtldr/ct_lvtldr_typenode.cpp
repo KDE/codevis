@@ -263,22 +263,34 @@ void TypeNode::loadClients()
 
 void TypeNode::invalidateFieldNames()
 {
-    d->fields.clear();
+    d->fieldNames.clear();
     d->fieldsLoaded = false;
 }
 
-void TypeNode::loadFields() // naming is bad hear field refers to two different things :O
+void TypeNode::addFieldName(std::string fieldName)
 {
+    loadFields();
+
+    // TODO: Really update the database
+    d_fields.fieldNames.push_back(fieldName);
+    d->fieldNames.push_back(fieldName);
+    d->fieldsLoaded = true;
+}
+
+void TypeNode::loadFields()
+{
+    // TODO: Renaming needed as "field" refers to many things
+
     if (d->fieldsLoaded) {
         return;
     }
     d_fields = d_dbHandler->get().getUdtFieldsById(d_fields.id);
     d->fieldsLoaded = true;
 
-    d->fields.clear();
-    d->fields.reserve(d_fields.fieldNames.size()); // fieldIds
+    d->fieldNames.clear();
+    d->fieldNames.reserve(d_fields.fieldNames.size());
     for (auto&& name : d_fields.fieldNames) {
-        d->fields.push_back(name);
+        d->fieldNames.push_back(name);
     }
 }
 

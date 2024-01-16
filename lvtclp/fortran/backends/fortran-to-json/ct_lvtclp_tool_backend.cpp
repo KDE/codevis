@@ -15,6 +15,8 @@
 // limitations under the License.
 */
 
+#include <ct_lvtmdb_fileobject.h>
+#include <fortran/ct_lvtclp_fortran_dbutils.h>
 #include <fortran/ct_lvtclp_tool.h>
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
@@ -30,25 +32,57 @@ using namespace clang::tooling;
 
 namespace {
 
-void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode)
+using namespace Codethink::lvtclp::fortran;
+using namespace Codethink::lvtmdb;
+
+struct FortranParsingContext {
+    std::string activeFile;
+    ComponentObject *activeDbComponentObject;
+};
+
+void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingContext& context, ObjectStore& memDb)
 {
     if (jsonASTNode.contains("tag")) {
         auto tag = jsonASTNode["tag"].toString();
         if (tag == "subroutine") {
-            std::cout << "!> Found subroutine " << jsonASTNode["name"].toString().toStdString() << "\n";
+            auto functionName = jsonASTNode["name"].toString().toStdString();
+
+            FunctionObject *function = nullptr;
+            memDb.withRWLock([&]() {
+                function = memDb.getOrAddFunction(
+                    /*qualifiedName=*/functionName,
+                    /*name=*/functionName,
+                    /*signature=*/"",
+                    /*returnType=*/"",
+                    /*templateParameters=*/"",
+                    /*parent=*/nullptr);
+                auto *file = memDb.getFile(context.activeFile);
+                file->withRWLock([&] {
+                    file->addGlobalFunction(function);
+                });
+            });
         } else if (tag == "call") {
             std::cout << "!> Found CALL (unhandled)\n";
         } else if (tag == "include") {
-            std::cout << "!> Found INCLUDE (unhandled)\n";
+            auto inclusionPath = jsonASTNode["path"]["value"]["value"].toString().toStdString();
+
+            // TODO: Search the inclusion taking in consideration the known inclusion list from compilation commands
+            inclusionPath = "FortranIncludes/" + inclusionPath;
+
+            auto inclusionComponentDbObject = addComponentForFile(memDb, inclusionPath);
+            recursiveAddComponentDependency(context.activeDbComponentObject, inclusionComponentDbObject);
+
+            // Update the context so that child `blocks` will be affected
+            context = FortranParsingContext{inclusionPath, inclusionComponentDbObject};
         } else if (tag == "statement") {
-            recursiveParseJsonASTNode(jsonASTNode["statement"].toObject());
+            recursiveParseJsonASTNode(jsonASTNode["statement"].toObject(), context, memDb);
         }
     }
 
     if (jsonASTNode.contains("blocks")) {
         auto children = jsonASTNode["blocks"].toArray();
         for (auto e : children) {
-            recursiveParseJsonASTNode(e.toObject());
+            recursiveParseJsonASTNode(e.toObject(), context, memDb);
         }
     }
 }
@@ -106,7 +140,7 @@ QJsonDocument runFortranToJsonAndGetOutputs(std::string const& targetDirectory,
     return QJsonDocument::fromJson(jsonRawData.toUtf8());
 }
 
-void runFullOnCommand(CompileCommand const& cmd)
+void runFullOnCommand(CompileCommand const& cmd, ObjectStore& memDb)
 {
     auto ext = std::filesystem::path{cmd.Filename}.extension().string();
     if (ext != ".f" && ext != ".for" && ext != ".f90" && ext != ".inc") {
@@ -121,11 +155,14 @@ void runFullOnCommand(CompileCommand const& cmd)
     }
 
     std::cout << "+ " << cmd.Filename << "\n";
+    auto dbComponentObject = addComponentForFile(memDb, cmd.Filename);
     auto jsonAST = runFortranToJsonAndGetOutputs(cmd.Directory, cmd.Filename, includePaths);
     if (!jsonAST.isEmpty() && jsonAST.isObject()) {
+        auto context = FortranParsingContext{cmd.Filename, dbComponentObject};
+
         auto programArray = jsonAST["program"].toArray();
         for (auto e : programArray) {
-            recursiveParseJsonASTNode(e.toObject());
+            recursiveParseJsonASTNode(e.toObject(), context, memDb);
         }
     }
     std::cout << "++ " << jsonAST["meta_info"]["filename"].toString().toStdString();
@@ -143,7 +180,7 @@ bool Tool::runPhysical(bool skipScan)
 bool Tool::runFull(bool skipPhysical)
 {
     for (auto const& cmd : this->compilationDatabase->getAllCompileCommands()) {
-        runFullOnCommand(cmd);
+        runFullOnCommand(cmd, this->memDb());
     }
     return true;
 }

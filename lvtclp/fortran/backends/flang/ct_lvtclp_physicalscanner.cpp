@@ -18,6 +18,7 @@
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <flang/Frontend/CompilerInstance.h>
+#include <fortran/ct_lvtclp_fortran_dbutils.h>
 #include <fortran/ct_lvtclp_physicalscanner.h>
 
 #include <filesystem>
@@ -26,55 +27,9 @@
 namespace Codethink::lvtclp::fortran {
 
 using namespace Fortran::parser;
-const char *const NON_LAKOSIAN_GROUP_NAME = "non-lakosian group";
 
 PhysicalParseAction::PhysicalParseAction(lvtmdb::ObjectStore& memDb): memDb(memDb)
 {
-}
-
-lvtmdb::ComponentObject *addComponentForFile(lvtmdb::ObjectStore& memDb, std::filesystem::path const& filePath)
-{
-    lvtmdb::ComponentObject *currentComponent = nullptr;
-    memDb.withRWLock([&]() {
-        auto qName = filePath.parent_path().stem();
-
-        // TODO: Proper package handling. Currently assume all Fortran packages are "non-lakosian"
-        auto *grp = memDb.getOrAddPackage(
-            /*qualifiedName=*/NON_LAKOSIAN_GROUP_NAME,
-            /*name=*/NON_LAKOSIAN_GROUP_NAME,
-            /*diskPath=*/"",
-            /*parent=*/nullptr,
-            /*repository=*/nullptr);
-        auto *package = memDb.getOrAddPackage(
-            /*qualifiedName=*/qName,
-            /*name=*/qName,
-            /*diskPath=*/"",
-            /*parent=*/grp,
-            /*repository=*/nullptr);
-        auto component = memDb.getOrAddComponent(
-            /*qualifiedName=*/qName.string() + "/" + filePath.stem().string(),
-            /*name=*/filePath.stem(),
-            /*package=*/package);
-        auto *file = memDb.getOrAddFile(
-            /*qualifiedName=*/filePath.string(),
-            /*name=*/filePath.string(),
-            /*isHeader=*/false,
-            /*hash=*/"", // TODO: Properly generate hash, if ever necessary
-            /*package=*/package,
-            /*component=*/component);
-        assert(file);
-
-        component->withRWLock([&] {
-            component->addFile(file);
-        });
-        package->withRWLock([&] {
-            package->addComponent(component);
-        });
-
-        currentComponent = component;
-    });
-    assert(currentComponent);
-    return currentComponent;
 }
 
 void PhysicalParseAction::executeAction()
@@ -91,20 +46,7 @@ void PhysicalParseAction::executeAction()
 
         auto dependencyPath = std::filesystem::path{srcFile->path()};
         auto targetComponent = addComponentForFile(memDb, dependencyPath);
-        lvtmdb::ComponentObject::addDependency(currentComponent, targetComponent);
-
-        auto srcLock = currentComponent->readOnlyLock();
-        auto trgLock = targetComponent->readOnlyLock();
-        auto srcParent = currentComponent->package();
-        auto trgParent = targetComponent->package();
-        while (srcParent && trgParent && srcParent != trgParent) {
-            lvtmdb::PackageObject::addDependency(srcParent, trgParent);
-
-            auto srcParentLock = srcParent->readOnlyLock();
-            auto trgParentLock = trgParent->readOnlyLock();
-            srcParent = srcParent->parent();
-            trgParent = trgParent->parent();
-        }
+        recursiveAddComponentDependency(currentComponent, targetComponent);
     };
 
     auto interval = *allSources.GetFirstFileProvenance();

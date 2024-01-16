@@ -213,9 +213,8 @@ class MainWindow : public KXmlGuiWindow {
 
     Q_SLOT void
     requestMenuPackageView(const QModelIndexList& multiSelection, const QModelIndex& clickedOn, const QPoint& pos);
-    Q_SLOT void requestMenuNamespaceView([[maybe_unused]] const QModelIndexList& multiSelection,
-                                         const QModelIndex& clickedOn,
-                                         const QPoint& pos);
+    Q_SLOT void
+    requestMenuNamespaceView(const QModelIndexList& multiSelection, const QModelIndex& clickedOn, const QPoint& pos);
     Q_SLOT void updatePluginData();
 
     void createReport(std::string const& title, std::string const& htmlContents);

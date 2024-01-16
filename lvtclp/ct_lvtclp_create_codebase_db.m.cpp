@@ -445,16 +445,16 @@ int main(int argc, char **argv)
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 
 #ifdef CT_ENABLE_FORTRAN_SCANNER
-    auto flang_tool = fortran::Tool::fromCompileCommands(args.compilationDbPaths[0]);
-    flang_tool->setSharedMemDb(sharedObjectStore);
+    auto fortran_tool = fortran::Tool::fromCompileCommands(args.compilationDbPaths[0]);
+    fortran_tool->setSharedMemDb(sharedObjectStore);
     const bool success = [&]() {
         if (args.physicalOnly) {
             auto clang_result = clang_tool->runPhysical();
-            auto flang_result = flang_tool->runPhysical();
+            auto flang_result = fortran_tool->runPhysical();
             return clang_result && flang_result;
         }
         auto clang_result = clang_tool->runFull();
-        auto flang_result = flang_tool->runFull();
+        auto flang_result = fortran_tool->runFull();
         return clang_result && flang_result;
     }();
     fortran::solveFortranToCInteropDeps(*sharedObjectStore);

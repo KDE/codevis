@@ -313,59 +313,76 @@ endif()
 if (ENABLE_FORTRAN_SCANNER)
     MESSAGE("Fortran support ENABLED")
 
-    # MLIR is required by flang
-    find_package(MLIR REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/mlir/" NO_DEFAULT_PATH)
-    find_package(Flang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/flang/" NO_DEFAULT_PATH)
+    if (FORTRAN_SCANNER_BACKEND STREQUAL "FLANG")
+        # MLIR is required by flang
+        find_package(MLIR REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/mlir/" NO_DEFAULT_PATH)
+        find_package(Flang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/flang/" NO_DEFAULT_PATH)
 
-    AddTargetLibrary(
+        AddTargetLibrary(
             LIBRARY_NAME
             lvtclp_fortran
             SOURCES
-            fortran/ct_lvtclp_logicalscanner.cpp
-            fortran/ct_lvtclp_physicalscanner.cpp
             fortran/ct_lvtclp_tool.cpp
             fortran/ct_lvtclp_fortran_c_interop.cpp
+
+            fortran/backends/flang/ct_lvtclp_logicalscanner.cpp
+            fortran/backends/flang/ct_lvtclp_physicalscanner.cpp
+            fortran/backends/flang/ct_lvtclp_tool.cpp
+
             HEADERS
-            fortran/ct_lvtclp_logicalscanner.h
-            fortran/ct_lvtclp_physicalscanner.h
             fortran/ct_lvtclp_tool.h
             fortran/ct_lvtclp_fortran_c_interop.h
+            fortran/backends/flang/ct_lvtclp_logicalscanner.h
+            fortran/backends/flang/ct_lvtclp_physicalscanner.h
             LIBRARIES
             Codethink::lvtmdb
             flangFrontend
             flangFrontendTool
             ${SYSTEM_EXTRA_LIBRARIES}
-    )
-    target_include_directories(lvtclp_fortran
-        PRIVATE
-        ${LLVM_INCLUDE_DIR}
-    )
-    target_compile_definitions(lvtclp_fortran
-        PRIVATE
-        FLANG_LITTLE_ENDIAN=1
-    )
-
-    if (COMPILE_TESTS)
-        function(add_lvtclp_fortran_test)
-            set(options NONE)
-            set(oneValueArgs NAME)
-            set(multiValueArgs SOURCES LIBRARIES)
-            cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-            if (ENABLE_FORTRAN_SCANNER)
-                set(CTFortranLibsIfAvailable "lvtclp_fortran")
-            else()
-                set(CTFortranLibsIfAvailable "")
-            endif()
-            add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp lvtclp_test lvttst ${CTFortranLibsIfAvailable})
-            add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
-        endfunction()
-
-        add_lvtclp_fortran_test(
-            NAME test_ct_lvtclp_fortranscanner
-            SOURCES
-                fortran/ct_lvtclp_fortranscanner.t.cpp
         )
+        target_include_directories(lvtclp_fortran_backend
+            PRIVATE
+            ${LLVM_INCLUDE_DIR}
+        )
+        target_compile_definitions(lvtclp_fortran_backend
+            PRIVATE
+            FLANG_LITTLE_ENDIAN=1
+        )
+
+        if (COMPILE_TESTS)
+            function(add_lvtclp_fortran_test)
+                set(options NONE)
+                set(oneValueArgs NAME)
+                set(multiValueArgs SOURCES LIBRARIES)
+                cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+                add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp lvtclp_test lvttst lvtclp_fortran)
+                add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
+            endfunction()
+
+            add_lvtclp_fortran_test(
+                NAME test_ct_lvtclp_fortranscanner
+                SOURCES
+                fortran/ct_lvtclp_fortranscanner.t.cpp
+            )
+        endif()
+    elseif (FORTRAN_SCANNER_BACKEND STREQUAL "FORTRAN-TO-JSON")
+        AddTargetLibrary(
+            LIBRARY_NAME
+            lvtclp_fortran
+            SOURCES
+            fortran/ct_lvtclp_tool.cpp
+            fortran/ct_lvtclp_fortran_c_interop.cpp
+
+            fortran/backends/fortran-to-json/ct_lvtclp_tool_backend.cpp
+            HEADERS
+            fortran/ct_lvtclp_tool.h
+            fortran/ct_lvtclp_fortran_c_interop.h
+            LIBRARIES
+            Codethink::lvtmdb
+            ${SYSTEM_EXTRA_LIBRARIES}
+        )
+    else()
+        MESSAGE(FATAL_ERROR "Unknown Fortran Scanner backend named '${FORTRAN_SCANNER_BACKEND}'.")
     endif()
 else()
     MESSAGE("Fortran support DISABLED")

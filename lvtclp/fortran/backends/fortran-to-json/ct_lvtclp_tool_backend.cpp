@@ -45,90 +45,95 @@ struct FortranParsingContext {
 
 void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingContext const& context, ObjectStore& memDb)
 {
-    auto visitChildrenBlocksWithContext = [&](FortranParsingContext const& context) {
-        if (jsonASTNode.contains("blocks")) {
-            auto children = jsonASTNode["blocks"].toArray();
-            for (auto e : children) {
-                recursiveParseJsonASTNode(e.toObject(), context, memDb);
+    auto visitAllChildrenWithContext = [&](FortranParsingContext const& context) {
+        for (auto const& k : jsonASTNode.keys()) {
+            if (jsonASTNode[k].isArray()) {
+                auto children = jsonASTNode[k].toArray();
+                for (auto e : children) {
+                    recursiveParseJsonASTNode(e.toObject(), context, memDb);
+                }
+            }
+            if (jsonASTNode[k].isObject()) {
+                recursiveParseJsonASTNode(jsonASTNode[k].toObject(), context, memDb);
             }
         }
     };
 
-    if (jsonASTNode.contains("tag")) {
-        auto tag = jsonASTNode["tag"].toString();
-        if (tag == "comment") {
-            // Ignore comments.
+    if (!jsonASTNode.contains("tag")) {
+        visitAllChildrenWithContext(context);
+    }
+
+    auto tag = jsonASTNode["tag"].toString();
+    if (tag == "comment") {
+        // Ignore comments.
+        return;
+    } else if (tag == "subroutine" || tag == "function") {
+        auto functionName = jsonASTNode["name"].isString()
+            ? jsonASTNode["name"].toString().toStdString()
+            : jsonASTNode["name"]["value"]["value"].toString().toStdString();
+
+        if (functionName.empty()) {
+            std::cout << "++ WARNING: Unexpected empty function name. Ignoring!\n";
+            std::cout << "++ [Debug] Tag='" << tag.toStdString() << "'\n";
+            std::cout << "++ [Debug] ActiveFile='" << context.activeFile << "'\n";
+            std::cout << "++ [Debug] Span='" << jsonASTNode["span"].toString().toStdString() << "'\n";
             return;
-        } else if (tag == "subroutine" || tag == "function") {
-            auto functionName = jsonASTNode["name"].isString()
-                ? jsonASTNode["name"].toString().toStdString()
-                : jsonASTNode["name"]["value"]["value"].toString().toStdString();
-
-            if (functionName.empty()) {
-                std::cout << "++ WARNING: Unexpected empty function name. Ignoring!\n";
-                std::cout << "++ [Debug] Tag='" << tag.toStdString() << "'\n";
-                std::cout << "++ [Debug] ActiveFile='" << context.activeFile << "'\n";
-                std::cout << "++ [Debug] Span='" << jsonASTNode["span"].toString().toStdString() << "'\n";
-                return;
-            }
-
-            FunctionObject *function = nullptr;
-            memDb.withRWLock([&]() {
-                function = memDb.getOrAddFunction(
-                    /*qualifiedName=*/functionName,
-                    /*name=*/functionName,
-                    /*signature=*/"",
-                    /*returnType=*/"",
-                    /*templateParameters=*/"",
-                    /*parent=*/nullptr);
-                auto *file = memDb.getFile(context.activeFile);
-                file->withRWLock([&] {
-                    file->addGlobalFunction(function);
-                });
-            });
-            auto subroutineContext = context;
-            subroutineContext.activeFunction = function;
-            visitChildrenBlocksWithContext(subroutineContext);
-        } else if (tag == "call") {
-            if (context.activeFunction == nullptr) {
-                std::cout << "++ WARNING: found a function call without caller context. Will skip.\n";
-                std::cout << "++ [Debug] Tag='" << tag.toStdString() << "'\n";
-                std::cout << "++ [Debug] ActiveFile='" << context.activeFile << "'\n";
-                std::cout << "++ [Debug] Span='" << jsonASTNode["span"].toString().toStdString() << "'\n";
-                return;
-            }
-            auto calleeName = jsonASTNode["function"]["value"]["value"].toString().toStdString();
-
-            memDb.withRWLock([&]() {
-                auto *callee = memDb.getOrAddFunction(
-                    /*qualifiedName=*/calleeName,
-                    /*name=*/calleeName,
-                    /*signature=*/"",
-                    /*returnType=*/"",
-                    /*templateParameters=*/"",
-                    /*parent=*/nullptr);
-                FunctionObject::addDependency(context.activeFunction, callee);
-            });
-        } else if (tag == "include") {
-            auto inclusionPath = jsonASTNode["path"]["value"]["value"].toString().toStdString();
-
-            // TODO: Search the inclusion taking in consideration the known inclusion list from compilation commands
-            inclusionPath = "FortranIncludes/" + inclusionPath;
-
-            auto inclusionComponentDbObject = addComponentForFile(memDb, inclusionPath);
-            recursiveAddComponentDependency(context.activeDbComponentObject, inclusionComponentDbObject);
-
-            // Update the context so that child `blocks` will be affected
-            auto inclusionContext = context;
-            inclusionContext.activeFile = inclusionPath;
-            inclusionContext.activeDbComponentObject = inclusionComponentDbObject;
-            visitChildrenBlocksWithContext(inclusionContext);
-        } else if (tag == "statement") {
-            recursiveParseJsonASTNode(jsonASTNode["statement"].toObject(), context, memDb);
-            visitChildrenBlocksWithContext(context);
-        } else {
-            visitChildrenBlocksWithContext(context);
         }
+
+        FunctionObject *function = nullptr;
+        memDb.withRWLock([&]() {
+            function = memDb.getOrAddFunction(
+                /*qualifiedName=*/functionName,
+                /*name=*/functionName,
+                /*signature=*/"",
+                /*returnType=*/"",
+                /*templateParameters=*/"",
+                /*parent=*/nullptr);
+            auto *file = memDb.getFile(context.activeFile);
+            file->withRWLock([&] {
+                file->addGlobalFunction(function);
+            });
+        });
+        auto subroutineContext = context;
+        subroutineContext.activeFunction = function;
+        visitAllChildrenWithContext(subroutineContext);
+    } else if (tag == "call") {
+        if (context.activeFunction == nullptr) {
+            std::cout << "++ WARNING: found a function call without caller context. Will skip.\n";
+            std::cout << "++ [Debug] Tag='" << tag.toStdString() << "'\n";
+            std::cout << "++ [Debug] ActiveFile='" << context.activeFile << "'\n";
+            std::cout << "++ [Debug] Span='" << jsonASTNode["span"].toString().toStdString() << "'\n";
+            return;
+        }
+        auto calleeName = jsonASTNode["function"]["value"]["value"].toString().toStdString();
+
+        memDb.withRWLock([&]() {
+            auto *callee = memDb.getOrAddFunction(
+                /*qualifiedName=*/calleeName,
+                /*name=*/calleeName,
+                /*signature=*/"",
+                /*returnType=*/"",
+                /*templateParameters=*/"",
+                /*parent=*/nullptr);
+            FunctionObject::addDependency(context.activeFunction, callee);
+        });
+        visitAllChildrenWithContext(context);
+    } else if (tag == "include") {
+        auto inclusionPath = jsonASTNode["path"]["value"]["value"].toString().toStdString();
+
+        // TODO: Search the inclusion taking in consideration the known inclusion list from compilation commands
+        inclusionPath = "FortranIncludes/" + inclusionPath;
+
+        auto inclusionComponentDbObject = addComponentForFile(memDb, inclusionPath);
+        recursiveAddComponentDependency(context.activeDbComponentObject, inclusionComponentDbObject);
+
+        // Update the context so that child `blocks` will be affected
+        auto inclusionContext = context;
+        inclusionContext.activeFile = inclusionPath;
+        inclusionContext.activeDbComponentObject = inclusionComponentDbObject;
+        visitAllChildrenWithContext(inclusionContext);
+    } else {
+        visitAllChildrenWithContext(context);
     }
 }
 

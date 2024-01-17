@@ -43,6 +43,24 @@ struct FortranParsingContext {
     FunctionObject *activeFunction = nullptr;
 };
 
+ComponentObject *findComponentForFunction(ObjectStore& memDb, FunctionObject *f)
+{
+    // TODO: Create a "component()" method in the FileObject class to avoid the loop below.
+    // TODO: Create a "file()" method in the FunctionObject class to avoid the loop below.
+    for (auto const& maybeCalleeFile : memDb.files()) {
+        auto const& functions = maybeCalleeFile.second->globalFunctions();
+        if (std::find_if(functions.cbegin(),
+                         functions.cend(),
+                         [&f](auto const& f2) {
+                             return f->qualifiedName() == f2->qualifiedName();
+                         })
+            != functions.cend()) {
+            return maybeCalleeFile.second->component();
+        }
+    }
+    return nullptr;
+};
+
 void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingContext const& context, ObjectStore& memDb)
 {
     auto visitAllChildrenWithContext = [&](FortranParsingContext const& context) {
@@ -93,6 +111,21 @@ void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingCon
             file->withRWLock([&] {
                 file->addGlobalFunction(function);
             });
+
+            // It may be the case that the function was already known, but not it's definition.
+            // It is necessary to search for the related component and make sure the dependencies are updated.
+            for (auto const& callee : function->callees()) {
+                auto calleeComponent = findComponentForFunction(memDb, callee);
+                if (calleeComponent) {
+                    recursiveAddComponentDependency(context.activeDbComponentObject, calleeComponent);
+                }
+            }
+            for (auto const& caller : function->callers()) {
+                auto callerComponent = findComponentForFunction(memDb, caller);
+                if (callerComponent) {
+                    recursiveAddComponentDependency(callerComponent, context.activeDbComponentObject);
+                }
+            }
         });
         auto subroutineContext = context;
         subroutineContext.activeFunction = function;
@@ -116,6 +149,12 @@ void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingCon
                 /*templateParameters=*/"",
                 /*parent=*/nullptr);
             FunctionObject::addDependency(context.activeFunction, callee);
+
+            // If the component where the function is defined is known, then update the dependency graph
+            auto calleeComponent = findComponentForFunction(memDb, callee);
+            if (calleeComponent) {
+                recursiveAddComponentDependency(context.activeDbComponentObject, calleeComponent);
+            }
         });
         visitAllChildrenWithContext(context);
     } else if (tag == "include") {

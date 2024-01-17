@@ -20,6 +20,7 @@
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
+#include <fortran/ct_lvtclp_fortran_dbutils.h>
 
 #include <unordered_map>
 
@@ -27,6 +28,8 @@ using namespace Codethink::lvtmdb;
 
 void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedMemDb)
 {
+    std::cout << "Resolving Fortran-to-C dependencies...\n";
+
     // Heuristically find bindings from/to C/Fortran code
     auto& all_functions = sharedMemDb.functions();
     auto bindDependencies = std::vector<std::pair<FunctionObject *, FunctionObject *>>{};
@@ -59,6 +62,7 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
         bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
     }
 
+    std::cout << "Updating Fortran-to-C relations in database...\n";
     sharedMemDb.withRWLock([&]() {
         // There is no back-mapping from functions to the components in the database, so we create a local one.
         auto functionObjToComponentObj = std::unordered_map<FunctionObject *, ComponentObject *>{};
@@ -72,6 +76,7 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
             }
         }
 
+        std::cout << "Resolving dependency bindings...\n";
         for (auto& [from, to] : bindDependencies) {
             FunctionObject::addDependency(from, to);
 
@@ -79,20 +84,7 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
             auto *fromComponent = functionObjToComponentObj[from];
             auto *toComponent = functionObjToComponentObj[to];
             if (fromComponent && toComponent && fromComponent != toComponent) {
-                ComponentObject::addDependency(fromComponent, toComponent);
-
-                auto fromComponentLock = fromComponent->rwLock();
-                auto toComponentLock = toComponent->rwLock();
-                auto fromPackage = fromComponent->package();
-                auto toPackage = toComponent->package();
-                while (fromPackage && toPackage && fromPackage != toPackage) {
-                    lvtmdb::PackageObject::addDependency(fromPackage, toPackage);
-
-                    auto srcParentLock = fromPackage->readOnlyLock();
-                    auto trgParentLock = toPackage->readOnlyLock();
-                    fromPackage = fromPackage->parent();
-                    toPackage = toPackage->parent();
-                }
+                recursiveAddComponentDependency(fromComponent, toComponent);
             }
         }
     });

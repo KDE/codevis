@@ -60,7 +60,17 @@ void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingCon
             // Ignore comments.
             return;
         } else if (tag == "subroutine" || tag == "function") {
-            auto functionName = jsonASTNode["name"].toString().toStdString();
+            auto functionName = jsonASTNode["name"].isString()
+                ? jsonASTNode["name"].toString().toStdString()
+                : jsonASTNode["name"]["value"]["value"].toString().toStdString();
+
+            if (functionName.empty()) {
+                std::cout << "++ WARNING: Unexpected empty function name. Ignoring!\n";
+                std::cout << "++ [Debug] Tag='" << tag.toStdString() << "'\n";
+                std::cout << "++ [Debug] ActiveFile='" << context.activeFile << "'\n";
+                std::cout << "++ [Debug] Span='" << jsonASTNode["span"].toString().toStdString() << "'\n";
+                return;
+            }
 
             FunctionObject *function = nullptr;
             memDb.withRWLock([&]() {
@@ -76,13 +86,15 @@ void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingCon
                     file->addGlobalFunction(function);
                 });
             });
-
             auto subroutineContext = context;
             subroutineContext.activeFunction = function;
             visitChildrenBlocksWithContext(subroutineContext);
         } else if (tag == "call") {
             if (context.activeFunction == nullptr) {
-                std::cout << "WARNING: found a function call without caller context. Will skip.\n";
+                std::cout << "++ WARNING: found a function call without caller context. Will skip.\n";
+                std::cout << "++ [Debug] Tag='" << tag.toStdString() << "'\n";
+                std::cout << "++ [Debug] ActiveFile='" << context.activeFile << "'\n";
+                std::cout << "++ [Debug] Span='" << jsonASTNode["span"].toString().toStdString() << "'\n";
                 return;
             }
             auto calleeName = jsonASTNode["function"]["value"]["value"].toString().toStdString();
@@ -164,9 +176,18 @@ QJsonDocument runFortranToJsonAndGetOutputs(std::string const& targetDirectory,
 
     fortranToJsonTool.setWorkingDirectory(QString::fromStdString(targetDirectory));
     auto args = QStringList({"-v77l", QString::fromStdString(targetFile)});
+    args.append("-I" + QString::fromStdString(std::filesystem::path{targetFile}.parent_path().string()));
+    args.append("-I" + QString::fromStdString(targetDirectory));
     for (auto const& includePath : includePaths) {
         args.append(QString::fromStdString(includePath));
     }
+
+    std::cout << "++ Command: " << FORTRAN_TO_JSON_EXECUTABLE << " ";
+    for (auto const& arg : args) {
+        std::cout << arg.toStdString() << " ";
+    }
+    std::cout << "\n";
+
     fortranToJsonTool.start(FORTRAN_TO_JSON_EXECUTABLE, args);
     fortranToJsonTool.waitForFinished();
 
@@ -190,6 +211,7 @@ void runFullOnCommand(CompileCommand const& cmd, ObjectStore& memDb)
     std::cout << "+ " << cmd.Filename << "\n";
     auto dbComponentObject = addComponentForFile(memDb, cmd.Filename);
     auto jsonAST = runFortranToJsonAndGetOutputs(cmd.Directory, cmd.Filename, includePaths);
+    std::cout << "++ Meta info filename = " << jsonAST["meta_info"]["filename"].toString().toStdString() << "\n";
     if (!jsonAST.isEmpty() && jsonAST.isObject()) {
         auto context = FortranParsingContext{cmd.Filename, dbComponentObject};
 
@@ -198,7 +220,6 @@ void runFullOnCommand(CompileCommand const& cmd, ObjectStore& memDb)
             recursiveParseJsonASTNode(e.toObject(), context, memDb);
         }
     }
-    std::cout << "++ " << jsonAST["meta_info"]["filename"].toString().toStdString();
 }
 } // namespace
 

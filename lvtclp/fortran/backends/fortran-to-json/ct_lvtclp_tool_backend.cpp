@@ -15,9 +15,11 @@
 // limitations under the License.
 */
 
-#include <ct_lvtmdb_fileobject.h>
 #include <fortran/ct_lvtclp_fortran_dbutils.h>
 #include <fortran/ct_lvtclp_tool.h>
+
+#include <ct_lvtmdb_fileobject.h>
+#include <ct_lvtmdb_functionobject.h>
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
 
@@ -38,13 +40,26 @@ using namespace Codethink::lvtmdb;
 struct FortranParsingContext {
     std::string activeFile;
     ComponentObject *activeDbComponentObject;
+    FunctionObject *activeFunction = nullptr;
 };
 
-void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingContext& context, ObjectStore& memDb)
+void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingContext const& context, ObjectStore& memDb)
 {
+    auto visitChildrenBlocksWithContext = [&](FortranParsingContext const& context) {
+        if (jsonASTNode.contains("blocks")) {
+            auto children = jsonASTNode["blocks"].toArray();
+            for (auto e : children) {
+                recursiveParseJsonASTNode(e.toObject(), context, memDb);
+            }
+        }
+    };
+
     if (jsonASTNode.contains("tag")) {
         auto tag = jsonASTNode["tag"].toString();
-        if (tag == "subroutine") {
+        if (tag == "comment") {
+            // Ignore comments.
+            return;
+        } else if (tag == "subroutine" || tag == "function") {
             auto functionName = jsonASTNode["name"].toString().toStdString();
 
             FunctionObject *function = nullptr;
@@ -61,8 +76,27 @@ void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingCon
                     file->addGlobalFunction(function);
                 });
             });
+
+            auto subroutineContext = context;
+            subroutineContext.activeFunction = function;
+            visitChildrenBlocksWithContext(subroutineContext);
         } else if (tag == "call") {
-            std::cout << "!> Found CALL (unhandled)\n";
+            if (context.activeFunction == nullptr) {
+                std::cout << "WARNING: found a function call without caller context. Will skip.\n";
+                return;
+            }
+            auto calleeName = jsonASTNode["function"]["value"]["value"].toString().toStdString();
+
+            memDb.withRWLock([&]() {
+                auto *callee = memDb.getOrAddFunction(
+                    /*qualifiedName=*/calleeName,
+                    /*name=*/calleeName,
+                    /*signature=*/"",
+                    /*returnType=*/"",
+                    /*templateParameters=*/"",
+                    /*parent=*/nullptr);
+                FunctionObject::addDependency(context.activeFunction, callee);
+            });
         } else if (tag == "include") {
             auto inclusionPath = jsonASTNode["path"]["value"]["value"].toString().toStdString();
 
@@ -73,16 +107,15 @@ void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingCon
             recursiveAddComponentDependency(context.activeDbComponentObject, inclusionComponentDbObject);
 
             // Update the context so that child `blocks` will be affected
-            context = FortranParsingContext{inclusionPath, inclusionComponentDbObject};
+            auto inclusionContext = context;
+            inclusionContext.activeFile = inclusionPath;
+            inclusionContext.activeDbComponentObject = inclusionComponentDbObject;
+            visitChildrenBlocksWithContext(inclusionContext);
         } else if (tag == "statement") {
             recursiveParseJsonASTNode(jsonASTNode["statement"].toObject(), context, memDb);
-        }
-    }
-
-    if (jsonASTNode.contains("blocks")) {
-        auto children = jsonASTNode["blocks"].toArray();
-        for (auto e : children) {
-            recursiveParseJsonASTNode(e.toObject(), context, memDb);
+            visitChildrenBlocksWithContext(context);
+        } else {
+            visitChildrenBlocksWithContext(context);
         }
     }
 }

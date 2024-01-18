@@ -88,7 +88,11 @@ class AbstractLibraryDispatcher {
     KPluginMetaData metadata()
     {
 #ifdef KDE_FRAMEWORKS_IS_OLD
-        return {};
+        auto metadataFilePath = QString::fromStdString(this->metadataFilePath());
+        auto metadataFile = QFile(metadataFilePath);
+        metadataFile.open(QFile::ReadOnly);
+        auto jsonContents = QJsonDocument().fromJson(metadataFile.readAll()).object();
+        return KPluginMetaData(jsonContents, metadataFilePath);
 #else
         return KPluginMetaData::fromJsonFile(QString::fromStdString(this->metadataFilePath()));
 #endif

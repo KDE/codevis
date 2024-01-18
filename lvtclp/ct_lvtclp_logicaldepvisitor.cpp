@@ -55,6 +55,54 @@
 
 namespace {
 
+using namespace Codethink::lvtmdb;
+
+void recursiveAddComponentDependency(ComponentObject *sourceComponent, ComponentObject *targetComponent)
+{
+    using namespace Codethink::lvtmdb;
+    ComponentObject::addDependency(sourceComponent, targetComponent);
+
+    PackageObject *srcParent = nullptr;
+    sourceComponent->withROLock([&]() {
+        srcParent = sourceComponent->package();
+    });
+
+    PackageObject *trgParent = nullptr;
+    targetComponent->withROLock([&]() {
+        trgParent = targetComponent->package();
+    });
+
+    while (srcParent && trgParent && srcParent != trgParent) {
+        PackageObject::addDependency(srcParent, trgParent);
+
+        srcParent->withROLock([&]() {
+            srcParent = srcParent->parent();
+        });
+
+        trgParent->withROLock([&]() {
+            trgParent = trgParent->parent();
+        });
+    }
+}
+
+ComponentObject *findComponentForFunction(ObjectStore& memDb, FunctionObject *f)
+{
+    // TODO: Create a "component()" method in the FileObject class to avoid the loop below.
+    // TODO: Create a "file()" method in the FunctionObject class to avoid the loop below.
+    for (auto const& maybeCalleeFile : memDb.files()) {
+        auto const& functions = maybeCalleeFile.second->globalFunctions();
+        if (std::find_if(functions.cbegin(),
+                         functions.cend(),
+                         [&f](auto const& f2) {
+                             return f->qualifiedName() == f2->qualifiedName();
+                         })
+            != functions.cend()) {
+            return maybeCalleeFile.second->component();
+        }
+    }
+    return nullptr;
+}
+
 // clang::Type::isTypedefNameType (not in older clang)
 // Determines whether this type is written as a typedef-name.
 bool typeIsTypedefNameType(const clang::Type *type)
@@ -792,30 +840,39 @@ bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
         }
 
         // find out if this function calls any functions
-        auto visitCallExpr = [this, functionDecl, function, &addFunctionToDb](const clang::CallExpr *callExpr) {
-            auto lock = function->readOnlyLock();
-            (void) lock;
+        auto callerComponent = findComponentForFunction(this->d_memDb, function);
+        auto visitCallExpr =
+            [this, functionDecl, function, &addFunctionToDb, &callerComponent](const clang::CallExpr *callExpr) {
+                auto lock = function->readOnlyLock();
+                (void) lock;
 
-            const clang::FunctionDecl *callee = callExpr->getDirectCallee();
-            if (!callee) {
-                return;
-            }
-            d_staticFnHandler_p->addFnUses(functionDecl, callee);
-
-            if (callee->isCXXClassMember()) {
-                // We do not follow calls to methods. This may be reviewed.
-                return;
-            }
-
-            if (callee->isTemplateInstantiation()) {
-                auto *primaryTemplate = callee->getPrimaryTemplate();
-                if (primaryTemplate) {
-                    callee = primaryTemplate->getTemplatedDecl();
+                const clang::FunctionDecl *callee = callExpr->getDirectCallee();
+                if (!callee) {
+                    return;
                 }
-            }
-            auto *calledFunction = addFunctionToDb(callee);
-            d_staticFnHandler_p->addCallgraphDep(function, calledFunction);
-        };
+                d_staticFnHandler_p->addFnUses(functionDecl, callee);
+
+                if (callee->isCXXClassMember()) {
+                    // We do not follow calls to methods. This may be reviewed.
+                    return;
+                }
+
+                if (callee->isTemplateInstantiation()) {
+                    auto *primaryTemplate = callee->getPrimaryTemplate();
+                    if (primaryTemplate) {
+                        callee = primaryTemplate->getTemplatedDecl();
+                    }
+                }
+                auto *calledFunction = addFunctionToDb(callee);
+                d_staticFnHandler_p->addCallgraphDep(function, calledFunction);
+                // If the component where the function is defined is known, then update the dependency graph
+                if (callerComponent) {
+                    auto calleeComponent = findComponentForFunction(this->d_memDb, calledFunction);
+                    if (calleeComponent) {
+                        recursiveAddComponentDependency(callerComponent, calleeComponent);
+                    }
+                }
+            };
         searchClangStmtAST<clang::CallExpr>(functionDecl->getBody(), visitCallExpr);
     }
 

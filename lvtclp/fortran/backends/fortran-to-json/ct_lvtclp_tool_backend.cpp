@@ -130,7 +130,7 @@ void recursiveParseJsonASTNode(QJsonObject const& jsonASTNode, FortranParsingCon
         auto subroutineContext = context;
         subroutineContext.activeFunction = function;
         visitAllChildrenWithContext(subroutineContext);
-    } else if (tag == "call") {
+    } else if (tag == "call" || tag == "function_call") {
         if (context.activeFunction == nullptr) {
             std::cout << "++ WARNING: found a function call without caller context. Will skip.\n";
             std::cout << "++ [Debug] Tag='" << tag.toStdString() << "'\n";

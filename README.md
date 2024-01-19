@@ -4,7 +4,7 @@
 
 ## Prebuilt binaries
 
-- [**Windows (.exe)**](https://invent.kde.org/sdk/codevis/-/jobs/1516543/artifacts/file/.kde-ci-packages/codevis-master-541-windows-cl-msvc2019-x86_64.exe)
+- [**Windows (.exe)**](https://invent.kde.org/sdk/codevis/-/jobs/1524261/artifacts/file/.kde-ci-packages/codevis-master-545-windows-cl-msvc2019-x86_64.exe)
 - [**Ubuntu 22.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/77fc53bdc32d671ce8d27162f6b409d1/codevis-ubuntu-22.04.zip)
 - [**Ubuntu 20.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/16c7045a6f17401a80652765bac3228a/codevis-ubuntu-20.04.zip)
 

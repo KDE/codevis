@@ -5,6 +5,8 @@
 ## Prebuilt binaries
 
 - [**Windows (.exe)**](https://invent.kde.org/sdk/codevis/-/jobs/1530469/artifacts/file/.kde-ci-packages/codevis-master-565-windows-cl-msvc2019-x86_64.exe)
+**Important Note: Windows build needs Python3.11 installed.** [Download and install Python 3.11 for Windows](https://www.python.org/downloads/windows/)
+
 - [**Ubuntu 22.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/77fc53bdc32d671ce8d27162f6b409d1/codevis-ubuntu-22.04.zip)
 - [**Ubuntu 20.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/16c7045a6f17401a80652765bac3228a/codevis-ubuntu-20.04.zip)
 

@@ -15,7 +15,7 @@
 // limitations under the License.
 */
 
-#include <fortran/ct_lvtclp_logicalscanner.h>
+#include <fortran/backends/flang/ct_lvtclp_logicalscanner.h>
 
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_fileobject.h>

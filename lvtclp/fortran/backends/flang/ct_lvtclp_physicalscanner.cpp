@@ -18,8 +18,8 @@
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_packageobject.h>
 #include <flang/Frontend/CompilerInstance.h>
+#include <fortran/backends/flang/ct_lvtclp_physicalscanner.h>
 #include <fortran/ct_lvtclp_fortran_dbutils.h>
-#include <fortran/ct_lvtclp_physicalscanner.h>
 
 #include <filesystem>
 #include <unordered_set>

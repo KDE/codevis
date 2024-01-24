@@ -327,7 +327,7 @@ if (ENABLE_FORTRAN_SCANNER)
 
             fortran/backends/flang/ct_lvtclp_logicalscanner.cpp
             fortran/backends/flang/ct_lvtclp_physicalscanner.cpp
-            fortran/backends/flang/ct_lvtclp_tool.cpp
+            fortran/backends/flang/ct_lvtclp_tool_backend.cpp
 
             HEADERS
             fortran/ct_lvtclp_tool.h
@@ -340,11 +340,11 @@ if (ENABLE_FORTRAN_SCANNER)
             flangFrontendTool
             ${SYSTEM_EXTRA_LIBRARIES}
         )
-        target_include_directories(lvtclp_fortran_backend
+        target_include_directories(lvtclp_fortran
             PRIVATE
             ${LLVM_INCLUDE_DIR}
         )
-        target_compile_definitions(lvtclp_fortran_backend
+        target_compile_definitions(lvtclp_fortran
             PRIVATE
             FLANG_LITTLE_ENDIAN=1
         )
@@ -362,7 +362,7 @@ if (ENABLE_FORTRAN_SCANNER)
             add_lvtclp_fortran_test(
                 NAME test_ct_lvtclp_fortranscanner
                 SOURCES
-                fortran/ct_lvtclp_fortranscanner.t.cpp
+                fortran/backends/flang/ct_lvtclp_fortranscanner.t.cpp
             )
         endif()
     elseif (FORTRAN_SCANNER_BACKEND STREQUAL "FORTRAN-TO-JSON")

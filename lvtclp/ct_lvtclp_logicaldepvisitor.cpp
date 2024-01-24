@@ -90,10 +90,16 @@ ComponentObject *findComponentForFunction(ObjectStore& memDb, FunctionObject *f)
     // TODO: Create a "component()" method in the FileObject class to avoid the loop below.
     // TODO: Create a "file()" method in the FunctionObject class to avoid the loop below.
     for (auto const& maybeCalleeFile : memDb.files()) {
+        auto fileLock = maybeCalleeFile.second->readOnlyLock();
         auto const& functions = maybeCalleeFile.second->globalFunctions();
         if (std::find_if(functions.cbegin(),
                          functions.cend(),
                          [&f](auto const& f2) {
+                             if (f == f2) {
+                                 return true;
+                             }
+
+                             auto functionsLock = Lockable::roLockTwo(f, f2);
                              return f->qualifiedName() == f2->qualifiedName();
                          })
             != functions.cend()) {

@@ -56,6 +56,8 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
 
     heuristicallyFindCallsFromFortranToC(sharedMemDb, localSharedData);
     heuristicallyFindCallsFromCToFortran(sharedMemDb, localSharedData);
+
+    (void) &addComponentForFile;
 }
 
 void heuristicallyFindCallsFromFortranToC(ObjectStore& sharedMemDb, LocalSharedData& localSharedData)

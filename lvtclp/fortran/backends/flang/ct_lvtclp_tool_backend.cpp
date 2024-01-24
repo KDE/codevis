@@ -15,8 +15,8 @@
 // limitations under the License.
 */
 
-#include <fortran/backends/ct_lvtclp_logicalscanner.h>
-#include <fortran/backends/ct_lvtclp_physicalscanner.h>
+#include <fortran/backends/flang/ct_lvtclp_logicalscanner.h>
+#include <fortran/backends/flang/ct_lvtclp_physicalscanner.h>
 #include <fortran/ct_lvtclp_tool.h>
 
 #include <flang/Frontend/CompilerInstance.h>
@@ -24,6 +24,7 @@
 #include <flang/Frontend/TextDiagnosticBuffer.h>
 #include <flang/FrontendTool/Utils.h>
 #include <flang/Parser/parse-tree-visitor.h>
+#include <llvm/Support/TargetSelect.h>
 
 #include <clang/Driver/DriverDiagnostic.h>
 #include <clang/Tooling/JSONCompilationDatabase.h>
@@ -32,7 +33,7 @@
 #include <memory>
 
 namespace {
-void Codethink::lvtclp::fortran::flang_backend::run(FrontendAction& act, CompileCommand const& cmd)
+void run(Fortran::frontend::FrontendAction& act, clang::tooling::CompileCommand const& cmd)
 {
     using namespace Fortran::frontend;
 

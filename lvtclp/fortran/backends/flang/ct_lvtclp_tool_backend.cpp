@@ -17,7 +17,7 @@
 
 #include <fortran/backends/flang/ct_lvtclp_logicalscanner.h>
 #include <fortran/backends/flang/ct_lvtclp_physicalscanner.h>
-#include <fortran/ct_lvtclp_tool.h>
+#include <fortran/ct_lvtclp_fortran_tool.h>
 
 #include <flang/Frontend/CompilerInstance.h>
 #include <flang/Frontend/CompilerInvocation.h>

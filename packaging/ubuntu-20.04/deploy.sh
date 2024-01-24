@@ -26,6 +26,7 @@ cp ./lvtcgn/liblvtcgn_gui.so ${CODEVIS_PKG_ARTIFACTS_PATH}
 cp ./lvtcgn/liblvtcgn_adapter.so ${CODEVIS_PKG_ARTIFACTS_PATH}
 cp ./lvtcgn/liblvtcgn_mdl.so ${CODEVIS_PKG_ARTIFACTS_PATH}
 cp ./lvtclp/liblvtclp.so ${CODEVIS_PKG_ARTIFACTS_PATH}
+cp ./lvtclp/liblvtclp_fortran.so ${CODEVIS_PKG_ARTIFACTS_PATH}
 cp ./lvtmdl/liblvtmdl.so ${CODEVIS_PKG_ARTIFACTS_PATH}
 cp ./lvtshr/liblvtshr.so ${CODEVIS_PKG_ARTIFACTS_PATH}
 cp ./lvtmdb/liblvtmdb.so ${CODEVIS_PKG_ARTIFACTS_PATH}

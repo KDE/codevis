@@ -7,38 +7,38 @@ find_package(Threads REQUIRED)
 ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
 LINK_DIRECTORIES(
-    ${CLANG_LIBRARY_DIRS}
+        ${CLANG_LIBRARY_DIRS}
 )
 
 # Windows does not support yet the LLVM libraries as a shared library.
 # Specify all of them by hand. =/
 if (USE_LLVM_STATIC_LIBS OR MSVC)
     SET(CLANG_EXTRA_LIBRARIES
-        clangIndex
-        clangFormat
-        clangTooling
-        clangToolingInclusions
-        clangToolingCore
-        clangFrontend
-        clangParse
-        clangSerialization
-        clangSema
-        clangAST
-        clangLex
-        clangDriver
-        clangBasic
-    )
+            clangIndex
+            clangFormat
+            clangTooling
+            clangToolingInclusions
+            clangToolingCore
+            clangFrontend
+            clangParse
+            clangSerialization
+            clangSema
+            clangAST
+            clangLex
+            clangDriver
+            clangBasic
+            )
 else()
     SET(CLANG_EXTRA_LIBRARIES
-        clang-cpp
-        LLVM
-    )
+            clang-cpp
+            LLVM
+            )
 endif()
 
 AddTargetLibrary(
-    LIBRARY_NAME
+        LIBRARY_NAME
         lvtclp
-    SOURCES
+        SOURCES
         ct_lvtclp_clputil.cpp
         ct_lvtclp_compilerutil.cpp
         ct_lvtclp_componentutil.cpp
@@ -51,10 +51,10 @@ AddTargetLibrary(
         ct_lvtclp_logicalpostprocessutil.cpp
         ct_lvtclp_physicaldepscanner.cpp
         ct_lvtclp_staticfnhandler.cpp
-        ct_lvtclp_tool.cpp
+        ct_lvtclp_cpp_tool.cpp
         ct_lvtclp_toolexecutor.cpp
         ct_lvtclp_visitlog.cpp
-    HEADERS
+        HEADERS
         ct_lvtclp_clputil.h
         ct_lvtclp_compilerutil.h
         ct_lvtclp_componentutil.h
@@ -68,9 +68,9 @@ AddTargetLibrary(
         ct_lvtclp_staticfnhandler.h
         ct_lvtclp_toolexecutor.h
         ct_lvtclp_visitlog.h
-    QT_HEADERS
-        ct_lvtclp_tool.h
-    LIBRARIES
+        QT_HEADERS
+        ct_lvtclp_cpp_tool.h
+        LIBRARIES
         Codethink::lvtmdb
         Codethink::lvtprj
         Codethink::lvtshr
@@ -81,8 +81,8 @@ AddTargetLibrary(
 )
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     set_target_properties(lvtclp
-        PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${SKIP_CLANG_WARNINGS}"
-    )
+            PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${SKIP_CLANG_WARNINGS}"
+            )
 endif()
 
 # add_lvtclp_exec(
@@ -98,14 +98,14 @@ function(add_lvtclp_exec)
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         set_target_properties(${clp_NAME}
-            PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${SKIP_CLANG_WARNINGS}")
+                PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${SKIP_CLANG_WARNINGS}")
     endif()
 
     target_link_libraries(${clp_NAME}
-        Codethink::lvtclp
-        Codethink::lvtshr
-        ${clp_LIBRARIES}
-    )
+            Codethink::lvtclp
+            Codethink::lvtshr
+            ${clp_LIBRARIES}
+            )
 endfunction()
 
 if (ENABLE_FORTRAN_SCANNER)
@@ -115,19 +115,19 @@ else()
 endif()
 
 add_lvtclp_exec(
-    NAME codevis_create_codebase_db
-    SOURCES ct_lvtclp_create_codebase_db.m.cpp
-    LIBRARIES Qt${QT_MAJOR_VERSION}::Core ${CTFortranLibsIfAvailable})
+        NAME codevis_create_codebase_db
+        SOURCES ct_lvtclp_create_codebase_db.m.cpp
+        LIBRARIES Qt${QT_MAJOR_VERSION}::Core ${CTFortranLibsIfAvailable})
 
 add_lvtclp_exec(
-    NAME codevis_merge_databases
-    SOURCES ct_lvtclp_merge_databases.m.cpp
-    LIBRARIES Qt${QT_MAJOR_VERSION}::Core Threads::Threads
+        NAME codevis_merge_databases
+        SOURCES ct_lvtclp_merge_databases.m.cpp
+        LIBRARIES Qt${QT_MAJOR_VERSION}::Core Threads::Threads
 )
 
 add_lvtclp_exec(
-    NAME codevis_dump_database
-    SOURCES ct_lvtclp_dumpdatabase.m.cpp)
+        NAME codevis_dump_database
+        SOURCES ct_lvtclp_dumpdatabase.m.cpp)
 
 if (COMPILE_TESTS)
     function(add_lvtclp_test)
@@ -141,147 +141,147 @@ if (COMPILE_TESTS)
     endfunction()
 
     add_library(lvtclp_test
-        ct_lvtclp_testutil.cpp
-        ct_lvtclp_testutil.h
-    )
+            ct_lvtclp_testutil.cpp
+            ct_lvtclp_testutil.h
+            )
     add_library(Codethink::lvtclp_test ALIAS lvtclp_test)
     target_link_libraries(
-        lvtclp_test
-        Codethink::lvtclp
-        Catch2::Catch2
+            lvtclp_test
+            Codethink::lvtclp
+            Catch2::Catch2
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_relationships
-        SOURCES
+            NAME test_ct_lvtclp_relationships
+            SOURCES
             ct_lvtclp_testrelationships.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_compilerutil
-        SOURCES
+            NAME test_ct_lvtclp_compilerutil
+            SOURCES
             ct_lvtclp_compilerutil.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_sourcefile
-        SOURCES
+            NAME test_ct_lvtclp_sourcefile
+            SOURCES
             ct_lvtclp_testsourcefile.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_namespace
-        SOURCES
+            NAME test_ct_lvtclp_namespace
+            SOURCES
             ct_lvtclp_testnamespace.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_function
-        SOURCES
+            NAME test_ct_lvtclp_function
+            SOURCES
             ct_lvtclp_testfunction.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_physicalandtemplates
-        SOURCES
+            NAME test_ct_lvtclp_physicalandtemplates
+            SOURCES
             ct_lvtclp_testphysicalandtemplates.t.cpp
     )
     add_lvtclp_test(
-        NAME test_ct_lvtclp_udt
-        SOURCES
+            NAME test_ct_lvtclp_udt
+            SOURCES
             ct_lvtclp_testudt.t.cpp
     )
     add_lvtclp_test(
-        NAME test_ct_lvtclp_field
-        SOURCES
+            NAME test_ct_lvtclp_field
+            SOURCES
             ct_lvtclp_testfield.t.cpp
     )
     add_lvtclp_test(
-        NAME test_ct_lvtclp_var
-        SOURCES
+            NAME test_ct_lvtclp_var
+            SOURCES
             ct_lvtclp_testvar.t.cpp
     )
     add_lvtclp_test(
-        NAME test_ct_lvtclp_filesystemscanner
-        SOURCES
+            NAME test_ct_lvtclp_filesystemscanner
+            SOURCES
             ct_lvtclp_filesystemscanner.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_fileupdatemgr_physical
-        SOURCES
+            NAME test_ct_lvtclp_fileupdatemgr_physical
+            SOURCES
             ct_lvtclp_fileupdatemgr_physical.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_tool
-        SOURCES
-            ct_lvtclp_tool.t.cpp
+            NAME test_ct_lvtclp_tool
+            SOURCES
+            ct_lvtclp_cpp_tool.t.cpp
     )
     set_property(TEST test_ct_lvtclp_tool PROPERTY ENVIRONMENT "TEST_PRJ_PATH=${CMAKE_CURRENT_SOURCE_DIR}/systemtests/")
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_logicalpostprocessutil
-        SOURCES
+            NAME test_ct_lvtclp_logicalpostprocessutil
+            SOURCES
             ct_lvtclp_logicalpostprocessutil.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_clputil
-        SOURCES
+            NAME test_ct_lvtclp_clputil
+            SOURCES
             ct_lvtclp_clputil.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_physicaldepscanner
-        SOURCES
+            NAME test_ct_lvtclp_physicaldepscanner
+            SOURCES
             ct_lvtclp_physicaldepscanner.t.cpp
     )
 
     add_lvtclp_test(
-        NAME test_ct_lvtclp_logicaldepscanner
-        SOURCES
+            NAME test_ct_lvtclp_logicaldepscanner
+            SOURCES
             ct_lvtclp_logicaldepscanner.t.cpp
     )
 endif()
-    
+
 if (CMAKE_COMPILER_IS_GNUCXX AND ENABLE_CODE_COVERAGE)
     setup_target_for_coverage_lcov(
-        NAME lvtclp_coverage
-        EXECUTABLE ../lvtclp/run_tests.sh
-        EXCLUDE "/usr/*"
-                "*.m.cpp"
-                "*.t.cpp"
-                "build*/*"
-                "desktopapp/*"
-                "lvtclr/*"
-                "lvtgrps/*"
-                "lvtmdl/*"
-                "lvtqtc/*"
-                "lvtqtd/*"
-                "lvtqtw/*"
-                "lvtshr/*"
-                "lvtwdg/*"
-                "submodules/*"
-         )
+            NAME lvtclp_coverage
+            EXECUTABLE ../lvtclp/run_tests.sh
+            EXCLUDE "/usr/*"
+            "*.m.cpp"
+            "*.t.cpp"
+            "build*/*"
+            "desktopapp/*"
+            "lvtclr/*"
+            "lvtgrps/*"
+            "lvtmdl/*"
+            "lvtqtc/*"
+            "lvtqtd/*"
+            "lvtqtw/*"
+            "lvtshr/*"
+            "lvtwdg/*"
+            "submodules/*"
+    )
 endif()
 
 SET(INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
 configure_file(
-    parse_bde.sh.in
-    ${CMAKE_BINARY_DIR}/parse_bde.sh
+        parse_bde.sh.in
+        ${CMAKE_BINARY_DIR}/parse_bde.sh
 )
 
 SET(${CMAKE_CURRENT_SOURCE_DIR}/systemtests/)
 
 configure_file(
-    autogen-test-variables.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/autogen-test-variables.h
+        autogen-test-variables.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/autogen-test-variables.h
 )
 
 install(FILES
-    ${CMAKE_BINARY_DIR}/parse_bde.sh
-    PERMISSIONS
+        ${CMAKE_BINARY_DIR}/parse_bde.sh
+        PERMISSIONS
         OWNER_READ
         OWNER_WRITE
         OWNER_EXECUTE
@@ -289,8 +289,8 @@ install(FILES
         GROUP_EXECUTE
         WORLD_READ
         WORLD_EXECUTE
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        )
 
 if (NOT ${KDE_FRAMEWORKS_IS_OLD})
     install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
@@ -319,35 +319,35 @@ if (ENABLE_FORTRAN_SCANNER)
         find_package(Flang REQUIRED PATHS "${LLVM_LIBRARY_DIR}/cmake/flang/" NO_DEFAULT_PATH)
 
         AddTargetLibrary(
-            LIBRARY_NAME
-            lvtclp_fortran
-            SOURCES
-            fortran/ct_lvtclp_tool.cpp
-            fortran/ct_lvtclp_fortran_c_interop.cpp
+                LIBRARY_NAME
+                lvtclp_fortran
+                SOURCES
+                fortran/ct_lvtclp_fortran_tool.cpp
+                fortran/ct_lvtclp_fortran_c_interop.cpp
 
-            fortran/backends/flang/ct_lvtclp_logicalscanner.cpp
-            fortran/backends/flang/ct_lvtclp_physicalscanner.cpp
-            fortran/backends/flang/ct_lvtclp_tool_backend.cpp
+                fortran/backends/flang/ct_lvtclp_logicalscanner.cpp
+                fortran/backends/flang/ct_lvtclp_physicalscanner.cpp
+                fortran/backends/flang/ct_lvtclp_tool_backend.cpp
 
-            HEADERS
-            fortran/ct_lvtclp_tool.h
-            fortran/ct_lvtclp_fortran_c_interop.h
-            fortran/backends/flang/ct_lvtclp_logicalscanner.h
-            fortran/backends/flang/ct_lvtclp_physicalscanner.h
-            LIBRARIES
-            Codethink::lvtmdb
-            flangFrontend
-            flangFrontendTool
-            ${SYSTEM_EXTRA_LIBRARIES}
+                HEADERS
+                fortran/ct_lvtclp_fortran_tool.h
+                fortran/ct_lvtclp_fortran_c_interop.h
+                fortran/backends/flang/ct_lvtclp_logicalscanner.h
+                fortran/backends/flang/ct_lvtclp_physicalscanner.h
+                LIBRARIES
+                Codethink::lvtmdb
+                flangFrontend
+                flangFrontendTool
+                ${SYSTEM_EXTRA_LIBRARIES}
         )
         target_include_directories(lvtclp_fortran
-            PRIVATE
-            ${LLVM_INCLUDE_DIR}
-        )
+                PRIVATE
+                ${LLVM_INCLUDE_DIR}
+                )
         target_compile_definitions(lvtclp_fortran
-            PRIVATE
-            FLANG_LITTLE_ENDIAN=1
-        )
+                PRIVATE
+                FLANG_LITTLE_ENDIAN=1
+                )
 
         if (COMPILE_TESTS)
             function(add_lvtclp_fortran_test)
@@ -360,26 +360,26 @@ if (ENABLE_FORTRAN_SCANNER)
             endfunction()
 
             add_lvtclp_fortran_test(
-                NAME test_ct_lvtclp_fortranscanner
-                SOURCES
-                fortran/backends/flang/ct_lvtclp_fortranscanner.t.cpp
+                    NAME test_ct_lvtclp_fortranscanner
+                    SOURCES
+                    fortran/backends/flang/ct_lvtclp_fortranscanner.t.cpp
             )
         endif()
     elseif (FORTRAN_SCANNER_BACKEND STREQUAL "FORTRAN-TO-JSON")
         AddTargetLibrary(
-            LIBRARY_NAME
-            lvtclp_fortran
-            SOURCES
-            fortran/ct_lvtclp_tool.cpp
-            fortran/ct_lvtclp_fortran_c_interop.cpp
+                LIBRARY_NAME
+                lvtclp_fortran
+                SOURCES
+                fortran/ct_lvtclp_fortran_tool.cpp
+                fortran/ct_lvtclp_fortran_c_interop.cpp
 
-            fortran/backends/fortran-to-json/ct_lvtclp_tool_backend.cpp
-            HEADERS
-            fortran/ct_lvtclp_tool.h
-            fortran/ct_lvtclp_fortran_c_interop.h
-            LIBRARIES
-            Codethink::lvtmdb
-            ${SYSTEM_EXTRA_LIBRARIES}
+                fortran/backends/fortran-to-json/ct_lvtclp_tool_backend.cpp
+                HEADERS
+                fortran/ct_lvtclp_fortran_tool.h
+                fortran/ct_lvtclp_fortran_c_interop.h
+                LIBRARIES
+                Codethink::lvtmdb
+                ${SYSTEM_EXTRA_LIBRARIES}
         )
     else()
         MESSAGE(FATAL_ERROR "Unknown Fortran Scanner backend named '${FORTRAN_SCANNER_BACKEND}'.")

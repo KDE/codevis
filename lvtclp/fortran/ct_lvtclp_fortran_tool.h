@@ -15,8 +15,8 @@
 // limitations under the License.
 */
 
-#ifndef CODEVIS_CT_LVTCLP_TOOL_H
-#define CODEVIS_CT_LVTCLP_TOOL_H
+#ifndef CODEVIS_CT_LVTCLP_FORTRAN_TOOL_H
+#define CODEVIS_CT_LVTCLP_FORTRAN_TOOL_H
 
 #include <clang/Tooling/CompilationDatabase.h>
 #include <ct_lvtmdb_objectstore.h>
@@ -53,4 +53,4 @@ class LVTCLP_EXPORT Tool {
 
 } // namespace Codethink::lvtclp::fortran
 
-#endif // CODEVIS_CT_LVTCLP_TOOL_H
+#endif // CODEVIS_CT_LVTCLP_FORTRAN_TOOL_H

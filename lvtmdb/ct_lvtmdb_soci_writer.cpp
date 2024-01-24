@@ -234,6 +234,9 @@ get_or_add_thing(DbObject *dbobj, soci::session& db, const std::string& table_na
 void exportRepository(RepositoryObject *obj, soci::session& db)
 {
     auto lock = obj->readOnlyLock();
+    if (obj->qualifiedName().empty()) {
+        return;
+    }
 
     if (query_id_from_qual_name(db, "source_repository", obj->qualifiedName()).has_value()) {
         return;
@@ -257,7 +260,6 @@ void exportPackage(PackageObject *pkg, soci::session& db)
     auto [repository_id, repository_ind] =
         get_or_add_thing(pkg->repository(), db, "source_repository", exportRepository);
 
-    std::cout << "Inserting the package " << pkg->name() << " " << pkg->qualifiedName() << "on the database\n";
     db << "insert into source_package(version, parent_id, source_repository_id, name, qualified_name, disk_path)"
           " values (0, :parent_id, :repo_id, :name, :qual_name, :disk_path)",
         soci::use(parent_id, parent_ind), soci::use(repository_id, repository_ind), soci::use(pkg->name()),
@@ -452,24 +454,20 @@ void exportPkgRelations(PackageObject *pkg, soci::session& db)
 
     // dependencies. Here we assume that all package queries are correct and that there's no need
     // to check if the sql failed.
-    int this_id = query_id_from_qual_name(db, "source_package", pkg->qualifiedName()).value().first;
+    const int this_id = query_id_from_qual_name(db, "source_package", pkg->qualifiedName()).value().first;
+    int dep_id = 0;
+
+    soci::statement insert_st =
+        (db.prepare << "insert into dependencies(source_id, target_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(dep_id));
 
     for (PackageObject *dep : pkg->forwardDependencies()) {
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "source_package", dep->qualifiedName()).value().first;
-
-        db << "select id from dependencies where source_id = :s and target_id = :t limit 1", soci::use(this_id),
-            soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into dependencies(source_id, target_id) values (:s, :t)", soci::use(this_id), soci::use(dep_id);
-
-        std::cout << "Adding a connection between" << this_id << " and " << dep_id << "\n";
+        dep_id = query_id_from_qual_name(db, "source_package", dep->qualifiedName()).value().first;
+        insert_st.execute(true);
     }
 }
 
@@ -480,22 +478,20 @@ void exportCompRelations(ComponentObject *comp, soci::session& db)
 
     // types handled in exportUserDefinedTypeRelations
     // dependencies
-    int this_id = query_id_from_qual_name(db, "source_component", comp->qualifiedName()).value().first;
+    const int this_id = query_id_from_qual_name(db, "source_component", comp->qualifiedName()).value().first;
+    int dep_id = 0;
+
+    soci::statement insert_st =
+        (db.prepare << "insert into component_relation(source_id, target_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(dep_id));
+
     for (ComponentObject *dep : comp->forwardDependencies()) {
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "source_component", dep->qualifiedName()).value().first;
-
-        db << "select id from component_relation where source_id = :s and target_id = :t limit 1", soci::use(this_id),
-            soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into component_relation(source_id, target_id) values (:s, :t)", soci::use(this_id),
-            soci::use(dep_id);
+        dep_id = query_id_from_qual_name(db, "source_component", dep->qualifiedName()).value().first;
+        insert_st.execute(true);
     }
 }
 
@@ -504,41 +500,34 @@ void exportFileRelations(FileObject *file, soci::session& db)
     auto lock = file->readOnlyLock();
     (void) lock;
 
-    int this_id = query_id_from_qual_name(db, "source_file", file->qualifiedName()).value().first;
+    const int this_id = query_id_from_qual_name(db, "source_file", file->qualifiedName()).value().first;
+    int other_source_id = 0;
+    int namespace_id = 0;
+
+    soci::statement other_source_insert =
+        (db.prepare << "insert into includes(source_id, target_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(other_source_id));
+
+    soci::statement namespace_insert = (db.prepare << "insert into namespace_source_file(source_file_id, namespace_id) "
+                                                      "values (:s, :t) on conflict do nothing",
+                                        soci::use(this_id),
+                                        soci::use(namespace_id));
 
     // includes
     for (FileObject *include : file->forwardIncludes()) {
         auto _lock = include->readOnlyLock();
         (void) _lock;
-
-        int dep_id = query_id_from_qual_name(db, "source_file", include->qualifiedName()).value().first;
-
-        db << "select id from includes where source_id = :s and target_id = :t limit 1", soci::use(this_id),
-            soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into includes(source_id, target_id) values (:s, :t)", soci::use(this_id), soci::use(dep_id);
+        other_source_id = query_id_from_qual_name(db, "source_file", include->qualifiedName()).value().first;
+        other_source_insert.execute(true);
     }
 
     // namespaces
     for (NamespaceObject *nmspc : file->namespaces()) {
         auto _lock = nmspc->readOnlyLock();
         (void) _lock;
-
-        int dep_id = query_id_from_qual_name(db, "namespace_declaration", nmspc->qualifiedName()).value().first;
-        db << "select source_file_id from namespace_source_file where source_file_id = :s and namespace_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into namespace_source_file(source_file_id, namespace_id) values (:s, :t)", soci::use(this_id),
-            soci::use(dep_id);
+        namespace_id = query_id_from_qual_name(db, "namespace_declaration", nmspc->qualifiedName()).value().first;
+        namespace_insert.execute(true);
     }
 
     // free functions
@@ -547,16 +536,8 @@ void exportFileRelations(FileObject *file, soci::session& db)
         (void) _lock;
 
         int dep_id = query_id_from_qual_name(db, "function_declaration", fnc->qualifiedName()).value().first;
-        db << "select source_file_id from global_function_source_file where source_file_id = :s and function_id = :t "
-              "limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into global_function_source_file(source_file_id, function_id) values (:s, :t)",
+        db << "insert into global_function_source_file(source_file_id, function_id) values (:s, :t) on conflict do "
+              "nothing",
             soci::use(this_id), soci::use(dep_id);
     }
 }
@@ -566,41 +547,54 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
     auto lock = type->readOnlyLock();
     (void) lock;
 
-    int this_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
+    const int this_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
+    int subclass_id = 0;
+    int uses_in_interface_id = 0;
+    int uses_in_impl_id = 0;
+    int component_id = 0;
+    int file_id = 0;
 
+    soci::statement subclass_insert_st =
+        (db.prepare << "insert into class_hierarchy(source_id, target_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(subclass_id));
+
+    soci::statement uses_in_interface_insert_st =
+        (db.prepare << "insert into uses_in_the_interface(source_id, target_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(uses_in_interface_id));
+
+    soci::statement uses_in_impl_insert_st =
+        (db.prepare
+             << "insert into uses_in_the_implementation(source_id, target_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(uses_in_impl_id));
+
+    soci::statement component_insert_st =
+        (db.prepare << "insert into udt_component(udt_id, component_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(component_id));
+
+    soci::statement file_insert_st =
+        (db.prepare << "insert into class_source_file(class_id, source_file_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(file_id));
     // isA
     for (TypeObject *subclass : type->subclasses()) {
         auto _lock = subclass->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "class_declaration", subclass->qualifiedName()).value().first;
-        db << "select id from class_hierarchy where source_id = :s and target_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into class_hierarchy(source_id, target_id) values (:s, :t)", soci::use(this_id),
-            soci::use(dep_id);
+        subclass_id = query_id_from_qual_name(db, "class_declaration", subclass->qualifiedName()).value().first;
+        subclass_insert_st.execute(true);
     }
+
     // usesInTheInterface
     for (TypeObject *dep : type->usesInTheInterface()) {
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName()).value().first;
-        db << "select id from uses_in_the_interface where source_id = :s and target_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into uses_in_the_interface(source_id, target_id) values (:s, :t)", soci::use(this_id),
-            soci::use(dep_id);
+        uses_in_interface_id = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName()).value().first;
+        uses_in_interface_insert_st.execute(true);
     }
 
     // usesInTheImplementation
@@ -608,50 +602,24 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName()).value().first;
-        db << "select id from uses_in_the_implementation where source_id = :s and target_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into uses_in_the_implementation(source_id, target_id) values (:s, :t)", soci::use(this_id),
-            soci::use(dep_id);
+        uses_in_impl_id = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName()).value().first;
+        uses_in_impl_insert_st.execute(true);
     }
 
     for (ComponentObject *comp : type->components()) {
         auto _lock = comp->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "source_component", comp->qualifiedName()).value().first;
-        db << "select component_id from udt_component where udt_id = :s and component_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into udt_component(udt_id, component_id) values (:s, :t)", soci::use(this_id), soci::use(dep_id);
+        component_id = query_id_from_qual_name(db, "source_component", comp->qualifiedName()).value().first;
+        component_insert_st.execute(true);
     }
 
     for (FileObject *file : type->files()) {
         auto _lock = file->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "source_file", file->qualifiedName()).value().first;
-        db << "select class_id from class_source_file where class_id = :s and source_file_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into class_source_file(class_id, source_file_id) values (:s, :t)", soci::use(this_id),
-            soci::use(dep_id);
+        file_id = query_id_from_qual_name(db, "source_file", file->qualifiedName()).value().first;
+        file_insert_st.execute(true);
     }
 }
 
@@ -661,22 +629,20 @@ void exportFieldRelations(FieldObject *field, soci::session& db)
     (void) lock;
 
     int this_id = query_id_from_qual_name(db, "field_declaration", field->qualifiedName()).value().first;
+    int dep_id = 0;
+
+    soci::statement insert_st =
+        (db.prepare << "insert into field_type(field_id, type_class_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(dep_id));
 
     // variable types
     for (TypeObject *type : field->variableTypes()) {
         auto _lock = type->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
-        db << "select field_id from field_type where field_id = :s and type_class_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into field_type(field_id, type_class_id) values (:s, :t)", soci::use(this_id), soci::use(dep_id);
+        dep_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
+        insert_st.execute(true);
     }
 }
 
@@ -686,23 +652,21 @@ void exportMethodRelations(MethodObject *method, soci::session& db)
     (void) lock;
 
     int this_id = query_id_from_qual_name(db, "method_declaration", method->qualifiedName()).value().first;
+    int dep_id = 0;
+
+    soci::statement insert_st =
+        (db.prepare
+             << "insert into method_argument_class(method_id, type_class_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(dep_id));
 
     // variable types
     for (TypeObject *type : method->argumentTypes()) {
         auto _lock = type->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
-        db << "select method_id from method_argument_class where method_id = :s and type_class_id = :t limit "
-              "1",
-            soci::use(this_id), soci::use(dep_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into method_argument_class(method_id, type_class_id) values (:s, :t)", soci::use(this_id),
-            soci::use(dep_id);
+        dep_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
+        insert_st.execute(true);
     }
 }
 
@@ -712,22 +676,20 @@ void exportFunctionCallgraph(FunctionObject *fn, soci::session& db)
     (void) lock;
 
     int this_id = query_id_from_qual_name(db, "function_declaration", fn->qualifiedName()).value().first;
+    int callee_id = 0;
+
+    soci::statement insert_st =
+        (db.prepare << "insert into function_calls(caller_id, callee_id) values (:s, :t) on conflict do nothing",
+         soci::use(this_id),
+         soci::use(callee_id));
 
     // variable types
     for (FunctionObject *callee : fn->callees()) {
         auto _lock = callee->readOnlyLock();
         (void) _lock;
 
-        int callee_id = query_id_from_qual_name(db, "function_declaration", callee->qualifiedName()).value().first;
-        db << "select callee_id from function_calls where caller_id = :s and callee_id = :t limit 1",
-            soci::use(this_id), soci::use(callee_id);
-
-        if (db.got_data()) {
-            continue;
-        }
-
-        db << "insert into function_calls(caller_id, callee_id) values (:s, :t)", soci::use(this_id),
-            soci::use(callee_id);
+        callee_id = query_id_from_qual_name(db, "function_declaration", callee->qualifiedName()).value().first;
+        insert_st.execute(true);
     }
 }
 
@@ -753,6 +715,8 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
 {
     const bool create_db = path == ":memory:" || !std::filesystem::exists(path);
 
+    std::cout << "Trying to open database at " << path << "\n";
+
     d_db.open(*soci::factory_sqlite3(), path);
     if (create_db) {
         const bool res = run_migration(d_db, schemaPath);
@@ -775,7 +739,7 @@ void SociWriter::writeFrom(const ObjectStore& store)
     assert(!d_path.empty());
     assert(d_db.is_connected());
 
-    std::cout << "Starting to write to the database\n";
+    std::cout << "Starting to write to the database at " << d_path << "\n";
     soci::transaction tr(d_db);
 
     // TODO: To optimize this call, we need to create the queries outside of the

@@ -15,7 +15,7 @@
 // limitations under the License.
 */
 
-#include <fortran/ct_lvtclp_tool.h>
+#include <fortran/ct_lvtclp_fortran_tool.h>
 
 #include <clang/Driver/DriverDiagnostic.h>
 #include <clang/Tooling/JSONCompilationDatabase.h>

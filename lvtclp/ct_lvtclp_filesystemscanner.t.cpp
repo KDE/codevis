@@ -19,8 +19,8 @@
 
 #include <ct_lvtclp_filesystemscanner.h>
 
+#include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtclp_testutil.h>
-#include <ct_lvtclp_tool.h>
 
 #include <ct_lvtmdb_objectstore.h>
 
@@ -42,10 +42,10 @@
 
 using namespace Codethink;
 
+using Codethink::lvtclp::CppTool;
 using Codethink::lvtclp::FilesystemScanner;
 using Codethink::lvtclp::StaticCompilationDatabase;
 using Codethink::lvtclp::Test_Util;
-using Codethink::lvtclp::Tool;
 
 const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
@@ -668,7 +668,7 @@ TEST_CASE_METHOD(FSNonLakosianFixture, "Non-lakosian extra levels of hierarchy")
         {},
         d_topLevel);
 
-    Tool tool(d_topLevel, cmds, ":memory:");
+    CppTool tool(d_topLevel, cmds, ":memory:");
     // regression test: filsystem scanner should not crash
     REQUIRE(tool.runPhysical());
 }

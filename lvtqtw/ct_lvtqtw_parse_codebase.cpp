@@ -18,7 +18,7 @@
 */
 #include <ct_lvtqtw_parse_codebase.h>
 
-#include <ct_lvtclp_tool.h>
+#include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_soci_helper.h>
 #include <ct_lvtmdb_soci_reader.h>
@@ -28,7 +28,7 @@
 #include <ct_lvtshr_iterator.h>
 #ifdef CT_ENABLE_FORTRAN_SCANNER
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
-#include <fortran/ct_lvtclp_tool.h>
+#include <fortran/ct_lvtclp_fortran_tool.h>
 #endif
 
 #include <ui_ct_lvtqtw_parse_codebase.h>
@@ -226,7 +226,7 @@ struct PkgMappingDialog : public QDialog {
 struct ParseCodebaseDialog::Private {
     State dialogState = State::Idle;
     std::shared_ptr<lvtmdb::ObjectStore> sharedMemDb = nullptr;
-    std::unique_ptr<lvtclp::Tool> tool_p = nullptr;
+    std::unique_ptr<lvtclp::CppTool> tool_p = nullptr;
 #ifdef CT_ENABLE_FORTRAN_SCANNER
     std::unique_ptr<lvtclp::fortran::Tool> fortran_tool_p = nullptr;
 #endif
@@ -731,14 +731,14 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
     const bool catchCodeAnalysisOutput = Preferences::enableCodeParseDebugOutput();
 
     if (!d->tool_p) {
-        d->tool_p = std::make_unique<lvtclp::Tool>(sourcePath(),
-                                                   std::vector<std::filesystem::path>{compileCommandsJson},
-                                                   codebasePath().toStdString(),
-                                                   ui->threadCount->value(),
-                                                   ignoreList,
-                                                   nonLakosianDirs,
-                                                   d->thirdPartyPathMapping,
-                                                   catchCodeAnalysisOutput);
+        d->tool_p = std::make_unique<lvtclp::CppTool>(sourcePath(),
+                                                      std::vector<std::filesystem::path>{compileCommandsJson},
+                                                      codebasePath().toStdString(),
+                                                      ui->threadCount->value(),
+                                                      ignoreList,
+                                                      nonLakosianDirs,
+                                                      d->thirdPartyPathMapping,
+                                                      catchCodeAnalysisOutput);
     }
 #ifdef CT_ENABLE_FORTRAN_SCANNER
     if (!d->fortran_tool_p) {
@@ -750,19 +750,19 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
 
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
     connect(d->tool_p.get(),
-            &lvtclp::Tool::processingFileNotification,
+            &lvtclp::CppTool::processingFileNotification,
             this,
             &ParseCodebaseDialog::processingFileNotification,
             Qt::QueuedConnection);
 
     connect(d->tool_p.get(),
-            &lvtclp::Tool::aboutToCallClangNotification,
+            &lvtclp::CppTool::aboutToCallClangNotification,
             this,
             &ParseCodebaseDialog::aboutToCallClangNotification,
             Qt::QueuedConnection);
 
     connect(d->tool_p.get(),
-            &lvtclp::Tool::messageFromThread,
+            &lvtclp::CppTool::messageFromThread,
             this,
             &ParseCodebaseDialog::receivedMessage,
             Qt::QueuedConnection);

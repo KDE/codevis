@@ -17,7 +17,7 @@
 // limitations under the License.
 */
 
-#include <ct_lvtclp_tool.h>
+#include <ct_lvtclp_cpp_tool.h>
 
 #include <ct_lvtclp_testutil.h>
 
@@ -426,7 +426,7 @@ static void checkDatabaseNewFiles(ObjectStore& session)
     ModelUtil::checkUDTs(session, udts);
 }
 
-static void runTool(Tool& tool, const bool madeChanges, const unsigned numRuns = 1, bool verbose = false)
+static void runTool(CppTool& tool, const bool madeChanges, const unsigned numRuns = 1, bool verbose = false)
 {
     tool.setPrintToConsole(verbose);
     for (unsigned i = 0; i < numRuns; i++) {
@@ -435,13 +435,13 @@ static void runTool(Tool& tool, const bool madeChanges, const unsigned numRuns =
     }
 }
 
-struct ToolTestFixture {
-    ToolTestFixture(): topLevel(std::filesystem::temp_directory_path() / "ct_lvtclp_tool_test")
+struct CppToolTestFixture {
+    CppToolTestFixture(): topLevel(std::filesystem::temp_directory_path() / "ct_lvtclp_tool_test")
     {
         createTestEnv(topLevel);
     }
 
-    ~ToolTestFixture()
+    ~CppToolTestFixture()
     {
         REQUIRE(std::filesystem::remove_all(topLevel));
     }
@@ -449,7 +449,7 @@ struct ToolTestFixture {
     std::filesystem::path topLevel;
 };
 
-TEST_CASE_METHOD(ToolTestFixture, "Tool")
+TEST_CASE_METHOD(CppToolTestFixture, "Tool")
 {
     constexpr unsigned NUM_RERUNS = 2;
 
@@ -460,7 +460,7 @@ TEST_CASE_METHOD(ToolTestFixture, "Tool")
                                        {"-Igroups/one/onetop", "-Igroups/one/onedep"},
                                        topLevel);
 
-        Tool tool(topLevel, cmds, topLevel / "database");
+        CppTool tool(topLevel, cmds, topLevel / "database");
         ObjectStore& session = tool.getObjectStore();
 
         // initial parse
@@ -505,7 +505,7 @@ TEST_CASE_METHOD(ToolTestFixture, "Tool")
             {"-Igroups/one/onetop", "-Igroups/one/onedep"},
             topLevel.string());
 
-        Tool toolPlus(topLevel, cmdsPlus, topLevel / "database");
+        CppTool toolPlus(topLevel, cmdsPlus, topLevel / "database");
 
         Test_Util::createFile(topLevel / "groups/one/onedep/onedep_newfile.h", R"(
     // onedep_newfile.h
@@ -535,7 +535,7 @@ TEST_CASE_METHOD(ToolTestFixture, "Tool")
 TEST_CASE("Run Tool on example project")
 {
     StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/hello_world/");
-    Tool tool(PREFIX + "/hello_world/", cmds, PREFIX + "/hello_world/database");
+    CppTool tool(PREFIX + "/hello_world/", cmds, PREFIX + "/hello_world/database");
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runFull());
@@ -560,7 +560,7 @@ TEST_CASE("Run Tool on example project incrementally")
         "placeholder",
         {"-I" + sourcePath + "/groups/one/onepkg/", "-I" + sourcePath + "/groups/two/twodmo/"},
         sourcePath);
-    Tool tool(sourcePath, cmds, sourcePath + "database");
+    CppTool tool(sourcePath, cmds, sourcePath + "database");
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runPhysical());
@@ -616,7 +616,7 @@ TEST_CASE("Run Tool on project including other lakosian project")
                                    "placeholder",
                                    {"-I" + prjAPath + "/groups/one/oneaaa/", "-I" + prjBPath + "/groups/two/twoaaa/"},
                                    prjAPath);
-    Tool tool(prjAPath, cmds, prjAPath + "/database");
+    CppTool tool(prjAPath, cmds, prjAPath + "/database");
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runFull());
@@ -648,7 +648,7 @@ TEST_CASE("Run Tool store test-only dependencies")
         "placeholder",
         {"-I" + prjAPath + "/groups/one/oneaaa/", "-fparse-all-comments"},
         prjAPath);
-    Tool tool(prjAPath, cmds, prjAPath + "/database");
+    CppTool tool(prjAPath, cmds, prjAPath + "/database");
 
     using Filename = std::string;
     using LineNo = unsigned;

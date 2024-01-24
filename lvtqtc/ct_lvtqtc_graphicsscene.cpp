@@ -77,7 +77,6 @@
 #include <QJsonObject>
 
 #include <fstream>
-#include <qgraphicsitem.h>
 #include <random>
 
 using namespace Codethink::lvtldr;
@@ -1076,6 +1075,8 @@ void GraphicsScene::connectEntitySignals(LakosEntity *entity)
                                                      UnloadDepth::Children,
                                                      QtcUtil::UndoActionType::e_Remove));
     });
+
+    connect(entity, &LakosEntity::requestNewTab, this, &GraphicsScene::requestNewTab);
 }
 
 void GraphicsScene::loadEntity(lvtshr::UniqueId uuid, UnloadDepth depth)

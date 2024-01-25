@@ -137,6 +137,9 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     ui.topMessageWidget->setVisible(false);
     ui.topMessageWidget->setWordWrap(true);
+#if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
+    ui.topMessageWidget->setPosition(KMessageWidget::Header);
+#endif
 
     connect(ui.mainSplitter, &SplitterView::currentTabChanged, this, &MainWindow::currentGraphSplitChanged);
     connect(ui.namespaceFilter, &QLineEdit::textChanged, ui.namespaceTree, &TreeView::setFilterText);

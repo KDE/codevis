@@ -23,5 +23,8 @@ Install craft by running the following command at PowerShell:
 Start the Craft Shell:
 `C:\CraftRoot\craft\craftenv.ps1`
 
-Ask Craft to build Codevis:
+If you want to build from master (Currently suggested), set the craft option:
+`craft —set version=master codevis`
+
+Finall, ask Craft to build Codevis:
 `craft codevis`

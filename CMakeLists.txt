@@ -78,6 +78,8 @@ include(AddTargetLibrary)
 include(GenerateExportHeader)
 include(GetGitVersion)
 include(GetDate)
+include(CodevisDeployPlugin)
+
 include(FeatureSummary)
 find_package(Doxygen)
 find_package(SQLite3 REQUIRED)

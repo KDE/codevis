@@ -116,6 +116,12 @@ add_custom_target(
         "${CMAKE_CURRENT_BINARY_DIR}/ct_lvtplg_hookbindings.inc.cpp"
         "${CMAKE_CURRENT_BINARY_DIR}/ct_lvtplg_handlerbindings.inc.cpp"
 )
+add_library(CodevisPluginHeaders INTERFACE)
+target_include_directories(CodevisPluginHeaders
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>/plugin-headers/
+)
+
 add_dependencies(lvtplg generate_lvtclp_py_bindings)
 
 if (COMPILE_TESTS)

@@ -130,7 +130,14 @@ void PluginManager::loadPlugins(const QList<QString>& searchPaths)
         const auto entryInfoList = pluginsPath.entryInfoList();
         for (auto const& fileInfo : qAsConst(entryInfoList)) {
             const auto pluginDir = fileInfo.absoluteFilePath();
-            loadSinglePlugin(pluginDir, libraries);
+            // if the folder ends with `plugins`, recurse into it, and look for plugins inside of it.
+            // this is a bit annoying, because we support loading multiple folders at the same time.
+            // but it seems to work.
+            if (pluginDir.endsWith("plugins")) {
+                loadPlugins({pluginDir});
+            } else {
+                loadSinglePlugin(pluginDir, libraries);
+            }
         }
     }
 

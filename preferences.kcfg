@@ -49,7 +49,11 @@
                         QDir::homePath() + "/lks-plugins",
                         QCoreApplication::applicationDirPath() + "/lks-plugins"
                     };
-                     ret += QStandardPaths::standardLocations(QStandardPaths::StandardLocation::AppDataLocation);
+                    const auto dataLocations = QStandardPaths::standardLocations(QStandardPaths::StandardLocation::AppDataLocation);
+                    // The joy of writting C++ on Xml...
+                    for (const auto&amp; location : dataLocations) {
+                        ret += location + "/lks-plugins";
+                    }
                     return ret;
                 } ()
             </default>

@@ -69,7 +69,7 @@ bool SharedLibraryDispatcher::isValidPlugin(QDir const& pluginDir)
 std::unique_ptr<AbstractLibraryDispatcher> SharedLibraryDispatcher::loadSinglePlugin(QDir const& pluginDir)
 {
     auto pluginName = pluginDir.dirName();
-    auto pluginSharedObjectBasename = pluginDir.path() + "/" + pluginName;
+    auto pluginSharedObjectBasename = pluginDir.path() + QDir::separator() + pluginName;
     auto lib = std::make_unique<SharedLibraryDispatcher>(pluginSharedObjectBasename);
     if (!lib->library.load()) {
         return nullptr;

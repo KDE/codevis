@@ -53,15 +53,17 @@ void SharedLibraryDispatcher::unload()
 
 bool SharedLibraryDispatcher::isValidPlugin(QDir const& pluginDir)
 {
-    auto pluginName = pluginDir.dirName();
+    const auto pluginName = pluginDir.dirName();
     // TODO: MacOS support
 #if defined(Q_OS_WINDOWS)
-    auto so_ext = QString{".dll"};
+    const auto so_ext = QStringLiteral(".dll");
 #else
-    auto so_ext = QString{".so"};
+    const auto so_ext = QStringLiteral(".so");
 #endif
-    return (pluginDir.exists("metadata.json") && pluginDir.exists("README.md")
-            && pluginDir.exists(pluginName + so_ext));
+    const bool metadataExists = pluginDir.exists(QStringLiteral("metadata.json"));
+    const bool readmeExists = pluginDir.exists(QStringLiteral("README.md"));
+    const bool pluginExists = pluginDir.exists(pluginName + so_ext);
+    return metadataExists && readmeExists && pluginExists;
 }
 
 std::unique_ptr<AbstractLibraryDispatcher> SharedLibraryDispatcher::loadSinglePlugin(QDir const& pluginDir)

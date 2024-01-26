@@ -121,6 +121,7 @@ target_include_directories(CodevisPluginHeaders
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>/plugin-headers/
 )
+add_dependencies(CodevisPluginHeaders generate_lvtclp_plugin_headers)
 
 add_dependencies(lvtplg generate_lvtclp_py_bindings)
 

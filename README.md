@@ -9,7 +9,7 @@
 Chose the windows installer from the following list. The software is still being actively developed and there's no final release yet.
 If something crashes, please download the second file with the debug symbols and unpack at the binary folder of the installation so we can have backtraces.
 
-- [**Windows (.exe)**](https://drive.google.com/drive/u/0/folders/13GDkPwe63WznUCpXdBNyj_wMdyCXiZgK)
+- [**Windows (.exe)**](https://invent.kde.org/tcanabrava/codevis-binaries)
 
 ### Linux:
 

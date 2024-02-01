@@ -323,9 +323,6 @@ add_subdirectory(lvtclp)
 add_subdirectory(lvtldr)
 add_subdirectory(lvtmdb)
 add_subdirectory(lvtprj)
-if (ENABLE_PLUGINS)
-    add_subdirectory(lvtplg)
-endif()
 add_subdirectory(lvtshr)
 add_subdirectory(lvttst)
 
@@ -356,17 +353,21 @@ if (BUILD_DESKTOP_APP)
     endif()
 
     add_subdirectory(doc)
+
+    if (ENABLE_PLUGINS)
+        add_subdirectory(lvtplg)
+        add_subdirectory(plugins)
+    endif()
+
     add_subdirectory(lvtmdl)
     add_subdirectory(lvtclr)
     add_subdirectory(lvtqtc)
     add_subdirectory(lvtqtd)
     add_subdirectory(lvtqtw)
+
     add_subdirectory(desktopapp)
 endif()
 
-if (BUILD_PLUGINS)
-    add_subdirectory(plugins)
-endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND ENABLE_CODE_COVERAGE)
     # Warning: Not setting up any TARGET below. Assume ctest will be run before running `make coverage` so that we dont

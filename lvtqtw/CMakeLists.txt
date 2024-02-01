@@ -1,6 +1,6 @@
 include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
 
-if (${KF_VERSION_MINOR} LESS 90)
+if (${KF_VERSION_MAJOR} EQUAL 5 AND ${KF_VERSION_MINOR} LESS 90)
     message("Warning: Old KDE Framework version doesn't have KFNewStuffWidgets available. Disabling support.")
     set(KFNewStuffWidgetsIfAvailable "") # No such library
 

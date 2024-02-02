@@ -25,6 +25,11 @@
 
 namespace Codethink::lvtqtc {
 
+static auto const SPACE_BETWEEN_LEVELS = 40.;
+static auto const SPACE_BETWEEN_SUBLEVELS = 10.;
+static auto const SPACE_BETWEEN_ENTITIES = 10.;
+static auto const MAX_ENTITY_PER_LEVEL = 8;
+
 std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<LakosEntity *> const& entities,
                                                                std::optional<const LakosEntity *> commonParentEntity)
 {
@@ -114,97 +119,127 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
     return entityToLevel;
 }
 
+void limitNumberOfEntitiesPerLevel(std::unordered_map<LakosEntity *, int> const& entityToLevel,
+                                   LakosEntity::LevelizationLayoutType type,
+                                   int direction)
+{
+    if (type == LakosEntity::LevelizationLayoutType::Vertical) {
+        auto entitiesFromLevel = std::map<int, std::vector<LakosEntity *>>{};
+        for (auto const& [e, level] : entityToLevel) {
+            entitiesFromLevel[level].push_back(e);
+        }
+        for (auto& [level, entities] : entitiesFromLevel) {
+            std::sort(entities.begin(), entities.end(), [](auto *e0, auto *e1) {
+                return e0->pos().x() < e1->pos().x();
+            });
+        }
+
+        auto globalOffset = 0.;
+        for (auto& [level, entities] : entitiesFromLevel) {
+            for (auto& e : entities) {
+                e->setPos(e->pos().x(), e->pos().y() + direction * globalOffset);
+            }
+
+            auto localOffset = 0.;
+            auto localNumberOfEntities = 0;
+            auto maxHeightOnCurrentLevel = 0.;
+            for (auto& e : entities) {
+                if (localNumberOfEntities == MAX_ENTITY_PER_LEVEL) {
+                    localOffset += maxHeightOnCurrentLevel + SPACE_BETWEEN_SUBLEVELS;
+                    localNumberOfEntities = 0;
+                    maxHeightOnCurrentLevel = 0.;
+                }
+
+                e->setPos(e->pos().x(), e->pos().y() + direction * localOffset);
+                maxHeightOnCurrentLevel = std::max(maxHeightOnCurrentLevel, e->rect().height());
+                localNumberOfEntities += 1;
+            }
+            globalOffset += localOffset;
+        }
+    }
+}
+
+void centralizeLayout(std::unordered_map<LakosEntity *, int> const& entityToLevel,
+                      LakosEntity::LevelizationLayoutType type,
+                      int direction)
+{
+    if (type == LakosEntity::LevelizationLayoutType::Vertical) {
+        // Warning: A "line" is not the same as a "level". One level may be composed by multiple lines.
+        auto lineToLineTotalWidth = std::unordered_map<int, double>{};
+        auto maxWidth = 0.;
+        for (auto& [e, _] : entityToLevel) {
+            // The use of "integer" for a "line position" is only to avoid having to deal with real numbers, and
+            // thus being able to make easy buckets for the lines.
+            auto yRepr = (int) e->pos().y();
+
+            lineToLineTotalWidth[yRepr] = lineToLineTotalWidth[yRepr] == 0.0
+                ? e->rect().width()
+                : lineToLineTotalWidth[yRepr] + e->rect().width() + SPACE_BETWEEN_ENTITIES;
+
+            maxWidth = std::max(lineToLineTotalWidth[yRepr], maxWidth);
+        }
+
+        auto lineCurrentXPos = std::map<int, double>{};
+        for (auto& [e, _] : entityToLevel) {
+            auto yRepr = (int) e->pos().y();
+
+            auto currentXPos = lineCurrentXPos[yRepr];
+            e->setPos(currentXPos + (maxWidth - lineToLineTotalWidth[yRepr]) / 2., e->pos().y());
+            lineCurrentXPos[yRepr] += e->rect().width() + SPACE_BETWEEN_ENTITIES;
+        }
+    }
+}
+
+void prepareEntityPositionForEachLevel(std::unordered_map<LakosEntity *, int> const& entityToLevel,
+                                       LakosEntity::LevelizationLayoutType type,
+                                       int direction)
+{
+    if (type == LakosEntity::LevelizationLayoutType::Vertical) {
+        auto heightForLvl = std::map<int, double>{};
+        for (auto const& [e, level] : entityToLevel) {
+            heightForLvl[level] = std::max(heightForLvl[level], e->rect().height());
+        }
+
+        auto yPosPerLevel = std::map<int, double>{};
+        for (auto const& [level, _] : heightForLvl) {
+            // clang-format off
+            yPosPerLevel[level] = (
+                level == 0 ? 0.0 : yPosPerLevel[level - 1] + direction * (heightForLvl[level - 1] + SPACE_BETWEEN_LEVELS)
+            );
+            // clang-format on
+        }
+
+        for (auto [e, level] : entityToLevel) {
+            e->setPos(0.0, yPosPerLevel[level]);
+        }
+    } else {
+        auto widthForLvl = std::map<int, double>{};
+        for (auto const& [e, level] : entityToLevel) {
+            widthForLvl[level] = std::max(widthForLvl[level], e->rect().width());
+        }
+
+        auto xPosPerLevel = std::map<int, double>{};
+        for (auto const& [level, _] : widthForLvl) {
+            // clang-format off
+            xPosPerLevel[level] = (
+                level == 0 ? 0.0 : xPosPerLevel[level - 1] + direction * (widthForLvl[level - 1] + SPACE_BETWEEN_LEVELS)
+            );
+            // clang-format on
+        }
+
+        for (auto [e, level] : entityToLevel) {
+            e->setPos(xPosPerLevel[level], 0.0);
+        }
+    }
+}
+
 void runLevelizationLayout(std::unordered_map<LakosEntity *, int> const& entityToLevel,
                            LakosEntity::LevelizationLayoutType type,
                            int direction)
 {
-    auto currentLevelReferencePosition = std::unordered_map<int, double>{};
-    if (type == LakosEntity::LevelizationLayoutType::Vertical) {
-        auto const X_SPACING = 10.;
-        auto const Y_SPACING = 40.;
-
-        auto referenceHeightPerLvl = std::map<int, double>{};
-        for (auto const& [e, level] : entityToLevel) {
-            referenceHeightPerLvl[level] = std::max(referenceHeightPerLvl[level], e->rect().height());
-        }
-
-        auto yPosPerLevel = std::map<int, double>{};
-        for (auto const& [level, referenceHeight] : referenceHeightPerLvl) {
-            if (level == 0) {
-                yPosPerLevel[level] = 0.0;
-            } else {
-                yPosPerLevel[level] =
-                    yPosPerLevel[level - 1] + direction * (referenceHeightPerLvl[level - 1] + Y_SPACING);
-            }
-        }
-
-        auto& currentLevelXPosition = currentLevelReferencePosition;
-        for (auto [e, level] : entityToLevel) {
-            auto width = e->rect().width();
-            e->setPos(currentLevelXPosition[level], yPosPerLevel[level]);
-            currentLevelXPosition[level] += width + X_SPACING;
-        }
-    } else {
-        auto const X_SPACING = 40.;
-        auto const Y_SPACING = 10.;
-
-        auto referenceWidthPerLvl = std::map<int, double>{};
-        for (auto const& [e, level] : entityToLevel) {
-            referenceWidthPerLvl[level] = std::max(referenceWidthPerLvl[level], e->rect().width());
-        }
-
-        auto xPosPerLevel = std::map<int, double>{};
-        for (auto const& [level, referenceWidth] : referenceWidthPerLvl) {
-            if (level == 0) {
-                xPosPerLevel[level] = 0.0;
-            } else {
-                xPosPerLevel[level] =
-                    xPosPerLevel[level - 1] + direction * (referenceWidthPerLvl[level - 1] + X_SPACING);
-            }
-        }
-
-        auto& currentLevelYPosition = currentLevelReferencePosition;
-        for (auto [e, level] : entityToLevel) {
-            auto height = e->rect().height();
-            e->setPos(xPosPerLevel[level], currentLevelYPosition[level]);
-            currentLevelYPosition[level] += height + Y_SPACING;
-        }
-    }
-
-    // Centralize the generated layout
-    if (type == LakosEntity::LevelizationLayoutType::Vertical) {
-        auto& currentLevelXPosition = currentLevelReferencePosition;
-        auto maxWidth = 0.;
-        for (auto const& [_, maxXPosition] : currentLevelXPosition) {
-            (void) _;
-            maxWidth = std::max(maxWidth, maxXPosition);
-        }
-
-        auto currentLevelXOffsetToCentralize = std::unordered_map<int, double>{};
-        for (auto const& [level, maxXPosition] : currentLevelXPosition) {
-            currentLevelXOffsetToCentralize[level] = (maxWidth - maxXPosition) / 2;
-        }
-
-        for (auto [e, level] : entityToLevel) {
-            e->setPos(e->pos().x() + currentLevelXOffsetToCentralize[level], e->pos().y());
-        }
-    } else {
-        auto& currentLevelYPosition = currentLevelReferencePosition;
-        auto maxHeight = 0.;
-        for (auto const& [_, maxYPosition] : currentLevelYPosition) {
-            (void) _;
-            maxHeight = std::max(maxHeight, maxYPosition);
-        }
-
-        auto currentLevelYOffsetToCentralize = std::unordered_map<int, double>{};
-        for (auto const& [level, maxYPosition] : currentLevelYPosition) {
-            currentLevelYOffsetToCentralize[level] = (maxHeight - maxYPosition) / 2;
-        }
-
-        for (auto [e, level] : entityToLevel) {
-            e->setPos(e->pos().x(), e->pos().y() + currentLevelYOffsetToCentralize[level]);
-        }
-    }
+    prepareEntityPositionForEachLevel(entityToLevel, type, direction);
+    limitNumberOfEntitiesPerLevel(entityToLevel, type, direction);
+    centralizeLayout(entityToLevel, type, direction);
 }
 
 } // namespace Codethink::lvtqtc

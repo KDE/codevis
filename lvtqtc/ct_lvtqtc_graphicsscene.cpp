@@ -452,6 +452,7 @@ void GraphicsScene::clearGraph()
     d->relationVec.clear();
     d->entityLoadFlags.clear();
     d->transitiveReductionAlg->reset();
+    d->physicalLoader.clear();
 
     removeItem(d->bgMessage);
     clear();

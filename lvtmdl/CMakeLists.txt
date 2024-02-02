@@ -8,7 +8,6 @@ AddTargetLibrary(
   SOURCES
     ct_lvtmdl_basetablemodel.cpp
     ct_lvtmdl_basetreemodel.cpp
-    ct_lvtmdl_circular_relationships_model.cpp
     ct_lvtmdl_debugmodel.cpp
     ct_lvtmdl_errorsmodel.cpp
     ct_lvtmdl_fieldstreemodel.cpp
@@ -24,7 +23,6 @@ AddTargetLibrary(
     ct_lvtmdl_usesintheinterfacetablemodel.cpp
   QT_HEADERS
     ct_lvtmdl_basetablemodel.h
-    ct_lvtmdl_circular_relationships_model.h
     ct_lvtmdl_errorsmodel.h
     ct_lvtmdl_methodstablemodel.h
     ct_lvtmdl_simpletextmodel.h

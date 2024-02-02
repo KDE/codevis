@@ -50,7 +50,6 @@ class QLabel;
 class CodeVisApplicationTestFixture;
 
 namespace Codethink::lvtmdl {
-class CircularRelationshipsModel;
 class ErrorsModel;
 class NamespaceTreeModel;
 class PackageTreeModel;

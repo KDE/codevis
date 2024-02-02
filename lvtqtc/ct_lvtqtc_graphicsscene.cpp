@@ -20,8 +20,6 @@
 #include <any>
 #include <ct_lvtqtc_graphicsscene.h>
 
-#include <ct_lvtmdl_circular_relationships_model.h>
-
 #include <ct_lvtqtc_alg_level_layout.h>
 #include <ct_lvtqtc_alg_transitive_reduction.h>
 
@@ -111,9 +109,6 @@ struct GraphicsScene::Private {
     bool blockNodeResizeOnHover = false;
     // blocks mouseHoverEvent resizing the nodes with this flag on.
 
-    Codethink::lvtmdl::CircularRelationshipsModel *circleModel = nullptr;
-    // model to display the circle relationships.
-
     std::vector<LakosEntity *> selectedEntities;
     // The selected entities is chosen by the user by selecting it on the view.
 
@@ -152,14 +147,6 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
     static int last_id = 0;
     this->setObjectName(QString::fromStdString("gs_" + std::to_string(last_id)));
     last_id++;
-
-    using Codethink::lvtmdl::CircularRelationshipsModel;
-    d->circleModel = new CircularRelationshipsModel(this);
-    connect(d->circleModel, &QAbstractItemModel::dataChanged, this, &GraphicsScene::highlightCyclesOnCicleModelChanged);
-    connect(d->circleModel,
-            &CircularRelationshipsModel::relationshipsUpdated,
-            this,
-            &GraphicsScene::resetHighlightedCycles);
 
     d->transitiveReductionAlg = new AlgorithmTransitiveReduction();
 
@@ -391,11 +378,6 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
 }
 
 GraphicsScene::~GraphicsScene() noexcept = default;
-
-Codethink::lvtmdl::CircularRelationshipsModel *GraphicsScene::circularRelationshipsModel() const
-{
-    return d->circleModel;
-}
 
 LakosEntity *GraphicsScene::findLakosEntityFromUid(lvtshr::UniqueId uid) const
 {
@@ -1757,100 +1739,6 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
     const auto show_transitive = doc["transitive_visibility"].toBool();
     toggleTransitiveRelationVisibility(show_transitive);
     Q_EMIT graphLoadFinished();
-}
-
-void GraphicsScene::highlightCyclesOnCicleModelChanged(const QModelIndex& _, const QModelIndex& index)
-{
-    using DataModel = Codethink::lvtmdl::CircularRelationshipsModel;
-
-    if (!index.isValid() || index.parent() != QModelIndex()) {
-        return;
-    }
-
-    auto cyclePathAsList = index.data(DataModel::CyclePathAsListRole).value<QList<QString>>();
-    if (cyclePathAsList.size() < 2) {
-        return;
-    }
-    // "Complete" the cycle by adding the first element as the last. This is just to make the
-    // algorithm below work without having to add special case to the last element.
-    cyclePathAsList.push_back(cyclePathAsList[0]);
-
-    auto& entities = allEntities();
-    auto findEntityByNameOnCurrentScene = [&](auto&& name) -> LakosEntity * {
-        auto it = std::find_if(entities.begin(), entities.end(), [&](auto&& e) {
-            return e->name() == name;
-        });
-        if (it == entities.end()) {
-            return nullptr;
-        }
-        return *it;
-    };
-
-    auto isEdgeValid = [&](auto const& e) {
-        auto relations = e.relations();
-        return std::all_of(relations.begin(), relations.end(), [this](auto&& r) {
-            if (!r->isVisible() || r->shouldBeHidden()) {
-                Q_EMIT errorMessage(QObject::tr(
-                    "One or more entities in the selected cycle is not visible in the current scene, so the path "
-                    "cannot be highlighted - Consider using 'show redundant edges' option."));
-                return false;
-            }
-            return true;
-        });
-    };
-    auto isEntityValid = [&](auto *e) {
-        if (!e) {
-            Q_EMIT errorMessage(QObject::tr(
-                "One or more entities in the selected cycle is not present in the current scene, so the path "
-                "cannot be highlighted."));
-            return false;
-        }
-        return true;
-    };
-
-    auto edgesToHighlight = std::vector<std::reference_wrapper<EdgeCollection>>{};
-    auto nodesToHighlight = std::vector<std::reference_wrapper<LakosEntity>>{};
-    auto *currentEntity = findEntityByNameOnCurrentScene(cyclePathAsList[0].toStdString());
-    if (!isEntityValid(currentEntity)) {
-        return;
-    }
-    nodesToHighlight.emplace_back(*currentEntity);
-    for (int i = 1; i < cyclePathAsList.size(); ++i) {
-        auto edges = currentEntity->edgesCollection();
-        for (auto&& edge : edges) {
-            if (!isEdgeValid(*edge)) {
-                return;
-            }
-            if (edge->to()->name() == cyclePathAsList[i].toStdString()) {
-                edgesToHighlight.emplace_back(*edge);
-                break;
-            }
-        }
-        currentEntity = findEntityByNameOnCurrentScene(cyclePathAsList[i].toStdString());
-        if (!isEntityValid(currentEntity)) {
-            return;
-        }
-        nodesToHighlight.emplace_back(*currentEntity);
-    }
-
-    auto toggle = index.data(Qt::CheckStateRole).toBool();
-    for (auto&& edge : edgesToHighlight) {
-        edge.get().toggleRelationFlags(EdgeCollection::RelationFlags::RelationIsHighlighted, toggle);
-    }
-    for (auto&& node : nodesToHighlight) {
-        node.get().setPresentationFlags(LakosEntity::PresentationFlags::Highlighted, toggle);
-    }
-}
-
-void GraphicsScene::resetHighlightedCycles() const
-{
-    auto& entities = allEntities();
-    for (auto&& entity : entities) {
-        auto edges = entity->edgesCollection();
-        for (auto&& edge : edges) {
-            edge->toggleRelationFlags(EdgeCollection::RelationFlags::RelationIsHighlighted, false);
-        }
-    }
 }
 
 void GraphicsScene::setPluginManager(Codethink::lvtplg::PluginManager& pm)

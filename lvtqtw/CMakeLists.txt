@@ -26,7 +26,6 @@ AddTargetLibrary(
         ct_lvtqtw_exportmanager.cpp
         ct_lvtqtw_errorview.cpp
         ct_lvtqtw_graphtabelement.cpp
-        ct_lvtqtw_cycletreeview.cpp
         ct_lvtqtw_modifierhelpers.cpp
         ct_lvtqtw_namespacetreeview.cpp
         ct_lvtqtw_parse_codebase.cpp
@@ -44,7 +43,6 @@ AddTargetLibrary(
         ct_lvtqtw_configurationdialog.h
         ct_lvtqtw_errorview.h
         ct_lvtqtw_exportmanager.h
-        ct_lvtqtw_cycletreeview.h
         ct_lvtqtw_modifierhelpers.h
         ct_lvtqtw_namespacetreeview.h
         ct_lvtqtw_tabwidget.h

@@ -233,9 +233,19 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     d_dockReports->setObjectName("Reports");
     addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, d_dockReports);
     d_dockReports->setWidget(d_reportsTabWidget);
-    d_dockReports->hide();
 
     ui.pluginEditorView->setPluginManager(d_pluginManager_p);
+
+    /* Setup default dock visibility */
+    ui.objectHierarchyDoc->setVisible(true);
+    ui.usesInTheInterfaceDock->setVisible(false);
+    ui.methodsDock->setVisible(false);
+    ui.usesInTheImplDock->setVisible(false);
+    ui.fieldsDock->setVisible(false);
+    ui.providersDock->setVisible(false);
+    ui.clientsDock->setVisible(false);
+    ui.pluginEditorDock->setVisible(false);
+    d_dockReports->setVisible(false);
 
     setupActions();
     setProjectWidgetsEnabled(false);
@@ -1334,6 +1344,7 @@ void MainWindow::configurePluginDocks()
         pluginDockWidget->setLayout(new QFormLayout());
         pluginDock->setWidget(pluginDockWidget);
         d_pluginManager_p->registerPluginQObject(dockId, pluginDock);
+        pluginDock->setVisible(false);
     };
     auto addDockWdgFileField = [this](std::string const& dockId, std::string const& label, std::string& dataModel) {
         auto *pluginDockWidget = dynamic_cast<QDockWidget *>(d_pluginManager_p->getPluginQObject(dockId));

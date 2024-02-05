@@ -17,6 +17,10 @@
 // limitations under the License.
 */
 
+#include <QDockWidget>
+#include <QFormLayout>
+#include <QLabel>
+#include <QLineEdit>
 #include <QTreeView>
 #include <ct_lvtqtc_lakosentitypluginutils.h>
 #include <ct_lvtqtc_pluginmanagerutils.h>
@@ -133,6 +137,46 @@ PluginGraphicsViewHandler PluginManagerQtUtils::createPluginGraphicsViewHandler(
     };
 
     return PluginGraphicsViewHandler{getEntityByQualifiedName, getVisibleEntities, getEdgeByQualifiedName};
+}
+
+PluginDockWidgetHandler PluginManagerQtUtils::createPluginDockWidgetHandler(PluginManager *pm,
+                                                                            std::string const& dockId)
+{
+    auto addDockWdgFileField = [pm, dockId](std::string const& label, std::string& dataModel) {
+        auto *pluginDockWidget = dynamic_cast<QDockWidget *>(pm->getPluginQObject(dockId));
+        if (pluginDockWidget == nullptr) {
+            return;
+        }
+        auto *lineEdit = new QLineEdit();
+        QObject::connect(lineEdit, &QLineEdit::textChanged, pluginDockWidget, [&dataModel](QString const& newText) {
+            dataModel = newText.toStdString();
+        });
+        auto *formLayout = dynamic_cast<QFormLayout *>(pluginDockWidget->widget()->layout());
+        formLayout->addRow(new QLabel(QString::fromStdString(label)), lineEdit);
+    };
+    auto addTree = [pm, dockId](std::string const& treeId) {
+        auto *pluginDockWidget = dynamic_cast<QDockWidget *>(pm->getPluginQObject(dockId));
+        if (pluginDockWidget == nullptr) {
+            return;
+        }
+        auto *treeView = new QTreeView(pluginDockWidget);
+        auto *treeModel = new QStandardItemModel{treeView};
+        treeView->setHeaderHidden(true);
+        treeView->setModel(treeModel);
+        auto *formLayout = dynamic_cast<QFormLayout *>(pluginDockWidget->widget()->layout());
+        formLayout->addRow(treeView);
+        pm->registerPluginQObject(treeId + "::view", treeView);
+        pm->registerPluginQObject(treeId + "::model", treeModel);
+    };
+    auto setVisible = [pm, dockId](bool visible) {
+        auto *pluginDockWidget = dynamic_cast<QDockWidget *>(pm->getPluginQObject(dockId));
+        if (pluginDockWidget == nullptr) {
+            return;
+        }
+        pluginDockWidget->setVisible(visible);
+    };
+
+    return PluginDockWidgetHandler{addDockWdgFileField, addTree, setVisible};
 }
 
 } // namespace Codethink::lvtqtc

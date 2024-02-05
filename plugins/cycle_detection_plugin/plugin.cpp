@@ -65,10 +65,10 @@ void hookGraphicsViewContextMenu(PluginContextMenuHandler *handler)
     handler->registerContextMenu("Highlight cycles", &highlightCycles);
 }
 
-void hookSetupDockWidget(PluginDockWidgetHandler *handler)
+void hookSetupDockWidget(PluginSetupDockWidgetHandler *handler)
 {
-    handler->createNewDock(DOCK_WIDGET_ID, DOCK_WIDGET_TITLE);
-    handler->addTree(DOCK_WIDGET_ID, DOCK_WIDGET_TREE_ID);
+    auto dockHandler = handler->createNewDock(DOCK_WIDGET_ID, DOCK_WIDGET_TITLE);
+    dockHandler.addTree(DOCK_WIDGET_TREE_ID);
 }
 
 bool containsPermutation(const Cycle& cycle, const std::vector<Cycle>& allCycles)
@@ -224,6 +224,9 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
             }
         }
     }
+
+    auto dock = handler->getDock(DOCK_WIDGET_ID);
+    dock.setVisible(true);
 }
 
 Cycle& extractCycleFrom(void *userData)

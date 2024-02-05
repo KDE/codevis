@@ -238,16 +238,12 @@ void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& ge
         libraries);
 }
 
-void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPluginDock,
-                                             addDockWdgTextField_f const& addDockWdgTextField,
-                                             addTree_f const& addTree)
+void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPluginDock)
 {
-    callAllHooks<hookSetupDockWidget_f>("hookSetupDockWidget",
-                                        PluginDockWidgetHandler{std::bind_front(&PluginManager::getPluginData, this),
-                                                                createPluginDock,
-                                                                addDockWdgTextField,
-                                                                addTree},
-                                        libraries);
+    callAllHooks<hookSetupDockWidget_f>(
+        "hookSetupDockWidget",
+        PluginSetupDockWidgetHandler{std::bind_front(&PluginManager::getPluginData, this), createPluginDock},
+        libraries);
 }
 
 void PluginManager::callHooksSetupEntityReport(getEntity_f const& getEntity, addReport_f const& addReport)

@@ -1301,6 +1301,10 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
                     auto *pm = &d->pluginManager->get();
                     return PluginManagerQtUtils::createPluginTreeWidgetHandler(pm, id, this);
                 };
+                auto getDock = [this](std::string const& id) {
+                    auto *pm = &d->pluginManager->get();
+                    return PluginManagerQtUtils::createPluginDockWidgetHandler(pm, id);
+                };
                 auto runQueryOnDatabase = [this](std::string const& dbQuery) -> std::vector<std::vector<RawDBData>> {
                     return lvtmdb::SociHelper::runSingleQuery(d->nodeStorage.getSession(), dbQuery);
                 };
@@ -1308,6 +1312,7 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
                                                               getAllEntitiesInCurrentView,
                                                               getEntityByQualifiedName,
                                                               getTree,
+                                                              getDock,
                                                               getEdgeByQualifiedName,
                                                               loadEntityByQualifiedName,
                                                               addEdgeByQualifiedName,

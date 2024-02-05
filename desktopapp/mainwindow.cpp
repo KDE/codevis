@@ -47,6 +47,7 @@
 #include <ct_lvtqtc_graphicsscene.h>
 #include <ct_lvtqtc_graphicsview.h>
 #include <ct_lvtqtc_lakosentitypluginutils.h>
+#include <ct_lvtqtc_pluginmanagerutils.h>
 #include <ct_lvtqtc_undo_manager.h>
 
 #include <ct_lvtqtd_packageviewdelegate.h>
@@ -1336,8 +1337,9 @@ void MainWindow::configurePluginDocks()
     }
 
     auto createPluginDock = [this](std::string const& dockId, std::string const& title) {
-        auto *pluginDock = new QDockWidget(this);
-        pluginDock->setWindowTitle(QString::fromStdString(title));
+        using namespace Codethink::lvtqtc;
+
+        auto *pluginDock = new QDockWidget(QString::fromStdString(title), this);
         pluginDock->setObjectName(QString::fromStdString(dockId));
         addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea, pluginDock);
         auto *pluginDockWidget = new QWidget();
@@ -1345,28 +1347,10 @@ void MainWindow::configurePluginDocks()
         pluginDock->setWidget(pluginDockWidget);
         d_pluginManager_p->registerPluginQObject(dockId, pluginDock);
         pluginDock->setVisible(false);
+
+        return PluginManagerQtUtils::createPluginDockWidgetHandler(d_pluginManager_p, dockId);
     };
-    auto addDockWdgFileField = [this](std::string const& dockId, std::string const& label, std::string& dataModel) {
-        auto *pluginDockWidget = dynamic_cast<QDockWidget *>(d_pluginManager_p->getPluginQObject(dockId));
-        auto *lineEdit = new QLineEdit();
-        connect(lineEdit, &QLineEdit::textChanged, [&dataModel](QString const& newText) {
-            dataModel = newText.toStdString();
-        });
-        auto *formLayout = dynamic_cast<QFormLayout *>(pluginDockWidget->widget()->layout());
-        formLayout->addRow(new QLabel(QString::fromStdString(label)), lineEdit);
-    };
-    auto addTree = [this](std::string const& dockId, std::string const& treeId) {
-        auto *pluginDockWidget = dynamic_cast<QDockWidget *>(d_pluginManager_p->getPluginQObject(dockId));
-        auto *treeView = new QTreeView(pluginDockWidget);
-        auto *treeModel = new QStandardItemModel{treeView};
-        treeView->setHeaderHidden(true);
-        treeView->setModel(treeModel);
-        auto *formLayout = dynamic_cast<QFormLayout *>(pluginDockWidget->widget()->layout());
-        formLayout->addRow(treeView);
-        d_pluginManager_p->registerPluginQObject(treeId + "::view", treeView);
-        d_pluginManager_p->registerPluginQObject(treeId + "::model", treeModel);
-    };
-    d_pluginManager_p->callHooksSetupDockWidget(createPluginDock, addDockWdgFileField, addTree);
+    d_pluginManager_p->callHooksSetupDockWidget(createPluginDock);
 }
 
 WrappedUiMainWindow::WrappedUiMainWindow(NodeStorage& sharedNodeStorage,

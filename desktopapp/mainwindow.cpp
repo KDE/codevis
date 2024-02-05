@@ -942,27 +942,28 @@ void MainWindow::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
 
-    static bool initialized = [this]() -> bool {
-        const auto dockWidgets = findChildren<QDockWidget *>();
+    const auto dockWidgets = findChildren<QDockWidget *>();
 
-        // object name setup by the codevisui.rc
-        auto *menuView = menuBar()->findChild<QMenu *>("view");
-        if (!menuView) {
-            menuView = menuBar()->addMenu("View");
-        }
+    // object name setup by the codevisui.rc
+    auto *menuView = menuBar()->findChild<QMenu *>("view");
+    if (!menuView) {
+        menuView = menuBar()->addMenu("View");
+    }
 
-        for (auto *dock : dockWidgets) {
-            auto *action = new QAction();
-            action->setText(dock->windowTitle());
-            action->setCheckable(true);
+    for (auto *dock : dockWidgets) {
+        auto *action = new QAction();
+        action->setText(dock->windowTitle());
+        action->setCheckable(true);
+        action->setChecked(dock->isVisible());
+        connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
+        connect(dock, &QDockWidget::visibilityChanged, action, [dock, action](bool visible) {
+            if (action == nullptr || dock == nullptr) {
+                return;
+            }
             action->setChecked(dock->isVisible());
-            connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
-            menuView->addAction(action);
-        }
-        return true;
-    }();
-
-    Q_UNUSED(initialized);
+        });
+        menuView->addAction(action);
+    }
 }
 
 void MainWindow::showWarningMessage(const QString& message)

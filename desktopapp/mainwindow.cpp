@@ -1341,7 +1341,7 @@ void MainWindow::configurePluginDocks()
 
         auto *pluginDock = new QDockWidget(QString::fromStdString(title), this);
         pluginDock->setObjectName(QString::fromStdString(dockId));
-        addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea, pluginDock);
+        addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, pluginDock);
         auto *pluginDockWidget = new QWidget();
         pluginDockWidget->setLayout(new QFormLayout());
         pluginDock->setWidget(pluginDockWidget);

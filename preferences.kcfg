@@ -157,23 +157,23 @@
         </entry>
         <entry name="backgroundColor" type="Color">
             <label>Background color of the Graph Visualizer</label>
-            <default>white</default>
+            <default>#FBF9F1</default>
         </entry>
         <entry name="entityBackgroundColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>green</default>
+            <label>Entity background color</label>
+            <default>#AAD7D9</default>
         </entry>
         <entry name="selectedEntityBackgroundColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>cyan</default>
+            <label>Selected entity background color</label>
+            <default>#92C7CF</default>
         </entry>
         <entry name="edgeColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>black</default>
+            <label>Edge color</label>
+            <default>#000000</default>
         </entry>
         <entry name="highlightEdgeColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>red</default>
+            <label>Edge highlight color</label>
+            <default>#FF0000</default>
         </entry>
 
     </group>

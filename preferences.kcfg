@@ -135,6 +135,22 @@
             <label>Layout Bottom to Top instead of Top to Bottom</label>
             <default>false</default>
         </entry>
+        <entry name="spaceBetweenLevels" type="Double">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>40.0</default>
+        </entry>
+        <entry name="spaceBetweenSublevels" type="Double">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>10.0</default>
+        </entry>
+        <entry name="spaceBetweenEntities" type="Double">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>10.0</default>
+        </entry>
+        <entry name="maxEntitiesPerLevel" type="Int">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>8</default>
+        </entry>
         <entry name="showLevelNumbers" type="Bool">
             <label>Show the Levelization Numbers on the Entities on Screen</label>
             <default>true</default>

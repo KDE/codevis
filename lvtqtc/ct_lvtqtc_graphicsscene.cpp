@@ -830,7 +830,13 @@ void GraphicsScene::runLayoutAlgorithm()
         recursiveLevelLayout(e);
     }
     auto entityToLevel = computeLevelForEntities(topLevelEntities);
-    runLevelizationLayout(entityToLevel, {LakosEntity::LevelizationLayoutType::Vertical, direction});
+    runLevelizationLayout(entityToLevel,
+                          {LakosEntity::LevelizationLayoutType::Vertical,
+                           direction,
+                           Preferences::spaceBetweenLevels(),
+                           Preferences::spaceBetweenSublevels(),
+                           Preferences::spaceBetweenEntities(),
+                           Preferences::maxEntitiesPerLevel()});
 }
 
 bool GraphicsScene::blockNodeResizeOnHover() const

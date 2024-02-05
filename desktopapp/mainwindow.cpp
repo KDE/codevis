@@ -1092,7 +1092,7 @@ void MainWindow::disableWindow()
     // we don't want to disable thre graph load progress bar when we disable
     // widgets during a graph load. To achieve this we also have to not disable
     // its parent
-    const QList<QWidget *> neverDisable{ui.graphLoadProgress, ui.centralarea};
+    const QList<QWidget *> neverDisable{ui.centralarea};
     for (QWidget *child : findChildren<QWidget *>()) { // clazy:exclude=range-loop,range-loop-detach
         if (neverDisable.contains(child)) {
             continue;

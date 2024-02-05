@@ -81,9 +81,6 @@
       </widget>
      </widget>
     </item>
-    <item>
-     <widget class="QProgressBar" name="graphLoadProgress"/>
-    </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

@@ -177,6 +177,23 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
             Preferences::self(),
             &Preferences::setInvertVerticalLevelizationLayout);
 
+    connect(d->ui.spaceBetweenLevels,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            Preferences::self(),
+            &Preferences::setSpaceBetweenLevels);
+    connect(d->ui.spaceBetweenSublevels,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            Preferences::self(),
+            &Preferences::setSpaceBetweenSublevels);
+    connect(d->ui.spaceBetweenEntities,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            Preferences::self(),
+            &Preferences::setSpaceBetweenEntities);
+    connect(d->ui.maxEntitiesPerLevel,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            Preferences::self(),
+            &Preferences::setMaxEntitiesPerLevel);
+
     connect(d->ui.pkgGroupFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setPkgGroupFont);
     connect(d->ui.pkgFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setPkgFont);
     connect(d->ui.componentFont, &KFontRequester::fontSelected, Preferences::self(), &Preferences::setComponentFont);
@@ -310,8 +327,12 @@ void ConfigurationDialog::load()
     d->ui.lakosianRules->setChecked(Preferences::useLakosianRules());
     d->ui.showRedundantEdgesDefaultCheckbox->setChecked(Preferences::showRedundantEdgesDefault());
     d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::hidePackagePrefixOnComponents());
-    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::invertHorizontalLevelizationLayout());
-    d->ui.hidePkgPrefixOnComponents->setChecked(Preferences::invertVerticalLevelizationLayout());
+    d->ui.invertHorizontalLvlLayout->setChecked(Preferences::invertHorizontalLevelizationLayout());
+    d->ui.invertVerticalLvlLayout->setChecked(Preferences::invertVerticalLevelizationLayout());
+    d->ui.spaceBetweenLevels->setValue(Preferences::spaceBetweenLevels());
+    d->ui.spaceBetweenSublevels->setValue(Preferences::spaceBetweenSublevels());
+    d->ui.spaceBetweenEntities->setValue(Preferences::spaceBetweenEntities());
+    d->ui.maxEntitiesPerLevel->setValue(Preferences::maxEntitiesPerLevel());
 }
 
 void ConfigurationDialog::save()

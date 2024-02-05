@@ -648,6 +648,91 @@
            </property>
           </widget>
          </item>
+
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_spaceBetweenLevels">
+           <property name="text">
+            <string>Space between levels:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="spaceBetweenLevels">
+           <property name="suffix">
+            <string>  px</string>
+           </property>
+           <property name="minimum">
+            <number>5</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+          </widget>
+         </item>
+
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_spaceBetweenSublevels">
+           <property name="text">
+            <string>Space between sublevels:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="spaceBetweenSublevels">
+           <property name="suffix">
+            <string>  px</string>
+           </property>
+           <property name="minimum">
+            <number>5</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+          </widget>
+         </item>
+
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_spaceBetweenEntities">
+           <property name="text">
+            <string>Space between entities:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSpinBox" name="spaceBetweenEntities">
+           <property name="suffix">
+            <string>  px</string>
+           </property>
+           <property name="minimum">
+            <number>5</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+          </widget>
+         </item>
+
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_maxEntitiesPerLevel">
+           <property name="text">
+            <string>Max. entities per level:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSpinBox" name="maxEntitiesPerLevel">
+           <property name="suffix">
+            <string>  px</string>
+           </property>
+           <property name="minimum">
+            <number>5</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+          </widget>
+         </item>
+
          <item>
           <spacer name="verticalSpacer_5">
            <property name="orientation">

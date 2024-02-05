@@ -25,13 +25,22 @@
 
 namespace Codethink::lvtqtc {
 
+struct RunLevelizationLayoutConfig {
+    LakosEntity::LevelizationLayoutType type;
+    int direction;
+
+    double spaceBetweenLevels = 40.;
+    double spaceBetweenSublevels = 10.;
+    double spaceBetweenEntities = 10.;
+    int maxEntitiesPerLevel = 8;
+};
+
 std::unordered_map<LakosEntity *, int>
 computeLevelForEntities(std::vector<LakosEntity *> const& entities,
                         std::optional<const LakosEntity *> commonParentEntity = std::nullopt);
 
 void runLevelizationLayout(std::unordered_map<LakosEntity *, int> const& entityToLevel,
-                           LakosEntity::LevelizationLayoutType type,
-                           int direction);
+                           RunLevelizationLayoutConfig const& config);
 
 } // namespace Codethink::lvtqtc
 

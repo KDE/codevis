@@ -2192,7 +2192,7 @@ void LakosEntity::levelizationLayout(LevelizationLayoutType type, int direction,
         entity->layoutIgnoredItems();
     }
 
-    runLevelizationLayout(entityToLevel, type, direction);
+    runLevelizationLayout(entityToLevel, {type, direction});
 
     recalculateRectangle();
     if (moveToPosition) {

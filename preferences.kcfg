@@ -62,11 +62,11 @@
     <group name="GraphTab">
         <entry name="showMinimap" type="Bool">
             <label>Use dependency types on the document</label>
-            <default>true</default>
+            <default>false</default>
         </entry>
         <entry name="showLegend" type="Bool">
             <label>Use dependency types on the document</label>
-            <default>true</default>
+            <default>false</default>
         </entry>
         <entry name="classLimit" type="Int">
             <label>Limit of autoloading classes</label>

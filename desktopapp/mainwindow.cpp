@@ -956,9 +956,11 @@ void MainWindow::showEvent(QShowEvent *event)
     const auto dockWidgets = findChildren<QDockWidget *>();
 
     // object name setup by the codevisui.rc
-    auto *menuView = menuBar()->findChild<QMenu *>("view");
+    auto const MENUBAR_VIEW_MENU_ID = QString{"view"};
+    auto *menuView = menuBar()->findChild<QMenu *>(MENUBAR_VIEW_MENU_ID);
     if (!menuView) {
         menuView = menuBar()->addMenu("View");
+        menuView->setObjectName(MENUBAR_VIEW_MENU_ID);
     }
 
     for (auto *dock : dockWidgets) {

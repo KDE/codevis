@@ -17,12 +17,7 @@
 
 #include <fortran/ct_lvtclp_fortran_tool.h>
 
-#include <clang/Driver/DriverDiagnostic.h>
 #include <clang/Tooling/JSONCompilationDatabase.h>
-#include <llvm/Option/Arg.h>
-#include <llvm/Option/ArgList.h>
-#include <llvm/Option/OptTable.h>
-#include <llvm/Support/TargetSelect.h>
 
 #include <iostream>
 #include <memory>

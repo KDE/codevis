@@ -16,7 +16,7 @@
 */
 
 #include <fortran/ct_lvtclp_fortran_dbutils.h>
-#include <fortran/ct_lvtclp_tool.h>
+#include <fortran/ct_lvtclp_fortran_tool.h>
 
 #include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_functionobject.h>

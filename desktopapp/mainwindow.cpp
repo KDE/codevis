@@ -364,9 +364,6 @@ void MainWindow::setupActions()
         action->setChecked(dock->isVisible());
         connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
         connect(dock, &QDockWidget::visibilityChanged, action, [dock, action](bool visible) {
-            if (action == nullptr || dock == nullptr) {
-                return;
-            }
             action->setChecked(dock->isVisible());
         });
         menuView->addAction(action);

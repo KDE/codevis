@@ -154,7 +154,6 @@ class MainWindow : public KXmlGuiWindow {
     void mousePressEvent(QMouseEvent *ev) override;
     void mouseReleaseEvent(QMouseEvent *ev) override;
     void closeEvent(QCloseEvent *ev) override;
-    void showEvent(QShowEvent *ev) override;
     bool eventFilter(QObject *obj, QEvent *event) override;
 
     void configurePluginDocks();

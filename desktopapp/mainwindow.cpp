@@ -351,6 +351,26 @@ void MainWindow::setupActions()
     KStandardAction::quit(qApp, &QCoreApplication::quit, actionCollection());
 
     setupGUI(Default, QStringLiteral(":/ui_files/codevisui.rc"));
+
+    // Populate the "View" menu. (See codevisui.rc)
+    // Note that we can't use the name "view" due to naming clash
+    auto const MENUBAR_VIEW_MENU_ID = QString{"codevis_view_menu"};
+    auto menuView = this->findChild<QMenu *>(MENUBAR_VIEW_MENU_ID);
+    const auto dockWidgets = findChildren<QDockWidget *>();
+    for (auto *dock : dockWidgets) {
+        action = new QAction();
+        action->setText(dock->windowTitle());
+        action->setCheckable(true);
+        action->setChecked(dock->isVisible());
+        connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
+        connect(dock, &QDockWidget::visibilityChanged, action, [dock, action](bool visible) {
+            if (action == nullptr || dock == nullptr) {
+                return;
+            }
+            action->setChecked(dock->isVisible());
+        });
+        menuView->addAction(action);
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev)
@@ -947,36 +967,6 @@ void MainWindow::createReport(std::string const& title, std::string const& htmlC
     auto idx = d_reportsTabWidget->addTab(htmlReportTab, QString::fromStdString(title));
     d_reportsTabWidget->setCurrentIndex(idx);
     d_dockReports->show();
-}
-
-void MainWindow::showEvent(QShowEvent *event)
-{
-    QMainWindow::showEvent(event);
-
-    const auto dockWidgets = findChildren<QDockWidget *>();
-
-    // object name setup by the codevisui.rc
-    auto const MENUBAR_VIEW_MENU_ID = QString{"view"};
-    auto *menuView = menuBar()->findChild<QMenu *>(MENUBAR_VIEW_MENU_ID);
-    if (!menuView) {
-        menuView = menuBar()->addMenu("View");
-        menuView->setObjectName(MENUBAR_VIEW_MENU_ID);
-    }
-
-    for (auto *dock : dockWidgets) {
-        auto *action = new QAction();
-        action->setText(dock->windowTitle());
-        action->setCheckable(true);
-        action->setChecked(dock->isVisible());
-        connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
-        connect(dock, &QDockWidget::visibilityChanged, action, [dock, action](bool visible) {
-            if (action == nullptr || dock == nullptr) {
-                return;
-            }
-            action->setChecked(dock->isVisible());
-        });
-        menuView->addAction(action);
-    }
 }
 
 void MainWindow::showWarningMessage(const QString& message)

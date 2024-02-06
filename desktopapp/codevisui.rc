@@ -29,7 +29,7 @@
         <text>Bookmarks</text>
         <ActionList name="bookmark_actionlist" />
     </Menu >
-    <Menu name="view">
+    <Menu name="codevis_view_menu">
         <text>View</text>
     </Menu >
     <Menu name="help">

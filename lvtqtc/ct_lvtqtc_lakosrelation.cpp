@@ -495,12 +495,12 @@ LakosEntity *LakosRelation::to() const
 void LakosRelation::toggleRelationFlags(EdgeCollection::RelationFlags flags, bool toggle)
 {
     if (toggle) {
-        if (flags | EdgeCollection::RelationFlags::RelationIsSelected) {
+        if (flags & EdgeCollection::RelationFlags::RelationIsSelected) {
             d->selectedCounter += 1;
         }
         d->relationFlags |= flags;
     } else {
-        if (flags | EdgeCollection::RelationFlags::RelationIsSelected) {
+        if (flags & EdgeCollection::RelationFlags::RelationIsSelected) {
             d->selectedCounter -= 1;
             if (d->selectedCounter == 0) {
                 d->relationFlags &= ~flags;

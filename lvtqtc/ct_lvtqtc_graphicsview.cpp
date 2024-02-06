@@ -258,6 +258,7 @@ void GraphicsView::calculateCurrentZoomFactor()
 void GraphicsView::mouseMoveEvent(QMouseEvent *event)
 {
     assert(event);
+
     const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
 
     if (d->multiSelect.isActive && mouseHasNewPosition) {
@@ -280,12 +281,22 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
                 lEntity->setSelected(true);
             }
         }
-        auto toUnselect = oldSelection.subtract(currentSelection);
+
+        auto toUnselect = oldSelection;
+        toUnselect.subtract(currentSelection);
         for (const auto lEntity : toUnselect) {
             lEntity->setSelected(false);
         }
 
-        oldSelection = currentSelection;
+        if (oldSelection != currentSelection) {
+            std::deque<LakosianNode *> selectedNodes;
+            for (const auto& lEntity : currentSelection) {
+                selectedNodes.push_back(lEntity->internalNode());
+            }
+            Q_EMIT newSelectionMade(selectedNodes);
+            oldSelection = currentSelection;
+        }
+
         viewport()->update();
     }
 
@@ -385,34 +396,6 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
         qDebug() << "GraphicsView mousePressEvent";
     }
 
-    if (!itemAt(event->pos())) {
-        if (event->button() == Qt::LeftButton) {
-            d->multiSelect.start = event->pos();
-            d->multiSelect.end = event->pos();
-            d->multiSelect.isActive = true;
-        } else {
-            d->multiSelect.isActive = false;
-        }
-    }
-
-    if (event->button() == Qt::LeftButton) {
-        if (QGraphicsItem *item = itemAt(event->pos())) {
-            if (d->scene->selectedEntities().size() > 1) {
-                if (const auto *entity = castUpToParent<LakosEntity *>(item)) {
-                    if (entity->isSelected()) {
-                        d->isMultiDragging = true;
-                    }
-                }
-            }
-        }
-    }
-
-    if (d->isMultiDragging) {
-        for (auto& entity : d->scene->selectedEntities()) {
-            entity->startDrag(mapToScene(event->pos()));
-        }
-    }
-
     if (event->button() == Qt::ForwardButton) {
         Q_EMIT requestNext();
         return;
@@ -425,6 +408,34 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
     if (event->modifiers() & Preferences::panModifier()
         || Preferences::panModifier() == Qt::KeyboardModifier::NoModifier) {
         setDragMode(QGraphicsView::DragMode::ScrollHandDrag);
+    } else {
+        if (!itemAt(event->pos())) {
+            if (event->button() == Qt::LeftButton) {
+                d->multiSelect.start = event->pos();
+                d->multiSelect.end = event->pos();
+                d->multiSelect.isActive = true;
+            } else {
+                d->multiSelect.isActive = false;
+            }
+        }
+
+        if (event->button() == Qt::LeftButton) {
+            if (QGraphicsItem *item = itemAt(event->pos())) {
+                if (d->scene->selectedEntities().size() > 1) {
+                    if (const auto *entity = castUpToParent<LakosEntity *>(item)) {
+                        if (entity->isSelected()) {
+                            d->isMultiDragging = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (d->isMultiDragging) {
+            for (auto& entity : d->scene->selectedEntities()) {
+                entity->startDrag(mapToScene(event->pos()));
+            }
+        }
     }
 
     // Qt loses the selection if we right click. So we need to

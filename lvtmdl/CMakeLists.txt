@@ -11,7 +11,7 @@ AddTargetLibrary(
     ct_lvtmdl_circular_relationships_model.cpp
     ct_lvtmdl_debugmodel.cpp
     ct_lvtmdl_errorsmodel.cpp
-    ct_lvtmdl_fieldstablemodel.cpp
+    ct_lvtmdl_fieldstreemodel.cpp
     ct_lvtmdl_historylistmodel.cpp
     ct_lvtmdl_methodstablemodel.cpp
     ct_lvtmdl_modelhelpers.cpp
@@ -34,7 +34,7 @@ AddTargetLibrary(
     ct_lvtmdl_debugmodel.h
     ct_lvtmdl_namespacetreemodel.h
     ct_lvtmdl_usesintheimpltablemodel.h
-    ct_lvtmdl_fieldstablemodel.h
+    ct_lvtmdl_fieldstreemodel.h
     ct_lvtmdl_packagetreemodel.h
     ct_lvtmdl_usesintheinterfacetablemodel.h
     ct_lvtmdl_historylistmodel.h

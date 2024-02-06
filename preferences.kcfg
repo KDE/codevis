@@ -8,6 +8,7 @@
     <include>QString</include>
     <include>QDir</include>
     <include>QThread</include>
+    <include>QStandardPaths</include>
     <group name="Debug">
         <entry name="enableSceneContextMenu" type="Bool">
             <label>Displays a Debug context menu on the Graphics Scene</label>
@@ -48,6 +49,11 @@
                         QDir::homePath() + "/lks-plugins",
                         QCoreApplication::applicationDirPath() + "/lks-plugins"
                     };
+                    const auto dataLocations = QStandardPaths::standardLocations(QStandardPaths::StandardLocation::AppDataLocation);
+                    // The joy of writting C++ on Xml...
+                    for (const auto&amp; location : dataLocations) {
+                        ret += location + "/lks-plugins";
+                    }
                     return ret;
                 } ()
             </default>

@@ -120,15 +120,21 @@ void PluginManager::loadPlugins(const QList<QString>& searchPaths)
         QDir pluginsPath(pluginsStr);
 
         qDebug() << "Loading plugins from " << pluginsPath.path() << "...";
-        if (!pluginsPath.exists() || !pluginsPath.isReadable()) {
-            qDebug() << "Couldn't find any plugin on path " << pluginsPath.path();
+        if (!pluginsPath.exists()) {
+            qDebug() << pluginsPath.path() << "does not exists, skipping plugin search for it.";
+            continue;
+        }
+        if (!pluginsPath.isReadable()) {
+            qDebug() << pluginsPath.path() << "exists but it's not readable, skipping plugin search for it.";
             continue;
         }
 
         pluginsPath.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
         pluginsPath.setSorting(QDir::Name);
         const auto entryInfoList = pluginsPath.entryInfoList();
+        qDebug() << entryInfoList.size() << "is the size of the number of files here";
         for (auto const& fileInfo : qAsConst(entryInfoList)) {
+            qDebug() << "\tTesting fileInfo" << fileInfo;
             const auto pluginDir = fileInfo.absoluteFilePath();
             loadSinglePlugin(pluginDir, libraries);
         }

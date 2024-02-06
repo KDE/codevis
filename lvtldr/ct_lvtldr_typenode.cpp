@@ -261,6 +261,39 @@ void TypeNode::loadClients()
     }
 }
 
+void TypeNode::invalidateFieldNames()
+{
+    d->fieldNames.clear();
+    d->fieldsLoaded = false;
+}
+
+void TypeNode::addFieldName(std::string fieldName)
+{
+    loadFields();
+
+    // TODO: Really update the database
+    d_fields.fieldNames.push_back(fieldName);
+    d->fieldNames.push_back(fieldName);
+    d->fieldsLoaded = true;
+}
+
+void TypeNode::loadFields()
+{
+    // TODO: Renaming needed as "field" refers to many things
+
+    if (d->fieldsLoaded) {
+        return;
+    }
+    d_fields = d_dbHandler->get().getUdtFieldsById(d_fields.id);
+    d->fieldsLoaded = true;
+
+    d->fieldNames.clear();
+    d->fieldNames.reserve(d_fields.fieldNames.size());
+    for (auto&& name : d_fields.fieldNames) {
+        d->fieldNames.push_back(name);
+    }
+}
+
 bool TypeNode::hasClassNamespace() const
 {
     return d_fields.classNamespaceId.has_value();

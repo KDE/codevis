@@ -4,6 +4,17 @@ def accept(path):
 
 
 def process(path, addPkg):
-    addPkg('LLVM', None, None, None)
-    return 'LLVM'
+    import re
 
+    addPkg('LLVM', None, None, None)
+
+    m = re.search('/(llvm-.*?)/', path)
+    if not m or not m[0]:
+        return 'LLVM'
+
+    prev = 'LLVM'
+    nestedPkgs = path.split(m[0])[1].split("/")[:-1]
+    for pkg in nestedPkgs:
+        addPkg(prev + '/' + pkg, prev, None, None)
+        prev = prev + '/' + pkg
+    return prev

@@ -92,6 +92,7 @@ class LVTQTW_EXPORT TabWidget : public QTabWidget
     Q_SIGNAL void errorMessage(const QString& errorMessage);
     // triggered when we set the text of the current tab.
 
+    void saveBookmarkByTabIndex(int tabIdx);
     void saveBookmark(const QString& name, int idx, Codethink::lvtprj::ProjectFile::BookmarkType type);
     void loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType historyType);
 

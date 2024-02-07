@@ -337,6 +337,11 @@ void MainWindow::setupActions()
                                                                      | static_cast<int>(Qt::Key_W)));
     connect(action, &QAction::triggered, this, &MainWindow::closeCurrentTab);
 
+    action = new QAction(this);
+    action->setText(tr("Bookmark Current Tab"));
+    actionCollection()->addAction("bookmark_current_tab", action);
+    connect(action, &QAction::triggered, this, &MainWindow::bookmarkCurrentTab);
+
     // Common Set of Actions that most applications have. Those *do not* need to be
     // specified in the codevisui.rc
     KStandardAction::find(this, &MainWindow::requestSearch, actionCollection());
@@ -382,6 +387,15 @@ void MainWindow::closeEvent(QCloseEvent *ev)
         }
     }
     QMainWindow::closeEvent(ev);
+}
+
+void MainWindow::bookmarkCurrentTab()
+{
+    if (!currentGraphTab) {
+        showErrorMessage(tr("Nothing to bookmark"));
+    }
+
+    currentGraphTab->saveBookmarkByTabIndex(currentGraphTab->currentIndex());
 }
 
 void MainWindow::setProjectWidgetsEnabled(bool enabled)

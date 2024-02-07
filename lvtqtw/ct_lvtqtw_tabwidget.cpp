@@ -111,16 +111,7 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
         if (tabIcon(idx).isNull()) {
             auto *action = menu.addAction(tr("Bookmark this tab"));
             connect(action, &QAction::triggered, this, [this, idx] {
-                InputDialog dlg;
-                dlg.addTextField("name", tr("Bookmark Name:"));
-                dlg.finish();
-                auto res = dlg.exec();
-                if (res == QDialog::DialogCode::Rejected) {
-                    return;
-                }
-
-                const auto text = std::any_cast<QString>(dlg.fieldValue("name"));
-                saveBookmark(text, idx, Codethink::lvtprj::ProjectFile::Bookmark);
+                saveBookmarkByTabIndex(idx);
             });
         } else {
             auto *action = menu.addAction(tr("Remove bookmark"));
@@ -139,6 +130,20 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
 }
 
 TabWidget::~TabWidget() noexcept = default;
+
+void TabWidget::saveBookmarkByTabIndex(int tabIdx)
+{
+    InputDialog dlg;
+    dlg.addTextField("name", tr("Bookmark Name:"));
+    dlg.finish();
+    auto res = dlg.exec();
+    if (res == QDialog::DialogCode::Rejected) {
+        return;
+    }
+
+    const auto text = std::any_cast<QString>(dlg.fieldValue("name"));
+    saveBookmark(text, tabIdx, Codethink::lvtprj::ProjectFile::Bookmark);
+}
 
 void TabWidget::closeTab(int idx)
 {

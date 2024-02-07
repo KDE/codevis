@@ -27,6 +27,7 @@
     </Menu >
     <Menu name="bookmarks">
         <text>Bookmarks</text>
+        <Action name="bookmark_current_tab" />
         <ActionList name="bookmark_actionlist" />
     </Menu >
     <Menu name="codevis_view_menu">

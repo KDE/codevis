@@ -163,7 +163,7 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void graphLoadFinished();
     Q_SLOT void triggerUndo();
     Q_SLOT void triggerRedo();
-
+    Q_SLOT void bookmarkCurrentTab();
     Q_SLOT void bookmarksChanged();
 
     Q_SLOT void generateDatabaseReadyForUpdate();

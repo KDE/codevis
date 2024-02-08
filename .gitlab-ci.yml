@@ -11,3 +11,18 @@ include:
       - /gitlab-templates/windows-qt6.yml
       - /gitlab-templates/craft-windows-x86-64.yml  
 #     - /gitlab-templates/flatpak.yml
+
+codevis-CLI-centos:
+  stage: build
+  image: invent-registry.kde.org/sysadmin/ci-images/suse-qt515:latest
+  tags:
+    - Linux
+  variables:
+    CODEVIS_PKG_DIST: centos7
+    CODEVIS_PKG_OUTDIR: /mnt/artifacts/suse-qt5.15/codevis-build-centos7/
+    CODEVIS_PKG_IMGNAME: codevis-centos7
+  interruptible: true
+  script:
+    - mkdir -p ${CODEVIS_PKG_OUTDIR}
+    - docker build . -t ${CODEVIS_PKG_IMGNAME}
+    - docker run -v ${CODEVIS_PKG_OUTDIR}:/artifacts -t ${CODEVIS_PKG_IMGNAME}

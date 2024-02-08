@@ -1,11 +1,10 @@
-
-# Run Instructions
+# Command line interface
 
 There are two ways to run the codebase parse: The GUI and the command line
 interface. In this document we will discuss the command line interface.
 
 The `codevis_create_codebase_db` tool takes a `compile_commands.json` file as input and
-outputs an SQLite code database. Multiple `compile_commands.json` can be
+outputs an SQLite code database (.db file). Multiple `compile_commands.json` can be
 specified to generate a database spanning multiple projects.
 
 Run `codevis_create_codebase_db --help` to see all available parameters. Some parameters are summarized here:
@@ -38,7 +37,36 @@ if you used the `--compile-commands` flag, you will need to merge the
 resulting databases into a single one later on (just like you need to run a linter on multiple
 object files to produce a binary). for that we have the tool `codevis_merge_databases`
 
-# CLI run example
+# Example 1
+
+For this example, you need to have `CMake` installed.
+
+Download the [bjg example project](../project_tests/bjg_wrong_cmake/) in this repository and unpack it somewhere.
+Create a `build` folder and run `CMake` to generate the `compile_commands.json` file, required by Codevis:
+
+```
+cd bjg_wrong_cmake/ && mkdir build/ && cd build
+cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+Run codevis to parse the code and build the database file:
+
+```
+codevis_create_codebase_db --compile-commands-json compile_commands.json --source-path .. -j6 -o bjg.db --replace
+```
+
+After the parsing is done, you can turn the database file into a project file that can be visualized with Codevis:
+
+```
+codevis_create_prj_from_db bjg.db bjg.lks
+```
+
+The following image is the resulting project, visualized on Codevis GUI:
+
+![example-4](images/codevis-4.png)
+
+
+# Example 2
 
 For this example, Bloomberg's Open Source BDE code will be used as a target. BDE uses a meta-build system (bde-tools) to configure arguments and the
 environment for cmake. Information about configuring and building BDE can be found at

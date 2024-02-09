@@ -1091,6 +1091,9 @@ void GraphicsScene::loadEntity(lvtshr::UniqueId uuid, UnloadDepth depth)
 void GraphicsScene::unloadEntity(lvtshr::UniqueId uuid, UnloadDepth depth)
 {
     LakosEntity *entity = findLakosEntityFromUid(uuid);
+    if (!entity) {
+        return;
+    }
     if (depth == UnloadDepth::Children) {
         const auto entities = entity->lakosEntities();
         for (auto *child : entities) {
@@ -1164,8 +1167,6 @@ void GraphicsScene::unloadEntity(LakosEntity *entity)
     d->verticesVec.erase(std::remove(std::begin(d->verticesVec), std::end(d->verticesVec), entity),
                          std::end(d->verticesVec));
 
-    delete entity;
-
     if (Preferences::enableDebugOutput()) {
         qDebug() << "Unloading entity" << intptr_t(entity) << QString::fromStdString(entity->name());
     }
@@ -1174,6 +1175,8 @@ void GraphicsScene::unloadEntity(LakosEntity *entity)
         d->bgMessage->setPos(sceneRect().center());
         d->bgMessage->show();
     }
+
+    delete entity;
 }
 
 void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)

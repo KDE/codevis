@@ -116,6 +116,8 @@ class MainWindow : public KXmlGuiWindow {
     [[nodiscard]] QString currentMessage() const;
 
     void setupActions();
+    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dropEvent(QDropEvent *e) override;
 
   protected:
     virtual QString requestProjectName();

@@ -17,14 +17,18 @@
 // limitations under the License.
 */
 
+#include <kmessagewidget.h>
 #include <mainwindow.h>
 
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QModelIndex>
 #include <QPushButton>
 #include <QStandardPaths>
@@ -250,9 +254,27 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     setupActions();
     setProjectWidgetsEnabled(false);
+    setAcceptDrops(true);
 }
 
 MainWindow::~MainWindow() noexcept = default;
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *e)
+{
+    if (e->mimeData()->hasUrls()) {
+        e->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *e)
+{
+    const QUrl url = e->mimeData()->urls().first();
+    const QString filename = url.toLocalFile();
+    const bool success = openProjectFromPath(filename);
+    if (!success) {
+        showMessage(tr("Error loading project file %1").arg(filename), KMessageWidget::Error);
+    }
+}
 
 void MainWindow::setupActions()
 {

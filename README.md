@@ -37,10 +37,11 @@ There's also [CLI documentation](doc/command_line_codebase_generation.md).
 Choose the Windows installer from the following list. The software is still being actively developed and there's no final release yet.
 If something crashes, please download the second file with the debug symbols and unpack at the binary folder of the installation so we can have backtraces.
 
-- [**Windows (.exe)**](https://invent.kde.org/tcanabrava/codevis-binaries)
+- [**Windows (.exe)**](https://invent.kde.org/tcanabrava/codevis-binaries/-/tree/master/Windows)
 
 ### Linux:
 
+- [**CentOS7 CLI Tools only (.zip)**](https://invent.kde.org/tcanabrava/codevis-binaries/-/tree/master/Centos7)
 - [**Ubuntu 22.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/77fc53bdc32d671ce8d27162f6b409d1/codevis-ubuntu-22.04.zip)
 - [**Ubuntu 20.04 (.zip)**](https://invent.kde.org/sdk/codevis/-/wikis/uploads/16c7045a6f17401a80652765bac3228a/codevis-ubuntu-20.04.zip)
 

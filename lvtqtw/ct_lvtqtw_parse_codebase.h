@@ -72,18 +72,29 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
     void showEvent(QShowEvent *event) override;
 
     void initParse();
+
     // Sets up everything needed for the parse.
+
+    void initTools(const std::string& compileCommandsJson,
+                   const std::vector<std::string>& ignoreList,
+                   const std::vector<std::filesystem::path>& nonLakosianDirs);
+
+    // Creates the tools needed for the codebase parse
 
     void runCMakeAndInitParse_Step2(const std::string& compileCommandsJson,
                                     const std::vector<std::string>& ignoreList,
                                     const std::vector<std::filesystem::path>& nonLakosianDirs);
+
     // Runs CMake to generate compile_commands.json file before starting parse step 2
+    QThread *createThreadFnToRunParseTools();
 
     void initParse_Step2(const std::string& compileCommandsJson,
                          const std::vector<std::string>& ignoreList,
                          const std::vector<std::filesystem::path>& nonLakosianDirs);
     // Actually starts the parsing process.
 
+    void cleanupTools();
+    void notifyUserForFinishedParsing(const std::string& parseFinishedMessage);
     void endParse();
     void validate();
 

@@ -677,6 +677,7 @@ void ParseCodebaseDialog::initParse()
     const auto mustGenerateCompileCommands = physicalRun && (!compileCommandsExists || ui->runCmake->checkState());
     const auto ignoreList = ignoredItemsAsStdVec();
     const auto nonLakosianDirs = nonLakosianDirsAsStdVec();
+    // what is the parse step 2 exactly?
     if (mustGenerateCompileCommands) {
         runCMakeAndInitParse_Step2(compileCommandsJson, ignoreList, nonLakosianDirs);
     } else {
@@ -725,12 +726,11 @@ void ParseCodebaseDialog::runCMakeAndInitParse_Step2(const std::string& compileC
     refreshCompileCommands->start(cmakeExecutable, QStringList({".", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"}));
 }
 
-void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson,
-                                          const std::vector<std::string>& ignoreList,
-                                          const std::vector<std::filesystem::path>& nonLakosianDirs)
+void ParseCodebaseDialog::initTools(const std::string& compileCommandsJson,
+                                    const std::vector<std::string>& ignoreList,
+                                    const std::vector<std::filesystem::path>& nonLakosianDirs)
 {
     const bool catchCodeAnalysisOutput = Preferences::enableCodeParseDebugOutput();
-
     if (!d->tool_p) {
         auto disableLakosianRules = (ui->disableLakosianRules->checkState() == Qt::Checked);
         d->tool_p = std::make_unique<lvtclp::CppTool>(sourcePath(),
@@ -744,33 +744,19 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
                                                       /*enableLakosianRules=*/not disableLakosianRules,
                                                       catchCodeAnalysisOutput);
     }
+    d->tool_p->setSharedMemDb(d->sharedMemDb);
+    d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
+
 #ifdef CT_ENABLE_FORTRAN_SCANNER
     if (!d->fortran_tool_p) {
         d->fortran_tool_p = lvtclp::fortran::Tool::fromCompileCommands(compileCommandsJson);
     }
     d->fortran_tool_p->setSharedMemDb(d->sharedMemDb);
 #endif
-    d->tool_p->setSharedMemDb(d->sharedMemDb);
+}
 
-    d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
-    connect(d->tool_p.get(),
-            &lvtclp::CppTool::processingFileNotification,
-            this,
-            &ParseCodebaseDialog::processingFileNotification,
-            Qt::QueuedConnection);
-
-    connect(d->tool_p.get(),
-            &lvtclp::CppTool::aboutToCallClangNotification,
-            this,
-            &ParseCodebaseDialog::aboutToCallClangNotification,
-            Qt::QueuedConnection);
-
-    connect(d->tool_p.get(),
-            &lvtclp::CppTool::messageFromThread,
-            this,
-            &ParseCodebaseDialog::receivedMessage,
-            Qt::QueuedConnection);
-
+QThread *ParseCodebaseDialog::createThreadFnToRunParseTools()
+{
 #ifdef CT_ENABLE_FORTRAN_SCANNER
     auto threadFn = [this]() {
         assert(d->tool_p);
@@ -794,8 +780,35 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
         }
     };
 #endif
+    return QThread::create(threadFn);
+}
 
-    d->parseThread = QThread::create(threadFn);
+void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson,
+                                          const std::vector<std::string>& ignoreList,
+                                          const std::vector<std::filesystem::path>& nonLakosianDirs)
+{
+    // for now a Cpp Tool and a fortran tool
+    initTools(compileCommandsJson, ignoreList, nonLakosianDirs);
+
+    connect(d->tool_p.get(),
+            &lvtclp::CppTool::processingFileNotification,
+            this,
+            &ParseCodebaseDialog::processingFileNotification,
+            Qt::QueuedConnection);
+
+    connect(d->tool_p.get(),
+            &lvtclp::CppTool::aboutToCallClangNotification,
+            this,
+            &ParseCodebaseDialog::aboutToCallClangNotification,
+            Qt::QueuedConnection);
+
+    connect(d->tool_p.get(),
+            &lvtclp::CppTool::messageFromThread,
+            this,
+            &ParseCodebaseDialog::receivedMessage,
+            Qt::QueuedConnection);
+
+    d->parseThread = createThreadFnToRunParseTools();
 
     connect(d->parseThread, &QThread::finished, this, &ParseCodebaseDialog::readyForDbUpdate);
 
@@ -906,6 +919,17 @@ void ParseCodebaseDialog::updateDatabase()
     endParse();
 }
 
+void ParseCodebaseDialog::cleanupTools()
+{
+    d->sharedMemDb->withRWLock([&] {
+        d->sharedMemDb->clear();
+    });
+    d->tool_p = nullptr;
+#ifdef CT_ENABLE_FORTRAN_SCANNER
+    d->fortran_tool_p = nullptr;
+#endif
+}
+
 void ParseCodebaseDialog::endParse()
 {
     assert(d->dialogState != State::Idle);
@@ -919,13 +943,7 @@ void ParseCodebaseDialog::endParse()
         ui->errorText->show();
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Killed);
-        d->sharedMemDb->withRWLock([&] {
-            d->sharedMemDb->clear();
-        });
-        d->tool_p = nullptr;
-#ifdef CT_ENABLE_FORTRAN_SCANNER
-        d->fortran_tool_p = nullptr;
-#endif
+        cleanupTools();
         return;
     }
 
@@ -934,13 +952,7 @@ void ParseCodebaseDialog::endParse()
         ui->errorText->show();
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Idle);
-        d->sharedMemDb->withRWLock([&] {
-            d->sharedMemDb->clear();
-        });
-        d->tool_p = nullptr;
-#ifdef CT_ENABLE_FORTRAN_SCANNER
-        d->fortran_tool_p = nullptr;
-#endif
+        cleanupTools();
         return;
     }
 
@@ -962,31 +974,16 @@ void ParseCodebaseDialog::endParse()
         return;
     }
 
+    // is there a specific reason the emit is in a different place? also the call is duplicated
     if (d->dialogState == State::RunPhysicalOnly) {
         Q_EMIT parseFinished(d->dialogState);
-
-        QTime time(0, 0);
-        time = time.addMSecs(d->parseTimer.elapsed());
-        KNotification *notification = new KNotification("parserFinished");
-        notification->setText(tr("Physical Parse finished with: %1.").arg(time.toString("mm:ss.zzz")));
-        notification->sendEvent();
+        notifyUserForFinishedParsing("Physical Parse finished with: ");
     } else if (d->dialogState == State::RunAllLogical) {
-        QTime time(0, 0);
-        time = time.addMSecs(d->parseTimer.elapsed());
-
-        KNotification *notification = new KNotification("parserFinished");
-        notification->setText(tr("Logical Parse finished with: %1.").arg(time.toString("mm:ss.zzz")));
-        notification->sendEvent();
+        notifyUserForFinishedParsing("Logical Parse finished with: ");
         Q_EMIT parseFinished(d->dialogState);
     }
     d->dialogState = State::Idle;
-    d->sharedMemDb->withRWLock([&] {
-        d->sharedMemDb->clear();
-    });
-    d->tool_p = nullptr;
-#ifdef CT_ENABLE_FORTRAN_SCANNER
-    d->fortran_tool_p = nullptr;
-#endif
+    cleanupTools();
     d->parseTimer.invalidate();
 
     if (d->pluginManager) {
@@ -1002,6 +999,18 @@ void ParseCodebaseDialog::endParse()
     }
 
     close();
+}
+
+void ParseCodebaseDialog::notifyUserForFinishedParsing(const std::string& parseFinishedMessage)
+{
+    QTime time(0, 0);
+    time = time.addMSecs(d->parseTimer.elapsed());
+    KNotification *notification = new KNotification("parserFinished");
+    // there is a better to do this cant find it
+    QString notificationText = QString::fromStdString(parseFinishedMessage) + time.toString("mm:ss.zzz");
+    const char *notificationString = notificationText.toUtf8().constData();
+    notification->setText(tr(notificationString));
+    notification->sendEvent();
 }
 
 void ParseCodebaseDialog::processingFileNotification(const QString& path)

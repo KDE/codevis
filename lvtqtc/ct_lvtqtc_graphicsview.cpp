@@ -410,7 +410,9 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
         setDragMode(QGraphicsView::DragMode::ScrollHandDrag);
     } else {
         if (!itemAt(event->pos())) {
-            if (event->button() == Qt::LeftButton) {
+            if (event->button() == Qt::LeftButton
+                && (event->modifiers() & Preferences::multiSelectModifier()
+                    || Preferences::multiSelectModifier() == Qt::KeyboardModifier::NoModifier)) {
                 d->multiSelect.start = event->pos();
                 d->multiSelect.end = event->pos();
                 d->multiSelect.isActive = true;

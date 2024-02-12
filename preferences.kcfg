@@ -95,9 +95,13 @@
             <label>Pan Modifier Key</label>
             <default>Qt::ALT</default>
         </entry>
+        <entry name="multiSelectModifier" type="Int">
+            <label>MultiSelect Modifier Key</label>
+            <default>Qt::CTRL</default>
+        </entry>
         <entry name="zoomModifier" type="Int">
             <label>Zoom Modifier Key</label>
-            <default>Qt::CTRL</default>
+            <default></default>
         </entry>
         <entry name="minimapSize" type="Int">
             <label>Minimap Modifier Key</label>

@@ -92,19 +92,19 @@
             <default>Qt::SHIFT</default>
         </entry>
         <entry name="panModifier" type="Int">
-            <label>Drag Modifier Key</label>
+            <label>Pan Modifier Key</label>
             <default>Qt::ALT</default>
         </entry>
         <entry name="zoomModifier" type="Int">
-            <label>Drag Modifier Key</label>
+            <label>Zoom Modifier Key</label>
             <default>Qt::CTRL</default>
         </entry>
         <entry name="minimapSize" type="Int">
-            <label>Drag Modifier Key</label>
+            <label>Minimap Modifier Key</label>
             <default>10</default>
         </entry>
         <entry name="lakosEntityNamePos" type="Int">
-            <label>Drag Modifier Key</label>
+            <label>LakosEntityNamePos Modifier Key</label>
             <default>Qt::BottomLeftCorner</default>
         </entry>
         <entry name="colorBlindMode" type="Bool">

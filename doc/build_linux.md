@@ -5,24 +5,20 @@
 
 ### Assisted build using kdesrc-build
 
-We use `kdesrc-build` in order to speed up and automate the build process,
-downloading the needed libraries, and building the ones we need in a multitude of linux distributions.
+You can use [kdesrc-build](https://invent.kde.org/sdk/kdesrc-build/) to download the necessary dependencies, and build the ones we need in a multitude of linux distributions.
 If you have never used `kdesrc-build` before, it's quite simple, and this is the startup point:
 
-clone the repository, or install from your package manager the `kdesrc-build` tool, the repository can be found in `https://invent.kde.org/sdk/kdesrc-build/`
+1. [Clone the kdesrc-build repository](https://invent.kde.org/sdk/kdesrc-build/), or install via your package manager.
 
-Run `kdesrc-build --initial-setup` to install the necessary packages for your linux distribution. Even if you already have `kdesrc-build`, you are encouraged to run `--initial-setup` often, to install newer dependencies that are added to the list from time to time, running this again will not override your configuration file.
+2. Run `kdesrc-build --initial-setup` to install the necessary packages for your linux distribution. 
 
-Open and edit `~/.config/kdesrc-buildrc` to your liking, specially the `kdedir`, `source-dir` and `build-dir` packages.
+**Note:** Even if you already have `kdesrc-build`, you are encouraged to run `--initial-setup` often, to install newer dependencies that are added to the list from time to time, running this again will not override your configuration file.
 
-run `kdesrc-build codevis`
-This will:
-    - Download the sources from the KDE infrastructure, on `source-dir`
-    - Configure the sources for building
-    - Build the sources into a compiled binary on `build-dir`
-    - Install the compiled binary into `kdedir`
+**Note:** Open and edit `~/.config/kdesrc-buildrc` to your liking, specially the `kdedir`, `source-dir` and `build-dir` packages.
 
-After you build the software for the first time with kdesrc-build, you can load the source on any IDE, and point the build folder to `$build-dir/codevis`, the IDE should pickup the `CMakeCache.txt` and the `compile_commands.json` and you can go from there.
+3. Run `kdesrc-build codevis`
+
+**Note**: If you are a developer, after you build the software for the first time with `kdesrc-build`, you can load the source on any IDE, and point the build folder to `$build-dir/codevis`, the IDE should pickup the `CMakeCache.txt` and the `compile_commands.json` and you can go from there.
 
 
 ### Manual build

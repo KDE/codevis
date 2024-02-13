@@ -12,6 +12,8 @@ If you have never used `kdesrc-build` before, it's quite simple, and this is the
 
 2. Run `kdesrc-build --initial-setup` to install the necessary packages for your linux distribution. 
 
+**Note:** There are reports of `kdesrc-build` failing in some distros (e.g. Ubuntu23.04) due to Qt6 related issues. If that happens to you, you can either change the Qt version for `kdesrc-build` to target Qt5 _or_ you can follow the [manual build](#manual-build) instead.
+
 **Note:** Even if you already have `kdesrc-build`, you are encouraged to run `--initial-setup` often, to install newer dependencies that are added to the list from time to time, running this again will not override your configuration file.
 
 **Note:** Open and edit `~/.config/kdesrc-buildrc` to your liking, specially the `kdedir`, `source-dir` and `build-dir` packages.

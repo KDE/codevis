@@ -11,9 +11,7 @@ Before going into details on how to visualize your own code, consider the [pre-p
 Codevis GUI doesn't visualize source code directly, it visualizes project files (.lks files) previously parsed using
 our parsing libraries. This can be done either using the CLI or the GUI.
 
-For a first approach, consider the example project [codevis.lks](../examples/codevis.lks). To visualize the code,
-first [download and install codevis](../README.md#prebuilt-binaries) and open the GUI and select "Open existing project", then
-select the `codevis.lks`.
+For a first approach, consider the example project [codevis.lks](../examples/codevis.lks). To visualize the code, first [download and install codevis](../README.md#prebuilt-binaries), then open the GUI and select "Open existing project". Finally, select the `codevis.lks` inside the example folder.
 
 ![example-1](images/codevis-1.png)
 

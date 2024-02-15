@@ -18,6 +18,21 @@ HANDLERS = [
         Function('void', 'unregisterPluginData', [Param('std::string const&', 'id')],
                  'Unregister a plugin data. Please make sure you delete the data before calling this, or the resource will leak.',
                  'pyUnregisterPluginData<T>'),
+        Function('PluginPythonInterpHandler', 'getPyInterpHandler', [],
+                 'Returns a PluginPythonInterpHandler instance so user can execute Python code within C++ plugins.',
+                 NO_BINDINGS),
+    ]),
+
+    HandlerInfo("PluginMainWindowReadyHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+    ]),
+
+    HandlerInfo("PluginPythonInterpHandler", [
+        Function('void', 'pyExec', [Param('std::string const&', 'pyCode')],
+                 'Executes the given python code within Codevis bundled Python interpreter',
+                 AS_LAMBDA),
     ]),
 
     HandlerInfo("PluginContextMenuActionHandler", [

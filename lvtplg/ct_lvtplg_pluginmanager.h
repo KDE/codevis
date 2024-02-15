@@ -61,6 +61,7 @@ class LVTPLG_EXPORT PluginManager {
     void removePlugin(const QString& pluginFolder);
 
     void callHooksSetupPlugin();
+    void callHooksMainWindowReady();
     void callHooksTeardownPlugin();
 
     using getAllEntitiesInCurrentView_f = decltype(PluginContextMenuHandler::getAllEntitiesInCurrentView);
@@ -116,6 +117,7 @@ class LVTPLG_EXPORT PluginManager {
 
     void registerPluginQObject(std::string const& id, QObject *object);
     QObject *getPluginQObject(std::string const& id) const;
+    PluginPythonInterpHandler getPyInterpHandler() const;
 
   private:
 #ifdef ENABLE_PYTHON_PLUGINS

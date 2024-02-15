@@ -4,6 +4,7 @@ HookInfo = namedtuple('HookInfo', ['return_type', 'name', 'handler', 'docs'])
 
 HOOKS = [
     HookInfo("void", "SetupPlugin", "PluginSetupHandler", "This hook is called as soon as the application initializes, and should be used to setup plugin data structures."),
+    HookInfo("void", "MainWindowReady", "PluginMainWindowReadyHandler", "Called as soon as the mainWindow is ready."),
     HookInfo("void", "TeardownPlugin", "PluginSetupHandler", "This hook is called just before the application closes, and must be used to cleanup any resource the plugin acquired."),
     HookInfo("void", "GraphicsViewContextMenu", "PluginContextMenuHandler", "Hook to control the graphics view context menu."),
     HookInfo("void", "SetupDockWidget", "PluginSetupDockWidgetHandler", "Can be used to setup new dock widgets (See PluginDockWidgetHandler)"),

@@ -385,8 +385,11 @@ void LakosRelation::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         headBrush.setColor(color);
         item->setBrush(headBrush);
     };
-    updateQGraphicsPathItemColor(d->head, color);
-    updateQGraphicsPathItemColor(d->tail, color);
+
+    if (overrideC.isValid()) {
+        updateQGraphicsPathItemColor(d->head, color);
+        updateQGraphicsPathItemColor(d->tail, color);
+    }
 
     if (s_showOriginalLine) {
         painter->save();

@@ -1323,7 +1323,7 @@ void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)
 
     // Hide or show content based on the number of children.
     if (isExpanded() && !lakosEntities().empty()) {
-        if (ev->button() == Qt::LeftButton) {
+        if (ev->button() == Qt::LeftButton && ev->modifiers() == Qt::KeyboardModifier::NoModifier) {
             if (d->isOpaque) {
                 showContent(ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_Yes);
                 Q_EMIT graphUpdate();

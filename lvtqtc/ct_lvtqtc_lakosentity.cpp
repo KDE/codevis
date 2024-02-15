@@ -1274,28 +1274,37 @@ void LakosEntity::mousePressEvent(QGraphicsSceneMouseEvent *ev)
     if (isBlockingEvents()) {
         // If it has a parent item, then it's an item inside a container.
         if (parentItem()) {
+            qDebug() << "LakosEntity MousePressEvent ignore" << QString::fromStdString(name());
+
             ev->ignore();
             return;
         }
+        qDebug() << "LakosEntity MousePressEvent accept" << QString::fromStdString(name());
+
         ev->accept();
         return;
     }
 
-    if (ev->button() != Qt::LeftButton || ev->modifiers() != Qt::KeyboardModifier::NoModifier) {
-        ev->ignore();
+    if (ev->button() == Qt::LeftButton && ev->modifiers() == Qt::KeyboardModifier::NoModifier) {
+        startDrag(mapToScene(ev->pos()));
         return;
     }
 
-    startDrag(mapToScene(ev->pos()));
+    if (ev->button() == Qt::LeftButton
+        && (ev->modifiers() & Preferences::multiSelectModifier()
+            || Preferences::multiSelectModifier() == Qt::KeyboardModifier::NoModifier)) {
+        Q_EMIT requestMultiSelectActivation(mapToScene(ev->pos()).toPoint());
+        return;
+    }
+
+    ev->ignore();
 }
 
 void LakosEntity::mouseMoveEvent(QGraphicsSceneMouseEvent *ev)
 {
-    if (!s_isDraggingItem) {
-        return;
+    if (s_isDraggingItem) {
+        doDrag(mapToScene(ev->pos()));
     }
-
-    doDrag(mapToScene(ev->pos()));
 }
 
 void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)

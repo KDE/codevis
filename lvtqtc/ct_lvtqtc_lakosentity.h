@@ -388,6 +388,9 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     Q_SIGNAL void graphUpdate();
     // The user manually changed something and we should save the graph
 
+    Q_SIGNAL void requestMultiSelectActivation(QPoint positionInScene);
+    // The user clicked inside a node but wants to start a multi selection.
+
     Q_SIGNAL void undoGroupRequested(const QString& groupName);
     // start to merge undo actions here.
 

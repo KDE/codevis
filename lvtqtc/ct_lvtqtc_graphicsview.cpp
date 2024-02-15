@@ -259,47 +259,9 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
 {
     assert(event);
 
+    updateMultiSelect(event->pos());
+
     const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
-
-    if (d->multiSelect.isActive && mouseHasNewPosition) {
-        d->multiSelect.end = event->pos();
-        auto selection = QRect(d->multiSelect.start, d->multiSelect.end).normalized();
-        QSet<LakosEntity *> currentSelection;
-        static QSet<LakosEntity *> oldSelection;
-
-        // Fill currentSelection with all LakosEntities in selection
-        const auto itemsInSelection = items(selection, Qt::IntersectsItemBoundingRect);
-        for (QGraphicsItem *item : itemsInSelection) {
-            if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(item)) {
-                currentSelection.insert(lEntity);
-            }
-        }
-
-        // Update selection
-        for (const auto lEntity : currentSelection) {
-            if (!lEntity->isSelected()) {
-                lEntity->setSelected(true);
-            }
-        }
-
-        auto toUnselect = oldSelection;
-        toUnselect.subtract(currentSelection);
-        for (const auto lEntity : toUnselect) {
-            lEntity->setSelected(false);
-        }
-
-        if (oldSelection != currentSelection) {
-            std::deque<LakosianNode *> selectedNodes;
-            for (const auto& lEntity : currentSelection) {
-                selectedNodes.push_back(lEntity->internalNode());
-            }
-            Q_EMIT newSelectionMade(selectedNodes);
-            oldSelection = currentSelection;
-        }
-
-        viewport()->update();
-    }
-
     if (d->isMultiDragging && mouseHasNewPosition) {
         for (const auto& entity : d->scene->selectedEntities()) {
             entity->doDrag(mapToScene(event->pos()));
@@ -413,15 +375,13 @@ void GraphicsView::mousePressEvent(QMouseEvent *event)
             if (event->button() == Qt::LeftButton
                 && (event->modifiers() & Preferences::multiSelectModifier()
                     || Preferences::multiSelectModifier() == Qt::KeyboardModifier::NoModifier)) {
-                d->multiSelect.start = event->pos();
-                d->multiSelect.end = event->pos();
-                d->multiSelect.isActive = true;
+                activateMultiSelect(event->pos());
             } else {
-                d->multiSelect.isActive = false;
+                deactivateMultiSelect(event->pos());
             }
         }
 
-        if (event->button() == Qt::LeftButton) {
+        if (event->button() == Qt::LeftButton && event->modifiers() == Qt::KeyboardModifier::NoModifier) {
             if (QGraphicsItem *item = itemAt(event->pos())) {
                 if (d->scene->selectedEntities().size() > 1) {
                     if (const auto *entity = castUpToParent<LakosEntity *>(item)) {
@@ -670,6 +630,67 @@ void GraphicsView::doSearch()
     Q_EMIT searchTotal(d->search.searchResult.size());
     Q_EMIT currentSearchItemHighlighted(d->search.current);
     viewport()->update();
+}
+
+void GraphicsView::activateMultiSelect(QPoint position)
+{
+    d->multiSelect.start = position;
+    d->multiSelect.end = position;
+    d->multiSelect.isActive = true;
+}
+
+void GraphicsView::updateMultiSelect(QPoint position)
+{
+    const bool mouseHasNewPosition = d->multiSelect.end != position;
+    if (!d->multiSelect.isActive || !mouseHasNewPosition) {
+        return;
+    }
+
+    d->multiSelect.end = position;
+    auto selection = QRect(d->multiSelect.start, d->multiSelect.end).normalized();
+    QSet<LakosEntity *> currentSelection;
+    static QSet<LakosEntity *> oldSelection;
+
+    // Fill currentSelection with all LakosEntities in selection
+    const auto itemsInSelection = items(selection, Qt::IntersectsItemBoundingRect);
+    for (QGraphicsItem *item : itemsInSelection) {
+        if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(item)) {
+            // Don't select the entity if the selection is fully inside that entity
+            if (!mapFromScene(item->sceneBoundingRect()).boundingRect().contains(selection, true)) {
+                currentSelection.insert(lEntity);
+            }
+        }
+    }
+
+    // Update selection
+    for (const auto lEntity : currentSelection) {
+        if (!lEntity->isSelected()) {
+            lEntity->setSelected(true);
+        }
+    }
+
+    auto toUnselect = oldSelection;
+    toUnselect.subtract(currentSelection);
+    for (const auto lEntity : toUnselect) {
+        lEntity->setSelected(false);
+    }
+
+    if (oldSelection != currentSelection) {
+        std::deque<LakosianNode *> selectedNodes;
+        for (const auto& lEntity : currentSelection) {
+            selectedNodes.push_back(lEntity->internalNode());
+        }
+        Q_EMIT newSelectionMade(selectedNodes);
+        oldSelection = currentSelection;
+    }
+
+    viewport()->update();
+}
+
+void GraphicsView::deactivateMultiSelect(QPoint position)
+{
+    d->multiSelect.end = position;
+    d->multiSelect.isActive = false;
 }
 
 void GraphicsView::contextMenuEvent(QContextMenuEvent *event)

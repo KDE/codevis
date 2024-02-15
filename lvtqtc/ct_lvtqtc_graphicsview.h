@@ -141,6 +141,10 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
     Q_SIGNAL void currentSearchItemHighlighted(int idx);
     void doSearch();
 
+    void activateMultiSelect(QPoint position);
+    void updateMultiSelect(QPoint position);
+    void deactivateMultiSelect(QPoint position);
+
     /* Return all of the items of type T */
     template<typename T>
     QList<T *> allItemsByType() const

@@ -123,6 +123,13 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
     connect(d->ui.comboPanModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
         Preferences::setPanModifier(ModifierHelpers::stringToModifier(d->ui.comboPanModifier->currentText()));
     });
+    connect(d->ui.comboZoomModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
+        Preferences::setZoomModifier(ModifierHelpers::stringToModifier(d->ui.comboZoomModifier->currentText()));
+    });
+    connect(d->ui.comboMultiSelectModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
+        Preferences::setMultiSelectModifier(
+            ModifierHelpers::stringToModifier(d->ui.comboMultiSelectModifier->currentText()));
+    });
 
     connect(d->ui.showLevelNumbers, &QCheckBox::toggled, this, [this] {
         Preferences::setShowLevelNumbers(d->ui.showLevelNumbers->isChecked());
@@ -149,9 +156,6 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
         Preferences::setHighlightEdgeColor(d->ui.highlightEdgeColor->color());
     });
 
-    connect(d->ui.comboZoomModifier, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
-        Preferences::setZoomModifier(ModifierHelpers::stringToModifier(d->ui.comboZoomModifier->currentText()));
-    });
     connect(d->ui.chkColorBlindness, &QCheckBox::toggled, Preferences::self(), &Preferences::setColorBlindMode);
     connect(d->ui.chkColorPattern, &QCheckBox::toggled, Preferences::self(), &Preferences::setUseColorBlindFill);
 
@@ -302,6 +306,8 @@ void ConfigurationDialog::load()
         ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::panModifier())));
     d->ui.comboZoomModifier->setCurrentText(
         ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::zoomModifier())));
+    d->ui.comboMultiSelectModifier->setCurrentText(
+        ModifierHelpers::modifierToText(static_cast<Qt::KeyboardModifier>(Preferences::multiSelectModifier())));
 
     d->ui.backgroundColor->setColor(Preferences::backgroundColor());
     d->ui.entityBackgroundColor->setColor(Preferences::entityBackgroundColor());
@@ -362,6 +368,7 @@ void ConfigurationDialog::populateMouseTabOptions()
     std::initializer_list<QComboBox *> comboBoxes = {
         d->ui.comboPanModifier,
         d->ui.comboZoomModifier,
+        d->ui.comboMultiSelectModifier,
     };
     for (QComboBox *combo : comboBoxes) {
 #ifdef __APPLE__

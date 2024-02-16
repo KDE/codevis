@@ -43,6 +43,7 @@ class LVTQTW_EXPORT CodeVisStatusBar : public QStatusBar {
   protected:
     void updatePanText(int newModifier);
     void updateZoomText(int newModifier);
+    void updateMultiSelectText(int newModifier);
 
     void handleParseStart(ParseCodebaseDialog::State);
     void handleParseStep(ParseCodebaseDialog::State, int, int);
@@ -51,6 +52,7 @@ class LVTQTW_EXPORT CodeVisStatusBar : public QStatusBar {
 
     QPushButton *m_labelPan = nullptr;
     QPushButton *m_labelZoom = nullptr;
+    QPushButton *m_labelMultiSelect = nullptr;
 
     QPushButton *m_labelParseCodebaseWindowStatus = nullptr;
     ParseCodebaseDialog *m_parseCodebaseDialog = nullptr;

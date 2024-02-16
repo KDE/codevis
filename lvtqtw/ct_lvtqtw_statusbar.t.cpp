@@ -56,6 +56,11 @@ class CodeVisStatusBarForTesting : public CodeVisStatusBar {
         return m_labelZoom->text();
     }
 
+    [[nodiscard]] QString currentMultiSelectText() const
+    {
+        return m_labelMultiSelect->text();
+    }
+
     void clickParseCodebaseStatus()
     {
         m_labelParseCodebaseWindowStatus->click();
@@ -78,6 +83,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic status bar workflow")
 #ifdef __APPLE__
     REQUIRE(statusBar.currentPanText() == "Pan Graph: OPTION + Click");
     REQUIRE(statusBar.currentZoomText() == "Zoom: COMMAND + Wheel");
+    // REQUIRE(statusBar.currentMultiSelectText() == "Zoom: COMMAND + Wheel"); // DO NOT MERGE STILL TO WRITE THIS TEST
+    // CASE
 #else
     REQUIRE(statusBar.currentPanText() == "Pan Graph: ALT + Click");
     REQUIRE(statusBar.currentZoomText() == "Zoom: CONTROL + Wheel");

@@ -228,10 +228,6 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
             if (!parent->isExpanded()) {
                 parent->toggleExpansion(QtcUtil::CreateUndoAction::e_No);
             }
-
-            if (parent->isCovered()) {
-                parent->toggleCover(PackageEntity::ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_No);
-            }
         }
     });
 
@@ -1029,16 +1025,6 @@ void GraphicsScene::connectEntitySignals(LakosEntity *entity)
         flags.traverseProvidersOnlyLocal = onlyLocal;
 
         finalizeEntityPartialLoad(entity);
-    });
-
-    connect(entity, &LakosEntity::coverChanged, this, [this, entity]() {
-        if (entity->isCovered()) {
-            return;
-        }
-
-        d->transitiveReductionAlg->reset();
-        searchTransitiveRelations();
-        transitiveRelationSearchFinished();
     });
 
     // Perhaps this should be a toggle?

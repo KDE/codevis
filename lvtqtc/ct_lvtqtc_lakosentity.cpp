@@ -26,7 +26,6 @@
 #include <ct_lvtqtc_lakosrelation.h>
 
 #include <ct_lvtqtc_alg_level_layout.h>
-#include <ct_lvtqtc_undo_cover.h>
 #include <ct_lvtqtc_undo_expand.h>
 #include <ct_lvtqtc_undo_move.h>
 #include <ct_lvtqtc_undo_notes.h>
@@ -74,7 +73,6 @@ static QPointF s_lastClick; // NOLINT
 // used to track the last click on the screen.
 
 constexpr int TITLE_LAYER = 1;
-constexpr int COVER_LAYER = 100;
 constexpr int ONE_CHILD_BORDER = 20;
 constexpr int DEFAULT_BORDER = 10;
 constexpr int SHRINK_BORDER = 20;
@@ -143,9 +141,6 @@ struct LakosEntity::Private {
     EllipsisTextItem *text = nullptr;
     // Pointer owned by Qt (it should be a child object of this Container)
 
-    GraphicsRectItem *cover = nullptr;
-    // Cover item for this item, hiding content.
-
     QGraphicsPixmapItem *notesIcon = nullptr;
     // notes, with a hover activation.
 
@@ -166,10 +161,7 @@ struct LakosEntity::Private {
     // handles animated expanding / shrink.
 
     bool isExpanded = true;
-    // Is this item exanded or collapsed?
-
-    bool isOpaque = false;
-    // We have an item covering all our internal items.
+    // Is this item expanded or collapsed?
 
     bool initialConstruction = true;
     // Are we just constructing this item or it's already constructed?
@@ -237,22 +229,10 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     ignoreItemOnLayout(d->text);
     ignoreItemOnLayout(d->notesIcon);
 
-    d->cover = new GraphicsRectItem(this);
-    d->cover->setBrush(QBrush(QColor(255, 255, 255, 195)));
-    d->cover->setPen(QPen(Qt::NoPen));
-    d->cover->setZValue(COVER_LAYER);
-    d->cover->setVisible(false);
-    d->cover->setRoundRadius(roundRadius());
-    ignoreItemOnLayout(d->cover);
-
     d->levelNr = new QGraphicsSimpleTextItem(this);
     ignoreItemOnLayout(d->levelNr);
 
     connect(this, &GraphicsRectItem::rectangleChanged, this, [this] {
-        if (d->isOpaque) {
-            hideContent(ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_No);
-        }
-
         updateBackground();
         layoutAllRelations();
     });
@@ -384,10 +364,6 @@ void LakosEntity::layoutIgnoredItems()
         return boundingRect().center().y() - d->text->boundingRect().height() / 2;
     }();
 
-    if (d->isOpaque) {
-        d->cover->setVisible(true);
-    }
-
     d->notesIcon->setPos(boundingRect().left(), boundingRect().top());
     d->text->setPos(x, y);
     d->text->setVisible(true);
@@ -458,7 +434,7 @@ void LakosEntity::expand(QtcUtil::CreateUndoAction createUndoAction,
     connect(d->expandAnimation, &QPropertyAnimation::finished, this, [this, behavior] {
         const QList<QGraphicsItem *> childList = childItems();
         for (auto *child : childList) {
-            if (child != d->cover && child != d->notesIcon) {
+            if (child != d->notesIcon) {
                 child->setVisible(true);
             }
         }
@@ -470,9 +446,6 @@ void LakosEntity::expand(QtcUtil::CreateUndoAction createUndoAction,
         }
 
         layoutEdges(this);
-        if (d->isOpaque) {
-            hideContent(ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_No);
-        }
 
         recalculateRectangle();
         Q_EMIT formFactorChanged();
@@ -552,7 +525,6 @@ void LakosEntity::shrink(QtcUtil::CreateUndoAction createUndoAction,
     disconnect(d->expandAnimation, nullptr, this, nullptr);
 
     connect(d->expandAnimation, &QPropertyAnimation::finished, this, [this, behavior] {
-        d->cover->setVisible(false);
         layoutIgnoredItems();
         calculateEdgeVisibility();
         layoutEdges(this);
@@ -929,41 +901,6 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(action);
     }
 
-    if (d->isExpanded) {
-        if (d->isOpaque) {
-            auto *action = new QAction(tr("Show Content"));
-            action->setToolTip(
-                tr("Uncovers this entity, showing all entities "
-                   "within it, but does not uncovers the children "
-                   "entities if they are covered."));
-
-            connect(action, &QAction::triggered, this, [this] {
-                showContent(ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_Yes);
-                Q_EMIT graphUpdate();
-            });
-            retValues.append(action);
-
-            action = new QAction(tr("Show Content Recursively"));
-            action->setToolTip(tr("Uncovers this entity, and all boxes within it, recursively"));
-            connect(action, &QAction::triggered, this, [this] {
-                showContent(ToggleContentBehavior::Recursive, QtcUtil::CreateUndoAction::e_Yes);
-                Q_EMIT graphUpdate();
-            });
-
-            retValues.append(action);
-        } else {
-            // We can't have a non recursive version for the hide, because
-            // edges crossing from other containers will appear quite broken.
-            auto *action = new QAction(tr("Hide Content"));
-            action->setToolTip(tr("Covers this entity, and all boxes within it, recursively"));
-            connect(action, &QAction::triggered, this, [this] {
-                hideContent(ToggleContentBehavior::Recursive, QtcUtil::CreateUndoAction::e_Yes);
-                Q_EMIT graphUpdate();
-            });
-            retValues.append(action);
-        }
-    }
-
     return retValues;
 }
 
@@ -1010,15 +947,6 @@ void LakosEntity::showNotesDialog()
 
 void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosition)
 {
-    // We need to test the parent to see if we can access this element.
-    // if the parent is covered, the contextMenu is just for the parent.
-    auto *containerParent = dynamic_cast<LakosEntity *>(parentItem());
-    if (containerParent) {
-        if (containerParent->isCovered()) {
-            return;
-        }
-    }
-
     if (d->pluginManager) {
         auto& pm = d->pluginManager->get();
         auto getEntity = [this]() {
@@ -1144,15 +1072,6 @@ void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosit
     }
 }
 
-bool LakosEntity::isBlockingEvents() const
-{
-    auto *containerParent = dynamic_cast<LakosEntity *>(parentItem());
-    if (containerParent) {
-        return containerParent->isCovered();
-    }
-    return false;
-}
-
 /* Variables that control the Moving / Dragging of the LakosEntities. */
 namespace {
 // Shared variables. Only one element can be moved at a time.
@@ -1271,16 +1190,6 @@ void LakosEntity::mousePressEvent(QGraphicsSceneMouseEvent *ev)
 
     qDebug() << "LakosEntity MousePressEvent" << QString::fromStdString(name());
 
-    if (isBlockingEvents()) {
-        // If it has a parent item, then it's an item inside a container.
-        if (parentItem()) {
-            ev->ignore();
-            return;
-        }
-        ev->accept();
-        return;
-    }
-
     if (ev->button() != Qt::LeftButton || ev->modifiers() != Qt::KeyboardModifier::NoModifier) {
         ev->ignore();
         return;
@@ -1311,21 +1220,6 @@ void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)
     }
 
     ev->accept();
-
-    // Hide or show content based on the number of children.
-    if (isExpanded() && !lakosEntities().empty()) {
-        if (ev->button() == Qt::LeftButton) {
-            if (d->isOpaque) {
-                showContent(ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_Yes);
-                Q_EMIT graphUpdate();
-            } else {
-                hideContent(ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_Yes);
-                Q_EMIT graphUpdate();
-            }
-            Q_EMIT coverChanged();
-            return;
-        }
-    }
 }
 
 void LakosEntity::recursiveEdgeRelayout()
@@ -1334,11 +1228,9 @@ void LakosEntity::recursiveEdgeRelayout()
         return;
     }
 
-    if (!d->isOpaque) {
-        for (auto *child : d->lakosChildren) {
-            if (child->isVisible()) {
-                child->recursiveEdgeRelayout();
-            }
+    for (auto *child : d->lakosChildren) {
+        if (child->isVisible()) {
+            child->recursiveEdgeRelayout();
         }
     }
 
@@ -1392,10 +1284,6 @@ void LakosEntity::recursiveEdgeHighlight(bool highlight)
 
 void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
 {
-    if (isBlockingEvents()) {
-        return;
-    }
-
     Q_UNUSED(ev);
 
     auto *pItem = dynamic_cast<LakosEntity *>(parentItem());
@@ -1431,10 +1319,6 @@ void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
 
 void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
 {
-    if (isBlockingEvents()) {
-        return;
-    }
-
     Q_UNUSED(ev);
     QGuiApplication::restoreOverrideCursor();
 
@@ -1553,14 +1437,6 @@ void LakosEntity::enableLayoutUpdates()
 
     updateBackground();
     layoutAllRelations();
-
-    // After testing a bit, the best scenario on enableLayoutUpdates
-    // is to hide everything recursively, but show only the toplevel.
-    if (d->isOpaque) {
-        hideContent(ToggleContentBehavior::Recursive, QtcUtil::CreateUndoAction::e_No);
-    } else {
-        showContent(ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_No);
-    }
 }
 
 void LakosEntity::setTextPos(qreal x, qreal y)
@@ -1597,18 +1473,6 @@ void LakosEntity::removeEdge(LakosRelation *relation)
     removeEdgeFrom(d->edges);
     removeEdgeFrom(d->targetEdges);
     removeEdgeFrom(d->redundantRelations);
-}
-
-bool LakosEntity::isCoveredByParent() const
-{
-    auto *parent = dynamic_cast<LakosEntity *>(parentItem());
-    while (parent) {
-        if (parent->isCovered()) {
-            return true;
-        }
-        parent = dynamic_cast<LakosEntity *>(parent->parentItem());
-    }
-    return false;
 }
 
 bool LakosEntity::isParentCollapsed() const
@@ -1697,7 +1561,7 @@ void LakosEntity::calculateEdgeVisibility(const std::shared_ptr<EdgeCollection>&
         return;
     }
 
-    // rule 1: Entities inside a collapsed or covered panel are always hidden
+    // rule 1: Entities inside a collapsed panel are always hidden
     auto *from = ec->from();
     auto *to = ec->to();
     if (from->isParentCollapsed() || to->isParentCollapsed()) {
@@ -1715,11 +1579,6 @@ void LakosEntity::calculateEdgeVisibility(const std::shared_ptr<EdgeCollection>&
     auto *pTo = qgraphicsitem_cast<LakosEntity *>(to->parentItem());
     if (pFrom && pTo && pFrom == pTo) {
         ec->setVisible(true);
-        return;
-    }
-
-    if (from->isCoveredByParent() || to->isCoveredByParent()) {
-        ec->setVisible(false);
         return;
     }
 
@@ -1741,15 +1600,13 @@ void LakosEntity::calculateEdgeVisibility(const std::shared_ptr<EdgeCollection>&
     }
 
     // Rule 5 - If there's a connection between 2 entities, and also between the children, we must only show the parent
-    // edge if it is covering the children.
-    const bool fVisibility = ec->from()->isCovered() || !ec->from()->isExpanded();
-    const bool tVisibility = ec->to()->isCovered() || !ec->to()->isExpanded();
-    ec->setVisible(fVisibility || tVisibility);
+    // edge if they are both expanded.
+    ec->setVisible(!ec->from()->isExpanded() || !ec->to()->isExpanded());
 }
 
 void LakosEntity::calculateEdgeVisibility()
 {
-    // When we cover / uncover, collapse, etc. this might
+    // When we expand / collapse this might
     // affect edges on children, so this needs to be recursive.
     for (const auto& child : d->lakosChildren) {
         child->calculateEdgeVisibility();
@@ -1762,72 +1619,6 @@ void LakosEntity::calculateEdgeVisibility()
     for (const auto& ec : d->targetEdges) {
         calculateEdgeVisibility(ec);
     }
-}
-
-void LakosEntity::toggleCover(ToggleContentBehavior behavior, QtcUtil::CreateUndoAction create)
-{
-    if (d->isOpaque) {
-        showContent(behavior, create);
-    } else {
-        hideContent(behavior, create);
-    }
-}
-
-void LakosEntity::hideContent(ToggleContentBehavior behavior, QtcUtil::CreateUndoAction create)
-{
-    if (create == QtcUtil::CreateUndoAction::e_Yes) {
-        Q_EMIT undoCommandCreated(new UndoCover(qobject_cast<GraphicsScene *>(scene()), d->id));
-        return;
-    }
-
-    if (lakosEntities().empty()) {
-        return;
-    }
-
-    d->isOpaque = true;
-
-    if (!layoutUpdatesEnabled()) {
-        return;
-    }
-
-    d->cover->setRectangle(rect());
-    d->cover->setRoundRadius(roundRadius());
-
-    d->cover->setVisible(true);
-
-    calculateEdgeVisibility();
-
-    for (LakosEntity *child : d->lakosChildren) {
-        if (behavior == ToggleContentBehavior::Recursive) {
-            child->hideContent(behavior, QtcUtil::CreateUndoAction::e_No);
-        }
-    }
-    recursiveEdgeRelayout();
-}
-
-void LakosEntity::showContent(ToggleContentBehavior behavior, QtcUtil::CreateUndoAction create)
-{
-    if (create == QtcUtil::CreateUndoAction::e_Yes) {
-        Q_EMIT undoCommandCreated(new UndoCover(qobject_cast<GraphicsScene *>(scene()), d->id));
-        return;
-    }
-
-    d->isOpaque = false;
-
-    if (!layoutUpdatesEnabled()) {
-        return;
-    }
-
-    d->cover->setVisible(false);
-
-    calculateEdgeVisibility();
-
-    for (LakosEntity *child : d->lakosChildren) {
-        if (behavior == ToggleContentBehavior::Recursive) {
-            child->showContent(behavior, QtcUtil::CreateUndoAction::e_No);
-        }
-    }
-    recursiveEdgeRelayout();
 }
 
 void LakosEntity::reactChildRemoved(QGraphicsItem *child)
@@ -1960,8 +1751,7 @@ std::string LakosEntity::legendText() const
     information += "Color ID: " + colorIdText() + "\n";
 
     if (QtcUtil::isDebugMode() && Preferences::enableSceneContextMenu()) {
-        information += "Cover Status " + std::to_string(d->isOpaque) + "\n";
-        information += "Item Visibility: " + std::to_string(d->cover->isVisible()) + "\n";
+        information += "Expanded Status: " + std::to_string(d->isExpanded) + "\n";
         information += "Pos: " + std::to_string(pos().x()) + ',' + std::to_string(pos().y()) + "\n";
         information +=
             "Top Left: " + std::to_string(bRect.topLeft().x()) + ',' + std::to_string(bRect.topLeft().y()) + "\n";
@@ -2144,11 +1934,6 @@ const lvtshr::LoaderInfo& LakosEntity::loaderInfo() const
     return d->loaderInfo;
 }
 
-bool LakosEntity::isCovered() const
-{
-    return d->isOpaque;
-}
-
 bool LakosEntity::isExpanded() const
 {
     return d->isExpanded;
@@ -2245,14 +2030,11 @@ QJsonObject LakosEntity::toJson() const
         {"height", rect.height()},
     };
 
-    QJsonObject thisEntity = {
-        {"pos", posObj},
-        {"rect", jsonRect},
-        {"qualifiedName", QString::fromStdString(qualifiedName())},
-        {"children", childrenJson},
-        {"expanded", isExpanded()},
-        {"covered", isCovered()},
-    };
+    QJsonObject thisEntity = {{"pos", posObj},
+                              {"rect", jsonRect},
+                              {"qualifiedName", QString::fromStdString(qualifiedName())},
+                              {"children", childrenJson},
+                              {"expanded", isExpanded()}};
 
     return thisEntity;
 }
@@ -2265,15 +2047,11 @@ void LakosEntity::fromJson(const QJsonObject& obj)
                         rectObj["width"].toDouble(),
                         rectObj["height"].toDouble()));
 
-    // After loading all elements, we need to cover / shrink if needed.
+    // After loading all elements, we need to shrink if needed.
     if (obj["expanded"].toBool()) {
         expand(QtcUtil::CreateUndoAction::e_No);
     } else {
         shrink(QtcUtil::CreateUndoAction::e_No);
-    }
-
-    if (obj["covered"].toBool()) {
-        hideContent(LakosEntity::ToggleContentBehavior::Single, QtcUtil::CreateUndoAction::e_No);
     }
 }
 

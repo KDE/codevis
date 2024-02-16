@@ -76,6 +76,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic status bar workflow")
 {
     Preferences::setPanModifier(Qt::ALT);
     Preferences::setZoomModifier(Qt::CTRL);
+    Preferences::setMultiSelectModifier(Qt::SHIFT);
 
     auto statusBar = CodeVisStatusBarForTesting{};
     statusBar.show();
@@ -83,22 +84,25 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic status bar workflow")
 #ifdef __APPLE__
     REQUIRE(statusBar.currentPanText() == "Pan Graph: OPTION + Click");
     REQUIRE(statusBar.currentZoomText() == "Zoom: COMMAND + Wheel");
-    // REQUIRE(statusBar.currentMultiSelectText() == "Zoom: COMMAND + Wheel"); // DO NOT MERGE STILL TO WRITE THIS TEST
-    // CASE
+    REQUIRE(statusBar.currentMultiSelectText() == "Multiple Select: SHIFT + Click and Drag");
 #else
     REQUIRE(statusBar.currentPanText() == "Pan Graph: ALT + Click");
     REQUIRE(statusBar.currentZoomText() == "Zoom: CONTROL + Wheel");
+    REQUIRE(statusBar.currentMultiSelectText() == "Multiple Select: SHIFT + Click and Drag");
 #endif
 
     Preferences::setPanModifier(Qt::SHIFT);
     Preferences::setZoomModifier(Qt::ALT);
+    Preferences::setMultiSelectModifier(Qt::CTRL);
 
 #ifdef __APPLE__
     REQUIRE(statusBar.currentPanText() == "Pan Graph: Click + SHIFT");
     REQUIRE(statusBar.currentZoomText() == "Zoom: Wheel + OPTION");
+    REQUIRE(statusBar.currentMultiSelectText() == "Multiple Select: COMMAND + Click and Drag");
 #else
     REQUIRE(statusBar.currentPanText() == "Pan Graph: SHIFT + Click");
     REQUIRE(statusBar.currentZoomText() == "Zoom: ALT + Wheel");
+    REQUIRE(statusBar.currentMultiSelectText() == "Multiple Select: CONTROL + Click and Drag");
 #endif
 }
 

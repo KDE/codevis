@@ -150,6 +150,14 @@ TEST_CASE_METHOD(QTApplicationFixture, "Smoke Test ConfigurationDialog class")
         REQUIRE_NOTHROW(comboZoomModifier->setCurrentIndex(0));
         REQUIRE_NOTHROW(comboZoomModifier->setCurrentIndex(comboZoomModifier->count() - 1));
     }
+
+    SECTION("Test comboMultiSelectModifier")
+    {
+        ConfigurationDialog configDialog(&manager, nullptr);
+        auto *comboMultiSelectModifier = configDialog.findChild<QComboBox *>("comboMultiSelectModifier");
+        REQUIRE_NOTHROW(comboMultiSelectModifier->setCurrentIndex(0));
+        REQUIRE_NOTHROW(comboMultiSelectModifier->setCurrentIndex(comboMultiSelectModifier->count() - 1));
+    }
 }
 
 TEST_CASE_METHOD(QTApplicationFixture, "Test ConfigurationDialog class Functionality")

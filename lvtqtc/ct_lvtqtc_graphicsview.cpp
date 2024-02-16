@@ -632,14 +632,14 @@ void GraphicsView::doSearch()
     viewport()->update();
 }
 
-void GraphicsView::activateMultiSelect(QPoint position)
+void GraphicsView::activateMultiSelect(const QPoint& position)
 {
     d->multiSelect.start = position;
     d->multiSelect.end = position;
     d->multiSelect.isActive = true;
 }
 
-void GraphicsView::updateMultiSelect(QPoint position)
+void GraphicsView::updateMultiSelect(const QPoint& position)
 {
     const bool mouseHasNewPosition = d->multiSelect.end != position;
     if (!d->multiSelect.isActive || !mouseHasNewPosition) {
@@ -687,7 +687,7 @@ void GraphicsView::updateMultiSelect(QPoint position)
     viewport()->update();
 }
 
-void GraphicsView::deactivateMultiSelect(QPoint position)
+void GraphicsView::deactivateMultiSelect(const QPoint& position)
 {
     d->multiSelect.end = position;
     d->multiSelect.isActive = false;

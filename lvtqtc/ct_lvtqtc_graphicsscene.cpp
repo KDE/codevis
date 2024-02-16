@@ -979,7 +979,6 @@ void GraphicsScene::connectEntitySignals(LakosEntity *entity)
 
     connect(entity, &LakosEntity::requestMultiSelectActivation, this, [this](const QPoint& positionInScene) {
         auto *view = qobject_cast<GraphicsView *>(views().constFirst());
-        assert(view);
         view->activateMultiSelect(view->mapFromScene(positionInScene));
     });
 

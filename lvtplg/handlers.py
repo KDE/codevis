@@ -27,6 +27,42 @@ HANDLERS = [
         Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
                  'Returns the plugin data previously registered with `registerPluginData`.',
                  'pyGetPluginData<T>'),
+        Function('void', 'addMenu', [
+                Param('std::string const&', 'title'),
+                Param('std::vector<std::tuple<std::string, std::function<void(PluginMenuBarActionHandler)>>> const&', 'menuDescription')
+            ],
+            'Add a new menu in the interface.',
+            AS_LAMBDA
+        ),
+    ]),
+
+    HandlerInfo("PluginMenuBarActionHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+        Function('void', 'createWizard', [
+                Param('std::string const&', 'title'),
+                Param('std::vector<std::tuple<std::string, std::string, PluginFieldType>> const&', 'fields'),
+                Param('std::function<void(PluginWizardActionHandler)> const&', 'action'),
+            ],
+            'Helper function to create a simple wizard-like window to run something.',
+            AS_LAMBDA),
+        ],
+    ),
+
+    HandlerInfo("PluginWizardActionHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+        Function('std::string', 'getFieldContents', [Param('std::string const&', 'field_id')],
+                 'Returns the user input data of the field inside the Wizard.',
+                 AS_LAMBDA),
+        Function('void', 'setFieldContents', [
+            Param('std::string const&', 'field_id'),
+            Param('std::string const&', 'contents')
+        ],
+        'Set a field in the wizard with the specified contents. Does nothing if the field id doesnt exist.',
+        AS_LAMBDA),
     ]),
 
     HandlerInfo("PluginPythonInterpHandler", [

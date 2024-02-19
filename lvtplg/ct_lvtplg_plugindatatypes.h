@@ -36,6 +36,8 @@ enum class EdgeStyle { SolidLine, DashLine, DotLine, DashDotLine, DashDotDotLine
 
 enum class EntityType { Unknown, PackageGroup, Package, Component };
 
+enum class PluginFieldType { TextInput, TextArea };
+
 using RawDBData = std::optional<std::any>;
 using RawDBCols = std::vector<RawDBData>;
 using RawDBRows = std::vector<RawDBCols>;

@@ -97,6 +97,11 @@ class MainWindow : public KXmlGuiWindow {
     [[nodiscard]] bool openProjectFromPath(const QString& path);
     void openProjectSettings();
 
+    void addMenuFromPlugin(
+        std::string const& title,
+        std::vector<std::tuple<std::string, std::function<void(PluginMenuBarActionHandler)>>> const& menuDescription);
+    // Simple API for creating menus for plugins
+
     void newTab();
     // Creates a new tab on the focused tabwidget.
 
@@ -123,6 +128,10 @@ class MainWindow : public KXmlGuiWindow {
     virtual QString requestProjectName();
 
   private:
+    void createWizardForPluginMenu(std::string const& title,
+                                   std::vector<std::tuple<std::string, std::string, PluginFieldType>> const& fields,
+                                   std::function<void(PluginWizardActionHandler)> const& action);
+
     void saveTabsOnProject();
     void loadTabsFromProject();
 

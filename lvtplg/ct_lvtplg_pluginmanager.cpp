@@ -216,11 +216,11 @@ void PluginManager::callHooksSetupPlugin()
                                     libraries);
 }
 
-void PluginManager::callHooksMainWindowReady()
+void PluginManager::callHooksMainWindowReady(decltype(PluginMainWindowReadyHandler::addMenu) const& addMenu)
 {
     callAllHooks<hookMainWindowReady_f>(
         "hookMainWindowReady",
-        PluginMainWindowReadyHandler{std::bind_front(&PluginManager::getPluginData, this)},
+        PluginMainWindowReadyHandler{std::bind_front(&PluginManager::getPluginData, this), addMenu},
         libraries);
 }
 

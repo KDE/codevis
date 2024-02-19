@@ -61,7 +61,9 @@ class LVTPLG_EXPORT PluginManager {
     void removePlugin(const QString& pluginFolder);
 
     void callHooksSetupPlugin();
-    void callHooksMainWindowReady();
+
+    void callHooksMainWindowReady(decltype(PluginMainWindowReadyHandler::addMenu) const& addMenu);
+
     void callHooksTeardownPlugin();
 
     using getAllEntitiesInCurrentView_f = decltype(PluginContextMenuHandler::getAllEntitiesInCurrentView);

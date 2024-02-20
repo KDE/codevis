@@ -44,11 +44,11 @@ constexpr int DEBUG_PATH_LAYER = 100;
 
 // static, we share those for every instance of the edges.
 // 5 bytes less per instance, and sometimes we have *lots* of instances.
-bool s_showBoundingRect = false; // NOLINT
-bool s_showShape = false; // NOLINT
-bool s_showTextualInformation = false; // NOLINT
-bool s_showIntersectionPaths = false; // NOLINT
-bool s_showOriginalLine = false; // NOLINT
+bool s_showBoundingRect = false;
+bool s_showShape = false;
+bool s_showTextualInformation = false;
+bool s_showIntersectionPaths = false;
+bool s_showOriginalLine = false;
 
 QPointF closestPointTo(const QPointF& target, const QPainterPath& sourcePath)
 // Returns the closest element (position) in \a sourcePath to \a target,

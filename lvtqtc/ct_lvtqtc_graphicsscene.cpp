@@ -1397,9 +1397,21 @@ void GraphicsScene::searchTransitiveRelations()
     transitiveRelationSearchFinished();
 }
 
+void GraphicsScene::handleZoomFactorChanged(int zoomFactor)
+{
+    if (zoomFactor >= PREFERRED_ZOOM_FACTOR) {
+        zoomFactor = PREFERRED_ZOOM_FACTOR;
+    }
+    if (m_zoomFactorInPercent != zoomFactor) { // no need to update if already preferred
+        m_zoomFactorInPercent = zoomFactor;
+        updateBoundingRect();
+    }
+}
 void GraphicsScene::updateBoundingRect()
 {
-    setSceneRect(itemsBoundingRect().adjusted(-20, -20, 20, 20));
+    qreal widthAdjust = ((itemsBoundingRect().width() * (m_zoomFactorInPercent / 100.0))) / 2;
+    qreal heightAdjust = ((itemsBoundingRect().height() * (m_zoomFactorInPercent / 100.0))) / 2;
+    setSceneRect(itemsBoundingRect().adjusted(-widthAdjust, -heightAdjust, widthAdjust, heightAdjust));
 }
 
 void GraphicsScene::transitiveRelationSearchFinished()

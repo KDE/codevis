@@ -42,6 +42,8 @@
 #include <memory>
 #include <tuple>
 
+constexpr qreal PREFERRED_ZOOM_FACTOR = 100; // percent
+
 class QKeyEvent;
 
 namespace Codethink::lvtclr {
@@ -237,6 +239,9 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     void setPluginManager(Codethink::lvtplg::PluginManager& pm);
 
+  public slots:
+    void handleZoomFactorChanged(int zoomFactor);
+
   private:
     void unloadEntity(LakosEntity *entity);
 
@@ -264,6 +269,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     // DATA TYPES
     std::unique_ptr<Private> d;
+    qreal m_zoomFactorInPercent = PREFERRED_ZOOM_FACTOR;
 };
 
 } // end namespace Codethink::lvtqtc

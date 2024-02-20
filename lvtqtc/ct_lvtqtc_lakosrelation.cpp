@@ -385,8 +385,11 @@ void LakosRelation::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         headBrush.setColor(color);
         item->setBrush(headBrush);
     };
-    updateQGraphicsPathItemColor(d->head, color);
-    updateQGraphicsPathItemColor(d->tail, color);
+
+    if (overrideC.isValid()) {
+        updateQGraphicsPathItemColor(d->head, color);
+        updateQGraphicsPathItemColor(d->tail, color);
+    }
 
     if (s_showOriginalLine) {
         painter->save();
@@ -474,7 +477,7 @@ QGraphicsPathItem *LakosRelation::diamondArrow()
 QGraphicsPathItem *LakosRelation::defaultTail()
 {
     QPainterPath circlePath;
-    circlePath.addEllipse(0, -5, 10, 10);
+    circlePath.addEllipse(-10, -5, 10, 10);
 
     auto *tail = new QGraphicsPathItem();
     tail->setPath(circlePath);

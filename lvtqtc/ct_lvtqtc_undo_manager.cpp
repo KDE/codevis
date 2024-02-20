@@ -96,4 +96,5 @@ void UndoManager::createDock(QMainWindow *mainWindow)
     auto *stackView = new QUndoView(&d->undoStack);
     d->dock->setWidget(stackView);
     d->debugWidget = stackView;
+    d->dock->setVisible(false);
 }

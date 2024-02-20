@@ -62,11 +62,11 @@
     <group name="GraphTab">
         <entry name="showMinimap" type="Bool">
             <label>Use dependency types on the document</label>
-            <default>true</default>
+            <default>false</default>
         </entry>
         <entry name="showLegend" type="Bool">
             <label>Use dependency types on the document</label>
-            <default>true</default>
+            <default>false</default>
         </entry>
         <entry name="classLimit" type="Int">
             <label>Limit of autoloading classes</label>
@@ -135,29 +135,45 @@
             <label>Layout Bottom to Top instead of Top to Bottom</label>
             <default>false</default>
         </entry>
+        <entry name="spaceBetweenLevels" type="Double">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>40.0</default>
+        </entry>
+        <entry name="spaceBetweenSublevels" type="Double">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>10.0</default>
+        </entry>
+        <entry name="spaceBetweenEntities" type="Double">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>10.0</default>
+        </entry>
+        <entry name="maxEntitiesPerLevel" type="Int">
+            <label>Layout Bottom to Top instead of Top to Bottom</label>
+            <default>8</default>
+        </entry>
         <entry name="showLevelNumbers" type="Bool">
             <label>Show the Levelization Numbers on the Entities on Screen</label>
             <default>true</default>
         </entry>
         <entry name="backgroundColor" type="Color">
             <label>Background color of the Graph Visualizer</label>
-            <default>white</default>
+            <default>#FBF9F1</default>
         </entry>
         <entry name="entityBackgroundColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>green</default>
+            <label>Entity background color</label>
+            <default>#AAD7D9</default>
         </entry>
         <entry name="selectedEntityBackgroundColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>cyan</default>
+            <label>Selected entity background color</label>
+            <default>#92C7CF</default>
         </entry>
         <entry name="edgeColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>black</default>
+            <label>Edge color</label>
+            <default>#000000</default>
         </entry>
         <entry name="highlightEdgeColor" type="Color">
-            <label>Background color of the Graph Visualizer</label>
-            <default>red</default>
+            <label>Edge highlight color</label>
+            <default>#FF0000</default>
         </entry>
 
     </group>

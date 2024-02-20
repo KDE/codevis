@@ -67,11 +67,6 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
 
     enum class RelayoutBehavior : short { e_DoNotRelayout, e_RequestRelayout };
 
-    enum class ToggleContentBehavior : short {
-        Single, // only shows or hides this container.
-        Recursive // recurse into children calling showContent on them.
-    };
-
     enum class LevelizationLayoutType { Horizontal, Vertical };
 
     enum { Type = QtcUtil::LAKOSENTITY_TYPE };
@@ -123,8 +118,6 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // returns the tooltip for the node, excluding the qualifiedName variant
     // that is used when the tooltip string is empty. if you call
     // the Qt tooltip() method, this could return the qualified name.
-
-    [[nodiscard]] std::string coverTextString() const;
 
     void setTooltipString(const std::string& tt);
     // set's the tooltip string to tt. if not set, the qualifiedName is used.
@@ -240,10 +233,6 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
                          std::optional<QPointF> moveToPosition = std::nullopt,
                          RelayoutBehavior relayoutBehavior = RelayoutBehavior::e_DoNotRelayout);
 
-    [[nodiscard]] bool isBlockingEvents() const;
-    // returns true if we are ignoring events on this node.
-    // We ignore events if the node is covered / hiding content.
-
     void recalculateRectangle();
     // recalculate the rectangle based on the child items,
     // but excluding the items specifically set to ignore.
@@ -253,27 +242,11 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // returns true if we are expanded, false if we are collapsed.
     // TODO: create a enum `VisibilityMode` to remove boolean traps.
 
-    void toggleCover(ToggleContentBehavior behavior, QtcUtil::CreateUndoAction create);
-    // calls hideContent or showContent based on the current status.
-
-    void hideContent(ToggleContentBehavior behavior, QtcUtil::CreateUndoAction create);
-    // show all edges that leaves this LakosEntity, and add a semitranslucent cover.
-
-    void showContent(ToggleContentBehavior behavior, QtcUtil::CreateUndoAction create);
-    // hides the semitranslucent cover and hides all the edges.
-
-    [[nodiscard]] bool isCovered() const;
-    // Child items are hidden behind a semi-translucent cover, events are
-    // not propagated - besides move, click and menu.
-
     void calculateEdgeVisibility(const std::shared_ptr<EdgeCollection>& ec);
     void calculateEdgeVisibility();
     // calculates the visibility of all edges that leaves this node
     // and all edges that arrive on this node, and set the appropriate
     // value for it, recursively.
-
-    [[nodiscard]] bool isCoveredByParent() const;
-    // returns true if any parent of this LakosEntity is covered.
 
     [[nodiscard]] bool isParentCollapsed() const;
     // returns true if any parent of this LakosEntity is collapsed.
@@ -372,9 +345,6 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
 
     Q_SIGNAL void formFactorChanged();
     // Expanded / shrunk / rect changed.
-
-    Q_SIGNAL void coverChanged();
-    // covered / uncovered the contents.
 
     Q_SIGNAL void dragStarted();
     // A drag operation started. child classes must implement to handle complex behavior.

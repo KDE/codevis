@@ -53,10 +53,6 @@ class NodeStorage;
 class LakosianNode;
 } // namespace Codethink::lvtldr
 
-namespace Codethink::lvtmdl {
-class CircularRelationshipsModel;
-}
-
 namespace Codethink::lvtqtc {
 class LakosEntity;
 class LakosRelation;
@@ -91,9 +87,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     ~GraphicsScene() noexcept override;
     // Destructor
-
-    [[nodiscard]] Codethink::lvtmdl::CircularRelationshipsModel *circularRelationshipsModel() const;
-    // returns the CircleRelationshipModel for this scene.
 
     void updateBoundingRect();
     // recalculates and updates the bounding rectangle based
@@ -268,9 +261,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // shows / hides the transitive edges.
 
     void addEdgeBetween(LakosEntity *fromEntity, LakosEntity *toEntity, lvtshr::LakosRelationType type);
-
-    Q_SLOT void highlightCyclesOnCicleModelChanged(const QModelIndex& _, const QModelIndex& index);
-    Q_SLOT void resetHighlightedCycles() const;
 
     // DATA TYPES
     std::unique_ptr<Private> d;

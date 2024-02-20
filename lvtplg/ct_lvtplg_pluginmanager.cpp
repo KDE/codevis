@@ -177,7 +177,8 @@ void PluginManager::removePlugin(const QString& pluginFolder)
         if (loadedLibrary.startsWith(pluginFolder)) {
             auto handler = PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
                                               std::bind_front(&PluginManager::getPluginData, this),
-                                              std::bind_front(&PluginManager::unregisterPluginData, this)};
+                                              std::bind_front(&PluginManager::unregisterPluginData, this),
+                                              std::bind_front(&PluginManager::getPyInterpHandler, this)};
 
             callSingleHook<hookTeardownPlugin_f>("hookTeardownPlugin", handler, p.get());
             p->unload();
@@ -210,8 +211,17 @@ void PluginManager::callHooksSetupPlugin()
     callAllHooks<hookSetupPlugin_f>("hookSetupPlugin",
                                     PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
                                                        std::bind_front(&PluginManager::getPluginData, this),
-                                                       std::bind_front(&PluginManager::unregisterPluginData, this)},
+                                                       std::bind_front(&PluginManager::unregisterPluginData, this),
+                                                       std::bind_front(&PluginManager::getPyInterpHandler, this)},
                                     libraries);
+}
+
+void PluginManager::callHooksMainWindowReady(decltype(PluginMainWindowReadyHandler::addMenu) const& addMenu)
+{
+    callAllHooks<hookMainWindowReady_f>(
+        "hookMainWindowReady",
+        PluginMainWindowReadyHandler{std::bind_front(&PluginManager::getPluginData, this), addMenu},
+        libraries);
 }
 
 void PluginManager::callHooksTeardownPlugin()
@@ -219,7 +229,8 @@ void PluginManager::callHooksTeardownPlugin()
     callAllHooks<hookTeardownPlugin_f>("hookTeardownPlugin",
                                        PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
                                                           std::bind_front(&PluginManager::getPluginData, this),
-                                                          std::bind_front(&PluginManager::unregisterPluginData, this)},
+                                                          std::bind_front(&PluginManager::unregisterPluginData, this),
+                                                          std::bind_front(&PluginManager::getPyInterpHandler, this)},
                                        libraries);
 }
 
@@ -238,16 +249,12 @@ void PluginManager::callHooksContextMenu(getAllEntitiesInCurrentView_f const& ge
         libraries);
 }
 
-void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPluginDock,
-                                             addDockWdgTextField_f const& addDockWdgTextField,
-                                             addTree_f const& addTree)
+void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPluginDock)
 {
-    callAllHooks<hookSetupDockWidget_f>("hookSetupDockWidget",
-                                        PluginDockWidgetHandler{std::bind_front(&PluginManager::getPluginData, this),
-                                                                createPluginDock,
-                                                                addDockWdgTextField,
-                                                                addTree},
-                                        libraries);
+    callAllHooks<hookSetupDockWidget_f>(
+        "hookSetupDockWidget",
+        PluginSetupDockWidgetHandler{std::bind_front(&PluginManager::getPluginData, this), createPluginDock},
+        libraries);
 }
 
 void PluginManager::callHooksSetupEntityReport(getEntity_f const& getEntity, addReport_f const& addReport)
@@ -324,6 +331,18 @@ void PluginManager::registerPluginData(std::string const& id, void *data)
 void PluginManager::unregisterPluginData(std::string const& id)
 {
     this->pluginData.erase(id);
+}
+
+PluginPythonInterpHandler PluginManager::getPyInterpHandler() const
+{
+    return PluginPythonInterpHandler{[](std::string const& pyCode) {
+        py::gil_scoped_acquire _;
+        try {
+            py::exec(pyCode);
+        } catch (pybind11::error_already_set const& e) {
+            std::cout << "Error executing python code: " << e.what() << "\n";
+        }
+    }};
 }
 
 void *PluginManager::getPluginData(std::string const& id) const

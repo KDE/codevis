@@ -42,7 +42,6 @@ target_link_libraries(pyLksPlugin
     PRIVATE
         Python::Python
 )
-add_dependencies(pyLksPlugin generate_lvtclp_plugin_headers)
 
 if (WIN32)
     set(PYMODULE_EXT ".pyd")
@@ -94,7 +93,6 @@ add_custom_target(
         "${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhandlers.h"
         "${PLUGIN_HEADERS_DIR}/ct_lvtplg_plugindatatypes.h"
 )
-add_dependencies(lvtplg generate_lvtclp_plugin_headers)
 
 add_custom_command(
     OUTPUT
@@ -121,9 +119,10 @@ target_include_directories(CodevisPluginHeaders
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>/plugin-headers/
 )
-add_dependencies(CodevisPluginHeaders generate_lvtclp_plugin_headers)
 
-add_dependencies(lvtplg generate_lvtclp_py_bindings)
+add_dependencies(lvtplg generate_lvtclp_py_bindings generate_lvtclp_plugin_headers)
+add_dependencies(pyLksPlugin generate_lvtclp_py_bindings generate_lvtclp_plugin_headers)
+add_dependencies(CodevisPluginHeaders generate_lvtclp_plugin_headers)
 
 if (COMPILE_TESTS)
     add_subdirectory(testplugins)

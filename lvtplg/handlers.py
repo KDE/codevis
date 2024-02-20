@@ -18,6 +18,57 @@ HANDLERS = [
         Function('void', 'unregisterPluginData', [Param('std::string const&', 'id')],
                  'Unregister a plugin data. Please make sure you delete the data before calling this, or the resource will leak.',
                  'pyUnregisterPluginData<T>'),
+        Function('PluginPythonInterpHandler', 'getPyInterpHandler', [],
+                 'Returns a PluginPythonInterpHandler instance so user can execute Python code within C++ plugins.',
+                 NO_BINDINGS),
+    ]),
+
+    HandlerInfo("PluginMainWindowReadyHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+        Function('void', 'addMenu', [
+                Param('std::string const&', 'title'),
+                Param('std::vector<std::tuple<std::string, std::function<void(PluginMenuBarActionHandler)>>> const&', 'menuDescription')
+            ],
+            'Add a new menu in the interface.',
+            AS_LAMBDA
+        ),
+    ]),
+
+    HandlerInfo("PluginMenuBarActionHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+        Function('void', 'createWizard', [
+                Param('std::string const&', 'title'),
+                Param('std::vector<std::tuple<std::string, std::string, PluginFieldType>> const&', 'fields'),
+                Param('std::function<void(PluginWizardActionHandler)> const&', 'action'),
+            ],
+            'Helper function to create a simple wizard-like window to run something.',
+            AS_LAMBDA),
+        ],
+    ),
+
+    HandlerInfo("PluginWizardActionHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+        Function('std::string', 'getFieldContents', [Param('std::string const&', 'field_id')],
+                 'Returns the user input data of the field inside the Wizard.',
+                 AS_LAMBDA),
+        Function('void', 'setFieldContents', [
+            Param('std::string const&', 'field_id'),
+            Param('std::string const&', 'contents')
+        ],
+        'Set a field in the wizard with the specified contents. Does nothing if the field id doesnt exist.',
+        AS_LAMBDA),
+    ]),
+
+    HandlerInfo("PluginPythonInterpHandler", [
+        Function('void', 'pyExec', [Param('std::string const&', 'pyCode')],
+                 'Executes the given python code within Codevis bundled Python interpreter',
+                 AS_LAMBDA),
     ]),
 
     HandlerInfo("PluginContextMenuActionHandler", [
@@ -35,6 +86,9 @@ HANDLERS = [
                  'such entities).',
                  AS_LAMBDA),
         Function('PluginTreeWidgetHandler', 'getTree', [Param('std::string const&', 'id')],
+                 '',
+                 AS_LAMBDA),
+        Function('PluginDockWidgetHandler', 'getDock', [Param('std::string const&', 'id')],
                  '',
                  AS_LAMBDA),
         Function('std::optional<Edge>', 'getEdgeByQualifiedName', [Param('std::string const&', 'fromQualifiedName'), Param('std::string const&', 'toQualifiedName')],
@@ -164,19 +218,24 @@ HANDLERS = [
                  AS_LAMBDA),
     ]),
 
-    HandlerInfo("PluginDockWidgetHandler", [
+    HandlerInfo("PluginSetupDockWidgetHandler", [
         Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
                  'Returns the plugin data previously registered with `registerPluginData`.',
                  'pyGetPluginData<T>'),
-        Function('void', 'createNewDock', [Param('std::string const&', 'dockId'), Param('std::string const&', 'title')],
+        Function('PluginDockWidgetHandler', 'createNewDock', [Param('std::string const&', 'dockId'), Param('std::string const&', 'title')],
                  'Creates a new dock in the GUI.',
                  AS_LAMBDA),
-        Function('void', 'addDockWdgTextField', [Param('std::string const&', 'dockId'), Param('std::string const&', 'title'), Param('std::string&', 'dataModel')],
+    ]),
+    HandlerInfo("PluginDockWidgetHandler", [
+        Function('void', 'addDockWdgTextField', [Param('std::string const&', 'title'), Param('std::string&', 'dataModel')],
                  'Adds a text field in the dock widget. When the field is changed, the dataModel will be automatically updated. '
                  'Make sure to manage the lifetime of the dataModel to ensure it\'s available outside the hook function\'s scope.',
                  NO_BINDINGS),
-        Function('void', 'addTree', [Param('std::string const&', 'dockId'), Param('std::string const&', 'treeId')],
+        Function('void', 'addTree', [Param('std::string const&', 'treeId')],
                  'Create a new tree in the dock widget.',
+                 AS_LAMBDA),
+        Function('void', 'setVisible', [Param('bool', 'visible')],
+                 'Set the dock visibility.',
                  AS_LAMBDA),
     ]),
 

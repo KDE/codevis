@@ -12,8 +12,6 @@ AddTargetLibrary(
         ct_lvtqtc_undo_add_edge.cpp
         ct_lvtqtc_undo_add_edge.h
         ct_lvtqtc_undo_add_entity_common.cpp
-        ct_lvtqtc_undo_cover.cpp
-        ct_lvtqtc_undo_cover.h
         ct_lvtqtc_undo_expand.cpp
         ct_lvtqtc_undo_expand.h
         ct_lvtqtc_undo_notes.cpp

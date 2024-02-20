@@ -35,6 +35,7 @@ class LVTQTC_EXPORT PluginManagerQtUtils {
   public:
     static PluginTreeWidgetHandler
     createPluginTreeWidgetHandler(lvtplg::PluginManager *pm, std::string const& id, GraphicsScene *gs);
+    static PluginDockWidgetHandler createPluginDockWidgetHandler(lvtplg::PluginManager *pm, std::string const& dockId);
 
   private:
     static PluginTreeItemHandler createPluginTreeItemHandler(lvtplg::PluginManager *pm,

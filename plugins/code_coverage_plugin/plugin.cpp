@@ -152,7 +152,7 @@ void graphicsViewContextMenuAction(PluginContextMenuActionHandler *handler)
     }
 }
 
-void hookSetupDockWidget(PluginDockWidgetHandler *handler)
+void hookSetupDockWidget(PluginSetupDockWidgetHandler *handler)
 {
     auto const DOCK_WIDGET_TITLE = "Code coverage plugin";
     auto const DOCK_WIDGET_ID = "cov_plugin_dock";
@@ -161,9 +161,9 @@ void hookSetupDockWidget(PluginDockWidgetHandler *handler)
 
     // TODO: Persist user data on project file
     // TODO: Change text fields with proper field types (Color picker and file picker)
-    handler->createNewDock(DOCK_WIDGET_ID, DOCK_WIDGET_TITLE);
-    handler->addDockWdgTextField(DOCK_WIDGET_ID, "Code coverage json file:", data->jsonFilePath);
-    handler->addDockWdgTextField(DOCK_WIDGET_ID, "Code coverage HTML directory:", data->htmlFilePath);
+    auto dock = handler->createNewDock(DOCK_WIDGET_ID, DOCK_WIDGET_TITLE);
+    dock.addDockWdgTextField("Code coverage json file:", data->jsonFilePath);
+    dock.addDockWdgTextField("Code coverage HTML directory:", data->htmlFilePath);
 }
 
 void entityReportAction(PluginEntityReportActionHandler *handler);

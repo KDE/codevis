@@ -17,18 +17,24 @@
 // limitations under the License.
 */
 
+#include <kmessagewidget.h>
 #include <mainwindow.h>
 
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QModelIndex>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QStandardPaths>
 #include <QStatusBar>
+#include <QTextEdit>
 
 #include <ct_lvtmdl_errorsmodel.h>
 #include <ct_lvtmdl_methodstablemodel.h>
@@ -47,6 +53,7 @@
 #include <ct_lvtqtc_graphicsscene.h>
 #include <ct_lvtqtc_graphicsview.h>
 #include <ct_lvtqtc_lakosentitypluginutils.h>
+#include <ct_lvtqtc_pluginmanagerutils.h>
 #include <ct_lvtqtc_undo_manager.h>
 
 #include <ct_lvtqtd_packageviewdelegate.h>
@@ -233,15 +240,43 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     d_dockReports->setObjectName("Reports");
     addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, d_dockReports);
     d_dockReports->setWidget(d_reportsTabWidget);
-    d_dockReports->hide();
 
     ui.pluginEditorView->setPluginManager(d_pluginManager_p);
 
+    /* Setup default dock visibility */
+    ui.objectHierarchyDoc->setVisible(true);
+    ui.usesInTheInterfaceDock->setVisible(false);
+    ui.methodsDock->setVisible(false);
+    ui.usesInTheImplDock->setVisible(false);
+    ui.fieldsDock->setVisible(false);
+    ui.providersDock->setVisible(false);
+    ui.clientsDock->setVisible(false);
+    ui.pluginEditorDock->setVisible(false);
+    d_dockReports->setVisible(false);
+
     setupActions();
     setProjectWidgetsEnabled(false);
+    setAcceptDrops(true);
 }
 
 MainWindow::~MainWindow() noexcept = default;
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *e)
+{
+    if (e->mimeData()->hasUrls()) {
+        e->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *e)
+{
+    const QUrl url = e->mimeData()->urls().first();
+    const QString filename = url.toLocalFile();
+    const bool success = openProjectFromPath(filename);
+    if (!success) {
+        showMessage(tr("Error loading project file %1").arg(filename), KMessageWidget::Error);
+    }
+}
 
 void MainWindow::setupActions()
 {
@@ -326,6 +361,11 @@ void MainWindow::setupActions()
                                                                      | static_cast<int>(Qt::Key_W)));
     connect(action, &QAction::triggered, this, &MainWindow::closeCurrentTab);
 
+    action = new QAction(this);
+    action->setText(tr("Bookmark Current Tab"));
+    actionCollection()->addAction("bookmark_current_tab", action);
+    connect(action, &QAction::triggered, this, &MainWindow::bookmarkCurrentTab);
+
     // Common Set of Actions that most applications have. Those *do not* need to be
     // specified in the codevisui.rc
     KStandardAction::find(this, &MainWindow::requestSearch, actionCollection());
@@ -340,6 +380,23 @@ void MainWindow::setupActions()
     KStandardAction::quit(qApp, &QCoreApplication::quit, actionCollection());
 
     setupGUI(Default, QStringLiteral(":/ui_files/codevisui.rc"));
+
+    // Populate the "View" menu. (See codevisui.rc)
+    // Note that we can't use the name "view" due to naming clash
+    auto const MENUBAR_VIEW_MENU_ID = QString{"codevis_view_menu"};
+    auto menuView = this->findChild<QMenu *>(MENUBAR_VIEW_MENU_ID);
+    const auto dockWidgets = findChildren<QDockWidget *>();
+    for (auto *dock : dockWidgets) {
+        action = new QAction();
+        action->setText(dock->windowTitle());
+        action->setCheckable(true);
+        action->setChecked(dock->isVisible());
+        connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
+        connect(dock, &QDockWidget::visibilityChanged, action, [dock, action](bool visible) {
+            action->setChecked(dock->isVisible());
+        });
+        menuView->addAction(action);
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev)
@@ -354,6 +411,15 @@ void MainWindow::closeEvent(QCloseEvent *ev)
         }
     }
     QMainWindow::closeEvent(ev);
+}
+
+void MainWindow::bookmarkCurrentTab()
+{
+    if (!currentGraphTab) {
+        showErrorMessage(tr("Nothing to bookmark"));
+    }
+
+    currentGraphTab->saveBookmarkByTabIndex(currentGraphTab->currentIndex());
 }
 
 void MainWindow::setProjectWidgetsEnabled(bool enabled)
@@ -938,33 +1004,6 @@ void MainWindow::createReport(std::string const& title, std::string const& htmlC
     d_dockReports->show();
 }
 
-void MainWindow::showEvent(QShowEvent *event)
-{
-    QMainWindow::showEvent(event);
-
-    static bool initialized = [this]() -> bool {
-        const auto dockWidgets = findChildren<QDockWidget *>();
-
-        // object name setup by the codevisui.rc
-        auto *menuView = menuBar()->findChild<QMenu *>("view");
-        if (!menuView) {
-            menuView = menuBar()->addMenu("View");
-        }
-
-        for (auto *dock : dockWidgets) {
-            auto *action = new QAction();
-            action->setText(dock->windowTitle());
-            action->setCheckable(true);
-            action->setChecked(dock->isVisible());
-            connect(action, &QAction::toggled, dock, &QDockWidget::setVisible);
-            menuView->addAction(action);
-        }
-        return true;
-    }();
-
-    Q_UNUSED(initialized);
-}
-
 void MainWindow::showWarningMessage(const QString& message)
 {
     showMessage(message, KMessageWidget::MessageType::Warning);
@@ -1081,7 +1120,7 @@ void MainWindow::disableWindow()
     // we don't want to disable thre graph load progress bar when we disable
     // widgets during a graph load. To achieve this we also have to not disable
     // its parent
-    const QList<QWidget *> neverDisable{ui.graphLoadProgress, ui.centralarea};
+    const QList<QWidget *> neverDisable{ui.centralarea};
     for (QWidget *child : findChildren<QWidget *>()) { // clazy:exclude=range-loop,range-loop-detach
         if (neverDisable.contains(child)) {
             continue;
@@ -1325,36 +1364,126 @@ void MainWindow::configurePluginDocks()
     }
 
     auto createPluginDock = [this](std::string const& dockId, std::string const& title) {
-        auto *pluginDock = new QDockWidget(this);
-        pluginDock->setWindowTitle(QString::fromStdString(title));
+        using namespace Codethink::lvtqtc;
+
+        auto *pluginDock = new QDockWidget(QString::fromStdString(title), this);
         pluginDock->setObjectName(QString::fromStdString(dockId));
-        addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea, pluginDock);
+        addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, pluginDock);
         auto *pluginDockWidget = new QWidget();
         pluginDockWidget->setLayout(new QFormLayout());
         pluginDock->setWidget(pluginDockWidget);
         d_pluginManager_p->registerPluginQObject(dockId, pluginDock);
+        pluginDock->setVisible(false);
+
+        return PluginManagerQtUtils::createPluginDockWidgetHandler(d_pluginManager_p, dockId);
     };
-    auto addDockWdgFileField = [this](std::string const& dockId, std::string const& label, std::string& dataModel) {
-        auto *pluginDockWidget = dynamic_cast<QDockWidget *>(d_pluginManager_p->getPluginQObject(dockId));
-        auto *lineEdit = new QLineEdit();
-        connect(lineEdit, &QLineEdit::textChanged, [&dataModel](QString const& newText) {
-            dataModel = newText.toStdString();
+    d_pluginManager_p->callHooksSetupDockWidget(createPluginDock);
+}
+
+void MainWindow::createWizardForPluginMenu(
+    std::string const& title,
+    std::vector<std::tuple<std::string, std::string, PluginFieldType>> const& fields,
+    std::function<void(PluginWizardActionHandler)> const& action)
+{
+    auto *wizardWindow = new QDialog{this};
+    wizardWindow->setWindowTitle(QString::fromStdString(title));
+    auto *layout = new QFormLayout{wizardWindow};
+
+    auto fieldMap = std::map<std::string, std::tuple<PluginFieldType, QWidget *>>{};
+    for (auto const& [id, fieldTitle, type] : fields) {
+        QWidget *wdg = nullptr;
+        switch (type) {
+        case PluginFieldType::TextArea:
+            wdg = new QTextEdit{wizardWindow};
+            break;
+        case PluginFieldType::TextInput:
+            wdg = new QLineEdit{wizardWindow};
+            break;
+        }
+        if (wdg == nullptr) {
+            continue;
+        }
+
+        auto *label = new QLabel{QString::fromStdString(fieldTitle), wizardWindow};
+        layout->addRow(label, wdg);
+        fieldMap[id] = {type, wdg};
+    }
+
+    auto getFieldContents = [fieldMap](std::string const& field_id) -> std::string {
+        if (fieldMap.count(field_id) == 0) {
+            return "";
+        }
+        auto [type, wdg] = fieldMap.at(field_id);
+        switch (type) {
+        case PluginFieldType::TextArea:
+            return qobject_cast<QTextEdit *>(wdg)->toPlainText().toStdString();
+        case PluginFieldType::TextInput:
+            return qobject_cast<QLineEdit *>(wdg)->text().toStdString();
+        }
+        return "";
+    };
+
+    auto setFieldContents = [fieldMap](std::string const& field_id, std::string const& contents) {
+        if (fieldMap.count(field_id) == 0) {
+            return;
+        }
+        auto [type, wdg] = fieldMap.at(field_id);
+        switch (type) {
+        case PluginFieldType::TextArea: {
+            qobject_cast<QTextEdit *>(wdg)->setText(QString::fromStdString(contents));
+            auto *scrollbar = qobject_cast<QTextEdit *>(wdg)->verticalScrollBar();
+            scrollbar->setValue(scrollbar->maximum());
+            break;
+        }
+        case PluginFieldType::TextInput: {
+            qobject_cast<QLineEdit *>(wdg)->setText(QString::fromStdString(contents));
+            break;
+        }
+        }
+        qApp->processEvents();
+    };
+
+    auto *acceptButton = new QPushButton{wizardWindow};
+    auto *closeButton = new QPushButton{wizardWindow};
+    acceptButton->setText("Run");
+    closeButton->setText("Close");
+    connect(acceptButton,
+            &QPushButton::clicked,
+            wizardWindow,
+            [this, acceptButton, closeButton, getFieldContents, setFieldContents, action]() {
+                acceptButton->setEnabled(false);
+                closeButton->setEnabled(false);
+                auto wizardHandler =
+                    PluginWizardActionHandler{std::bind_front(&PluginManager::getPluginData, d_pluginManager_p),
+                                              getFieldContents,
+                                              setFieldContents};
+                action(wizardHandler);
+                acceptButton->setEnabled(true);
+                closeButton->setEnabled(true);
+            });
+    connect(closeButton, &QPushButton::clicked, wizardWindow, &QDialog::close);
+    layout->addRow(acceptButton, closeButton);
+
+    wizardWindow->setLayout(layout);
+    wizardWindow->exec();
+}
+
+void MainWindow::addMenuFromPlugin(
+    std::string const& title,
+    std::vector<std::tuple<std::string, std::function<void(PluginMenuBarActionHandler)>>> const& menuDescription)
+{
+    auto *menu = menuBar()->addMenu(QString::fromStdString(title));
+    for (auto const& [menuItemTitle, menuItemAction] : menuDescription) {
+        auto *action = new QAction{this};
+        action->setText(QString::fromStdString(menuItemTitle));
+        menu->addAction(action);
+        auto& _menuItemAction = menuItemAction;
+        connect(action, &QAction::triggered, this, [this, _menuItemAction]() {
+            _menuItemAction(
+                PluginMenuBarActionHandler{std::bind_front(&PluginManager::getPluginData, d_pluginManager_p),
+                                           std::bind_front(&MainWindow::createWizardForPluginMenu, this)});
         });
-        auto *formLayout = dynamic_cast<QFormLayout *>(pluginDockWidget->widget()->layout());
-        formLayout->addRow(new QLabel(QString::fromStdString(label)), lineEdit);
-    };
-    auto addTree = [this](std::string const& dockId, std::string const& treeId) {
-        auto *pluginDockWidget = dynamic_cast<QDockWidget *>(d_pluginManager_p->getPluginQObject(dockId));
-        auto *treeView = new QTreeView(pluginDockWidget);
-        auto *treeModel = new QStandardItemModel{treeView};
-        treeView->setHeaderHidden(true);
-        treeView->setModel(treeModel);
-        auto *formLayout = dynamic_cast<QFormLayout *>(pluginDockWidget->widget()->layout());
-        formLayout->addRow(treeView);
-        d_pluginManager_p->registerPluginQObject(treeId + "::view", treeView);
-        d_pluginManager_p->registerPluginQObject(treeId + "::model", treeModel);
-    };
-    d_pluginManager_p->callHooksSetupDockWidget(createPluginDock, addDockWdgFileField, addTree);
+    }
 }
 
 WrappedUiMainWindow::WrappedUiMainWindow(NodeStorage& sharedNodeStorage,

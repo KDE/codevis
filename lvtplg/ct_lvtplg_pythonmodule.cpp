@@ -82,6 +82,14 @@ void exportDataTypes(ModuleType& m)
     }
 
     {
+        using T = PluginFieldType;
+        py::enum_<T>(m, "PluginFieldType")
+            .value("TextInput", T::TextInput)
+            .value("TextArea", T::TextArea)
+            .export_values();
+    }
+
+    {
         using T = Color;
         py::class_<T>(m, "Color")
             .def(py::init<int, int, int>())

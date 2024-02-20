@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
     auto *mWindow = new MainWindow(sharedNodeStorage, &pluginManager, &undoManager, &debugModel);
 
     CodeVisDBusInterface dbusInterface(*mWindow); // cppcheck-suppress unreadVariable
+    pluginManager.callHooksMainWindowReady(std::bind_front(&MainWindow::addMenuFromPlugin, mWindow));
 
     if (parser.isSet(inputFile)) {
         const bool isOpen = mWindow->openProjectFromPath(parser.value(inputFile));

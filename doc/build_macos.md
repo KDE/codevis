@@ -7,5 +7,6 @@ Then build Codevis:
 
 ```
 source ~/CraftRoot/craft/craftenv.sh
+craft --set version=master codevis
 craft codevis
 ```

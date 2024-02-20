@@ -50,7 +50,6 @@ class QLabel;
 class CodeVisApplicationTestFixture;
 
 namespace Codethink::lvtmdl {
-class CircularRelationshipsModel;
 class ErrorsModel;
 class NamespaceTreeModel;
 class PackageTreeModel;
@@ -98,6 +97,11 @@ class MainWindow : public KXmlGuiWindow {
     [[nodiscard]] bool openProjectFromPath(const QString& path);
     void openProjectSettings();
 
+    void addMenuFromPlugin(
+        std::string const& title,
+        std::vector<std::tuple<std::string, std::function<void(PluginMenuBarActionHandler)>>> const& menuDescription);
+    // Simple API for creating menus for plugins
+
     void newTab();
     // Creates a new tab on the focused tabwidget.
 
@@ -117,11 +121,17 @@ class MainWindow : public KXmlGuiWindow {
     [[nodiscard]] QString currentMessage() const;
 
     void setupActions();
+    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dropEvent(QDropEvent *e) override;
 
   protected:
     virtual QString requestProjectName();
 
   private:
+    void createWizardForPluginMenu(std::string const& title,
+                                   std::vector<std::tuple<std::string, std::string, PluginFieldType>> const& fields,
+                                   std::function<void(PluginWizardActionHandler)> const& action);
+
     void saveTabsOnProject();
     void loadTabsFromProject();
 
@@ -155,7 +165,6 @@ class MainWindow : public KXmlGuiWindow {
     void mousePressEvent(QMouseEvent *ev) override;
     void mouseReleaseEvent(QMouseEvent *ev) override;
     void closeEvent(QCloseEvent *ev) override;
-    void showEvent(QShowEvent *ev) override;
     bool eventFilter(QObject *obj, QEvent *event) override;
 
     void configurePluginDocks();
@@ -165,7 +174,7 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void graphLoadFinished();
     Q_SLOT void triggerUndo();
     Q_SLOT void triggerRedo();
-
+    Q_SLOT void bookmarkCurrentTab();
     Q_SLOT void bookmarksChanged();
 
     Q_SLOT void generateDatabaseReadyForUpdate();

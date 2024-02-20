@@ -61,6 +61,9 @@ class LVTPLG_EXPORT PluginManager {
     void removePlugin(const QString& pluginFolder);
 
     void callHooksSetupPlugin();
+
+    void callHooksMainWindowReady(decltype(PluginMainWindowReadyHandler::addMenu) const& addMenu);
+
     void callHooksTeardownPlugin();
 
     using getAllEntitiesInCurrentView_f = decltype(PluginContextMenuHandler::getAllEntitiesInCurrentView);
@@ -72,12 +75,8 @@ class LVTPLG_EXPORT PluginManager {
                               getEdgeByQualifiedName_f const& getEdgeByQualifiedName,
                               registerContextMenu_f const& registerContextMenu);
 
-    using createPluginDock_f = decltype(PluginDockWidgetHandler::createNewDock);
-    using addDockWdgTextField_f = decltype(PluginDockWidgetHandler::addDockWdgTextField);
-    using addTree_f = decltype(PluginDockWidgetHandler::addTree);
-    void callHooksSetupDockWidget(createPluginDock_f const& createPluginDock,
-                                  addDockWdgTextField_f const& addDockWdgTextField,
-                                  addTree_f const& addTree);
+    using createPluginDock_f = decltype(PluginSetupDockWidgetHandler::createNewDock);
+    void callHooksSetupDockWidget(createPluginDock_f const& createPluginDock);
 
     using getEntity_f = decltype(PluginEntityReportHandler::getEntity);
     using addReport_f = decltype(PluginEntityReportHandler::addReport);
@@ -120,6 +119,7 @@ class LVTPLG_EXPORT PluginManager {
 
     void registerPluginQObject(std::string const& id, QObject *object);
     QObject *getPluginQObject(std::string const& id) const;
+    PluginPythonInterpHandler getPyInterpHandler() const;
 
   private:
 #ifdef ENABLE_PYTHON_PLUGINS

@@ -81,22 +81,28 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
 
     // Creates the tools needed for the codebase parse
 
-    void runCMakeAndInitParse_Step2(const std::string& compileCommandsJson,
-                                    const std::vector<std::string>& ignoreList,
-                                    const std::vector<std::filesystem::path>& nonLakosianDirs);
+    void runCMakeAndStartParse(const std::string& compileCommandsJson,
+                               const std::vector<std::string>& ignoreList,
+                               const std::vector<std::filesystem::path>& nonLakosianDirs);
 
     // Runs CMake to generate compile_commands.json file before starting parse step 2
     QThread *createThreadFnToRunParseTools();
 
-    void initParse_Step2(const std::string& compileCommandsJson,
-                         const std::vector<std::string>& ignoreList,
-                         const std::vector<std::filesystem::path>& nonLakosianDirs);
+    void prepareParse(const std::string& compileCommandsJson,
+                      const std::vector<std::string>& ignoreList,
+                      const std::vector<std::filesystem::path>& nonLakosianDirs);
+    // sets everything in place for the parse to happen
+    void startParse();
     // Actually starts the parsing process.
 
-    void cleanupTools();
-    void notifyUserForFinishedParsing(const std::string& parseFinishedMessage);
     void endParse();
-    void validate();
+    void cleanupTools();
+    void notifyUserForFinishedStage();
+    void displayStopError();
+    void resetUiForNextParse();
+    // helper methods to simplify the endParse step
+
+    void validateUserInputFolders();
 
     Q_SLOT void processingFileNotification(const QString& path);
     Q_SLOT void aboutToCallClangNotification(int size);

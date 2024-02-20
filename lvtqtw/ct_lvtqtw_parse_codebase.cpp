@@ -339,11 +339,11 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     ui->progressBar->setMinimum(0);
 
     connect(ui->compileCommandsFolder, &QLineEdit::textChanged, this, [this] {
-        validate();
+        validateUserInputFolders();
     });
 
     connect(ui->sourceFolder, &QLineEdit::textChanged, this, [this] {
-        validate();
+        validateUserInputFolders();
     });
 
     ui->projectBuildFolderError->setVisible(false);
@@ -365,10 +365,10 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
         windowFlags() & ~(Qt::WindowCloseButtonHint | Qt::WindowMinMaxButtonsHint | Qt::WindowContextHelpButtonHint);
     setWindowFlags(flags);
 
-    validate();
+    validateUserInputFolders();
 }
 
-void ParseCodebaseDialog::validate()
+void ParseCodebaseDialog::validateUserInputFolders()
 {
     // a QValidator will not allow the string to be set, but we need to tell the user the reason that
     // the string was not set. So instead of using the `setValidator` calls on QLineEdit, we *accept*
@@ -624,7 +624,7 @@ void ParseCodebaseDialog::reset()
         ui->btnSaveOutput->setEnabled(false);
         ui->stackedWidget->setCurrentIndex(0);
     }
-    validate();
+    validateUserInputFolders();
 }
 
 void ParseCodebaseDialog::initParse()
@@ -677,17 +677,17 @@ void ParseCodebaseDialog::initParse()
     const auto mustGenerateCompileCommands = physicalRun && (!compileCommandsExists || ui->runCmake->checkState());
     const auto ignoreList = ignoredItemsAsStdVec();
     const auto nonLakosianDirs = nonLakosianDirsAsStdVec();
-    // what is the parse step 2 exactly?
+    // parse remains a bit vague
     if (mustGenerateCompileCommands) {
-        runCMakeAndInitParse_Step2(compileCommandsJson, ignoreList, nonLakosianDirs);
+        runCMakeAndStartParse(compileCommandsJson, ignoreList, nonLakosianDirs);
     } else {
-        initParse_Step2(compileCommandsJson, ignoreList, nonLakosianDirs);
+        prepareParse(compileCommandsJson, ignoreList, nonLakosianDirs);
     }
 }
 
-void ParseCodebaseDialog::runCMakeAndInitParse_Step2(const std::string& compileCommandsJson,
-                                                     const std::vector<std::string>& ignoreList,
-                                                     const std::vector<std::filesystem::path>& nonLakosianDirs)
+void ParseCodebaseDialog::runCMakeAndStartParse(const std::string& compileCommandsJson,
+                                                const std::vector<std::string>& ignoreList,
+                                                const std::vector<std::filesystem::path>& nonLakosianDirs)
 {
     const QString cmakeExecutable = QStandardPaths::findExecutable("cmake");
     if (cmakeExecutable.isEmpty()) {
@@ -712,7 +712,7 @@ void ParseCodebaseDialog::runCMakeAndInitParse_Step2(const std::string& compileC
             }
             sender()->deleteLater();
 
-            initParse_Step2(compileCommandsJson, ignoreList, nonLakosianDirs);
+            prepareParse(compileCommandsJson, ignoreList, nonLakosianDirs);
         };
     connect(refreshCompileCommands,
             QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
@@ -753,6 +753,24 @@ void ParseCodebaseDialog::initTools(const std::string& compileCommandsJson,
     }
     d->fortran_tool_p->setSharedMemDb(d->sharedMemDb);
 #endif
+
+    connect(d->tool_p.get(),
+            &lvtclp::CppTool::processingFileNotification,
+            this,
+            &ParseCodebaseDialog::processingFileNotification,
+            Qt::QueuedConnection);
+
+    connect(d->tool_p.get(),
+            &lvtclp::CppTool::aboutToCallClangNotification,
+            this,
+            &ParseCodebaseDialog::aboutToCallClangNotification,
+            Qt::QueuedConnection);
+
+    connect(d->tool_p.get(),
+            &lvtclp::CppTool::messageFromThread,
+            this,
+            &ParseCodebaseDialog::receivedMessage,
+            Qt::QueuedConnection);
 }
 
 QThread *ParseCodebaseDialog::createThreadFnToRunParseTools()
@@ -783,34 +801,12 @@ QThread *ParseCodebaseDialog::createThreadFnToRunParseTools()
     return QThread::create(threadFn);
 }
 
-void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson,
-                                          const std::vector<std::string>& ignoreList,
-                                          const std::vector<std::filesystem::path>& nonLakosianDirs)
+void ParseCodebaseDialog::prepareParse(const std::string& compileCommandsJson,
+                                       const std::vector<std::string>& ignoreList,
+                                       const std::vector<std::filesystem::path>& nonLakosianDirs)
 {
     // for now a Cpp Tool and a fortran tool
     initTools(compileCommandsJson, ignoreList, nonLakosianDirs);
-
-    connect(d->tool_p.get(),
-            &lvtclp::CppTool::processingFileNotification,
-            this,
-            &ParseCodebaseDialog::processingFileNotification,
-            Qt::QueuedConnection);
-
-    connect(d->tool_p.get(),
-            &lvtclp::CppTool::aboutToCallClangNotification,
-            this,
-            &ParseCodebaseDialog::aboutToCallClangNotification,
-            Qt::QueuedConnection);
-
-    connect(d->tool_p.get(),
-            &lvtclp::CppTool::messageFromThread,
-            this,
-            &ParseCodebaseDialog::receivedMessage,
-            Qt::QueuedConnection);
-
-    d->parseThread = createThreadFnToRunParseTools();
-
-    connect(d->parseThread, &QThread::finished, this, &ParseCodebaseDialog::readyForDbUpdate);
 
     ui->progressBar->setValue(0);
     ui->progressBarText->setVisible(true);
@@ -825,12 +821,17 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
     } else {
         assert(false && "Unreachable");
     }
+    startParse();
+}
 
+void ParseCodebaseDialog::startParse()
+{
     // it is okay to close the window after the physical parse is completed and
     // allow the logical parse to continue in the background. Otherwise disable
     // closing while a parse is running.
     ui->btnClose->setEnabled(d->dialogState == State::RunAllLogical);
-
+    d->parseThread = createThreadFnToRunParseTools();
+    connect(d->parseThread, &QThread::finished, this, &ParseCodebaseDialog::readyForDbUpdate);
     ui->btnParse->setEnabled(false);
     ui->btnSaveOutput->setEnabled(false);
     Q_EMIT parseStarted(d->dialogState);
@@ -930,45 +931,52 @@ void ParseCodebaseDialog::cleanupTools()
 #endif
 }
 
-void ParseCodebaseDialog::endParse()
+void ParseCodebaseDialog::resetUiForNextParse()
 {
-    assert(d->dialogState != State::Idle);
-
     ui->btnParse->setEnabled(true);
     ui->progressBarText->setVisible(false);
     ui->progressBar->setValue(0);
+}
 
+void ParseCodebaseDialog::displayStopError()
+{
     if (d->dialogState == State::Killed) {
         ui->errorText->setText(tr("Parsing operation killed."));
         ui->errorText->show();
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Killed);
-        cleanupTools();
         return;
     }
 
     if (!d->threadSuccess) {
-        ui->errorText->setText(tr("Error parsing codebase with clang"));
+        ui->errorText->setText(tr("Compiler Error while parsing the codebase."));
         ui->errorText->show();
         d->dialogState = State::Idle;
         Q_EMIT parseFinished(State::Idle);
-        cleanupTools();
+        return;
+    }
+}
+
+void ParseCodebaseDialog::endParse()
+{
+    assert(d->dialogState != State::Idle);
+    resetUiForNextParse();
+    cleanupTools();
+    auto parsingDidNotFinishSuccessfully = [this]() {
+        return d->dialogState == State::Killed || !d->threadSuccess;
+    };
+
+    if (parsingDidNotFinishSuccessfully()) {
+        displayStopError();
         return;
     }
 
     if (d->dialogState == State::RunAllPhysical) {
         // move on to RunAllLogical
+        // the error text is also used to just notify the user, mb a diffrent name would be ideal
         ui->errorText->setText(tr("Physical parsing done. Continuing with logical parse"));
         ui->errorText->show();
-        Q_EMIT parseFinished(State::RunAllPhysical);
-
-        QTime time(0, 0);
-        time = time.addMSecs(d->parseTimer.elapsed());
-
-        KNotification *notification = new KNotification("parserFinished");
-        notification->setText(
-            tr("Physical Parse finished with: %1<br/>Starting Logical Parse.").arg(time.toString("mm:ss.zzz")));
-        notification->sendEvent();
+        notifyUserForFinishedStage();
         d->parseTimer.restart();
         initParse();
         return;
@@ -976,14 +984,11 @@ void ParseCodebaseDialog::endParse()
 
     // is there a specific reason the emit is in a different place? also the call is duplicated
     if (d->dialogState == State::RunPhysicalOnly) {
-        Q_EMIT parseFinished(d->dialogState);
-        notifyUserForFinishedParsing("Physical Parse finished with: ");
+        notifyUserForFinishedStage();
     } else if (d->dialogState == State::RunAllLogical) {
-        notifyUserForFinishedParsing("Logical Parse finished with: ");
-        Q_EMIT parseFinished(d->dialogState);
+        notifyUserForFinishedStage();
     }
     d->dialogState = State::Idle;
-    cleanupTools();
     d->parseTimer.invalidate();
 
     if (d->pluginManager) {
@@ -1001,16 +1006,27 @@ void ParseCodebaseDialog::endParse()
     close();
 }
 
-void ParseCodebaseDialog::notifyUserForFinishedParsing(const std::string& parseFinishedMessage)
+void ParseCodebaseDialog::notifyUserForFinishedStage()
 {
+    auto getStringForState = [](State current) {
+        if (current == State::RunPhysicalOnly) {
+            return QString("Physical Parse finished with: %1");
+        } else if (current == State::RunAllLogical) {
+            return QString("Logical Parse finished with: %1");
+        } else if (current == State::RunAllPhysical) {
+            return QString("Physical Parse finished with: %1<br/>Starting Logical Parse.");
+        } else {
+            return QString("This Code path was not meant to be followed");
+        }
+    };
     QTime time(0, 0);
     time = time.addMSecs(d->parseTimer.elapsed());
-    KNotification *notification = new KNotification("parserFinished");
-    // there is a better to do this cant find it
-    QString notificationText = QString::fromStdString(parseFinishedMessage) + time.toString("mm:ss.zzz");
-    const char *notificationString = notificationText.toUtf8().constData();
-    notification->setText(tr(notificationString));
+    auto *notification = new KNotification("parserFinished");
+
+    const QString notificationText = getStringForState(d->dialogState).arg(time.toString("mm:ss.zzz"));
+    notification->setText(notificationText);
     notification->sendEvent();
+    Q_EMIT parseFinished(d->dialogState);
 }
 
 void ParseCodebaseDialog::processingFileNotification(const QString& path)

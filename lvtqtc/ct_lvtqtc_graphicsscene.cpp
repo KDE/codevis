@@ -1397,7 +1397,7 @@ void GraphicsScene::searchTransitiveRelations()
     transitiveRelationSearchFinished();
 }
 
-void GraphicsScene::handleViewPortChanged()
+void GraphicsScene::handleViewportChanged()
 {
     updateBoundingRect();
 }
@@ -1407,11 +1407,11 @@ void GraphicsScene::updateBoundingRect()
     QGraphicsView *graphicsView = views().at(0);
 
     // The viewport
-    QRectF viewPortRect = graphicsView->mapToScene(graphicsView->viewport()->geometry()).boundingRect();
+    QRectF viewportRect = graphicsView->mapToScene(graphicsView->viewport()->geometry()).boundingRect();
 
     // The width and height of viewport
-    qreal viewPortWidth = viewPortRect.width();
-    qreal viewPortHeight = viewPortRect.height();
+    qreal viewportWidth = viewportRect.width();
+    qreal viewportHeight = viewportRect.height();
 
     // The width and height of items bounding rectangle
     qreal itemsBoundingRectWidth = itemsBoundingRect().width();
@@ -1419,8 +1419,8 @@ void GraphicsScene::updateBoundingRect()
 
     // Take whichever is smaller (the viewport or the bounding rectangle), and adjust the scene rect accordingly:
     auto const ADJUST_PCT = 0.5;
-    qreal widthAdjust = qMin(viewPortWidth, itemsBoundingRectWidth) * ADJUST_PCT;
-    qreal heightAdjust = qMin(viewPortHeight, itemsBoundingRectHeight) * ADJUST_PCT;
+    qreal widthAdjust = qMin(viewportWidth, itemsBoundingRectWidth) * ADJUST_PCT;
+    qreal heightAdjust = qMin(viewportHeight, itemsBoundingRectHeight) * ADJUST_PCT;
 
     setSceneRect(itemsBoundingRect().adjusted(-widthAdjust, -heightAdjust, widthAdjust, heightAdjust));
 }

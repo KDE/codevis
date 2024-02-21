@@ -238,7 +238,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     void setPluginManager(Codethink::lvtplg::PluginManager& pm);
 
   public Q_SLOTS:
-    void handleViewPortChanged();
+    void handleViewportChanged();
 
   private:
     void unloadEntity(LakosEntity *entity);

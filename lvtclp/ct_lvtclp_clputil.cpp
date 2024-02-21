@@ -390,6 +390,18 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
 void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::CompilationDatabase& db,
                                                          const std::filesystem::path& buildDir)
 {
+    static std::set<std::string> accepted_suffixes = {
+        ".c",
+        ".h",
+        ".cc",
+        ".cpp",
+        ".hpp",
+        ".hh",
+        ".C",
+        ".cxx",
+        ".H",
+    };
+
     for (clang::tooling::CompileCommand cmd : db.getAllCompileCommands()) {
         // resolve any relative paths
         std::filesystem::path filename(cmd.Filename);
@@ -399,7 +411,7 @@ void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::C
         cmd.Filename = filename.string();
 
         auto ext = filename.extension().string();
-        if (ext != ".cc" && ext != ".cpp" && ext != ".c" && ext != ".h" && ext != ".hpp" && ext != ".hh") {
+        if (!accepted_suffixes.contains(ext)) {
             continue;
         }
 

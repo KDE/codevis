@@ -372,25 +372,6 @@ void LakosRelation::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->drawLine(d->adjustedLine);
     painter->restore();
 
-    auto updateQGraphicsPathItemColor = [](QGraphicsPathItem *item, QColor const& color) {
-        if (item == nullptr) {
-            return;
-        }
-
-        auto headPen = item->pen();
-        headPen.setColor(color);
-        item->setPen(headPen);
-
-        auto headBrush = item->brush();
-        headBrush.setColor(color);
-        item->setBrush(headBrush);
-    };
-
-    if (overrideC.isValid()) {
-        updateQGraphicsPathItemColor(d->head, color);
-        updateQGraphicsPathItemColor(d->tail, color);
-    }
-
     if (s_showOriginalLine) {
         painter->save();
         painter->setPen(Qt::red);
@@ -512,6 +493,28 @@ void LakosRelation::toggleRelationFlags(EdgeCollection::RelationFlags flags, boo
             d->relationFlags &= ~flags;
         }
     }
+
+    const auto overrideC = overrideColor();
+    auto const color = overrideC.isValid() ? overrideC : d->color;
+
+    auto updateQGraphicsPathItemColor = [](QGraphicsPathItem *item, QColor const& color) {
+        if (item == nullptr) {
+            return;
+        }
+
+        auto headPen = item->pen();
+        headPen.setColor(color);
+        item->setPen(headPen);
+
+        auto headBrush = item->brush();
+        headBrush.setColor(color);
+        item->setBrush(headBrush);
+
+        item->update();
+    };
+
+    updateQGraphicsPathItemColor(d->head, color);
+    updateQGraphicsPathItemColor(d->tail, color);
 
     update();
 }

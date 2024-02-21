@@ -259,17 +259,10 @@ void GraphicsView::calculateCurrentZoomFactor()
     Q_EMIT zoomFactorChanged(d->zoomFactor);
 }
 
-void GraphicsView::mouseMoveEvent(QMouseEvent *event)
+void GraphicsView::updateTooltipItem(QMouseEvent *event)
 {
-    assert(event);
-
-    updateMultiSelect(event->pos());
-
-    const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
-    if (d->isMultiDragging && mouseHasNewPosition) {
-        for (const auto& entity : d->scene->selectedEntities()) {
-            entity->doDrag(mapToScene(event->pos()));
-        }
+    if (!d->toolTipItem->isVisible()) {
+        return;
     }
 
     QList<QGraphicsItem *> underMouse = items(event->pos());
@@ -287,6 +280,23 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
             break;
         }
     }
+}
+
+void GraphicsView::mouseMoveEvent(QMouseEvent *event)
+{
+    assert(event);
+
+    updateMultiSelect(event->pos());
+
+    const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
+    if (d->isMultiDragging && mouseHasNewPosition) {
+        for (const auto& entity : d->scene->selectedEntities()) {
+            entity->doDrag(mapToScene(event->pos()));
+        }
+    }
+
+    updateTooltipItem(event);
+
     QGraphicsView::mouseMoveEvent(event);
 }
 

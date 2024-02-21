@@ -31,8 +31,10 @@
 #include <QMimeData>
 #include <QModelIndex>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QStandardPaths>
 #include <QStatusBar>
+#include <QTextEdit>
 
 #include <ct_lvtmdl_errorsmodel.h>
 #include <ct_lvtmdl_methodstablemodel.h>
@@ -1376,6 +1378,112 @@ void MainWindow::configurePluginDocks()
         return PluginManagerQtUtils::createPluginDockWidgetHandler(d_pluginManager_p, dockId);
     };
     d_pluginManager_p->callHooksSetupDockWidget(createPluginDock);
+}
+
+void MainWindow::createWizardForPluginMenu(
+    std::string const& title,
+    std::vector<std::tuple<std::string, std::string, PluginFieldType>> const& fields,
+    std::function<void(PluginWizardActionHandler)> const& action)
+{
+    auto *wizardWindow = new QDialog{this};
+    wizardWindow->setWindowTitle(QString::fromStdString(title));
+    auto *layout = new QFormLayout{wizardWindow};
+
+    auto fieldMap = std::map<std::string, std::tuple<PluginFieldType, QWidget *>>{};
+    for (auto const& [id, fieldTitle, type] : fields) {
+        QWidget *wdg = nullptr;
+        switch (type) {
+        case PluginFieldType::TextArea:
+            wdg = new QTextEdit{wizardWindow};
+            break;
+        case PluginFieldType::TextInput:
+            wdg = new QLineEdit{wizardWindow};
+            break;
+        }
+        if (wdg == nullptr) {
+            continue;
+        }
+
+        auto *label = new QLabel{QString::fromStdString(fieldTitle), wizardWindow};
+        layout->addRow(label, wdg);
+        fieldMap[id] = {type, wdg};
+    }
+
+    auto getFieldContents = [fieldMap](std::string const& field_id) -> std::string {
+        if (fieldMap.count(field_id) == 0) {
+            return "";
+        }
+        auto [type, wdg] = fieldMap.at(field_id);
+        switch (type) {
+        case PluginFieldType::TextArea:
+            return qobject_cast<QTextEdit *>(wdg)->toPlainText().toStdString();
+        case PluginFieldType::TextInput:
+            return qobject_cast<QLineEdit *>(wdg)->text().toStdString();
+        }
+        return "";
+    };
+
+    auto setFieldContents = [fieldMap](std::string const& field_id, std::string const& contents) {
+        if (fieldMap.count(field_id) == 0) {
+            return;
+        }
+        auto [type, wdg] = fieldMap.at(field_id);
+        switch (type) {
+        case PluginFieldType::TextArea: {
+            qobject_cast<QTextEdit *>(wdg)->setText(QString::fromStdString(contents));
+            auto *scrollbar = qobject_cast<QTextEdit *>(wdg)->verticalScrollBar();
+            scrollbar->setValue(scrollbar->maximum());
+            break;
+        }
+        case PluginFieldType::TextInput: {
+            qobject_cast<QLineEdit *>(wdg)->setText(QString::fromStdString(contents));
+            break;
+        }
+        }
+        qApp->processEvents();
+    };
+
+    auto *acceptButton = new QPushButton{wizardWindow};
+    auto *closeButton = new QPushButton{wizardWindow};
+    acceptButton->setText("Run");
+    closeButton->setText("Close");
+    connect(acceptButton,
+            &QPushButton::clicked,
+            wizardWindow,
+            [this, acceptButton, closeButton, getFieldContents, setFieldContents, action]() {
+                acceptButton->setEnabled(false);
+                closeButton->setEnabled(false);
+                auto wizardHandler =
+                    PluginWizardActionHandler{std::bind_front(&PluginManager::getPluginData, d_pluginManager_p),
+                                              getFieldContents,
+                                              setFieldContents};
+                action(wizardHandler);
+                acceptButton->setEnabled(true);
+                closeButton->setEnabled(true);
+            });
+    connect(closeButton, &QPushButton::clicked, wizardWindow, &QDialog::close);
+    layout->addRow(acceptButton, closeButton);
+
+    wizardWindow->setLayout(layout);
+    wizardWindow->exec();
+}
+
+void MainWindow::addMenuFromPlugin(
+    std::string const& title,
+    std::vector<std::tuple<std::string, std::function<void(PluginMenuBarActionHandler)>>> const& menuDescription)
+{
+    auto *menu = menuBar()->addMenu(QString::fromStdString(title));
+    for (auto const& [menuItemTitle, menuItemAction] : menuDescription) {
+        auto *action = new QAction{this};
+        action->setText(QString::fromStdString(menuItemTitle));
+        menu->addAction(action);
+        auto& _menuItemAction = menuItemAction;
+        connect(action, &QAction::triggered, this, [this, _menuItemAction]() {
+            _menuItemAction(
+                PluginMenuBarActionHandler{std::bind_front(&PluginManager::getPluginData, d_pluginManager_p),
+                                           std::bind_front(&MainWindow::createWizardForPluginMenu, this)});
+        });
+    }
 }
 
 WrappedUiMainWindow::WrappedUiMainWindow(NodeStorage& sharedNodeStorage,

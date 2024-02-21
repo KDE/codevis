@@ -57,6 +57,11 @@ TEST_CASE("Python dispatcher")
                 return nullptr;
             },
             [](auto _1) {},
+            []() {
+                return PluginPythonInterpHandler{
+                    [](std::string const&) {},
+                };
+            },
         };
 
         REQUIRE(setupHook != nullptr);

@@ -1397,20 +1397,31 @@ void GraphicsScene::searchTransitiveRelations()
     transitiveRelationSearchFinished();
 }
 
-void GraphicsScene::handleZoomFactorChanged(int zoomFactor)
+void GraphicsScene::handleViewPortChanged()
 {
-    if (zoomFactor >= PREFERRED_ZOOM_FACTOR) {
-        zoomFactor = PREFERRED_ZOOM_FACTOR;
-    }
-    if (m_zoomFactorInPercent != zoomFactor) { // no need to update if already preferred
-        m_zoomFactorInPercent = zoomFactor;
-        updateBoundingRect();
-    }
+    updateBoundingRect();
 }
 void GraphicsScene::updateBoundingRect()
 {
-    qreal widthAdjust = ((itemsBoundingRect().width() * (m_zoomFactorInPercent / 100.0))) / 2;
-    qreal heightAdjust = ((itemsBoundingRect().height() * (m_zoomFactorInPercent / 100.0))) / 2;
+    // View "0" is the main view, view "1" is the minimap.
+    QGraphicsView *graphicsView = views().at(0);
+
+    // The viewport
+    QRectF viewPortRect = graphicsView->mapToScene(graphicsView->viewport()->geometry()).boundingRect();
+
+    // The width and height of viewport
+    qreal viewPortWidth = viewPortRect.width();
+    qreal viewPortHeight = viewPortRect.height();
+
+    // The width and height of items bounding rectangle
+    qreal itemsBoundingRectWidth = itemsBoundingRect().width();
+    qreal itemsBoundingRectHeight = itemsBoundingRect().height();
+
+    // Take whichever is smaller (the viewport or the bounding rectangle), and adjust the scene rect accordingly:
+    auto const ADJUST_PCT = 0.5;
+    qreal widthAdjust = qMin(viewPortWidth, itemsBoundingRectWidth) * ADJUST_PCT;
+    qreal heightAdjust = qMin(viewPortHeight, itemsBoundingRectHeight) * ADJUST_PCT;
+
     setSceneRect(itemsBoundingRect().adjusted(-widthAdjust, -heightAdjust, widthAdjust, heightAdjust));
 }
 

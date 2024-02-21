@@ -93,7 +93,7 @@ GraphicsView::GraphicsView(NodeStorage& nodeStorage, lvtprj::ProjectFile const& 
     connect(this,
             &Codethink::lvtqtc::GraphicsView::zoomFactorChanged,
             d->scene,
-            &lvtqtc::GraphicsScene::handleZoomFactorChanged);
+            &lvtqtc::GraphicsScene::handleViewPortChanged);
 
     setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOn);
     setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOn);

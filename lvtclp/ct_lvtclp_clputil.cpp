@@ -50,6 +50,19 @@ namespace {
 
 using namespace Codethink;
 
+template<typename T>
+std::set<T> getUnion(const std::set<T>& a, const std::set<T>& b)
+{
+    std::set<T> result = a;
+    result.insert(b.begin(), b.end());
+    return result;
+}
+
+const std::set<std::string> headerExtensions({".h", ".hh", ".h++", ".hpp", ".H"});
+const std::set<std::string> sourceExtensions({".cpp", ".c", ".C", ".c++", ".cc", ".cxx", ".t.cpp", ".moc"});
+const std::set<std::string> otherExtensions({".dep", ".mem", ".o", ".swp", ".md", ".txt", ""});
+const std::set<std::string> allCppExtensions = getUnion(headerExtensions, sourceExtensions);
+
 lvtmdb::PackageObject *getSourcePackage(const std::string& qualifiedName,
                                         std::string name,
                                         std::string diskPath,
@@ -333,10 +346,6 @@ FileType ClpUtil::categorisePath(const std::string& file)
     const std::filesystem::path path(file);
     const std::string ext = path.extension().string();
 
-    static const std::set<std::string> headerExtensions({".h", ".hh", ".h++", ".hpp"});
-    static const std::set<std::string> sourceExtensions({".cpp", ".c", ".C", ".c++", ".cc", ".cxx", ".t.cpp"});
-    static const std::set<std::string> otherExtensions({".dep", ".mem", ".o", ".swp", ".md", ".txt", ""});
-
     if (headerExtensions.count(ext)) {
         return FileType::e_Header;
     }
@@ -390,18 +399,6 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
 void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::CompilationDatabase& db,
                                                          const std::filesystem::path& buildDir)
 {
-    static std::set<std::string> accepted_suffixes = {
-        ".c",
-        ".h",
-        ".cc",
-        ".cpp",
-        ".hpp",
-        ".hh",
-        ".C",
-        ".cxx",
-        ".H",
-    };
-
     for (clang::tooling::CompileCommand cmd : db.getAllCompileCommands()) {
         // resolve any relative paths
         std::filesystem::path filename(cmd.Filename);
@@ -411,7 +408,7 @@ void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::C
         cmd.Filename = filename.string();
 
         auto ext = filename.extension().string();
-        if (!accepted_suffixes.contains(ext)) {
+        if (!allCppExtensions.contains(ext)) {
             continue;
         }
 

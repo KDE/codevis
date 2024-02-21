@@ -1190,21 +1190,26 @@ void LakosEntity::mousePressEvent(QGraphicsSceneMouseEvent *ev)
 
     qDebug() << "LakosEntity MousePressEvent" << QString::fromStdString(name());
 
-    if (ev->button() != Qt::LeftButton || ev->modifiers() != Qt::KeyboardModifier::NoModifier) {
-        ev->ignore();
+    if (ev->button() == Qt::LeftButton && ev->modifiers() == Qt::KeyboardModifier::NoModifier) {
+        startDrag(mapToScene(ev->pos()));
         return;
     }
 
-    startDrag(mapToScene(ev->pos()));
+    if (ev->button() == Qt::LeftButton
+        && (ev->modifiers() & Preferences::multiSelectModifier()
+            || Preferences::multiSelectModifier() == Qt::KeyboardModifier::NoModifier)) {
+        Q_EMIT requestMultiSelectActivation(mapToScene(ev->pos()).toPoint());
+        return;
+    }
+
+    ev->ignore();
 }
 
 void LakosEntity::mouseMoveEvent(QGraphicsSceneMouseEvent *ev)
 {
-    if (!s_isDraggingItem) {
-        return;
+    if (s_isDraggingItem) {
+        doDrag(mapToScene(ev->pos()));
     }
-
-    doDrag(mapToScene(ev->pos()));
 }
 
 void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)

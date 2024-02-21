@@ -26,14 +26,18 @@ namespace Codethink::lvtqtw {
 CodeVisStatusBar::CodeVisStatusBar():
     m_labelPan(new QPushButton(this)),
     m_labelZoom(new QPushButton(this)),
+    m_labelMultiSelect(new QPushButton(this)),
     m_labelParseCodebaseWindowStatus(new QPushButton(this))
 {
     addWidget(m_labelPan);
     addWidget(m_labelZoom);
+    addWidget(m_labelMultiSelect);
     m_labelPan->setFlat(true);
     m_labelZoom->setFlat(true);
+    m_labelMultiSelect->setFlat(true);
     connect(m_labelPan, &QPushButton::clicked, this, &CodeVisStatusBar::mouseInteractionLabelClicked);
     connect(m_labelZoom, &QPushButton::clicked, this, &CodeVisStatusBar::mouseInteractionLabelClicked);
+    connect(m_labelMultiSelect, &QPushButton::clicked, this, &CodeVisStatusBar::mouseInteractionLabelClicked);
 
     addWidget(new QLabel(" | ", this));
 
@@ -49,9 +53,13 @@ CodeVisStatusBar::CodeVisStatusBar():
     connect(Preferences::self(), &Preferences::zoomModifierChanged, this, [this] {
         updateZoomText(Preferences::zoomModifier());
     });
+    connect(Preferences::self(), &Preferences::multiSelectModifierChanged, this, [this] {
+        updateMultiSelectText(Preferences::multiSelectModifier());
+    });
 
     updatePanText(Preferences::panModifier());
     updateZoomText(Preferences::zoomModifier());
+    updateMultiSelectText(Preferences::multiSelectModifier());
 }
 
 void CodeVisStatusBar::updatePanText(int newModifier)
@@ -71,6 +79,17 @@ void CodeVisStatusBar::updateZoomText(int newModifier)
         m_labelZoom->setText(tr("Zoom: Wheel"));
     } else {
         m_labelZoom->setText(tr("Zoom: %1 + Wheel").arg(ModifierHelpers::modifierToText(modifier)));
+    }
+}
+
+void CodeVisStatusBar::updateMultiSelectText(int newModifier)
+{
+    auto modifier = static_cast<Qt::KeyboardModifier>(newModifier);
+    if (modifier == Qt::KeyboardModifier::NoModifier) {
+        m_labelMultiSelect->setText(tr("Multiple Select: Click and Drag"));
+    } else {
+        m_labelMultiSelect->setText(
+            tr("Multiple Select: %1 + Click and Drag").arg(ModifierHelpers::modifierToText(modifier)));
     }
 }
 

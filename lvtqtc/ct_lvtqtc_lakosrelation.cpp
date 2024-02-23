@@ -433,9 +433,9 @@ void LakosRelation::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     if (d->relationFlags & EdgeCollection::RelationFlags::RelationIsHighlighted
         || d->relationFlags & EdgeCollection::RelationFlags::RelationIsSelected) {
-        setZValue(99);
+        setZValue(QtcUtil::e_EDGE_HIGHLIGHED_LAYER);
     } else {
-        setZValue(1);
+        setZValue(QtcUtil::e_EDGE_LAYER);
     }
 }
 

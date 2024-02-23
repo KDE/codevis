@@ -1978,7 +1978,7 @@ QList<LakosEntity *> LakosEntity::parentHierarchy() const
 
 void LakosEntity::updateZLevel()
 {
-    setZValue(isSelected() ? 100 : 1);
+    setZValue(isSelected() ? QtcUtil::e_NODE_SELECTED_LAYER : QtcUtil::e_NODE_LAYER);
 }
 
 void LakosEntity::levelizationLayout(LevelizationLayoutType type, int direction, std::optional<QPointF> moveToPosition)

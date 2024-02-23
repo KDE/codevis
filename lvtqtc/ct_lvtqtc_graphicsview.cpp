@@ -656,13 +656,10 @@ void GraphicsView::updateMultiSelect(const QPoint& position)
     static QSet<LakosEntity *> oldSelection;
 
     // Fill currentSelection with all LakosEntities in selection
-    const auto itemsInSelection = items(selection, Qt::IntersectsItemBoundingRect);
+    const auto itemsInSelection = items(selection, Qt::ContainsItemBoundingRect);
     for (QGraphicsItem *item : itemsInSelection) {
         if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(item)) {
-            // Don't select the entity if the selection is fully inside that entity
-            if (!mapFromScene(item->sceneBoundingRect()).boundingRect().contains(selection, true)) {
-                currentSelection.insert(lEntity);
-            }
+            currentSelection.insert(lEntity);
         }
     }
 

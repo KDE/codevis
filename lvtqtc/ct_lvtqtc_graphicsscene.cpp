@@ -360,10 +360,11 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
                          auto *newParentEntity = findLakosEntityFromUid(newParent->uid());
                          if (oldParentEntity && !newParentEntity) {
                              // Entity must vanish from this scene, as it doesn't have the other parent to go to.
-                             removeItem(entity);
+                             unloadEntity(entity);
                          } else if (newParentEntity) {
                              // Setting the new parent will automatically update the old parent if it is in this scene.
                              entity->setParentItem(newParentEntity);
+                             entity->recursiveEdgeRelayout();
                          }
                      });
 

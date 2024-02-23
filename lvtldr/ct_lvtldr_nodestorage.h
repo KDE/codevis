@@ -155,11 +155,11 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
 
     cpp::result<void, ErrorRemoveEntity> removeLogicalEntity(LakosianNode *node);
 
-    [[nodiscard]] cpp::result<void, ErrorAddPhysicalDependency> addPhysicalDependency(LakosianNode *source,
-                                                                                      LakosianNode *target);
+    [[nodiscard]] cpp::result<void, ErrorAddPhysicalDependency>
+    addPhysicalDependency(LakosianNode *source, LakosianNode *target, bool emitSignals = true);
 
-    [[nodiscard]] cpp::result<void, ErrorRemovePhysicalDependency> removePhysicalDependency(LakosianNode *source,
-                                                                                            LakosianNode *target);
+    [[nodiscard]] cpp::result<void, ErrorRemovePhysicalDependency>
+    removePhysicalDependency(LakosianNode *source, LakosianNode *target, bool emitSignals = true);
 
     [[nodiscard]] cpp::result<void, ErrorAddLogicalRelation>
     addLogicalRelation(TypeNode *source, TypeNode *target, lvtshr::LakosRelationType type);

@@ -360,10 +360,11 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
                          auto *newParentEntity = findLakosEntityFromUid(newParent->uid());
                          if (oldParentEntity && !newParentEntity) {
                              // Entity must vanish from this scene, as it doesn't have the other parent to go to.
-                             removeItem(entity);
+                             unloadEntity(entity);
                          } else if (newParentEntity) {
                              // Setting the new parent will automatically update the old parent if it is in this scene.
                              entity->setParentItem(newParentEntity);
+                             entity->recursiveEdgeRelayout();
                          }
                      });
 
@@ -1397,9 +1398,32 @@ void GraphicsScene::searchTransitiveRelations()
     transitiveRelationSearchFinished();
 }
 
+void GraphicsScene::handleViewportChanged()
+{
+    updateBoundingRect();
+}
 void GraphicsScene::updateBoundingRect()
 {
-    setSceneRect(itemsBoundingRect().adjusted(-20, -20, 20, 20));
+    // View "0" is the main view, view "1" is the minimap.
+    QGraphicsView *graphicsView = views().at(0);
+
+    // The viewport
+    QRectF viewportRect = graphicsView->mapToScene(graphicsView->viewport()->geometry()).boundingRect();
+
+    // The width and height of viewport
+    qreal viewportWidth = viewportRect.width();
+    qreal viewportHeight = viewportRect.height();
+
+    // The width and height of items bounding rectangle
+    qreal itemsBoundingRectWidth = itemsBoundingRect().width();
+    qreal itemsBoundingRectHeight = itemsBoundingRect().height();
+
+    // Take whichever is smaller (the viewport or the bounding rectangle), and adjust the scene rect accordingly:
+    auto const ADJUST_PCT = 0.5;
+    qreal widthAdjust = qMin(viewportWidth, itemsBoundingRectWidth) * ADJUST_PCT;
+    qreal heightAdjust = qMin(viewportHeight, itemsBoundingRectHeight) * ADJUST_PCT;
+
+    setSceneRect(itemsBoundingRect().adjusted(-widthAdjust, -heightAdjust, widthAdjust, heightAdjust));
 }
 
 void GraphicsScene::transitiveRelationSearchFinished()

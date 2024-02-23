@@ -641,19 +641,46 @@ TEST_CASE("Reparent entity on NodeStorage")
     auto *a = nodeStorage.addPackage("a", "a").value();
     auto *b = nodeStorage.addPackage("b", "b").value();
     auto *aa = nodeStorage.addComponent("aa", "aa", a).value();
+    auto *ab = nodeStorage.addComponent("ab", "ab", a).value();
     (void) nodeStorage.addLogicalEntity("some_class", "some_class", aa, Codethink::lvtshr::UDTKind::Class).value();
+    (void) nodeStorage.addPhysicalDependency(aa, ab);
 
     REQUIRE(aa->parent() == a);
-    REQUIRE(a->children().size() == 1);
-    REQUIRE(a->children()[0] == aa);
+    REQUIRE(ab->parent() == a);
+    REQUIRE(a->children().size() == 2);
     REQUIRE(b->children().empty());
+    REQUIRE(!a->hasProvider(b));
+    REQUIRE(!b->hasProvider(a));
 
-    nodeStorage.reparentEntity(aa, b).expect(".");
+    nodeStorage.reparentEntity(aa, b).expect("Unexpected: Reparent failed");
 
     REQUIRE(aa->parent() == b);
+    REQUIRE(ab->parent() == a);
+    REQUIRE(a->children().size() == 1);
     REQUIRE(b->children().size() == 1);
-    REQUIRE(b->children()[0] == aa);
+    REQUIRE(!a->hasProvider(b));
+    REQUIRE(b->hasProvider(a));
+
+    // Move back to original package
+    nodeStorage.reparentEntity(aa, a).expect("Unexpected: Reparent failed");
+
+    REQUIRE(aa->parent() == a);
+    REQUIRE(ab->parent() == a);
+    REQUIRE(a->children().size() == 2);
+    REQUIRE(b->children().empty());
+    REQUIRE(!a->hasProvider(b));
+    REQUIRE(!b->hasProvider(a));
+
+    // Move both to ab
+    nodeStorage.reparentEntity(aa, b).expect("Unexpected: Reparent failed");
+    nodeStorage.reparentEntity(ab, b).expect("Unexpected: Reparent failed");
+
+    REQUIRE(aa->parent() == b);
+    REQUIRE(ab->parent() == b);
     REQUIRE(a->children().empty());
+    REQUIRE(b->children().size() == 2);
+    REQUIRE(!a->hasProvider(b));
+    REQUIRE(!b->hasProvider(a));
 }
 
 TEST_CASE("Check Lakosian nodes")

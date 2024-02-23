@@ -31,7 +31,9 @@
 
 #include <iostream>
 #include <optional>
+#include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 
 using namespace Codethink::lvtldr;
 using namespace Codethink::lvtshr;
@@ -332,8 +334,8 @@ cpp::result<void, ErrorRemoveEntity> NodeStorage::removeLogicalEntity(LakosianNo
     return {};
 }
 
-cpp::result<void, ErrorAddPhysicalDependency> NodeStorage::addPhysicalDependency(LakosianNode *source,
-                                                                                 LakosianNode *target)
+cpp::result<void, ErrorAddPhysicalDependency>
+NodeStorage::addPhysicalDependency(LakosianNode *source, LakosianNode *target, bool emitSignals)
 {
     using Kind = ErrorAddPhysicalDependency::Kind;
 
@@ -420,13 +422,15 @@ cpp::result<void, ErrorAddPhysicalDependency> NodeStorage::addPhysicalDependency
     source->invalidateProviders();
     target->invalidateClients();
 
-    Q_EMIT physicalDependencyAdded(source, target);
-    Q_EMIT storageChanged();
+    if (emitSignals) {
+        Q_EMIT physicalDependencyAdded(source, target);
+        Q_EMIT storageChanged();
+    }
     return {};
 }
 
-cpp::result<void, ErrorRemovePhysicalDependency> NodeStorage::removePhysicalDependency(LakosianNode *source,
-                                                                                       LakosianNode *target)
+cpp::result<void, ErrorRemovePhysicalDependency>
+NodeStorage::removePhysicalDependency(LakosianNode *source, LakosianNode *target, bool emitSignals)
 {
     using Kind = ErrorRemovePhysicalDependency::Kind;
 
@@ -463,8 +467,10 @@ cpp::result<void, ErrorRemovePhysicalDependency> NodeStorage::removePhysicalDepe
     source->invalidateProviders();
     target->invalidateClients();
 
-    Q_EMIT physicalDependencyRemoved(source, target);
-    Q_EMIT storageChanged();
+    if (emitSignals) {
+        Q_EMIT physicalDependencyRemoved(source, target);
+        Q_EMIT storageChanged();
+    }
     return {};
 }
 
@@ -577,8 +583,10 @@ cpp::result<void, ErrorReparentEntity> NodeStorage::reparentEntity(LakosianNode 
     }
 
     auto *oldParent = dynamic_cast<PackageNode *>(entity->parent());
-    for (auto *udt : entity->children()) {
-        dynamic_cast<TypeNode *>(udt)->setParentPackageId(newParent->id());
+    for (auto *child : entity->children()) {
+        if (auto *udt = dynamic_cast<TypeNode *>(child); udt != nullptr) {
+            udt->setParentPackageId(newParent->id());
+        }
     }
     dynamic_cast<ComponentNode *>(entity)->setParentPackageId(newParent->id());
     oldParent->removeChild(entity);
@@ -589,7 +597,69 @@ cpp::result<void, ErrorReparentEntity> NodeStorage::reparentEntity(LakosianNode 
     newParent->invalidateChildren();
     entity->invalidateParent();
 
+    // Update new parent dependencies
+    // /!\ Important note: emitSignals must be *false* to avoid calling signals in an intermediary state.
+    // Emitting signals at this point may cause crashes because the entities are not fully resolved!
+    auto delayedAddPhysicalDependencySignals = std::vector<std::tuple<LakosianNode *, LakosianNode *>>{};
+    for (auto const& dependency : entity->providers()) {
+        // Add new physical dependency, ignore any errors such as dependency already exists
+        auto result = addPhysicalDependency(newParent, dependency.other()->parent(), /*emitSignals=*/false);
+        if (!result.has_error()) {
+            delayedAddPhysicalDependencySignals.emplace_back(newParent, dependency.other()->parent());
+        }
+    }
+    for (auto const& dependency : entity->clients()) {
+        // Add new physical dependency, ignore any errors such as dependency already exists
+        auto result = addPhysicalDependency(dependency.other()->parent(), newParent, /*emitSignals=*/false);
+        if (!result.has_error()) {
+            delayedAddPhysicalDependencySignals.emplace_back(dependency.other()->parent(), newParent);
+        }
+    }
+
+    // Update old parent dependencies
+    // /!\ Important note: emitSignals must be *false* to avoid calling signals in an intermediary state.
+    // Emitting signals at this point may cause crashes because the entities are not fully resolved!
+    auto delayedRemovePhysicalDependencySignals = std::vector<std::tuple<LakosianNode *, LakosianNode *>>{};
+    {
+        auto oldParentProvidersLookupTable = std::unordered_set<LakosianNode *>{};
+        for (auto const& child : oldParent->children()) {
+            for (auto const& dependency : child->providers()) {
+                oldParentProvidersLookupTable.insert(dependency.other());
+            }
+        }
+        for (auto const& dependency : entity->providers()) {
+            if (!oldParentProvidersLookupTable.contains(dependency.other())) {
+                auto result = removePhysicalDependency(oldParent, dependency.other()->parent(), /*emitSignals=*/false);
+                if (!result.has_error()) {
+                    delayedRemovePhysicalDependencySignals.emplace_back(oldParent, dependency.other()->parent());
+                }
+            }
+        }
+    }
+    {
+        auto oldParentClientsLookupTable = std::unordered_set<LakosianNode *>{};
+        for (auto const& child : oldParent->children()) {
+            for (auto const& dependency : child->clients()) {
+                oldParentClientsLookupTable.insert(dependency.other());
+            }
+        }
+        for (auto const& dependency : entity->clients()) {
+            if (!oldParentClientsLookupTable.contains(dependency.other())) {
+                auto result = removePhysicalDependency(dependency.other()->parent(), oldParent, /*emitSignals=*/false);
+                if (!result.has_error()) {
+                    delayedRemovePhysicalDependencySignals.emplace_back(dependency.other()->parent(), oldParent);
+                }
+            }
+        }
+    }
+
     Q_EMIT entityReparent(entity, oldParent, newParent);
+    for (auto const& [fromEntity, toEntity] : delayedAddPhysicalDependencySignals) {
+        Q_EMIT physicalDependencyAdded(fromEntity, toEntity);
+    }
+    for (auto const& [fromEntity, toEntity] : delayedRemovePhysicalDependencySignals) {
+        Q_EMIT physicalDependencyRemoved(fromEntity, toEntity);
+    }
     Q_EMIT storageChanged();
     return {};
 }

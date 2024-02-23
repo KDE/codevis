@@ -181,6 +181,9 @@ struct LakosEntity::Private {
     bool showBackground = true;
     // are we showing the bg?
 
+    std::optional<qreal> originalZValue;
+    // holds the original ZValue before changing temporarily (due to hovering, etc.)
+
     lvtldr::LakosianNode *node = nullptr;
     // the in-memory node that represents this visual node
 
@@ -1320,6 +1323,8 @@ void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
             setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue(), 180)));
         }
     }
+    d->originalZValue = zValue();
+    setZValue(QtcUtil::e_NODE_HOVER_LAYER);
 }
 
 void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
@@ -1340,6 +1345,10 @@ void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
             const QColor& thisColor = thisBrush.color();
             setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue())));
         }
+    }
+    if (d->originalZValue.has_value()) {
+        setZValue(d->originalZValue.value());
+        d->originalZValue = std::nullopt;
     }
 }
 
@@ -1969,7 +1978,7 @@ QList<LakosEntity *> LakosEntity::parentHierarchy() const
 
 void LakosEntity::updateZLevel()
 {
-    setZValue(isSelected() ? 100 : 1);
+    setZValue(isSelected() ? QtcUtil::e_NODE_SELECTED_LAYER : QtcUtil::e_NODE_LAYER);
 }
 
 void LakosEntity::levelizationLayout(LevelizationLayoutType type, int direction, std::optional<QPointF> moveToPosition)

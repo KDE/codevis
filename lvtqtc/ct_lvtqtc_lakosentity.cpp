@@ -181,6 +181,9 @@ struct LakosEntity::Private {
     bool showBackground = true;
     // are we showing the bg?
 
+    std::optional<qreal> originalZValue;
+    // holds the original ZValue before changing temporarily (due to hovering, etc.)
+
     lvtldr::LakosianNode *node = nullptr;
     // the in-memory node that represents this visual node
 
@@ -1320,6 +1323,7 @@ void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
             setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue(), 180)));
         }
     }
+    d->originalZValue = zValue();
     setZValue(QtcUtil::e_NODE_HOVER_LAYER);
 }
 
@@ -1342,7 +1346,10 @@ void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
             setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue())));
         }
     }
-    setZValue(QtcUtil::e_NODE_LAYER);
+    if (d->originalZValue.has_value()) {
+        setZValue(d->originalZValue.value());
+        d->originalZValue = std::nullopt;
+    }
 }
 
 void LakosEntity::updateBackground()

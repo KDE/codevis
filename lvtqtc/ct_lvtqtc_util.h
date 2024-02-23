@@ -43,6 +43,7 @@ struct LVTQTC_EXPORT QtcUtil {
 
     enum {
         e_INFORMATION = 100,
+        e_NODE_HOVER_LAYER = 11,
         e_EDGE_LAYER = 10,
         e_NODE_LAYER = 1,
     };

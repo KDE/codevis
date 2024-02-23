@@ -1320,6 +1320,7 @@ void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
             setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue(), 180)));
         }
     }
+    setZValue(QtcUtil::e_NODE_HOVER_LAYER);
 }
 
 void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
@@ -1341,6 +1342,7 @@ void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
             setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue())));
         }
     }
+    setZValue(QtcUtil::e_NODE_LAYER);
 }
 
 void LakosEntity::updateBackground()

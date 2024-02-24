@@ -160,6 +160,9 @@ void LakosRelation::setColor(QColor const& newColor)
     }
 
     d->color = newColor;
+    setInnerBrushColor(d->head, d->color);
+    setInnerBrushColor(d->tail, d->color);
+
     update();
 }
 
@@ -497,26 +500,26 @@ void LakosRelation::toggleRelationFlags(EdgeCollection::RelationFlags flags, boo
     const auto overrideC = overrideColor();
     auto const color = overrideC.isValid() ? overrideC : d->color;
 
-    auto updateQGraphicsPathItemColor = [](QGraphicsPathItem *item, QColor const& color) {
-        if (item == nullptr) {
-            return;
-        }
-
-        auto headPen = item->pen();
-        headPen.setColor(color);
-        item->setPen(headPen);
-
-        auto headBrush = item->brush();
-        headBrush.setColor(color);
-        item->setBrush(headBrush);
-
-        item->update();
-    };
-
-    updateQGraphicsPathItemColor(d->head, color);
-    updateQGraphicsPathItemColor(d->tail, color);
+    setInnerBrushColor(d->head, color);
+    setInnerBrushColor(d->tail, color);
 
     update();
+}
+
+void LakosRelation::setInnerBrushColor(QGraphicsPathItem *innerItem, const QColor& color)
+{
+    if (innerItem == nullptr) {
+        return;
+    }
+
+    auto pen = innerItem->pen();
+    pen.setColor(color);
+    innerItem->setPen(pen);
+
+    auto brush = innerItem->brush();
+    brush.setColor(color);
+    innerItem->setBrush(brush);
+    innerItem->update();
 }
 
 void LakosRelation::setThickness(qreal thickness)

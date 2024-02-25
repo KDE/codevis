@@ -601,8 +601,8 @@ std::string LakosRelation::legendText() const
         const std::string x2 = std::to_string(d->adjustedLine.p2().x());
         const std::string y1 = std::to_string(d->adjustedLine.p1().y());
         const std::string y2 = std::to_string(d->adjustedLine.p2().y());
-
         ret += "From: (" + x1 + "," + y1 + ") to (" + x2 + "," + y2 + ")\n";
+        ret += "Has Parent? " + std::to_string(!!parentObject());
     }
 
     return ret;

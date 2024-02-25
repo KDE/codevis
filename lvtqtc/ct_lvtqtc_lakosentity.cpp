@@ -1776,14 +1776,14 @@ std::string LakosEntity::legendText() const
     information += "\n";
 
     auto displayEdgesLambda =
-        [](const std::string& none, const std::string& some, std::string& information, auto& edges) {
+        [](const std::string& none, const std::string& some, std::string& information, auto& edges, bool fromThisEdge) {
             if (edges.empty()) {
                 information += none + '\n';
             } else {
                 information += some + ": " + std::to_string(edges.size()) + '\n';
                 std::string edge_names;
                 for (auto& edge : edges) {
-                    edge_names += edge->to()->name() + " ";
+                    edge_names += (fromThisEdge ? edge->to()->name() : edge->from()->name()) + " ";
                     if (edge_names.size() > 40) {
                         information += edge_names + "\n";
                         edge_names = std::string{};
@@ -1793,9 +1793,9 @@ std::string LakosEntity::legendText() const
             }
         };
 
-    displayEdgesLambda("No outgoing edges", "Connections from this node", information, d->edges);
+    displayEdgesLambda("No outgoing edges", "Connections from this node", information, d->edges, true);
     information += "\n";
-    displayEdgesLambda("No incoming edges", "Connections to this node", information, d->targetEdges);
+    displayEdgesLambda("No incoming edges", "Connections to this node", information, d->targetEdges, false);
     information += "\n";
 
     return information;

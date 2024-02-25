@@ -1735,6 +1735,10 @@ QJsonObject GraphicsScene::toJson() const
         }
     }
     return {
+        {"x", sceneRect().x()},
+        {"y", sceneRect().y()},
+        {"width", sceneRect().width()},
+        {"height", sceneRect().height()},
         {"elements", array},
         {"transitive_visibility", d->showTransitive},
     };
@@ -1769,6 +1773,14 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
 {
     Q_EMIT graphLoadStarted();
     clearGraph();
+
+    const auto x = doc["x"].toInt();
+    const auto y = doc["y"].toInt();
+    const auto w = doc["width"].toInt();
+    const auto h = doc["height"].toInt();
+
+    setSceneRect(x, y, w, h);
+
     const auto elements = doc["elements"].toArray();
 
     for (const auto& element : elements) {

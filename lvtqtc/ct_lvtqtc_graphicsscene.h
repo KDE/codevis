@@ -166,7 +166,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     void reLayout();
     // runs the layout algorithm again, on the current loaded graph.
 
-    void pannelCollapse();
     void enableLayoutUpdates();
     void layoutDone();
     [[nodiscard]] QString fetchErrorMessage() const;
@@ -218,7 +217,8 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     LakosEntity *findLakosEntityFromUid(lvtshr::UniqueId uid) const;
 
-    void collapseSecondaryEntities();
+    void expandToplevelEntities();
+    void collapseToplevelEntities();
 
     void loadEntity(lvtshr::UniqueId uuid, UnloadDepth depth);
     void unloadEntity(lvtshr::UniqueId uuid, UnloadDepth depth);

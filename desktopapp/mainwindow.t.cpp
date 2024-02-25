@@ -92,7 +92,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
 
     auto *view = window().findChild<GraphicsView *>();
     auto *scene = qobject_cast<GraphicsScene *>(view->scene());
-    scene->collapseSecondaryEntities();
+    scene->collapseToplevelEntities();
     REQUIRE(relation);
     REQUIRE(relation->isVisible());
 }

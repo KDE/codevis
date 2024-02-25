@@ -399,11 +399,21 @@ std::vector<LakosEntity *> GraphicsScene::selectedEntities() const
 }
 
 // TODO: Pass the entity that we don't want to collapse here.'
-void GraphicsScene::collapseSecondaryEntities()
+void GraphicsScene::collapseToplevelEntities()
 {
     for (LakosEntity *entity : d->verticesVec) {
         if (entity->parentItem() == nullptr) {
             entity->shrink(QtcUtil::CreateUndoAction::e_No);
+        }
+    }
+    reLayout();
+}
+
+void GraphicsScene::expandToplevelEntities()
+{
+    for (LakosEntity *entity : d->verticesVec) {
+        if (entity->parentItem() == nullptr) {
+            entity->expand(QtcUtil::CreateUndoAction::e_No);
         }
     }
     reLayout();
@@ -1343,9 +1353,20 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         });
     }
     {
-        auto *action = menu.addAction(tr("Collapse Entities"));
+        auto *action = menu.addAction(tr("Collapse Toplevel"));
         connect(action, &QAction::triggered, this, [this] {
-            collapseSecondaryEntities();
+            collapseToplevelEntities();
+        });
+
+        action = menu.addAction(tr("Expand Toplevel"));
+        connect(action, &QAction::triggered, this, [this] {
+            expandToplevelEntities();
+        });
+
+        action = menu.addAction(tr("Quick fix edges"));
+        connect(action, &QAction::triggered, this, [this] {
+            collapseToplevelEntities();
+            expandToplevelEntities();
         });
     }
     if (debugMenu) {

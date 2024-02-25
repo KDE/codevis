@@ -101,7 +101,16 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
     void displayStopError();
     void resetUiForNextParse();
     // helper methods to simplify the endParse step
+    enum BuildFolderValidationResult {
+        BuildFolderOk,
+        CompileCommandsJsonNotFound,
+        NoBuildFolderProvided,
+        WslBuildFolder
+    };
+    enum SourceFolderValidationResult { NoSourceFolderProvided, SourceFolderOk, WslSourceFolder };
 
+    SourceFolderValidationResult validateSourceFolder(const QString& sourceFolder);
+    BuildFolderValidationResult validateCompileCommandsFolder(const QString& compileCommandsFolder);
     void validateUserInputFolders();
 
     Q_SLOT void processingFileNotification(const QString& path);

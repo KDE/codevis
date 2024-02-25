@@ -112,6 +112,18 @@ QString createSysinfoFileAt(const QString& lPath, const QString& ignorePattern)
     return lPath + QDir::separator() + "system_information.txt";
 }
 
+bool is_wsl_string(const QString& text)
+{
+    const auto wslStr = std::string{"wsl://"};
+    return text.startsWith(wslStr.c_str());
+}
+
+bool file_exists(const QString& file_path)
+{
+    QFileInfo inf(file_path);
+    return inf.exists();
+}
+
 } // namespace
 
 struct PkgMappingDialog : public QDialog {
@@ -368,55 +380,73 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     validateUserInputFolders();
 }
 
+ParseCodebaseDialog::SourceFolderValidationResult ParseCodebaseDialog::validateSourceFolder(const QString& sourceFolder)
+{
+    if (sourceFolder.isEmpty()) {
+        return SourceFolderValidationResult::NoSourceFolderProvided;
+    } else if (is_wsl_string(sourceFolder)) {
+        return SourceFolderValidationResult::WslSourceFolder;
+    } else {
+        return SourceFolderValidationResult::SourceFolderOk;
+    }
+}
+
+ParseCodebaseDialog::BuildFolderValidationResult
+ParseCodebaseDialog::validateCompileCommandsFolder(const QString& compileCommandsFolder)
+{
+    if (compileCommandsFolder.isEmpty()) {
+        return BuildFolderValidationResult::NoBuildFolderProvided;
+    } else if (is_wsl_string(compileCommandsFolder)) {
+        return BuildFolderValidationResult::WslBuildFolder;
+    } else if (!file_exists(compileCommandsFolder + QDir::separator() + "compile_commands.json")) {
+        return BuildFolderValidationResult::CompileCommandsJsonNotFound;
+    } else {
+        return BuildFolderValidationResult::BuildFolderOk;
+    }
+}
+
 void ParseCodebaseDialog::validateUserInputFolders()
 {
-    // a QValidator will not allow the string to be set, but we need to tell the user the reason that
-    // the string was not set. So instead of using the `setValidator` calls on QLineEdit, we *accept*
-    // the wrong string, and if the validator is invalid, we display an error message, while also blocking
-    // the Parse button.
     const auto emptyErrorMsg = tr("This field can't be empty");
     const auto wslErrorMsg = tr("The software does not support wsl, use the native linux build.");
     const auto errorCss = QString("border: 1px solid red");
-    const auto missingCompileCommands = tr("The specified folder does not contains compile_commands.json");
-    const auto wslStr = std::string{"wsl://"};
-
+    const auto missingCompileCommands = tr("The specified folder does not contain compile_commands.json");
     bool disableParse = false;
-    QFileInfo inf(ui->compileCommandsFolder->text() + QDir::separator() + "compile_commands.json");
-    if (ui->compileCommandsFolder->text().isEmpty()) {
+    const auto build_folder_validation = validateCompileCommandsFolder(ui->compileCommandsFolder->text());
+    if (build_folder_validation == BuildFolderValidationResult::NoBuildFolderProvided) {
         ui->projectBuildFolderError->setVisible(true);
         ui->projectBuildFolderError->setText(emptyErrorMsg);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else if (!inf.exists()) {
-        ui->projectBuildFolderError->setVisible(true);
-        ui->projectBuildFolderError->setText(missingCompileCommands);
-        ui->compileCommandsFolder->setStyleSheet(errorCss);
-        disableParse = true;
-    } else if (ui->compileCommandsFolder->text().startsWith(wslStr.c_str())) {
+    } else if (build_folder_validation == BuildFolderValidationResult::WslBuildFolder) {
         ui->projectBuildFolderError->setVisible(true);
         ui->projectBuildFolderError->setText(wslErrorMsg);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else {
+    } else if (build_folder_validation == BuildFolderValidationResult::CompileCommandsJsonNotFound) {
+        ui->projectBuildFolderError->setVisible(true);
+        ui->projectBuildFolderError->setText(missingCompileCommands);
+        ui->compileCommandsFolder->setStyleSheet(errorCss);
+        disableParse = true;
+    } else if (build_folder_validation == BuildFolderValidationResult::BuildFolderOk) {
         ui->projectBuildFolderError->setVisible(false);
         ui->compileCommandsFolder->setStyleSheet(QString());
     }
-
-    if (ui->sourceFolder->text().isEmpty()) {
+    const auto source_folder_validation = validateSourceFolder(ui->sourceFolder->text());
+    if (source_folder_validation == SourceFolderValidationResult::NoSourceFolderProvided) {
         ui->projectSourceFolderError->setVisible(true);
         ui->projectSourceFolderError->setText(emptyErrorMsg);
         ui->sourceFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else if (ui->sourceFolder->text().startsWith(wslStr.c_str())) {
+    } else if (source_folder_validation == SourceFolderValidationResult::WslSourceFolder) {
         ui->projectSourceFolderError->setVisible(true);
         ui->projectSourceFolderError->setText(wslErrorMsg);
         ui->sourceFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else {
+    } else if (source_folder_validation == SourceFolderValidationResult::SourceFolderOk) {
         ui->projectSourceFolderError->setVisible(false);
         ui->sourceFolder->setStyleSheet(QString());
     }
-
     ui->btnParse->setDisabled(disableParse);
 }
 

@@ -48,10 +48,8 @@ macro(AddTargetLibrary)
         $<INSTALL_INTERFACE:include/lakos/${DTARGS_LIBRARY_NAME}>
     )
 
-    if (NOT ${KDE_FRAMEWORKS_IS_OLD})
-        install(TARGETS
-            ${DTARGS_LIBRARY_NAME}
-            DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
-        )
-    endif()
+    install(TARGETS
+        ${DTARGS_LIBRARY_NAME}
+        DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
+    )
 endmacro()

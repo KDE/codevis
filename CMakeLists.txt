@@ -318,6 +318,14 @@ if (ENABLE_PYTHON_PLUGINS)
     add_compile_definitions(ENABLE_PYTHON_PLUGINS=1)
 endif()
 
+if (KDE_FRAMEWORKS_IS_OLD)
+    set(KDE_INSTALL_TARGETS_DEFAULT_ARGS $CMAKE_INSTALL_PREFIX)
+    set(KDE_INSTALL_KNSRCDIR $CMAKE_INSTALL_PREFIX/share/knsrcfiles)
+    set(KDE_INSTALL_METAINFODIR $CMAKE_INSTALL_PREFIX/share/metainfo)
+    set(KDE_INSTALL_APPDIR $CMAKE_INSTALL_PREFIX/share/applications)
+    set(KDE_INSTALL_KNOTIFYRCDIR $CMAKE_INSTALL_PREFIX/share/knotifications5)
+endif()
+
 add_subdirectory(lvtcgn)
 add_subdirectory(lvtclp)
 add_subdirectory(lvtldr)
@@ -345,12 +353,10 @@ if (BUILD_DESKTOP_APP)
         $<INSTALL_INTERFACE:include/lakos/preferences>
     )
 
-    if (NOT ${KDE_FRAMEWORKS_IS_OLD})
-        install(TARGETS
-            lakospreferences
-            DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
-        )
-    endif()
+    install(TARGETS
+        lakospreferences
+        DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS}
+    )
 
     add_subdirectory(doc)
 

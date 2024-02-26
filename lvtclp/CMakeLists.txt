@@ -287,24 +287,9 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/autogen-test-variables.h
 )
 
-install(FILES
-    ${CMAKE_BINARY_DIR}/parse_bde.sh
-    PERMISSIONS
-        OWNER_READ
-        OWNER_WRITE
-        OWNER_EXECUTE
-        GROUP_READ
-        GROUP_EXECUTE
-        WORLD_READ
-        WORLD_EXECUTE
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-if (NOT ${KDE_FRAMEWORKS_IS_OLD})
-    install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-    install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-    install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-endif()
+install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 if (APPLE)
     # See desktopapp/CMakeLists.txt for copying the headers into the bundle

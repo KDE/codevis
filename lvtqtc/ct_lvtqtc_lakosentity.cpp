@@ -1978,11 +1978,11 @@ QList<LakosEntity *> LakosEntity::parentHierarchy() const
 
 void LakosEntity::updateZLevel()
 {
-    setZValue(isSelected() ? QtcUtil::e_NODE_SELECTED_LAYER : QtcUtil::e_NODE_LAYER);
-
-    // case: when Z level updated while mouse is hovering over entity, e.g. by double clicking
+    auto newZValue = isSelected() ? QtcUtil::e_NODE_SELECTED_LAYER : QtcUtil::e_NODE_LAYER;
     if (d->zValueBeforeHoverEnter.has_value()) {
-        d->zValueBeforeHoverEnter = zValue();
+        d->zValueBeforeHoverEnter = newZValue;
+    } else {
+        setZValue(newZValue);
     }
 }
 

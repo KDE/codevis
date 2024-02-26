@@ -179,6 +179,7 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void triggerRedo();
     Q_SLOT void bookmarkCurrentTab();
     Q_SLOT void bookmarksChanged();
+    Q_SLOT void onRecentListCleared();
 
     Q_SLOT void generateDatabaseReadyForUpdate();
     // database generation is ready to replace our database when it is next

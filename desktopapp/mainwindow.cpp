@@ -265,6 +265,8 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     setProjectWidgetsEnabled(false);
     setAcceptDrops(true);
     m_configPtr = KSharedConfig::openConfig();
+    KConfigGroup recentFilesGroup = m_configPtr->group("RecentFiles");
+    m_recentFilesAction->loadEntries(recentFilesGroup);
 }
 
 MainWindow::~MainWindow() noexcept = default;
@@ -527,6 +529,7 @@ void MainWindow::setupActions()
     KStandardAction::find(this, &MainWindow::requestSearch, actionCollection());
     KStandardAction::openNew(this, &MainWindow::newProject, actionCollection());
     m_recentFilesAction = KStandardAction::openRecent(this, &MainWindow::openFromRecentProjects, actionCollection());
+    connect(m_recentFilesAction, &KRecentFilesAction::recentListCleared, this, &MainWindow::onRecentListCleared);
     KStandardAction::close(this, &MainWindow::closeProject, actionCollection());
     KStandardAction::undo(this, &MainWindow::triggerUndo, actionCollection());
     KStandardAction::redo(this, &MainWindow::triggerRedo, actionCollection());
@@ -608,6 +611,7 @@ void MainWindow::closeProject()
     setProjectWidgetsEnabled(false);
 
     sharedNodeStorage.closeDatabase();
+    m_recentFilesAction->saveEntries(m_configPtr->group("RecentFiles"));
     cpp::result<void, Codethink::lvtprj::ProjectFileError> closed = d_projectFile.close();
     if (closed.has_error()) {
         showErrorMessage(
@@ -690,7 +694,6 @@ bool MainWindow::newProject()
 
 bool MainWindow::openFromRecentProjects(const QUrl& url)
 {
-    m_recentFilesAction->loadEntries(m_configPtr->group("RecentFiles")); // FIXME (ERTAN): NOT WORKING AS EXPECTED
     return openProjectFromPath(url.path());
 }
 
@@ -733,8 +736,6 @@ void MainWindow::saveProject()
         showErrorMessage(tr("Error saving project: %1").arg(QString::fromStdString(saved.error().errorMessage)));
         return;
     }
-    // FIXME (ERTAN): NOT WORKING AS EXPECTED
-    m_recentFilesAction->saveEntries(m_configPtr->group("RecentFiles"));
     Preferences::setLastDocument(QString::fromStdString(d_projectFile.location().string()));
 }
 
@@ -1520,6 +1521,22 @@ void MainWindow::bookmarksChanged()
 
     unplugActionList("bookmark_actionlist");
     plugActionList("bookmark_actionlist", actions);
+}
+
+void MainWindow::onRecentListCleared()
+{
+    KConfigGroup recentFilesGroup = m_configPtr->group("RecentFiles");
+
+    auto result = QMessageBox::question(this,
+                                        tr("Clear Recent List"),
+                                        tr("Do you want to clear recent list permanently?"),
+                                        QMessageBox::Button::Yes,
+                                        QMessageBox::Button::No);
+    if (result == QMessageBox::Button::No) {
+        // FIXME (ERTAN): the config is not removed here but the list is cleared anyways, think about a resolution for this. //***
+        return;
+    }
+    recentFilesGroup.deleteGroup();
 }
 
 void MainWindow::configurePluginDocks()

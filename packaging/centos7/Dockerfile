@@ -130,27 +130,9 @@ RUN git clone https://github.com/catchorg/Catch2.git \
     && cmake -Bbuild -H. -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr \
     && cmake --build build/ --target install
 
-RUN yum -y install python-devel
+RUN yum -y install python3-devel
 
 RUN rm -rf /codevis/
-
-# KDE / KF5 libraries  (Old work, kept for reference)
-#RUN wget https://www.cpan.org/src/5.0/perl-5.38.2.tar.gz
-#RUN tar -xvf perl-5.38.2.tar.gz && cd perl-5.38.2
-#RUN ./Configure -d -e
-#RUN make && make install
-#RUN mv /usr/local/bin/perl /usr/local/bin/perl.old
-#RUN ln -s /usr/local/bin/perl5.38.2 /usr/local/bin/perl
-#RUN mv /usr/bin/perl /usr/bin/perl.old
-#RUN ln -s /usr/local/bin/perl5.38.2 /usr/bin/perl
-#RUN mkdir /root/kde/src
-#WORKDIR /root/kde/src/
-#RUN git clone https://invent.kde.org/sdk/kdesrc-build.git
-#WORKDIR /root/kde/src/kdesrc-build/
-#RUN yum install -y dnf
-#    NOTE: kdesrc-build fails due to not-found packages.
-#          The solution was to avoid using kdesrc-build.
-#RUN yes | ./kdesrc-build --initial-setup
 
 # ECM
 WORKDIR /
@@ -173,7 +155,23 @@ RUN cd /karchive/ \
     && make \
     && make install
 
+# SQLite from yum is too old, so we compile from source
+WORKDIR /
+RUN git clone https://github.com/sqlite/sqlite.git
+RUN yum -y install tcl # SQLite build dependency
+RUN cd /sqlite/ \
+    && git checkout version-3.45.1 \
+    && mkdir -p build \
+    && cd build/ \
+    && ../configure \
+    && make \
+    && make install
+
 WORKDIR /
 ADD deploy.sh /
 RUN chmod +x /deploy.sh
-CMD ["/bin/bash", "/deploy.sh"]
+
+# See deploy.sh for options
+ENV BRANCH=""
+ENV CMAKE_ARGS=""
+CMD ["/bin/bash", "/deploy.sh", "$BRANCH", "$CMAKE_ARGS"]

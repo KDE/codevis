@@ -1,45 +1,61 @@
-EXTRA_CMAKE_OPTIONS="$1"
+while getopts b:c: flag
+do
+    case "${flag}" in
+        b) BRANCH=${OPTARG};;
+        c) CMAKE_ARGS=${OPTARG};;
+    esac
+done
+BRANCH=${BRANCH:-master}
+CMAKE_ARGS=${CMAKE_ARGS:-"-DQT_MAJOR_VERSION=5 -DBUILD_DESKTOP_APP=OFF -DENABLE_PLUGINS=OFF"}
+export CODEVIS_PKG_ARTIFACTS_PATH=/artifacts
+mkdir -p $CODEVIS_PKG_ARTIFACTS_PATH || exit
+
+echo "DEPLOY OPTIONS:"
+echo "Codevis branch (default=master): $BRANCH";
+echo "CMake args: $CMAKE_ARGS";
+echo "Artifacts path: $CODEVIS_PKG_ARTIFACTS_PATH";
+echo ""
 
 export PATH=/opt/rh/devtoolset-9/root/usr/bin:$PATH
-git clone https://invent.kde.org/sdk/codevis.git
+git clone https://invent.kde.org/sdk/codevis.git || exit
 cd codevis/ || exit
-git checkout work/fortran-parser
+git checkout "$BRANCH" || exit
 mkdir -p build/ && cd build/ || exit
-cmake .. -DQT_MAJOR_VERSION=5 -DWARNINGS_AS_ERRORS=OFF -DBUILD_DESKTOP_APP=OFF -DENABLE_PLUGINS=OFF "$EXTRA_CMAKE_OPTIONS" || exit
+mkdir -p /codevis-install/ || exit
+cmake .. $CMAKE_ARGS -DCMAKE_INSTALL_RPATH="\$ORIGIN/lib/" -DCMAKE_INSTALL_PREFIX="/codevis-install/" || exit
 cmake --build . -j"$(nproc)" || exit
+cmake --install .
 
-export CODEVIS_PKG_ARTIFACTS_PATH=/artifacts
-mkdir -p $CODEVIS_PKG_ARTIFACTS_PATH
-cp ./lvtcgn/liblvtcgn_mdl.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtclp/liblvtclp.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtshr/liblvtshr.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtmdb/liblvtmdb.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtprj/liblvtprj.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtldr/liblvtldr.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lib/libsoci_core.so.4.1 ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lib/libsoci_sqlite3.so.4.1 ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtclp/codevis_create_codebase_db ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtclp/codevis_merge_databases ${CODEVIS_PKG_ARTIFACTS_PATH}
-cp ./lvtprj/codevis_create_prj_from_db ${CODEVIS_PKG_ARTIFACTS_PATH}
-
-# Codevis GUI (Disabled, kept for reference)
-#cp ./lvtqtd/liblvtqtd.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./lvtcgn/liblvtcgn_gui.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./lvtcgn/liblvtcgn_adapter.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./lvtmdl/liblvtmdl.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./lvtqtw/liblvtqtw.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./lvtqtc/liblvtqtc.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./lvtclr/liblvtclr.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./lvtplg/liblvtplg.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./liblakospreferences.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./thirdparty/MRichTextEditor/libMRichTextEdit.so ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp ./desktopapp/codevis_desktop ${CODEVIS_PKG_ARTIFACTS_PATH}
-#cp -r ./desktopapp/lks-plugins/ ${CODEVIS_PKG_ARTIFACTS_PATH}
+export CODEVIS_ZIP_PATH=/codevis-install/zip/
+export CODEVIS_ZIP_CONTENTS_PATH=${CODEVIS_ZIP_PATH}/codevis/
+mkdir -p ${CODEVIS_ZIP_CONTENTS_PATH}
+mkdir -p ${CODEVIS_ZIP_CONTENTS_PATH}/bin/ || exit
+mkdir -p ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/ || exit
+cp /codevis-install/bin/* ${CODEVIS_ZIP_CONTENTS_PATH}/bin/
+cp /codevis-install/lib64/*.so* ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/
 
 # Copy precompiled external dependencies
-cp /usr/lib/libQt5Core.so.5 .
-cp /usr/local/lib64/libKF5Archive.so.5 .
-cp /lib64/libsqlite3.so.0 .
-cp /lib64/libpython2.7.so.1.0 .
-cp /lib/libclang-cpp.so.17 .
-cp /lib/libLLVM-17.so .
+cp /usr/lib/libQt5Core.so* ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/
+cp /usr/local/lib64/libKF5Archive.so* ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/
+cp /usr/local/lib/libsqlite3.so* ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/
+cp /lib/libclang-cpp.so* ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/
+cp /lib/libLLVM-17*.so ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/
+cp /lib64/libpython3.6m.so* ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/
+cp -R /usr/lib64/python3.6/ ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/python3.6/
+
+# Create helper scripts
+CODEVIS_ENV_SETUP="PYTHONHOME=\$(dirname \"\$0\")/bin/lib/python3.6/ PYTHONPATH=\$(dirname \"\$0\")/bin/lib/python3.6/"
+echo '#!/bin/bash' > ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_codebase_db
+echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_create_codebase_db" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_codebase_db
+chmod +x ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_codebase_db
+
+echo '#!/bin/bash' > ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_prj_from_db
+echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_create_prj_from_db" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_prj_from_db
+chmod +x ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_prj_from_db
+
+echo '#!/bin/bash' > ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_merge_databases
+echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_merge_databases" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_merge_databases
+chmod +x ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_merge_databases
+
+# Create tar
+tar -czvf --mode='a+rwX' ${CODEVIS_PKG_ARTIFACTS_PATH}/codevis.tar.gz -C ${CODEVIS_ZIP_PATH} codevis/

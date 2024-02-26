@@ -130,16 +130,14 @@ target_link_libraries(
     codevis_lib
 )
 
-if (NOT ${KDE_FRAMEWORKS_IS_OLD})
-    install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-    install(FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
-    install(
-      FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml
-      DESTINATION ${KDE_INSTALL_METAINFODIR}
-    )
-    install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
-    install(FILES codevis.notifyrc  DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
-endif()
+install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/org.kde.codevis.metainfo.xml
+  DESTINATION ${KDE_INSTALL_METAINFODIR}
+)
+install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+install(FILES codevis.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
 
 file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
 

@@ -37,6 +37,8 @@
 
 #include <ui_mainwindow.h>
 
+#include <KRecentFilesAction>
+#include <KSharedConfig>
 #include <KXmlGuiWindow>
 
 #include <QElapsedTimer>
@@ -145,6 +147,7 @@ class MainWindow : public KXmlGuiWindow {
 
     void closeProject();
     bool newProject();
+    bool openFromRecentProjects(const QUrl& url);
     void newProjectFromSource();
 
     void openProjectAction();
@@ -255,6 +258,8 @@ class MainWindow : public KXmlGuiWindow {
 
     Codethink::lvtqtw::CodeVisStatusBar *d_status_bar;
     QString m_currentQualifiedName;
+    KRecentFilesAction *m_recentFilesAction;
+    KSharedConfigPtr m_configPtr;
 
     QList<QWidget *> d_disabledWidgets;
     // Widgets we disabled during the last graph load

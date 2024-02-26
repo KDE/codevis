@@ -212,7 +212,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     // signal happens, we hide it.
     showWelcomeScreen();
 
-    connect(ui.welcomeWidget, &WelcomeScreen::requestNewProject, this, &MainWindow::newProject);
+    connect(ui.welcomeWidget, &WelcomeScreen::requestNewProject, this, &MainWindow::newProject); //***
     connect(ui.welcomeWidget, &WelcomeScreen::requestParseProject, this, &MainWindow::newProjectFromSource);
     connect(ui.welcomeWidget, &WelcomeScreen::requestExistingProject, this, &MainWindow::openProjectAction);
 
@@ -264,6 +264,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     setupActions();
     setProjectWidgetsEnabled(false);
     setAcceptDrops(true);
+    m_configPtr = KSharedConfig::openConfig();
 }
 
 MainWindow::~MainWindow() noexcept = default;
@@ -525,6 +526,7 @@ void MainWindow::setupActions()
     // specified in the codevisui.rc
     KStandardAction::find(this, &MainWindow::requestSearch, actionCollection());
     KStandardAction::openNew(this, &MainWindow::newProject, actionCollection());
+    m_recentFilesAction = KStandardAction::openRecent(this, &MainWindow::openFromRecentProjects, actionCollection());
     KStandardAction::close(this, &MainWindow::closeProject, actionCollection());
     KStandardAction::undo(this, &MainWindow::triggerUndo, actionCollection());
     KStandardAction::redo(this, &MainWindow::triggerRedo, actionCollection());
@@ -686,6 +688,12 @@ bool MainWindow::newProject()
     return true;
 }
 
+bool MainWindow::openFromRecentProjects(const QUrl& url)
+{
+    m_recentFilesAction->loadEntries(m_configPtr->group("RecentFiles")); // FIXME (ERTAN): NOT WORKING AS EXPECTED
+    return openProjectFromPath(url.path());
+}
+
 QString MainWindow::requestProjectName()
 {
     bool ok = true;
@@ -725,7 +733,8 @@ void MainWindow::saveProject()
         showErrorMessage(tr("Error saving project: %1").arg(QString::fromStdString(saved.error().errorMessage)));
         return;
     }
-
+    // FIXME (ERTAN): NOT WORKING AS EXPECTED
+    m_recentFilesAction->saveEntries(m_configPtr->group("RecentFiles"));
     Preferences::setLastDocument(QString::fromStdString(d_projectFile.location().string()));
 }
 
@@ -815,6 +824,7 @@ bool MainWindow::openProjectFromPath(const QString& path)
 
     loadTabsFromProject();
     bookmarksChanged();
+    m_recentFilesAction->addUrl(path, project);
     return true;
 }
 

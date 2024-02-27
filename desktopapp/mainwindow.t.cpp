@@ -46,7 +46,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
     QTest::qWait(100);
 
     clickOn(Sidebar::ManipulationTool::NewPackage{"def"});
-    clickOn(CurrentGraph{300, 400});
+    clickOn(CurrentGraph{300, 500});
     QTest::qWait(100);
 
     clickOn(Sidebar::ManipulationTool::AddDependency{});

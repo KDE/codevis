@@ -88,6 +88,7 @@
 #include <KActionCollection>
 #include <KLocalizedString>
 #include <KMessageWidget>
+#include <KMessageBox>
 #include <KStandardAction>
 
 #include <kwidgetsaddons_version.h>
@@ -212,7 +213,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     // signal happens, we hide it.
     showWelcomeScreen();
 
-    connect(ui.welcomeWidget, &WelcomeScreen::requestNewProject, this, &MainWindow::newProject); //***
+    connect(ui.welcomeWidget, &WelcomeScreen::requestNewProject, this, &MainWindow::newProject);
     connect(ui.welcomeWidget, &WelcomeScreen::requestParseProject, this, &MainWindow::newProjectFromSource);
     connect(ui.welcomeWidget, &WelcomeScreen::requestExistingProject, this, &MainWindow::openProjectAction);
 
@@ -264,9 +265,9 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     setupActions();
     setProjectWidgetsEnabled(false);
     setAcceptDrops(true);
-    m_configPtr = KSharedConfig::openConfig();
-    KConfigGroup recentFilesGroup = m_configPtr->group("RecentFiles");
-    m_recentFilesAction->loadEntries(recentFilesGroup);
+    KSharedConfigPtr configPtr = KSharedConfig::openConfig();
+    m_recentFilesGroup = configPtr->group(Preferences::recentFiles());
+    m_recentFilesAction->loadEntries(m_recentFilesGroup);
 }
 
 MainWindow::~MainWindow() noexcept = default;
@@ -611,7 +612,7 @@ void MainWindow::closeProject()
     setProjectWidgetsEnabled(false);
 
     sharedNodeStorage.closeDatabase();
-    m_recentFilesAction->saveEntries(m_configPtr->group("RecentFiles"));
+    m_recentFilesAction->saveEntries(m_recentFilesGroup);
     cpp::result<void, Codethink::lvtprj::ProjectFileError> closed = d_projectFile.close();
     if (closed.has_error()) {
         showErrorMessage(
@@ -694,7 +695,7 @@ bool MainWindow::newProject()
 
 bool MainWindow::openFromRecentProjects(const QUrl& url)
 {
-    return openProjectFromPath(url.path());
+    return openProjectFromPath(url.toLocalFile());
 }
 
 QString MainWindow::requestProjectName()
@@ -825,7 +826,13 @@ bool MainWindow::openProjectFromPath(const QString& path)
 
     loadTabsFromProject();
     bookmarksChanged();
+    for (int i = 0; i < m_recentFilesAction->urls().size(); i++) {
+        if (m_recentFilesAction->urls().at(i).toLocalFile() == path) {
+            m_recentFilesAction->removeUrl(m_recentFilesAction->urls().at(i));
+        }
+    }
     m_recentFilesAction->addUrl(path, project);
+    m_recentFilesAction->saveEntries(m_recentFilesGroup);
     return true;
 }
 
@@ -1525,18 +1532,26 @@ void MainWindow::bookmarksChanged()
 
 void MainWindow::onRecentListCleared()
 {
-    KConfigGroup recentFilesGroup = m_configPtr->group("RecentFiles");
+#if KWIDGETSADDONS_VERSION >= QT_VERSION_CHECK(5, 100, 0)
+    auto clearAction = KGuiItem(tr("Clear Recent Files"));
+    auto cancelAction = KGuiItem(tr("Cancel"));
 
-    auto result = QMessageBox::question(this,
-                                        tr("Clear Recent List"),
-                                        tr("Do you want to clear recent list permanently?"),
-                                        QMessageBox::Button::Yes,
-                                        QMessageBox::Button::No);
-    if (result == QMessageBox::Button::No) {
-        // FIXME (ERTAN): the config is not removed here but the list is cleared anyways, think about a resolution for this. //***
-        return;
+    const bool clearResponse = KMessageBox::questionTwoActions(this,
+                                                               tr("Clear Recent List"),
+                                                               tr("Do you want to clear recent list permanently?"),
+                                                               clearAction,
+                                                               cancelAction,
+                                                               tr("Do not ask again."))
+        == KMessageBox::ButtonCode::PrimaryAction;
+
+    if (clearResponse) {
+        m_recentFilesAction->saveEntries(m_recentFilesGroup); // save empty entries to recent files group
+    } else {
+        m_recentFilesAction->loadEntries(m_recentFilesGroup); // reload the recent file actions from group
     }
-    recentFilesGroup.deleteGroup();
+#else
+    m_recentFilesAction->saveEntries(m_recentFilesGroup); // save empty entries to recent files group
+#endif
 }
 
 void MainWindow::configurePluginDocks()

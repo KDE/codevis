@@ -37,6 +37,7 @@
 
 #include <ui_mainwindow.h>
 
+#include <KConfigGroup>
 #include <KRecentFilesAction>
 #include <KSharedConfig>
 #include <KXmlGuiWindow>
@@ -260,7 +261,7 @@ class MainWindow : public KXmlGuiWindow {
     Codethink::lvtqtw::CodeVisStatusBar *d_status_bar;
     QString m_currentQualifiedName;
     KRecentFilesAction *m_recentFilesAction;
-    KSharedConfigPtr m_configPtr;
+    KConfigGroup m_recentFilesGroup;
 
     QList<QWidget *> d_disabledWidgets;
     // Widgets we disabled during the last graph load

@@ -336,7 +336,7 @@ void LakosEntity::toggleExpansion(QtcUtil::CreateUndoAction createUndoAction,
     if (shouldExpand) {
         expand(createUndoAction, moveToPosition, behavior);
     } else {
-        shrink(createUndoAction, moveToPosition, behavior);
+        collapse(createUndoAction, moveToPosition, behavior);
     }
 
     Q_SIGNAL void formFactorChanged();
@@ -461,9 +461,9 @@ void LakosEntity::expand(QtcUtil::CreateUndoAction createUndoAction,
     d->expandAnimation->start();
 }
 
-void LakosEntity::shrink(QtcUtil::CreateUndoAction createUndoAction,
-                         std::optional<QPointF> moveToPosition,
-                         RelayoutBehavior behavior)
+void LakosEntity::collapse(QtcUtil::CreateUndoAction createUndoAction,
+                           std::optional<QPointF> moveToPosition,
+                           RelayoutBehavior behavior)
 {
     if (createUndoAction == QtcUtil::CreateUndoAction::e_Yes) {
         Q_EMIT undoCommandCreated(
@@ -1647,7 +1647,7 @@ void LakosEntity::reactChildRemoved(QGraphicsItem *child)
         if (!d->lakosChildren.isEmpty()) {
             recalculateRectangle();
         } else {
-            shrink(QtcUtil::CreateUndoAction::e_No);
+            collapse(QtcUtil::CreateUndoAction::e_No);
         }
     }
 }
@@ -2070,7 +2070,7 @@ void LakosEntity::fromJson(const QJsonObject& obj)
     if (obj["expanded"].toBool()) {
         expand(QtcUtil::CreateUndoAction::e_No);
     } else {
-        shrink(QtcUtil::CreateUndoAction::e_No);
+        collapse(QtcUtil::CreateUndoAction::e_No);
     }
 }
 

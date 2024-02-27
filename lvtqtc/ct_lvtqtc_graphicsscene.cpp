@@ -405,7 +405,7 @@ void GraphicsScene::collapseToplevelEntities()
 {
     for (LakosEntity *entity : d->verticesVec) {
         if (entity->parentItem() == nullptr) {
-            entity->shrink(QtcUtil::CreateUndoAction::e_No);
+            entity->collapse(QtcUtil::CreateUndoAction::e_No);
         }
     }
     reLayout();

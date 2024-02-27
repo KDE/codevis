@@ -76,7 +76,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
 
     auto *entity1 = findElement("abc");
 
-    entity1->shrink(QtcUtil::CreateUndoAction::e_No, std::nullopt, LakosEntity::RelayoutBehavior::e_RequestRelayout);
+    entity1->collapse(QtcUtil::CreateUndoAction::e_No, std::nullopt, LakosEntity::RelayoutBehavior::e_RequestRelayout);
     QTest::qWait(300);
     auto *relation = getRelation();
     REQUIRE(relation);

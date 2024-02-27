@@ -61,10 +61,8 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
 
     auto getRelation = [this]() -> LakosRelation * {
         auto *view = qobject_cast<GraphicsView *>(window().findChild<QGraphicsView *>());
-        LakosRelation *relation = nullptr;
         for (auto *item : view->items()) {
-            relation = dynamic_cast<LakosRelation *>(item);
-            if (relation) {
+            if (auto relation = dynamic_cast<LakosRelation *>(item)) {
                 return relation;
             }
         }

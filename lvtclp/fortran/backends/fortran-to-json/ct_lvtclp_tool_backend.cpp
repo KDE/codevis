@@ -182,14 +182,15 @@ QJsonDocument runFortranToJsonAndGetOutputs(std::string const& targetDirectory,
 {
     static auto const FORTRAN_TO_JSON_EXECUTABLE = QString::fromStdString("fortran-to-json");
 
-    auto *fortranToJsonTool = new QProcess{};
+    auto fortranToJsonTool = QProcess{};
     auto jsonRawData = QString{};
-    auto onFinish = [fortranToJsonTool, &jsonRawData](int exitCode, QProcess::ExitStatus) {
+    auto onFinish = [&fortranToJsonTool, &jsonRawData](int exitCode, QProcess::ExitStatus) {
         if (exitCode != 0) {
             std::cout << "Unexpected exit code (exitCode='" << exitCode << "')\n";
             return;
         }
-        jsonRawData = fortranToJsonTool->readAllStandardOutput();
+        std::cout << "!> Successfully read output!\n\n";
+        jsonRawData = fortranToJsonTool.readAllStandardOutput();
     };
 
     auto onErrorOccurred = [](QProcess::ProcessError error) {
@@ -215,13 +216,10 @@ QJsonDocument runFortranToJsonAndGetOutputs(std::string const& targetDirectory,
         }
     };
 
-    QObject::connect(fortranToJsonTool,
-                     QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                     fortranToJsonTool,
-                     onFinish);
-    QObject::connect(fortranToJsonTool, &QProcess::errorOccurred, fortranToJsonTool, onErrorOccurred);
+    QObject::connect(&fortranToJsonTool, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), onFinish);
+    QObject::connect(&fortranToJsonTool, &QProcess::errorOccurred, onErrorOccurred);
 
-    fortranToJsonTool->setWorkingDirectory(QString::fromStdString(targetDirectory));
+    fortranToJsonTool.setWorkingDirectory(QString::fromStdString(targetDirectory));
     auto args = QStringList({"-v77l", QString::fromStdString(targetFile)});
     args.append("-I" + QString::fromStdString(std::filesystem::path{targetFile}.parent_path().string()));
     args.append("-I" + QString::fromStdString(targetDirectory));
@@ -235,12 +233,10 @@ QJsonDocument runFortranToJsonAndGetOutputs(std::string const& targetDirectory,
     }
     std::cout << "\n";
 
-    fortranToJsonTool->start(FORTRAN_TO_JSON_EXECUTABLE, args);
-    std::cout << "..." << std::flush;
-    fortranToJsonTool->waitForFinished();
-    std::cout << "!\n";
+    fortranToJsonTool.setProcessChannelMode(QProcess::ForwardedChannels);
+    fortranToJsonTool.start(FORTRAN_TO_JSON_EXECUTABLE, args);
+    fortranToJsonTool.waitForFinished();
 
-    delete fortranToJsonTool;
     return QJsonDocument::fromJson(jsonRawData.toUtf8());
 }
 

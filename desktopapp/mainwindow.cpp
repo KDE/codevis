@@ -17,24 +17,33 @@
 // limitations under the License.
 */
 
-#include <kmessagewidget.h>
 #include <mainwindow.h>
 
+#include <QDesktopServices>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
+#include <QInputDialog>
 #include <QJsonObject>
 #include <QKeyEvent>
+#include <QLoggingCategory>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QModelIndex>
+#include <QProcess>
 #include <QPushButton>
 #include <QScrollBar>
 #include <QStandardPaths>
 #include <QStatusBar>
+#include <QTemporaryDir>
 #include <QTextEdit>
+#ifdef USE_WEB_ENGINE
+#include <QWebEngineView>
+#else
+#include <QTextBrowser>
+#endif
 
 #include <ct_lvtmdl_errorsmodel.h>
 #include <ct_lvtmdl_methodstablemodel.h>
@@ -65,24 +74,22 @@
 #include <ct_lvtqtw_splitterview.h>
 #include <ct_lvtqtw_tabwidget.h>
 
+#include <ct_lvtprj_projectfile.h>
+
 #include <ct_lvtcgn_app_adapter.h>
 
+#include <chrono>
 #include <fstream>
+#include <memory>
+
 #include <preferences.h>
 #include <projectsettingsdialog.h>
 
-#include <QDesktopServices>
-#include <QInputDialog>
-#include <QLoggingCategory>
-#ifdef USE_WEB_ENGINE
-#include <QWebEngineView>
-#else
-#include <QTextBrowser>
-#endif
-
 #include <KActionCollection>
 #include <KLocalizedString>
+#include <KMessageWidget>
 #include <KStandardAction>
+
 #include <kwidgetsaddons_version.h>
 
 // in a header
@@ -270,54 +277,160 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *e)
 
 void MainWindow::dropEvent(QDropEvent *e)
 {
-    const QUrl url = e->mimeData()->urls().first();
-    const QString filename = url.toLocalFile();
-
-    auto closeCurrentProjectLambda = [this, filename] {
-        closeProject();
-        const bool success = openProjectFromPath(filename);
-        if (!success) {
-            showMessage(tr("Error loading project file %1").arg(filename), KMessageWidget::Error);
+    const auto getProjectName = [this]() -> QString {
+        QString newProjectName = QFileDialog::getSaveFileName(this, tr("New Project Name"));
+        if (newProjectName.isEmpty()) {
+            return {};
         }
+        if (!newProjectName.endsWith(".lks")) {
+            newProjectName += ".lks";
+        }
+        return newProjectName;
     };
 
-    if (!projectFile().isOpen()) {
-        closeCurrentProjectLambda();
-        return;
+    QList<QUrl> urls = e->mimeData()->urls();
+    if (urls.size() == 1) {
+        const QUrl url = urls.first();
+        const QString filename = url.toLocalFile();
+
+        auto closeCurrentProjectLambda = [this, filename] {
+            closeProject();
+            const bool success = openProjectFromPath(filename);
+            if (!success) {
+                showMessage(tr("Error loading project file %1").arg(filename), KMessageWidget::Error);
+            }
+        };
+
+        if (!projectFile().isOpen()) {
+            closeCurrentProjectLambda();
+            return;
+        }
+
+        if (projectFile().location().string() == filename.toStdString()) {
+            QMessageBox messageBox;
+            messageBox.setWindowTitle(tr("Reload project file"));
+            messageBox.setText(
+                tr("The file you just requested to load is already open."
+                   "do you like to refresh it's contents? That will destroy any change you did"
+                   " on this workspace."));
+
+            auto *closeCurrent = messageBox.addButton(tr("Refresh current project"), QMessageBox::AcceptRole);
+            connect(closeCurrent, &QAbstractButton::clicked, this, closeCurrentProjectLambda);
+
+            messageBox.addButton(tr("Do nothing"), QMessageBox::RejectRole);
+            messageBox.exec();
+            return;
+        }
     }
 
-    if (projectFile().location().string() == filename.toStdString()) {
+    if (projectFile().isOpen()) {
         QMessageBox messageBox;
-        messageBox.setWindowTitle(tr("Reload project file"));
-        messageBox.setText(
-            tr("The file you just requested to load is already open."
-               "do you like to refresh it's contents? That will destroy any change you did"
-               " on this workspace."));
+        messageBox.setWindowTitle(tr("Open Project File"));
 
-        auto *closeCurrent = messageBox.addButton(tr("Refresh current project"), QMessageBox::AcceptRole);
-        connect(closeCurrent, &QAbstractButton::clicked, this, closeCurrentProjectLambda);
+        messageBox.setText(tr("You have an open project currently, what do you want to do?"));
 
-        messageBox.addButton(tr("Do nothing"), QMessageBox::RejectRole);
+        auto *closeCurrent = messageBox.addButton(tr("Close current project"), QMessageBox::AcceptRole);
+        connect(closeCurrent, &QAbstractButton::clicked, this, [this, urls] {
+            mergeProjects(urls, tr("Untitled.lks"));
+        });
+
+        const QString currProjName = QString::fromStdString(projectFile().projectName());
+        auto *loadWithinAction = messageBox.addButton(tr("Add to current project"), QMessageBox::AcceptRole);
+        connect(loadWithinAction, &QAbstractButton::clicked, this, [this, &urls] {
+            const QString currProjFile = QString::fromStdString(projectFile().location().string());
+            urls.push_back(QUrl::fromLocalFile(currProjFile));
+            mergeProjects(urls, currProjFile);
+        });
+
+        auto *createMergedProject =
+            messageBox.addButton(tr("Merge files in new project").arg(currProjName), QMessageBox::AcceptRole);
+
+        connect(createMergedProject, &QAbstractButton::clicked, this, [this, &urls, &getProjectName] {
+            const std::string stdStrCurrFile = projectFile().location().string();
+            const QString currentFile = QString::fromStdString(stdStrCurrFile);
+            urls.push_back(QUrl::fromLocalFile(currentFile));
+            mergeProjects(urls, getProjectName());
+        });
+
         messageBox.exec();
         return;
     }
 
-    QMessageBox messageBox;
-    messageBox.setWindowTitle(tr("Open Project File"));
-    messageBox.setText(tr("You have an open project currently, what do you want to do?"));
+    mergeProjects(urls, getProjectName());
+}
 
-    auto *closeCurrent = messageBox.addButton(tr("Close current project"), QMessageBox::AcceptRole);
-    connect(closeCurrent, &QAbstractButton::clicked, this, closeCurrentProjectLambda);
-    std::ignore = closeCurrent;
-    const QString currProjName = QString::fromStdString(projectFile().projectName());
+namespace {
+void mergePrjFunc(const QList<QUrl>& projectFiles, const QString& newFileName)
+{
+    // uncompress the dropped list of projects to fetch the database path
+    // for each one. Note, projects must be opened untill the merge is finished.
+    // closing a project will delete it's temporary files.
+    std::vector<std::unique_ptr<ProjectFile>> projectsFromPath;
+    for (const auto& prjUrl : projectFiles) {
+        auto prjFromPath = std::make_unique<ProjectFile>();
+        std::filesystem::path prjPath = prjUrl.toLocalFile().toStdString();
+        cpp::result<void, ProjectFileError> res = prjFromPath->open(prjPath);
+        if (res.has_error()) {
+            std::cout << "Error uncompressing project\n";
+        }
+        projectsFromPath.push_back(std::move(prjFromPath));
+    }
 
-    auto *loadWithinAction = messageBox.addButton(tr("Load within %1").arg(currProjName), QMessageBox::AcceptRole);
-    std::ignore = loadWithinAction;
+    // After the projects are uncompressed, fetch the list of in disk databases.
+    // and prepare the arguments for `codevis_merge_databases`
+    QStringList arguments;
+    for (auto& prj : projectsFromPath) {
+        arguments.append("--database");
+        arguments.append(QString::fromStdString(prj->codeDatabasePath().string()));
+    }
+    // use QProcess to call `codevis_merge_databases` with the list of databases.
+    QTemporaryDir tempDir;
+    QProcess process;
 
-    auto *createMergedProject =
-        messageBox.addButton(tr("Create a new merged project").arg(currProjName), QMessageBox::AcceptRole);
-    std::ignore = createMergedProject;
-    messageBox.exec();
+    const QString outputFile = tempDir.path() + "/code_database.db";
+    const QString outputProject = tempDir.path() + "/untitled.lks";
+
+    arguments.append("--output");
+    arguments.append(outputFile);
+
+    process.execute("codevis_merge_databases", arguments);
+    process.waitForFinished(-1); // wait untill finished.
+    if (process.exitCode() != 0) {
+        qDebug() << "Error merging databases";
+        qDebug() << process.errorString();
+        return;
+    }
+
+    process.execute("codevis_create_prj_from_db", QStringList{outputFile, outputProject});
+    process.waitForFinished(-1); // wait untill finished.
+    if (process.exitCode() != 0) {
+        qDebug() << "Error generating project file";
+        qDebug() << process.errorString();
+        return;
+    }
+
+    QFile project(outputProject);
+    project.copy(outputProject, newFileName);
+}
+} // namespace
+
+void MainWindow::mergeProjects(const QList<QUrl>& projectFiles, const QString& newFileName)
+{
+    if (newFileName.isEmpty()) {
+        return;
+    }
+
+    closeProject();
+    showMessage(tr("While we process multiple databases the application will be unresponsive."
+                   "\nPlease wait a moment."),
+                KMessageWidget::Information);
+
+    auto thread = QThread::create(mergePrjFunc, projectFiles, newFileName);
+    connect(thread, &QThread::finished, this, [this, newFileName] {
+        std::ignore = openProjectFromPath(newFileName);
+        showMessage(QString(), KMessageWidget::Information);
+    });
+    thread->start();
 }
 
 void MainWindow::setupActions()

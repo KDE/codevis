@@ -299,7 +299,25 @@ void MainWindow::dropEvent(QDropEvent *e)
 
         messageBox.addButton(tr("Do nothing"), QMessageBox::RejectRole);
         messageBox.exec();
+        return;
     }
+
+    QMessageBox messageBox;
+    messageBox.setWindowTitle(tr("Open Project File"));
+    messageBox.setText(tr("You have an open project currently, what do you want to do?"));
+
+    auto *closeCurrent = messageBox.addButton(tr("Close current project"), QMessageBox::AcceptRole);
+    connect(closeCurrent, &QAbstractButton::clicked, this, closeCurrentProjectLambda);
+    std::ignore = closeCurrent;
+    const QString currProjName = QString::fromStdString(projectFile().projectName());
+
+    auto *loadWithinAction = messageBox.addButton(tr("Load within %1").arg(currProjName), QMessageBox::AcceptRole);
+    std::ignore = loadWithinAction;
+
+    auto *createMergedProject =
+        messageBox.addButton(tr("Create a new merged project").arg(currProjName), QMessageBox::AcceptRole);
+    std::ignore = createMergedProject;
+    messageBox.exec();
 }
 
 void MainWindow::setupActions()

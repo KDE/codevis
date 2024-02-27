@@ -46,16 +46,16 @@ cp -R /usr/lib64/python3.6/ ${CODEVIS_ZIP_CONTENTS_PATH}/bin/lib/python3.6/
 # Create helper scripts
 CODEVIS_ENV_SETUP="PYTHONHOME=\$(dirname \"\$0\")/bin/lib/python3.6/ PYTHONPATH=\$(dirname \"\$0\")/bin/lib/python3.6/"
 echo '#!/bin/bash' > ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_codebase_db
-echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_create_codebase_db" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_codebase_db
+echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_create_codebase_db \$@" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_codebase_db
 chmod +x ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_codebase_db
 
 echo '#!/bin/bash' > ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_prj_from_db
-echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_create_prj_from_db" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_prj_from_db
+echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_create_prj_from_db \$@" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_prj_from_db
 chmod +x ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_create_prj_from_db
 
 echo '#!/bin/bash' > ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_merge_databases
-echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_merge_databases" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_merge_databases
+echo "$CODEVIS_ENV_SETUP \$(dirname \"\$0\")/bin/codevis_merge_databases \$@" >> ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_merge_databases
 chmod +x ${CODEVIS_ZIP_CONTENTS_PATH}/codevis_merge_databases
 
 # Create tar
-tar -czvf --mode='a+rwX' ${CODEVIS_PKG_ARTIFACTS_PATH}/codevis.tar.gz -C ${CODEVIS_ZIP_PATH} codevis/
+tar -czvf ${CODEVIS_PKG_ARTIFACTS_PATH}/codevis.tar.gz --mode='a+rwX' -C ${CODEVIS_ZIP_PATH} codevis/

@@ -612,7 +612,7 @@ void MainWindow::closeProject()
     setProjectWidgetsEnabled(false);
 
     sharedNodeStorage.closeDatabase();
-    m_recentFilesAction->saveEntries(m_recentFilesGroup);
+
     cpp::result<void, Codethink::lvtprj::ProjectFileError> closed = d_projectFile.close();
     if (closed.has_error()) {
         showErrorMessage(
@@ -633,6 +633,7 @@ void MainWindow::closeProject()
     d_status_bar->reset();
     showWelcomeScreen();
     Preferences::setLastDocument(QString());
+    m_recentFilesAction->saveEntries(m_recentFilesGroup);
 }
 
 bool MainWindow::askCloseCurrentProject()
@@ -695,7 +696,24 @@ bool MainWindow::newProject()
 
 bool MainWindow::openFromRecentProjects(const QUrl& url)
 {
-    return openProjectFromPath(url.toLocalFile());
+    auto alreadyOpenProjectPath = QString::fromStdString(d_projectFile.location().string());
+    if (alreadyOpenProjectPath == url.path()) {
+        return false; // already open project selected from recent list, no need to reopen
+    }
+
+    if (d_projectFile.isOpen()) {
+        auto result = QMessageBox::question(this,
+                                            tr("Really close project"),
+                                            tr("Do you really want to close the project and open another?"),
+                                            QMessageBox::Button::Yes,
+                                            QMessageBox::Button::No);
+        if (result == QMessageBox::Button::No) {
+            return false;
+        }
+        closeProject();
+    }
+
+    return openProjectFromPath(url.path());
 }
 
 QString MainWindow::requestProjectName()

@@ -1364,12 +1364,6 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         connect(action, &QAction::triggered, this, [this] {
             expandToplevelEntities();
         });
-
-        action = menu.addAction(tr("Quick fix edges"));
-        connect(action, &QAction::triggered, this, [this] {
-            collapseToplevelEntities();
-            expandToplevelEntities();
-        });
     }
     if (debugMenu) {
         QAction *action = debugMenu->addAction(tr("Show Edge Bounding Rects"));

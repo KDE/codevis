@@ -272,9 +272,33 @@ void MainWindow::dropEvent(QDropEvent *e)
 {
     const QUrl url = e->mimeData()->urls().first();
     const QString filename = url.toLocalFile();
-    const bool success = openProjectFromPath(filename);
-    if (!success) {
-        showMessage(tr("Error loading project file %1").arg(filename), KMessageWidget::Error);
+
+    auto closeCurrentProjectLambda = [this, filename] {
+        closeProject();
+        const bool success = openProjectFromPath(filename);
+        if (!success) {
+            showMessage(tr("Error loading project file %1").arg(filename), KMessageWidget::Error);
+        }
+    };
+
+    if (!projectFile().isOpen()) {
+        closeCurrentProjectLambda();
+        return;
+    }
+
+    if (projectFile().location().string() == filename.toStdString()) {
+        QMessageBox messageBox;
+        messageBox.setWindowTitle(tr("Reload project file"));
+        messageBox.setText(
+            tr("The file you just requested to load is already open."
+               "do you like to refresh it's contents? That will destroy any change you did"
+               " on this workspace."));
+
+        auto *closeCurrent = messageBox.addButton(tr("Refresh current project"), QMessageBox::AcceptRole);
+        connect(closeCurrent, &QAbstractButton::clicked, this, closeCurrentProjectLambda);
+
+        messageBox.addButton(tr("Do nothing"), QMessageBox::RejectRole);
+        messageBox.exec();
     }
 }
 

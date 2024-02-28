@@ -759,12 +759,9 @@ void GraphicsView::dropEvent(QDropEvent *event)
 #else
     qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);
 #endif
-    if (!qualNameList.isEmpty()) {
-        d->scene->loadEntitiesByQualifiedNameList(qualNameList, mapToScene(event->pos()));
-
-        if (qualNameList.size() > 1) {
-            d->scene->reLayout();
-        }
+    d->scene->loadEntitiesByQualifiedNameList(qualNameList, mapToScene(event->pos()));
+    if (qualNameList.size() > 1) {
+        d->scene->reLayout();
     }
 }
 

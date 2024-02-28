@@ -1553,6 +1553,9 @@ LakosEntity *GraphicsScene::entityByQualifiedName(const std::string& qualName) c
 }
 void GraphicsScene::loadEntitiesByQualifiedNameList(const QStringList& qualifiedNameList, const QPointF& pos)
 {
+    if (qualifiedNameList.isEmpty()) {
+        return;
+    }
     for (const auto& qualName : qualifiedNameList) {
         loadEntityByQualifiedName(qualName, pos);
     }

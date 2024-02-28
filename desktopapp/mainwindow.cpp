@@ -698,7 +698,8 @@ bool MainWindow::openFromRecentProjects(const QUrl& url)
 {
     auto alreadyOpenProjectPath = QString::fromStdString(d_projectFile.location().string());
     if (alreadyOpenProjectPath == url.path()) {
-        return false; // already open project selected from recent list, no need to reopen
+        // already open project selected from recent list, no need to reopen
+        return false;
     }
 
     if (d_projectFile.isOpen()) {
@@ -1563,12 +1564,15 @@ void MainWindow::onRecentListCleared()
         == KMessageBox::ButtonCode::PrimaryAction;
 
     if (clearResponse) {
-        m_recentFilesAction->saveEntries(m_recentFilesGroup); // save empty entries to recent files group
+        // save empty entries to recent files group
+        m_recentFilesAction->saveEntries(m_recentFilesGroup);
     } else {
-        m_recentFilesAction->loadEntries(m_recentFilesGroup); // reload the recent file actions from group
+        // reload the recent file actions from group
+        m_recentFilesAction->loadEntries(m_recentFilesGroup);
     }
 #else
-    m_recentFilesAction->saveEntries(m_recentFilesGroup); // save empty entries to recent files group
+    // save empty entries to recent files group
+    m_recentFilesAction->saveEntries(m_recentFilesGroup);
 #endif
 }
 

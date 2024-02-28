@@ -241,6 +241,9 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     void handleViewportChanged();
 
   private:
+  // REMOVE AFTER REVIEW:
+  // Please see the alternative comment in GraphicsScene class //***
+    friend class GraphicsView;
     void unloadEntity(LakosEntity *entity);
 
     void finalizeEntityPartialLoad(LakosEntity *entity);

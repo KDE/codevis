@@ -762,6 +762,11 @@ void GraphicsView::dropEvent(QDropEvent *event)
     for (const auto& qualName : qualNameList) {
         d->scene->loadEntityByQualifiedName(qualName, mapToScene(event->pos()));
     }
+    // REMOVE AFTER REVIEW:
+    // Couldn't decide if envapsulating private searchTransitiveRelations() function with another
+    // public function in GraphicsScene would be better?
+    // Please see another alternative comment in GraphicsScene class //***
+    d->scene->searchTransitiveRelations();
 
     if (qualNameList.size() > 1) {
         d->scene->reLayout();

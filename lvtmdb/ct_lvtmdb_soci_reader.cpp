@@ -697,75 +697,79 @@ void loadUserDefinedTypeRelations(ObjectStore& store, soci::session& db, const M
 {
     for (const auto& [source_id, source] : maps.userDefinedTypeMap) {
         // uses_in_the_interface.
-        int target_id = 0;
-        soci::statement st = (db.prepare << "select target_id from uses_in_the_interface where source_id = :s",
-                              soci::into(target_id),
+
+        soci::indicator target_id_uses_in_interface_ind;
+        int target_id_uses_in_interface = 0;
+        soci::indicator target_id_uses_in_impl_ind;
+        int target_id_uses_in_impl = 0;
+        soci::indicator target_id_class_hierarchy_ind;
+        int target_id_class_hierarchy = 0;
+        soci::indicator component_id_ind;
+        int component_id = 0;
+        soci::indicator source_file_id_ind;
+        int source_file_id = 0;
+
+        soci::statement st = (db.prepare << R"(
+select target_id as t1, null as t2,      null as t3,      null as t4,          null as t5 from uses_in_the_interface where source_id = :s1 union
+select null as t1,      target_id as t2, null as t3,      null as t4,          null as t5 from uses_in_the_implementation where source_id = :s2 union
+select null as t1,      null as t2,      target_id as t3, null as t4,          null as t5 from class_hierarchy where source_id = :s3 union
+select null as t1,      null as t2,      null as t3,      component_id as t4,  null as t5 from udt_component where udt_id = :s4 union
+select null as t1,      null as t2,      null as t3,      null as t4,          source_file_id as t5 from class_source_file where class_id = :s5
+        )",
+                              soci::into(target_id_uses_in_interface, target_id_uses_in_interface_ind),
+                              soci::into(target_id_uses_in_impl, target_id_uses_in_impl_ind),
+                              soci::into(target_id_class_hierarchy, target_id_class_hierarchy_ind),
+                              soci::into(component_id, component_id_ind),
+                              soci::into(source_file_id, source_file_id_ind),
+                              soci::use(source_id),
+                              soci::use(source_id),
+                              soci::use(source_id),
+                              soci::use(source_id),
                               soci::use(source_id));
-        st.execute();
-        while (st.fetch()) {
-            TypeObject *target = maps.userDefinedTypeMap.at(target_id);
-            TypeObject::addUsesInTheInterface(source, target);
-        }
 
-        // uses_in_the_implementation
-        target_id = 0;
-        st = (db.prepare << "select target_id from uses_in_the_implementation where source_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
         st.execute();
         while (st.fetch()) {
-            TypeObject *target = maps.userDefinedTypeMap.at(target_id);
-            TypeObject::addUsesInTheImplementation(source, target);
-        }
-
-        // class_hierarchy
-        target_id = 0;
-        st = (db.prepare << "select target_id from class_hierarchy where source_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
-        st.execute();
-        while (st.fetch()) {
-            TypeObject *target = maps.userDefinedTypeMap.at(target_id);
-            TypeObject::addIsARelationship(source, target);
-        }
-
-        // components
-        target_id = 0;
-        st = (db.prepare << "select component_id from udt_component where udt_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
-        st.execute();
-        while (st.fetch()) {
-            ComponentObject *target = maps.componentMap.at(target_id);
-            {
-                auto lock = target->rwLock();
-                (void) lock;
-                target->addType(source);
+            if (target_id_uses_in_interface_ind == soci::i_ok) {
+                TypeObject *target = maps.userDefinedTypeMap.at(target_id_uses_in_interface);
+                TypeObject::addUsesInTheInterface(source, target);
             }
-            {
-                auto lock = source->rwLock();
-                (void) lock;
-                source->addComponent(target);
-            }
-        }
 
-        // source files.
-        target_id = 0;
-        st = (db.prepare << "select source_file_id from class_source_file where class_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
-        st.execute();
-        while (st.fetch()) {
-            FileObject *target = maps.filesMap.at(target_id);
-            {
-                auto lock = target->rwLock();
-                (void) lock;
-                target->addType(source);
+            if (target_id_uses_in_impl_ind == soci::i_ok) {
+                TypeObject *target = maps.userDefinedTypeMap.at(target_id_uses_in_impl);
+                TypeObject::addUsesInTheImplementation(source, target);
             }
-            {
-                auto lock = source->rwLock();
-                (void) lock;
-                source->addFile(target);
+
+            if (target_id_class_hierarchy_ind == soci::i_ok) {
+                TypeObject *target = maps.userDefinedTypeMap.at(target_id_class_hierarchy);
+                TypeObject::addIsARelationship(source, target);
+            }
+
+            if (component_id_ind == soci::i_ok) {
+                ComponentObject *target = maps.componentMap.at(component_id);
+                {
+                    auto lock = target->rwLock();
+                    (void) lock;
+                    target->addType(source);
+                }
+                {
+                    auto lock = source->rwLock();
+                    (void) lock;
+                    source->addComponent(target);
+                }
+            }
+
+            if (source_file_id_ind == soci::i_ok) {
+                FileObject *target = maps.filesMap.at(source_file_id);
+                {
+                    auto lock = target->rwLock();
+                    (void) lock;
+                    target->addType(source);
+                }
+                {
+                    auto lock = source->rwLock();
+                    (void) lock;
+                    source->addFile(target);
+                }
             }
         }
     }

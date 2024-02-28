@@ -752,24 +752,19 @@ void GraphicsView::dragMoveEvent(QDragMoveEvent *event)
 void GraphicsView::dropEvent(QDropEvent *event)
 {
     const QString qualNames = event->mimeData()->data("codevis/qualifiednames");
+    QStringList qualNameList;
 #ifdef KDE_FRAMEWORKS_IS_OLD
-    QStringList qualNameList = qualNames.split(";");
+    qualNameList = qualNames.split(";");
     qualNameList.removeAll(QString(";"));
 #else
-    const QStringList qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);
+    qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);
 #endif
+    if (!qualNameList.isEmpty()) {
+        d->scene->loadEntitiesByQualifiedNameList(qualNameList, mapToScene(event->pos()));
 
-    for (const auto& qualName : qualNameList) {
-        d->scene->loadEntityByQualifiedName(qualName, mapToScene(event->pos()));
-    }
-    // REMOVE AFTER REVIEW:
-    // Couldn't decide if envapsulating private searchTransitiveRelations() function with another
-    // public function in GraphicsScene would be better?
-    // Please see another alternative comment in GraphicsScene class //***
-    d->scene->searchTransitiveRelations();
-
-    if (qualNameList.size() > 1) {
-        d->scene->reLayout();
+        if (qualNameList.size() > 1) {
+            d->scene->reLayout();
+        }
     }
 }
 

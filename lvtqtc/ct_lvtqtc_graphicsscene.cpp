@@ -1551,6 +1551,14 @@ LakosEntity *GraphicsScene::entityByQualifiedName(const std::string& qualName) c
 
     return *findIt;
 }
+void GraphicsScene::loadEntitiesByQualifiedNameList(const QStringList& qualifiedNameList, const QPointF& pos)
+{
+    for (const auto& qualName : qualifiedNameList) {
+        loadEntityByQualifiedName(qualName, pos);
+    }
+    d->transitiveReductionAlg->reset();
+    searchTransitiveRelations();
+}
 
 void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos)
 {
@@ -1679,12 +1687,6 @@ void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, cons
     for (auto *newEntity : newEntities) {
         newEntity->recursiveEdgeRelayout();
     }
-
-    // REMOVE AFTER REVIEW:
-    // REVIEWME: Alternative to declaring view as friend to scene and calling
-    //           searchTransitiveRelations outside of this class, we can call it here, but it will be
-    //           called every dropped entity instead of searching them as bulk after loading the dropped ones. //***
-    //   searchTransitiveRelations();
 
     Q_EMIT graphLoadFinished();
 }

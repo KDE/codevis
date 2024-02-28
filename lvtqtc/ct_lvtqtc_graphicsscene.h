@@ -206,6 +206,10 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     [[nodiscard]] LakosEntity *entityByQualifiedName(const std::string& qualName) const;
     // returns an entity by it's qualified name.
 
+    void loadEntitiesByQualifiedNameList(const QStringList& qualifiedNameList, const QPointF& pos);
+    // A Qualified name list is just dropped onto the scene. We need to build
+    // the entities for it.
+
     void loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos);
     // A Qualified name is just dropped onto the scene. We need to build
     // the entities for it.
@@ -241,9 +245,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     void handleViewportChanged();
 
   private:
-    // REMOVE AFTER REVIEW:
-    // Please see the alternative comment in GraphicsScene class //***
-    friend class GraphicsView;
     void unloadEntity(LakosEntity *entity);
 
     void finalizeEntityPartialLoad(LakosEntity *entity);

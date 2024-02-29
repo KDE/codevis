@@ -462,18 +462,9 @@ void exportMethod(MethodObject *method, soci::session& db)
         soci::use(access), soci::use(isVirtual), soci::use(isPure), soci::use(isStatic), soci::use(isConst);
 }
 
-void exportPkgRelations(PackageObject *pkg, soci::session& db)
+void exportPkgRelations(const ObjectStore& store, soci::session& db)
 {
-    auto lock = pkg->readOnlyLock();
-    (void) lock;
-
-    auto res = query_id_from_qual_name(db, "source_package", pkg->qualifiedName());
-    if (!res.has_value()) {
-        // TODO: Investigate data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << pkg->qualifiedName() << "' for exportPkgRelations. IGNORING.\n";
-        return;
-    }
-    const int this_id = res.value().first;
+    int this_id = 0;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -481,19 +472,33 @@ void exportPkgRelations(PackageObject *pkg, soci::session& db)
          soci::use(this_id),
          soci::use(dep_id));
 
-    for (PackageObject *dep : pkg->forwardDependencies()) {
-        auto _lock = dep->readOnlyLock();
-        (void) _lock;
+    for (const auto& [_, pkg] : store.packages()) {
+        (void) _;
+        auto lock = pkg->readOnlyLock();
+        (void) lock;
 
-        auto res = query_id_from_qual_name(db, "source_package", dep->qualifiedName());
+        auto res = query_id_from_qual_name(db, "source_package", pkg->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << dep->qualifiedName()
-                      << "' for exportPkgRelations forward deps. IGNORING.\n";
+            std::cout << "WARNING: Could not find '" << pkg->qualifiedName() << "' for exportPkgRelations. IGNORING.\n";
             continue;
         }
-        dep_id = res.value().first;
-        insert_st.execute(true);
+        this_id = res.value().first;
+
+        for (PackageObject *dep : pkg->forwardDependencies()) {
+            auto _lock = dep->readOnlyLock();
+            (void) _lock;
+
+            auto inner_res = query_id_from_qual_name(db, "source_package", dep->qualifiedName());
+            if (!inner_res.has_value()) {
+                // TODO: Investigate data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find '" << dep->qualifiedName()
+                          << "' for exportPkgRelations forward deps. IGNORING.\n";
+                continue;
+            }
+            dep_id = inner_res.value().first;
+            insert_st.execute(true);
+        }
     }
 }
 
@@ -968,10 +973,8 @@ void SociWriter::writeFrom(const ObjectStore& store)
         (void) _;
         exportMethod(method.get(), d_db);
     }
-    for (const auto& [_, pkg] : store.packages()) {
-        (void) _;
-        exportPkgRelations(pkg.get(), d_db);
-    }
+
+    exportPkgRelations(store, d_db);
 
     for (const auto& [_, comp] : store.components()) {
         (void) _;

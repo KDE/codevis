@@ -669,7 +669,9 @@ void GraphicsView::updateMultiSelect(const QPoint& position)
     const auto itemsInSelection = items(selection, Qt::ContainsItemBoundingRect);
     for (QGraphicsItem *item : itemsInSelection) {
         if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(item)) {
-            currentSelection.insert(lEntity);
+            if (lEntity->internalNode()->type() != lvtshr::DiagramType::PackageType) {
+                currentSelection.insert(lEntity);
+            }
         }
     }
 

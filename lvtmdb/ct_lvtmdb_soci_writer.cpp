@@ -197,10 +197,8 @@ template<typename DbObject, typename callable>
 std::pair<int, soci::indicator>
 get_or_add_thing(DbObject *dbobj, soci::session& db, const std::string& table_name, callable fn)
 {
-    int id = 0;
-    soci::indicator indicator = soci::indicator::i_null;
     if (!dbobj) {
-        return {id, indicator};
+        return {0, soci::indicator::i_null};
     }
 
     auto lock = dbobj->readOnlyLock();
@@ -209,26 +207,29 @@ get_or_add_thing(DbObject *dbobj, soci::session& db, const std::string& table_na
     // TODO:
     // This should never happen but we have a problem with repositories
     // that might be empty, currently.
-    // so let's this for a while untill we fix that.'
+    // so let's this for a while until we fix that.'
     if (dbobj->name().empty() || dbobj->qualifiedName().empty()) {
         std::cout << "We are looking for something without name and qualified name.\n";
         std::cout << "returning an empty indicator / null item.\n";
-        return {id, indicator};
+        return {0, soci::indicator::i_null};
     }
 
-    std::optional<std::pair<int, soci::indicator>> res =
-        query_id_from_qual_name(db, table_name, dbobj->qualifiedName());
-
+    auto res = query_id_from_qual_name(db, table_name, dbobj->qualifiedName());
     if (!res.has_value()) {
         fn(dbobj, db);
         res = query_id_from_qual_name(db, table_name, dbobj->qualifiedName());
+        if (!res.has_value()) {
+            // TODO:
+            // This should never happen but we have a problem with repositories that might fail, currently.
+            std::cout << "Failed to find object, and recover-function (fn) seems to have failed.\n";
+            std::cout << "While trying to get object with qualified name '" << dbobj->qualifiedName()
+                      << "' from table '" << table_name << "'\n";
+            std::cout << "returning an empty indicator / null item.\n";
+            return {0, soci::indicator::i_null};
+        }
     }
 
-    // here it *needs* to have value.
-    id = res.value().first;
-    indicator = res.value().second;
-
-    return std::make_pair(id, indicator);
+    return std::make_pair(res.value().first, res.value().second);
 }
 
 void exportRepository(RepositoryObject *obj, soci::session& db)
@@ -452,9 +453,13 @@ void exportPkgRelations(PackageObject *pkg, soci::session& db)
     auto lock = pkg->readOnlyLock();
     (void) lock;
 
-    // dependencies. Here we assume that all package queries are correct and that there's no need
-    // to check if the sql failed.
-    const int this_id = query_id_from_qual_name(db, "source_package", pkg->qualifiedName()).value().first;
+    auto res = query_id_from_qual_name(db, "source_package", pkg->qualifiedName());
+    if (!res.has_value()) {
+        // TODO: Investigate data that only happens in specific codebases.
+        std::cout << "WARNING: Could not find '" << pkg->qualifiedName() << "' for exportPkgRelations. IGNORING.\n";
+        return;
+    }
+    const int this_id = res.value().first;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -466,7 +471,14 @@ void exportPkgRelations(PackageObject *pkg, soci::session& db)
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        dep_id = query_id_from_qual_name(db, "source_package", dep->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "source_package", dep->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find '" << dep->qualifiedName()
+                      << "' for exportPkgRelations forward deps. IGNORING.\n";
+            continue;
+        }
+        dep_id = res.value().first;
         insert_st.execute(true);
     }
 }
@@ -478,7 +490,13 @@ void exportCompRelations(ComponentObject *comp, soci::session& db)
 
     // types handled in exportUserDefinedTypeRelations
     // dependencies
-    const int this_id = query_id_from_qual_name(db, "source_component", comp->qualifiedName()).value().first;
+    auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
+    if (!res.has_value()) {
+        // TODO: Investigate data that only happens in specific codebases.
+        std::cout << "WARNING: Could not find '" << comp->qualifiedName() << "' for exportCompRelations. IGNORING.\n";
+        return;
+    }
+    const int this_id = res.value().first;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -490,7 +508,15 @@ void exportCompRelations(ComponentObject *comp, soci::session& db)
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        dep_id = query_id_from_qual_name(db, "source_component", dep->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "source_component", dep->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find '" << dep->qualifiedName()
+                      << "' for exportCompRelations forward deps. IGNORING.\n";
+            continue;
+        }
+        dep_id = res.value().first;
+
         insert_st.execute(true);
     }
 }
@@ -500,7 +526,13 @@ void exportFileRelations(FileObject *file, soci::session& db)
     auto lock = file->readOnlyLock();
     (void) lock;
 
-    const int this_id = query_id_from_qual_name(db, "source_file", file->qualifiedName()).value().first;
+    auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
+    if (!res.has_value()) {
+        // TODO: Investigate missing data that only happens in specific codebases.
+        std::cout << "WARNING: Could not find '" << file->qualifiedName() << "' for exportFileRelations. IGNORING.\n";
+        return;
+    }
+    const int this_id = res.value().first;
     int other_source_id = 0;
     int namespace_id = 0;
 
@@ -518,7 +550,14 @@ void exportFileRelations(FileObject *file, soci::session& db)
     for (FileObject *include : file->forwardIncludes()) {
         auto _lock = include->readOnlyLock();
         (void) _lock;
-        other_source_id = query_id_from_qual_name(db, "source_file", include->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "source_file", include->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find fwd include '" << include->qualifiedName()
+                      << "' for exportFileRelations. IGNORING.\n";
+            continue;
+        }
+        other_source_id = res.value().first;
         other_source_insert.execute(true);
     }
 
@@ -526,7 +565,14 @@ void exportFileRelations(FileObject *file, soci::session& db)
     for (NamespaceObject *nmspc : file->namespaces()) {
         auto _lock = nmspc->readOnlyLock();
         (void) _lock;
-        namespace_id = query_id_from_qual_name(db, "namespace_declaration", nmspc->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "namespace_declaration", nmspc->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find namespace '" << nmspc->qualifiedName()
+                      << "' for exportFileRelations. IGNORING.\n";
+            continue;
+        }
+        namespace_id = res.value().first;
         namespace_insert.execute(true);
     }
 
@@ -535,7 +581,14 @@ void exportFileRelations(FileObject *file, soci::session& db)
         auto _lock = fnc->readOnlyLock();
         (void) _lock;
 
-        int dep_id = query_id_from_qual_name(db, "function_declaration", fnc->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "function_declaration", fnc->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find global function '" << fnc->qualifiedName()
+                      << "' for exportFileRelations. IGNORING.\n";
+            continue;
+        }
+        int dep_id = res.value().first;
         db << "insert into global_function_source_file(source_file_id, function_id) values (:s, :t) on conflict do "
               "nothing",
             soci::use(this_id), soci::use(dep_id);
@@ -547,7 +600,15 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
     auto lock = type->readOnlyLock();
     (void) lock;
 
-    const int this_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
+    auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
+    if (!res.has_value()) {
+        // TODO: Investigate missing data that only happens in specific codebases.
+        std::cout << "WARNING: Could not find '" << type->qualifiedName()
+                  << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+        return;
+    }
+    const int this_id = res.value().first;
+
     int subclass_id = 0;
     int uses_in_interface_id = 0;
     int uses_in_impl_id = 0;
@@ -584,7 +645,15 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
         auto _lock = subclass->readOnlyLock();
         (void) _lock;
 
-        subclass_id = query_id_from_qual_name(db, "class_declaration", subclass->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "class_declaration", subclass->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find subclass '" << subclass->qualifiedName()
+                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+            continue;
+        }
+        subclass_id = res.value().first;
+
         subclass_insert_st.execute(true);
     }
 
@@ -593,7 +662,14 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        uses_in_interface_id = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find usesInTheInterface '" << dep->qualifiedName()
+                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+            continue;
+        }
+        uses_in_interface_id = res.value().first;
         uses_in_interface_insert_st.execute(true);
     }
 
@@ -602,7 +678,14 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
         auto _lock = dep->readOnlyLock();
         (void) _lock;
 
-        uses_in_impl_id = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find usesInTheImplementation '" << dep->qualifiedName()
+                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+            continue;
+        }
+        uses_in_impl_id = res.value().first;
         uses_in_impl_insert_st.execute(true);
     }
 
@@ -610,7 +693,14 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
         auto _lock = comp->readOnlyLock();
         (void) _lock;
 
-        component_id = query_id_from_qual_name(db, "source_component", comp->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find component '" << comp->qualifiedName()
+                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+            continue;
+        }
+        component_id = res.value().first;
         component_insert_st.execute(true);
     }
 
@@ -618,7 +708,14 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
         auto _lock = file->readOnlyLock();
         (void) _lock;
 
-        file_id = query_id_from_qual_name(db, "source_file", file->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find file '" << file->qualifiedName()
+                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+            continue;
+        }
+        file_id = res.value().first;
         file_insert_st.execute(true);
     }
 }
@@ -628,7 +725,13 @@ void exportFieldRelations(FieldObject *field, soci::session& db)
     auto lock = field->readOnlyLock();
     (void) lock;
 
-    int this_id = query_id_from_qual_name(db, "field_declaration", field->qualifiedName()).value().first;
+    auto res = query_id_from_qual_name(db, "field_declaration", field->qualifiedName());
+    if (!res.has_value()) {
+        // TODO: Investigate missing data that only happens in specific codebases.
+        std::cout << "WARNING: Could not find '" << field->qualifiedName() << "' for exportFieldRelations. IGNORING.\n";
+        return;
+    }
+    int this_id = res.value().first;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -641,7 +744,14 @@ void exportFieldRelations(FieldObject *field, soci::session& db)
         auto _lock = type->readOnlyLock();
         (void) _lock;
 
-        dep_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find variable type '" << type->qualifiedName()
+                      << "' for exportFieldRelations. IGNORING.\n";
+            continue;
+        }
+        dep_id = res.value().first;
         insert_st.execute(true);
     }
 }
@@ -651,7 +761,14 @@ void exportMethodRelations(MethodObject *method, soci::session& db)
     auto lock = method->readOnlyLock();
     (void) lock;
 
-    int this_id = query_id_from_qual_name(db, "method_declaration", method->qualifiedName()).value().first;
+    auto res = query_id_from_qual_name(db, "method_declaration", method->qualifiedName());
+    if (!res.has_value()) {
+        // TODO: Investigate missing data that only happens in specific codebases.
+        std::cout << "WARNING: Could not find '" << method->qualifiedName()
+                  << "' for exportMethodRelations. IGNORING.\n";
+        return;
+    }
+    int this_id = res.value().first;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -665,7 +782,14 @@ void exportMethodRelations(MethodObject *method, soci::session& db)
         auto _lock = type->readOnlyLock();
         (void) _lock;
 
-        dep_id = query_id_from_qual_name(db, "class_declaration", type->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find type '" << type->qualifiedName()
+                      << "' for exportMethodRelations. IGNORING.\n";
+            continue;
+        }
+        dep_id = res.value().first;
         insert_st.execute(true);
     }
 }
@@ -675,7 +799,13 @@ void exportFunctionCallgraph(FunctionObject *fn, soci::session& db)
     auto lock = fn->readOnlyLock();
     (void) lock;
 
-    int this_id = query_id_from_qual_name(db, "function_declaration", fn->qualifiedName()).value().first;
+    auto res = query_id_from_qual_name(db, "function_declaration", fn->qualifiedName());
+    if (!res.has_value()) {
+        // TODO: Investigate missing data that only happens in specific codebases.
+        std::cout << "WARNING: Could not find '" << fn->qualifiedName() << "' for exportFunctionCallgraph. IGNORING.\n";
+        return;
+    }
+    int this_id = res.value().first;
     int callee_id = 0;
 
     soci::statement insert_st =
@@ -688,7 +818,14 @@ void exportFunctionCallgraph(FunctionObject *fn, soci::session& db)
         auto _lock = callee->readOnlyLock();
         (void) _lock;
 
-        callee_id = query_id_from_qual_name(db, "function_declaration", callee->qualifiedName()).value().first;
+        auto res = query_id_from_qual_name(db, "function_declaration", callee->qualifiedName());
+        if (!res.has_value()) {
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find callee '" << callee->qualifiedName()
+                      << "' for exportFunctionCallgraph. IGNORING.\n";
+            continue;
+        }
+        callee_id = res.value().first;
         insert_st.execute(true);
     }
 }

@@ -26,6 +26,7 @@
 #include <llvm/Support/VirtualFileSystem.h>
 
 #include <climits>
+#include <iostream>
 #include <mutex>
 #include <utility>
 #include <vector>
@@ -160,10 +161,18 @@ class ToolExecutor::RunnableThread : public QRunnable {
         // 0 on success;
         // 1 if any error occurred;
         // 2 if there is no error but some files are skipped due to missing compile commands.
-        auto ret = tool.run(d_action.first.get());
+        try {
+            auto ret = tool.run(d_action.first.get());
 
-        if (ret == 1) {
-            d_appendError(llvm::Twine("Failed to run action on ") + d_file + "\n");
+            if (ret == 1) {
+                d_appendError(llvm::Twine("Failed to run action on ") + d_file + "\n");
+            }
+        }
+        // on Windows, LLVM failed while parsing the owncloud desktop client
+        // throwing an instance of std::out_of_range. The specific code is
+        // inside of llvm and out of our control, so just ignore it.
+        catch (std::out_of_range& e) {
+            std::cout << "ERROR - Out of Range Access" << e.what() << "\n";
         }
     }
 };

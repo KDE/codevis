@@ -336,7 +336,7 @@ void LakosEntity::toggleExpansion(QtcUtil::CreateUndoAction createUndoAction,
     if (shouldExpand) {
         expand(createUndoAction, moveToPosition, behavior);
     } else {
-        shrink(createUndoAction, moveToPosition, behavior);
+        collapse(createUndoAction, moveToPosition, behavior);
     }
 
     Q_SIGNAL void formFactorChanged();
@@ -461,9 +461,9 @@ void LakosEntity::expand(QtcUtil::CreateUndoAction createUndoAction,
     d->expandAnimation->start();
 }
 
-void LakosEntity::shrink(QtcUtil::CreateUndoAction createUndoAction,
-                         std::optional<QPointF> moveToPosition,
-                         RelayoutBehavior behavior)
+void LakosEntity::collapse(QtcUtil::CreateUndoAction createUndoAction,
+                           std::optional<QPointF> moveToPosition,
+                           RelayoutBehavior behavior)
 {
     if (createUndoAction == QtcUtil::CreateUndoAction::e_Yes) {
         Q_EMIT undoCommandCreated(
@@ -1647,7 +1647,7 @@ void LakosEntity::reactChildRemoved(QGraphicsItem *child)
         if (!d->lakosChildren.isEmpty()) {
             recalculateRectangle();
         } else {
-            shrink(QtcUtil::CreateUndoAction::e_No);
+            collapse(QtcUtil::CreateUndoAction::e_No);
         }
     }
 }
@@ -1776,14 +1776,14 @@ std::string LakosEntity::legendText() const
     information += "\n";
 
     auto displayEdgesLambda =
-        [](const std::string& none, const std::string& some, std::string& information, auto& edges) {
+        [](const std::string& none, const std::string& some, std::string& information, auto& edges, bool fromThisEdge) {
             if (edges.empty()) {
                 information += none + '\n';
             } else {
                 information += some + ": " + std::to_string(edges.size()) + '\n';
                 std::string edge_names;
                 for (auto& edge : edges) {
-                    edge_names += edge->to()->name() + " ";
+                    edge_names += (fromThisEdge ? edge->to()->name() : edge->from()->name()) + " ";
                     if (edge_names.size() > 40) {
                         information += edge_names + "\n";
                         edge_names = std::string{};
@@ -1793,9 +1793,9 @@ std::string LakosEntity::legendText() const
             }
         };
 
-    displayEdgesLambda("No outgoing edges", "Connections from this node", information, d->edges);
+    displayEdgesLambda("No outgoing edges", "Connections from this node", information, d->edges, true);
     information += "\n";
-    displayEdgesLambda("No incoming edges", "Connections to this node", information, d->targetEdges);
+    displayEdgesLambda("No incoming edges", "Connections to this node", information, d->targetEdges, false);
     information += "\n";
 
     return information;
@@ -2070,7 +2070,7 @@ void LakosEntity::fromJson(const QJsonObject& obj)
     if (obj["expanded"].toBool()) {
         expand(QtcUtil::CreateUndoAction::e_No);
     } else {
-        shrink(QtcUtil::CreateUndoAction::e_No);
+        collapse(QtcUtil::CreateUndoAction::e_No);
     }
 }
 

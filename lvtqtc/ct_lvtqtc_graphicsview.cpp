@@ -259,17 +259,10 @@ void GraphicsView::calculateCurrentZoomFactor()
     Q_EMIT zoomFactorChanged(d->zoomFactor);
 }
 
-void GraphicsView::mouseMoveEvent(QMouseEvent *event)
+void GraphicsView::updateTooltipItem(QMouseEvent *event)
 {
-    assert(event);
-
-    updateMultiSelect(event->pos());
-
-    const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
-    if (d->isMultiDragging && mouseHasNewPosition) {
-        for (const auto& entity : d->scene->selectedEntities()) {
-            entity->doDrag(mapToScene(event->pos()));
-        }
+    if (!d->toolTipItem->isVisible()) {
+        return;
     }
 
     QList<QGraphicsItem *> underMouse = items(event->pos());
@@ -287,6 +280,23 @@ void GraphicsView::mouseMoveEvent(QMouseEvent *event)
             break;
         }
     }
+}
+
+void GraphicsView::mouseMoveEvent(QMouseEvent *event)
+{
+    assert(event);
+
+    updateMultiSelect(event->pos());
+
+    const bool mouseHasNewPosition = d->multiSelect.end != event->pos();
+    if (d->isMultiDragging && mouseHasNewPosition) {
+        for (const auto& entity : d->scene->selectedEntities()) {
+            entity->doDrag(mapToScene(event->pos()));
+        }
+    }
+
+    updateTooltipItem(event);
+
     QGraphicsView::mouseMoveEvent(event);
 }
 
@@ -742,17 +752,14 @@ void GraphicsView::dragMoveEvent(QDragMoveEvent *event)
 void GraphicsView::dropEvent(QDropEvent *event)
 {
     const QString qualNames = event->mimeData()->data("codevis/qualifiednames");
+    QStringList qualNameList;
 #ifdef KDE_FRAMEWORKS_IS_OLD
-    QStringList qualNameList = qualNames.split(";");
+    qualNameList = qualNames.split(";");
     qualNameList.removeAll(QString(";"));
 #else
-    const QStringList qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);
+    qualNameList = qualNames.split(";", Qt::SplitBehaviorFlags::SkipEmptyParts);
 #endif
-
-    for (const auto& qualName : qualNameList) {
-        d->scene->loadEntityByQualifiedName(qualName, mapToScene(event->pos()));
-    }
-
+    d->scene->loadEntitiesByQualifiedNameList(qualNameList, mapToScene(event->pos()));
     if (qualNameList.size() > 1) {
         d->scene->reLayout();
     }

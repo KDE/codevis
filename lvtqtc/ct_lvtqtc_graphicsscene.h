@@ -166,7 +166,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     void reLayout();
     // runs the layout algorithm again, on the current loaded graph.
 
-    void pannelCollapse();
     void enableLayoutUpdates();
     void layoutDone();
     [[nodiscard]] QString fetchErrorMessage() const;
@@ -207,6 +206,10 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     [[nodiscard]] LakosEntity *entityByQualifiedName(const std::string& qualName) const;
     // returns an entity by it's qualified name.
 
+    void loadEntitiesByQualifiedNameList(const QStringList& qualifiedNameList, const QPointF& pos);
+    // A Qualified name list is just dropped onto the scene. We need to build
+    // the entities for it.
+
     void loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos);
     // A Qualified name is just dropped onto the scene. We need to build
     // the entities for it.
@@ -218,7 +221,8 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     LakosEntity *findLakosEntityFromUid(lvtshr::UniqueId uid) const;
 
-    void collapseSecondaryEntities();
+    void expandToplevelEntities();
+    void collapseToplevelEntities();
 
     void loadEntity(lvtshr::UniqueId uuid, UnloadDepth depth);
     void unloadEntity(lvtshr::UniqueId uuid, UnloadDepth depth);

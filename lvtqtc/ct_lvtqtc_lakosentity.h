@@ -299,9 +299,9 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
                 RelayoutBehavior behavior = RelayoutBehavior::e_DoNotRelayout);
     // Expands this node.
 
-    void shrink(QtcUtil::CreateUndoAction CreateUndoAction,
-                std::optional<QPointF> moveToPosition = std::nullopt,
-                RelayoutBehavior behavior = RelayoutBehavior::e_DoNotRelayout);
+    void collapse(QtcUtil::CreateUndoAction CreateUndoAction,
+                  std::optional<QPointF> moveToPosition = std::nullopt,
+                  RelayoutBehavior behavior = RelayoutBehavior::e_DoNotRelayout);
     // Shrinks this node.
 
     [[nodiscard]] std::unordered_map<LakosEntity *, int> childrenLevels() const;

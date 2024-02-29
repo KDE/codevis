@@ -61,11 +61,13 @@
 #include <QAction>
 #include <QApplication>
 #include <QCursor>
+#include <QElapsedTimer>
 #include <QGraphicsRectItem>
 #include <QGraphicsSceneContextMenuEvent>
 #include <QGraphicsView>
 #include <QLoggingCategory>
 #include <QMenu>
+#include <QMessageBox>
 #include <QScreen>
 #include <QTextBrowser>
 #include <QTimer>
@@ -399,11 +401,21 @@ std::vector<LakosEntity *> GraphicsScene::selectedEntities() const
 }
 
 // TODO: Pass the entity that we don't want to collapse here.'
-void GraphicsScene::collapseSecondaryEntities()
+void GraphicsScene::collapseToplevelEntities()
 {
     for (LakosEntity *entity : d->verticesVec) {
         if (entity->parentItem() == nullptr) {
-            entity->shrink(QtcUtil::CreateUndoAction::e_No);
+            entity->collapse(QtcUtil::CreateUndoAction::e_No);
+        }
+    }
+    reLayout();
+}
+
+void GraphicsScene::expandToplevelEntities()
+{
+    for (LakosEntity *entity : d->verticesVec) {
+        if (entity->parentItem() == nullptr) {
+            entity->expand(QtcUtil::CreateUndoAction::e_No);
         }
     }
     reLayout();
@@ -1343,9 +1355,14 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         });
     }
     {
-        auto *action = menu.addAction(tr("Collapse Entities"));
+        auto *action = menu.addAction(tr("Collapse Toplevel"));
         connect(action, &QAction::triggered, this, [this] {
-            collapseSecondaryEntities();
+            collapseToplevelEntities();
+        });
+
+        action = menu.addAction(tr("Expand Toplevel"));
+        connect(action, &QAction::triggered, this, [this] {
+            expandToplevelEntities();
         });
     }
     if (debugMenu) {
@@ -1534,6 +1551,17 @@ LakosEntity *GraphicsScene::entityByQualifiedName(const std::string& qualName) c
 
     return *findIt;
 }
+void GraphicsScene::loadEntitiesByQualifiedNameList(const QStringList& qualifiedNameList, const QPointF& pos)
+{
+    if (qualifiedNameList.isEmpty()) {
+        return;
+    }
+    for (const auto& qualName : qualifiedNameList) {
+        loadEntityByQualifiedName(qualName, pos);
+    }
+    d->transitiveReductionAlg->reset();
+    searchTransitiveRelations();
+}
 
 void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos)
 {
@@ -1714,6 +1742,10 @@ QJsonObject GraphicsScene::toJson() const
         }
     }
     return {
+        {"x", sceneRect().x()},
+        {"y", sceneRect().y()},
+        {"width", sceneRect().width()},
+        {"height", sceneRect().height()},
         {"elements", array},
         {"transitive_visibility", d->showTransitive},
     };
@@ -1746,8 +1778,27 @@ void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)
 
 void GraphicsScene::fromJson(const QJsonObject& doc)
 {
+    // Hack. if we add elements to the GraphiscScene, it will
+    // trigger a repaint, and we might be adding *thousands* of edges
+    // here. because edges have a big boundingRect, this will trigger
+    // a repaint and cache invalidation of the view *thousands* of times.
+    // making loading huge graphs quite slow.
+    // so we hide the viewport, it will not try to paint anything untill
+    // we set it to visible again.
+    // before this change: Load From Jason Took: 1778ms
+    // after this change: Load from Json Took: 230ms
+    views().at(0)->viewport()->setVisible(false);
+
     Q_EMIT graphLoadStarted();
     clearGraph();
+
+    const auto x = doc["x"].toInt();
+    const auto y = doc["y"].toInt();
+    const auto w = doc["width"].toInt();
+    const auto h = doc["height"].toInt();
+
+    setSceneRect(x, y, w, h);
+
     const auto elements = doc["elements"].toArray();
 
     for (const auto& element : elements) {
@@ -1768,6 +1819,31 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
     const auto show_transitive = doc["transitive_visibility"].toBool();
     toggleTransitiveRelationVisibility(show_transitive);
     Q_EMIT graphLoadFinished();
+
+    views().at(0)->viewport()->setVisible(true);
+
+    // Do not remove this, this is a hack to fix the edges pointing to nowhere.
+    // Or Better, Remove this when this hack is not needed anymore.
+    // it does not really matter that the strings are slightly incorrect,
+    // but they allow us to not show garbage to the user, and that matters more.
+    // The error appears to be that the initial setup contains bogus information
+    // about the viewport because we might position things outside of the view
+    // area.
+    // the Event Loop is not helping because it calculates things while the view
+    // is not visible yet, so I need to halt this method using something that
+    // awaits for user interaction. when the user *sees* this, it means that the
+    // view is ok, and I can continue with the collapse / expand.
+    // the relayout() call below is currently needed but might be easier to remove
+    // than the start of this hack.
+    // not really proud of this code, but, hey, it works.
+    QTimer::singleShot(std::chrono::seconds{1}, [this] {
+        collapseToplevelEntities();
+        expandToplevelEntities();
+
+        QTimer::singleShot(std::chrono::seconds{1}, [this] {
+            reLayout();
+        });
+    });
 }
 
 void GraphicsScene::setPluginManager(Codethink::lvtplg::PluginManager& pm)

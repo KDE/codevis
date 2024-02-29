@@ -37,6 +37,9 @@
 
 #include <ui_mainwindow.h>
 
+#include <KConfigGroup>
+#include <KRecentFilesAction>
+#include <KSharedConfig>
 #include <KXmlGuiWindow>
 
 #include <QElapsedTimer>
@@ -145,6 +148,7 @@ class MainWindow : public KXmlGuiWindow {
 
     void closeProject();
     bool newProject();
+    bool openFromRecentProjects(const QUrl& url);
     void newProjectFromSource();
 
     void openProjectAction();
@@ -176,6 +180,7 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void triggerRedo();
     Q_SLOT void bookmarkCurrentTab();
     Q_SLOT void bookmarksChanged();
+    Q_SLOT void onRecentListCleared();
 
     Q_SLOT void generateDatabaseReadyForUpdate();
     // database generation is ready to replace our database when it is next
@@ -213,6 +218,7 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void showErrorMessage(const QString& message);
     Q_SLOT void showSuccessMessage(const QString& message);
     Q_SLOT void showMessage(const QString& message, KMessageWidget::MessageType type);
+    Q_SLOT void mergeProjects(const QList<QUrl>& projectFiles, const QString& newFileName);
 
     Q_SLOT void requestSearch();
     // Show / Hide the search box on the selected widget, if the widget is searchable.
@@ -253,6 +259,8 @@ class MainWindow : public KXmlGuiWindow {
 
     Codethink::lvtqtw::CodeVisStatusBar *d_status_bar;
     QString m_currentQualifiedName;
+    KRecentFilesAction *m_recentFilesAction;
+    KConfigGroup m_recentFilesGroup;
 
     QList<QWidget *> d_disabledWidgets;
     // Widgets we disabled during the last graph load

@@ -146,7 +146,7 @@ class LVTQTC_EXPORT LakosRelation : public QObject, public QGraphicsItem {
 
   private:
     QColor overrideColor() const;
-
+    void setInnerBrushColor(QGraphicsPathItem *innerItem, const QColor& color);
     struct Private;
     std::unique_ptr<Private> d;
 };

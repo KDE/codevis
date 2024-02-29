@@ -271,4 +271,9 @@
             <label>Folder to dump the code generation</label>
         </entry>
     </group>
+    <group name="RecentFiles">
+    <entry name="recentFiles" type="String">
+        <label>Recent Files</label>
+    </entry>
+    </group>
 </kcfg>

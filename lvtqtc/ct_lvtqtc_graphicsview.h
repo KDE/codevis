@@ -83,6 +83,8 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
     void setZoomFactor(int zoomFactorInPercent);
     // set's the zoom factor in percents
 
+    void updateTooltipItem(QMouseEvent *event);
+
     void calculateCurrentZoomFactor();
     // when we load a graph, we zoom out or zoom in, to fit the entire graph on screen
     // so we need to calculate how much this affected the zoom.

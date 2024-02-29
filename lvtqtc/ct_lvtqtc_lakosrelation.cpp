@@ -44,11 +44,11 @@ constexpr int DEBUG_PATH_LAYER = 100;
 
 // static, we share those for every instance of the edges.
 // 5 bytes less per instance, and sometimes we have *lots* of instances.
-bool s_showBoundingRect = false; // NOLINT
-bool s_showShape = false; // NOLINT
-bool s_showTextualInformation = false; // NOLINT
-bool s_showIntersectionPaths = false; // NOLINT
-bool s_showOriginalLine = false; // NOLINT
+bool s_showBoundingRect = false;
+bool s_showShape = false;
+bool s_showTextualInformation = false;
+bool s_showIntersectionPaths = false;
+bool s_showOriginalLine = false;
 
 QPointF closestPointTo(const QPointF& target, const QPainterPath& sourcePath)
 // Returns the closest element (position) in \a sourcePath to \a target,
@@ -160,6 +160,9 @@ void LakosRelation::setColor(QColor const& newColor)
     }
 
     d->color = newColor;
+    setInnerBrushColor(d->head, d->color);
+    setInnerBrushColor(d->tail, d->color);
+
     update();
 }
 
@@ -372,25 +375,6 @@ void LakosRelation::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->drawLine(d->adjustedLine);
     painter->restore();
 
-    auto updateQGraphicsPathItemColor = [](QGraphicsPathItem *item, QColor const& color) {
-        if (item == nullptr) {
-            return;
-        }
-
-        auto headPen = item->pen();
-        headPen.setColor(color);
-        item->setPen(headPen);
-
-        auto headBrush = item->brush();
-        headBrush.setColor(color);
-        item->setBrush(headBrush);
-    };
-
-    if (overrideC.isValid()) {
-        updateQGraphicsPathItemColor(d->head, color);
-        updateQGraphicsPathItemColor(d->tail, color);
-    }
-
     if (s_showOriginalLine) {
         painter->save();
         painter->setPen(Qt::red);
@@ -513,7 +497,29 @@ void LakosRelation::toggleRelationFlags(EdgeCollection::RelationFlags flags, boo
         }
     }
 
+    const auto overrideC = overrideColor();
+    auto const color = overrideC.isValid() ? overrideC : d->color;
+
+    setInnerBrushColor(d->head, color);
+    setInnerBrushColor(d->tail, color);
+
     update();
+}
+
+void LakosRelation::setInnerBrushColor(QGraphicsPathItem *innerItem, const QColor& color)
+{
+    if (innerItem == nullptr) {
+        return;
+    }
+
+    auto pen = innerItem->pen();
+    pen.setColor(color);
+    innerItem->setPen(pen);
+
+    auto brush = innerItem->brush();
+    brush.setColor(color);
+    innerItem->setBrush(brush);
+    innerItem->update();
 }
 
 void LakosRelation::setThickness(qreal thickness)
@@ -595,8 +601,8 @@ std::string LakosRelation::legendText() const
         const std::string x2 = std::to_string(d->adjustedLine.p2().x());
         const std::string y1 = std::to_string(d->adjustedLine.p1().y());
         const std::string y2 = std::to_string(d->adjustedLine.p2().y());
-
         ret += "From: (" + x1 + "," + y1 + ") to (" + x2 + "," + y2 + ")\n";
+        ret += "Has Parent? " + std::to_string(!!parentObject());
     }
 
     return ret;

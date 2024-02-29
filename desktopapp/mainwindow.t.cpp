@@ -46,7 +46,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
     QTest::qWait(100);
 
     clickOn(Sidebar::ManipulationTool::NewPackage{"def"});
-    clickOn(CurrentGraph{300, 400});
+    clickOn(CurrentGraph{300, 500});
     QTest::qWait(100);
 
     clickOn(Sidebar::ManipulationTool::AddDependency{});
@@ -61,10 +61,8 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
 
     auto getRelation = [this]() -> LakosRelation * {
         auto *view = qobject_cast<GraphicsView *>(window().findChild<QGraphicsView *>());
-        LakosRelation *relation = nullptr;
         for (auto *item : view->items()) {
-            relation = dynamic_cast<LakosRelation *>(item);
-            if (relation) {
+            if (auto relation = dynamic_cast<LakosRelation *>(item)) {
                 return relation;
             }
         }
@@ -78,7 +76,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
 
     auto *entity1 = findElement("abc");
 
-    entity1->shrink(QtcUtil::CreateUndoAction::e_No, std::nullopt, LakosEntity::RelayoutBehavior::e_RequestRelayout);
+    entity1->collapse(QtcUtil::CreateUndoAction::e_No, std::nullopt, LakosEntity::RelayoutBehavior::e_RequestRelayout);
     QTest::qWait(300);
     auto *relation = getRelation();
     REQUIRE(relation);
@@ -92,7 +90,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
 
     auto *view = window().findChild<GraphicsView *>();
     auto *scene = qobject_cast<GraphicsScene *>(view->scene());
-    scene->collapseSecondaryEntities();
+    scene->collapseToplevelEntities();
     REQUIRE(relation);
     REQUIRE(relation->isVisible());
 }

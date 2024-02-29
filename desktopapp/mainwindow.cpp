@@ -846,11 +846,11 @@ bool MainWindow::openProjectFromPath(const QString& path)
     loadTabsFromProject();
     bookmarksChanged();
     for (int i = 0; i < m_recentFilesAction->urls().size(); i++) {
-        if (m_recentFilesAction->urls().at(i).toLocalFile() == path) {
+        if (m_recentFilesAction->urls().at(i).path() == path) {
             m_recentFilesAction->removeUrl(m_recentFilesAction->urls().at(i));
         }
     }
-    m_recentFilesAction->addUrl(path, project);
+    m_recentFilesAction->addUrl(path);
     m_recentFilesAction->saveEntries(m_recentFilesGroup);
     return true;
 }

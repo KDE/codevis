@@ -763,18 +763,9 @@ void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
     }
 }
 
-void exportFieldRelations(FieldObject *field, soci::session& db)
+void exportFieldRelations(const ObjectStore& store, soci::session& db)
 {
-    auto lock = field->readOnlyLock();
-    (void) lock;
-
-    auto res = query_id_from_qual_name(db, "field_declaration", field->qualifiedName());
-    if (!res.has_value()) {
-        // TODO: Investigate missing data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << field->qualifiedName() << "' for exportFieldRelations. IGNORING.\n";
-        return;
-    }
-    int this_id = res.value().first;
+    int this_id = 0;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -782,20 +773,41 @@ void exportFieldRelations(FieldObject *field, soci::session& db)
          soci::use(this_id),
          soci::use(dep_id));
 
-    // variable types
-    for (TypeObject *type : field->variableTypes()) {
-        auto _lock = type->readOnlyLock();
-        (void) _lock;
+    for (const auto& [_, field] : store.fields()) {
+        (void) _;
 
-        auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
+        auto lock = field->readOnlyLock();
+        (void) lock;
+
+        auto res = query_id_from_qual_name(db, "field_declaration", field->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find variable type '" << type->qualifiedName()
+            std::cout << "WARNING: Could not find '" << field->qualifiedName()
                       << "' for exportFieldRelations. IGNORING.\n";
-            continue;
+            return;
         }
-        dep_id = res.value().first;
-        insert_st.execute(true);
+        this_id = res.value().first;
+
+        soci::statement insert_st =
+            (db.prepare << "insert into field_type(field_id, type_class_id) values (:s, :t) on conflict do nothing",
+             soci::use(this_id),
+             soci::use(dep_id));
+
+        // variable types
+        for (TypeObject *type : field->variableTypes()) {
+            auto _lock = type->readOnlyLock();
+            (void) _lock;
+
+            auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate missing data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find variable type '" << type->qualifiedName()
+                          << "' for exportFieldRelations. IGNORING.\n";
+                continue;
+            }
+            dep_id = res.value().first;
+            insert_st.execute(true);
+        }
     }
 }
 
@@ -999,11 +1011,7 @@ void SociWriter::writeFrom(const ObjectStore& store)
     exportCompRelations(store, d_db);
     exportFileRelations(store, d_db);
     exportUserDefinedTypeRelations(store, d_db);
-
-    for (const auto& [_, field] : store.fields()) {
-        (void) _;
-        exportFieldRelations(field.get(), d_db);
-    }
+    exportFieldRelations(store, d_db);
 
     for (const auto& [_, method] : store.methods()) {
         (void) _;

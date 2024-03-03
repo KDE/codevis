@@ -114,8 +114,7 @@ QString createSysinfoFileAt(const QString& lPath, const QString& ignorePattern)
 
 bool is_wsl_string(const QString& text)
 {
-    const auto wslStr = std::string{"wsl://"};
-    return text.startsWith(wslStr.c_str());
+    return text.startsWith("wsl://");
 }
 
 bool file_exists(const QString& file_path)
@@ -384,11 +383,13 @@ ParseCodebaseDialog::SourceFolderValidationResult ParseCodebaseDialog::validateS
 {
     if (sourceFolder.isEmpty()) {
         return SourceFolderValidationResult::NoSourceFolderProvided;
-    } else if (is_wsl_string(sourceFolder)) {
-        return SourceFolderValidationResult::WslSourceFolder;
-    } else {
-        return SourceFolderValidationResult::SourceFolderOk;
     }
+
+    if (is_wsl_string(sourceFolder)) {
+        return SourceFolderValidationResult::WslSourceFolder;
+    }
+
+    return SourceFolderValidationResult::SourceFolderOk;
 }
 
 ParseCodebaseDialog::BuildFolderValidationResult
@@ -396,13 +397,17 @@ ParseCodebaseDialog::validateCompileCommandsFolder(const QString& compileCommand
 {
     if (compileCommandsFolder.isEmpty()) {
         return BuildFolderValidationResult::NoBuildFolderProvided;
-    } else if (is_wsl_string(compileCommandsFolder)) {
-        return BuildFolderValidationResult::WslBuildFolder;
-    } else if (!file_exists(compileCommandsFolder + QDir::separator() + "compile_commands.json")) {
-        return BuildFolderValidationResult::CompileCommandsJsonNotFound;
-    } else {
-        return BuildFolderValidationResult::BuildFolderOk;
     }
+
+    if (is_wsl_string(compileCommandsFolder)) {
+        return BuildFolderValidationResult::WslBuildFolder;
+    }
+
+    if (!file_exists(compileCommandsFolder + QDir::separator() + "compile_commands.json")) {
+        return BuildFolderValidationResult::CompileCommandsJsonNotFound;
+    }
+
+    return BuildFolderValidationResult::BuildFolderOk;
 }
 
 void ParseCodebaseDialog::validateUserInputFolders()
@@ -412,41 +417,56 @@ void ParseCodebaseDialog::validateUserInputFolders()
     const auto errorCss = QString("border: 1px solid red");
     const auto missingCompileCommands = tr("The specified folder does not contain compile_commands.json");
     bool disableParse = false;
+
     const auto build_folder_validation = validateCompileCommandsFolder(ui->compileCommandsFolder->text());
+
     if (build_folder_validation == BuildFolderValidationResult::NoBuildFolderProvided) {
         ui->projectBuildFolderError->setVisible(true);
         ui->projectBuildFolderError->setText(emptyErrorMsg);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else if (build_folder_validation == BuildFolderValidationResult::WslBuildFolder) {
+    }
+
+    if (build_folder_validation == BuildFolderValidationResult::WslBuildFolder) {
         ui->projectBuildFolderError->setVisible(true);
         ui->projectBuildFolderError->setText(wslErrorMsg);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else if (build_folder_validation == BuildFolderValidationResult::CompileCommandsJsonNotFound) {
+    }
+
+    if (build_folder_validation == BuildFolderValidationResult::CompileCommandsJsonNotFound) {
         ui->projectBuildFolderError->setVisible(true);
         ui->projectBuildFolderError->setText(missingCompileCommands);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else if (build_folder_validation == BuildFolderValidationResult::BuildFolderOk) {
+    }
+
+    if (build_folder_validation == BuildFolderValidationResult::BuildFolderOk) {
         ui->projectBuildFolderError->setVisible(false);
         ui->compileCommandsFolder->setStyleSheet(QString());
     }
+
     const auto source_folder_validation = validateSourceFolder(ui->sourceFolder->text());
+
     if (source_folder_validation == SourceFolderValidationResult::NoSourceFolderProvided) {
         ui->projectSourceFolderError->setVisible(true);
         ui->projectSourceFolderError->setText(emptyErrorMsg);
         ui->sourceFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else if (source_folder_validation == SourceFolderValidationResult::WslSourceFolder) {
+    }
+
+    if (source_folder_validation == SourceFolderValidationResult::WslSourceFolder) {
         ui->projectSourceFolderError->setVisible(true);
         ui->projectSourceFolderError->setText(wslErrorMsg);
         ui->sourceFolder->setStyleSheet(errorCss);
         disableParse = true;
-    } else if (source_folder_validation == SourceFolderValidationResult::SourceFolderOk) {
+    }
+
+    if (source_folder_validation == SourceFolderValidationResult::SourceFolderOk) {
         ui->projectSourceFolderError->setVisible(false);
         ui->sourceFolder->setStyleSheet(QString());
     }
+
     ui->btnParse->setDisabled(disableParse);
 }
 
@@ -1038,22 +1058,26 @@ void ParseCodebaseDialog::endParse()
 
 void ParseCodebaseDialog::notifyUserForFinishedStage()
 {
-    auto getStringForState = [](State current) {
+    auto getNotificationStringForState = [](State current) {
         if (current == State::RunPhysicalOnly) {
-            return QString("Physical Parse finished with: %1");
-        } else if (current == State::RunAllLogical) {
-            return QString("Logical Parse finished with: %1");
-        } else if (current == State::RunAllPhysical) {
-            return QString("Physical Parse finished with: %1<br/>Starting Logical Parse.");
-        } else {
-            return QString("This Code path was not meant to be followed");
+            return "Physical Parse finished with: %1";
         }
+
+        if (current == State::RunAllLogical) {
+            return "Logical Parse finished with: %1";
+        }
+
+        if (current == State::RunAllPhysical) {
+            return "Physical Parse finished with: %1<br/>Starting Logical Parse.";
+        }
+
+        return "This Code path was not meant to be followed";
     };
     QTime time(0, 0);
     time = time.addMSecs(d->parseTimer.elapsed());
     auto *notification = new KNotification("parserFinished");
 
-    const QString notificationText = getStringForState(d->dialogState).arg(time.toString("mm:ss.zzz"));
+    const auto notificationText = tr(getNotificationStringForState(d->dialogState)).arg(time.toString("mm:ss.zzz"));
     notification->setText(notificationText);
     notification->sendEvent();
     Q_EMIT parseFinished(d->dialogState);

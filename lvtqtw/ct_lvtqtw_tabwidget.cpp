@@ -96,6 +96,14 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
         this->openNewGraphTab();
     });
     connect(this, &QTabWidget::tabCloseRequested, this, &TabWidget::closeTab);
+
+    connect(this, &QTabWidget::tabBarDoubleClicked, this, [this](int idx) {
+        if (idx != -1) {
+            return;
+        }
+        openNewGraphTab();
+    });
+
     setTabsClosable(true);
 
     setDocumentMode(true);

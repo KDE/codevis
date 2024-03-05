@@ -47,6 +47,7 @@
 
 #include <QDebug>
 #include <QFile>
+#include <QtSystemDetection>
 
 using namespace Codethink::lvtmdb;
 
@@ -860,6 +861,21 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
         if (!res) {
             return false;
         }
+
+#ifdef Q_OS_LINUX
+        // We need to close the file, change it's permissions, then reopen.
+        // soci creates the file with `r` for groups, instead of `rw`, on unix based systems.
+        if (path != ":memory:") {
+            d_db.close();
+            std::filesystem::permissions(path,
+                                         std::filesystem::perms::group_read | std::filesystem::perms::group_write
+                                             | std::filesystem::perms::owner_read | std::filesystem::perms::owner_write
+                                             | std::filesystem::perms::others_read,
+                                         std::filesystem::perm_options::replace);
+            d_db.open(*soci::factory_sqlite3(), path);
+        }
+#endif
+
         std::cout << "Database created correctly\n";
     } else {
         std::cout << "Using a pre-existing database\n";

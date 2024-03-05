@@ -143,29 +143,15 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="Line" name="line_3">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLineEdit" name="packagesFilter">
            <property name="frame">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="placeholderText">
             <string>Filter...</string>
            </property>
            <property name="clearButtonEnabled">
             <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Line" name="line_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
@@ -202,29 +188,15 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="Line" name="line_4">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLineEdit" name="namespaceFilter">
            <property name="frame">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="placeholderText">
             <string>Filter...</string>
            </property>
            <property name="clearButtonEnabled">
             <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Line" name="line">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
@@ -515,7 +487,7 @@
      <x>0</x>
      <y>0</y>
      <width>988</width>
-     <height>35</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

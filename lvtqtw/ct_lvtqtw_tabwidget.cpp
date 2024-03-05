@@ -87,7 +87,8 @@ TabWidget::TabWidget(NodeStorage& nodeStorage,
     d(std::make_unique<TabWidget::Private>(nodeStorage, projectFile, std::move(colorManagement), pluginManager))
 {
     d->addGraphBtn = new QToolButton();
-    d->addGraphBtn->setText("+");
+    d->addGraphBtn->setIcon(QIcon::fromTheme("list-add"));
+    d->addGraphBtn->setAutoRaise(true);
 
     // TODO: Icons
     setCornerWidget(d->addGraphBtn, Qt::TopLeftCorner);

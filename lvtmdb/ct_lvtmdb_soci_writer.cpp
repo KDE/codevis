@@ -70,15 +70,9 @@ namespace {
 bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std::string& db_schema_id)
 {
     std::filesystem::path resulting_file = db_schema_path / db_schema_id;
-
-#if 0
-// Temporarely disable this check, as it causes problems such as not updating the
-// database spec when we need.
-// We need a new way so that users can say that they want to override the file.
     if (std::filesystem::exists(resulting_file)) {
         return true;
     }
-#endif
 
     QFile thisFile = QString::fromStdString(":/db/" + db_schema_id);
     if (!thisFile.exists()) {

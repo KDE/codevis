@@ -187,7 +187,13 @@ ProjectFile::ProjectFile(): d(std::make_unique<ProjectFile::Private>())
     std::filesystem::path backupF = backupFolder();
     std::filesystem::directory_entry backupDir(backupF);
     if (!backupDir.exists()) {
-        if (!std::filesystem::create_directories(backupDir)) {
+        try {
+            if (!std::filesystem::create_directories(backupDir)) {
+                std::cerr << "Could not create directories for the project backup.";
+                std::cerr << "Disabling autosave features";
+                d->allowedAutoSave = false;
+            }
+        } catch (std::filesystem::filesystem_error const&) {
             std::cerr << "Could not create directories for the project backup.";
             std::cerr << "Disabling autosave features";
             d->allowedAutoSave = false;

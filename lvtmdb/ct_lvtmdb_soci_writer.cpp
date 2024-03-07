@@ -48,6 +48,10 @@
 #include <QDebug>
 #include <QFile>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QtSystemDetection>
+#endif
+
 using namespace Codethink::lvtmdb;
 
 // must be called on the global namespace.
@@ -66,15 +70,9 @@ namespace {
 bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std::string& db_schema_id)
 {
     std::filesystem::path resulting_file = db_schema_path / db_schema_id;
-
-#if 0
-// Temporarely disable this check, as it causes problems such as not updating the
-// database spec when we need.
-// We need a new way so that users can say that they want to override the file.
     if (std::filesystem::exists(resulting_file)) {
         return true;
     }
-#endif
 
     QFile thisFile = QString::fromStdString(":/db/" + db_schema_id);
     if (!thisFile.exists()) {
@@ -860,6 +858,21 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
         if (!res) {
             return false;
         }
+
+#ifdef Q_OS_LINUX
+        // We need to close the file, change it's permissions, then reopen.
+        // soci creates the file with `r` for groups, instead of `rw`, on unix based systems.
+        if (path != ":memory:") {
+            d_db.close();
+            std::filesystem::permissions(path,
+                                         std::filesystem::perms::group_read | std::filesystem::perms::group_write
+                                             | std::filesystem::perms::owner_read | std::filesystem::perms::owner_write
+                                             | std::filesystem::perms::others_read,
+                                         std::filesystem::perm_options::replace);
+            d_db.open(*soci::factory_sqlite3(), path);
+        }
+#endif
+
         std::cout << "Database created correctly\n";
     } else {
         std::cout << "Using a pre-existing database\n";

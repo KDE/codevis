@@ -663,14 +663,23 @@ void GraphicsView::updateMultiSelect(const QPoint& position)
     d->multiSelect.end = position;
     auto selection = QRect(d->multiSelect.start, d->multiSelect.end).normalized();
     QSet<LakosEntity *> currentSelection;
+    QSet<LakosEntity *> packageSelectionCandidates;
     static QSet<LakosEntity *> oldSelection;
 
     // Fill currentSelection with all LakosEntities in selection
     const auto itemsInSelection = items(selection, Qt::ContainsItemBoundingRect);
     for (QGraphicsItem *item : itemsInSelection) {
         if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(item)) {
-            currentSelection.insert(lEntity);
+            if (lEntity->internalNode()->type() != lvtshr::DiagramType::PackageType) {
+                currentSelection.insert(lEntity);
+            } else {
+                packageSelectionCandidates.insert(lEntity);
+            }
         }
+    }
+    if (currentSelection.isEmpty() && !packageSelectionCandidates.isEmpty()) {
+        // if the only items in selection area were packages, then select them.
+        currentSelection.swap(packageSelectionCandidates);
     }
 
     // Update selection

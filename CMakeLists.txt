@@ -133,9 +133,6 @@ set(SOCI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/soci)
 
 # Required here so that the version comparison below works
 find_package(Qt${QT_MAJOR_VERSION}Core ${QT_MIN_VERSION} CONFIG REQUIRED)
-if (QT_MAJOR_VERSION STREQUAL "6")
-    find_package(Qt6Core5Compat)
-endif()
 message("-- Qt Version: ${QT_MAJOR_VERSION}")
 message("-- LLVM Version: ${LLVM_VERSION}")
 

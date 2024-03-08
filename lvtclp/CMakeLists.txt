@@ -2,7 +2,6 @@ include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
 find_package(Python COMPONENTS Development REQUIRED)
-find_package(Threads REQUIRED)
 
 ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 

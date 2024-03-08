@@ -83,6 +83,7 @@ include(CodevisDeployPlugin)
 include(FeatureSummary)
 find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
+find_package(Threads REQUIRED)
 
 foreach(LLVM_VER 18 17 16 15 14)
     find_package(LLVM ${LLVM_VER})

@@ -942,7 +942,12 @@ bool LogicalDepVisitor::classIsTemplateSpecialization(const clang::CXXRecordDecl
 {
     assert(decl);
     using TSK = clang::TemplateSpecializationKind;
-    return decl->getTemplateSpecializationKind() != TSK::TSK_Undeclared;
+
+    // WARNING: It is possible that getTemplateSpecializationKind != TSK_Undeclared but the record may still not be a
+    // template specialization. Example: Nested class inside a templated class such as `struct Foo<Something>::Bar`,
+    // which is why we need to test using `clang::isa` after the (cheaper) specializationType check.
+    return (decl->getTemplateSpecializationKind() != TSK::TSK_Undeclared
+            && clang::isa<clang::ClassTemplateSpecializationDecl>(decl));
 }
 
 bool LogicalDepVisitor::methodIsTemplateSpecialization(const clang::CXXMethodDecl *decl)

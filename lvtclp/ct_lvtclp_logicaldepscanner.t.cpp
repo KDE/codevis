@@ -108,3 +108,30 @@ TEST_CASE("Optional comment callbacks")
             != foundComments.end());
     REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.cpp", "Main include", 1, 1}) != foundComments.end());
 }
+
+TEST_CASE("Smoke test partial template specialization - Must not crash")
+{
+    /*
+     * Smoke test for a partial template specialization with nested data type that was crashing while trying
+     * to resolve the template specialization arguments. The code has been changed and this test added to ensure
+     * we don't have a regression.
+     */
+    auto const PREFIX = std::string{TEST_PRJ_PATH};
+
+    auto const prjPath = PREFIX + "/templates/";
+    auto cdb = StaticCompilationDatabase{{{"templates.m.cpp", "templates.m.o"}},
+                                         "placeholder",
+                                         {"-I" + prjPath, "-std=c++17"},
+                                         prjPath};
+    auto memDb = lvtmdb::ObjectStore{};
+
+    auto executor = ToolExecutor{cdb, 1, [](auto&& _1, auto&& _2) {}, memDb};
+    (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
+        memDb,
+        PREFIX,
+        std::vector<std::filesystem::path>{},
+        std::vector<std::pair<std::string, std::string>>{},
+        [](const std::string&) {},
+        std::nullopt,
+        false));
+}

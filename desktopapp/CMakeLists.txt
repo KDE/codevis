@@ -130,6 +130,7 @@ target_link_libraries(
     codevis_lib
 )
 
+ecm_install_icons(ICONS ${CMAKE_SOURCE_DIR}/imgs/256-apps-org.kde.codevis.png DESTINATION ${KDE_INSTALL_ICONDIR})
 install(TARGETS codevis_desktop ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 install(FILES codevis.knsrc DESTINATION ${KDE_INSTALL_KNSRCDIR})
 install(

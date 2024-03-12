@@ -39,6 +39,7 @@
 #include <ui_ct_lvtqtw_graphtabelement.h>
 
 #include <any>
+#include <memory>
 #include <variant>
 
 using namespace Codethink::lvtldr;
@@ -108,15 +109,12 @@ class CodeVisApplicationTestFixture : public QTApplicationFixture {
     void ctrlZ();
     void ctrlShiftZ();
     bool isAnyToolSelected();
-    TestMainWindow& window()
-    {
-        return *mainWindow;
-    };
+    CodevisApplicationTesting::TestMainWindow& window();
 
   private:
     Codethink::lvtqtc::UndoManager undoManager;
     NodeStorage sharedNodeStorage;
-    TestMainWindow *mainWindow;
+    std::unique_ptr<CodevisApplicationTesting::TestMainWindow> mainWindow = nullptr;
 };
 
 #endif // DIAGRAM_SERVER_APPTESTING_FIXTURE_H

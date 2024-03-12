@@ -17,9 +17,18 @@
 
 #include <testmainwindow.h>
 
+namespace CodevisApplicationTesting {
+
 TestMainWindow::TestMainWindow(Codethink::lvtldr::NodeStorage& sharedNodeStorage,
                                Codethink::lvtqtc::UndoManager *undoManager,
                                Codethink::lvtmdl::DebugModel *debugModel):
     MainWindow(sharedNodeStorage, nullptr, undoManager, debugModel)
 {
 }
+
+QString TestMainWindow::requestProjectName()
+{
+    return QStringLiteral("__test_project__");
+}
+
+} // namespace CodevisApplicationTesting

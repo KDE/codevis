@@ -1,10 +1,15 @@
 #ifndef TESTMAINWINDOW_H
 #define TESTMAINWINDOW_H
 
+#include <mainwindow.h>
+
 #include <ct_lvtldr_nodestorage.h>
 #include <ct_lvtmdl_debugmodel.h>
 #include <ct_lvtqtc_undo_manager.h>
-#include <mainwindow.h>
+
+#include <QString>
+
+namespace CodevisApplicationTesting {
 
 class TestMainWindow : public MainWindow {
     Q_OBJECT
@@ -12,11 +17,11 @@ class TestMainWindow : public MainWindow {
     explicit TestMainWindow(Codethink::lvtldr::NodeStorage& sharedNodeStorage,
                             Codethink::lvtqtc::UndoManager *undoManager = nullptr,
                             Codethink::lvtmdl::DebugModel *debugModel = nullptr);
+    ~TestMainWindow() override = default;
 
-    QString requestProjectName() override
-    {
-        return QStringLiteral("__test_project__");
-    }
+    QString requestProjectName() override;
 };
+
+} // namespace CodevisApplicationTesting
 
 #endif

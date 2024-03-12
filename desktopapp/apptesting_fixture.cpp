@@ -17,13 +17,10 @@
 // limitations under the License.
 */
 
-#include <ct_lvtmdl_packagetreemodel.h>
-#include <kstandardaction.h>
-#include <mainwindow.h>
-
 #include <apptesting_fixture.h>
 
-#include <utility>
+#include <ct_lvtmdl_packagetreemodel.h>
+#include <kstandardaction.h>
 
 #include <KActionCollection>
 #include <QComboBox>
@@ -35,7 +32,7 @@ CodeVisApplicationTestFixture::CodeVisApplicationTestFixture()
 
     // Resources must be initialized before mainwindow, so I can't initialize this on
     // the initialization list.
-    mainWindow = new TestMainWindow(sharedNodeStorage, &undoManager);
+    mainWindow = std::make_unique<CodevisApplicationTesting::TestMainWindow>(sharedNodeStorage, &undoManager);
     mainWindow->show();
 }
 
@@ -209,19 +206,22 @@ void CodeVisApplicationTestFixture::clickOn(ClickableFeature const& feature)
 
 void CodeVisApplicationTestFixture::ctrlZ()
 {
-    QTest::keySequence(mainWindow, static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_Z)));
+    QTest::keySequence(mainWindow.get(),
+                       static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_Z)));
     QTest::qWait(100);
 }
 
 void CodeVisApplicationTestFixture::ctrlShiftZ()
 {
+    auto sequence =
 #if defined(Q_OS_WINDOWS)
-    QTest::keySequence(mainWindow, static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_Y)));
+        static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_Y))
 #else
-    QTest::keySequence(mainWindow,
-                       static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::SHIFT)
-                                                 | static_cast<int>(Qt::Key_Z)));
+        static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::SHIFT)
+                                  | static_cast<int>(Qt::Key_Z))
 #endif
+        ;
+    QTest::keySequence(mainWindow.get(), sequence);
     QTest::qWait(100);
 }
 
@@ -253,4 +253,9 @@ QPoint CodeVisApplicationTestFixture::findElementTopLeftPosition(const std::stri
     const auto offset = QPointF(10, 10);
     const auto p = entity->scenePos() + offset;
     return view->mapFromScene(p);
+}
+
+CodevisApplicationTesting::TestMainWindow& CodeVisApplicationTestFixture::window()
+{
+    return *mainWindow;
 }

@@ -95,7 +95,7 @@ class MainWindow : public KXmlGuiWindow {
                         Codethink::lvtplg::PluginManager *pluginManager = nullptr,
                         Codethink::lvtqtc::UndoManager *undoManager = nullptr,
                         Codethink::lvtmdl::DebugModel *debugModel = nullptr);
-    ~MainWindow() noexcept;
+    ~MainWindow() noexcept override;
 
     [[nodiscard]] bool openProjectFromPath(const QString& path);
     void openProjectSettings();

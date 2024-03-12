@@ -144,6 +144,10 @@ file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp
 if (COMPILE_TESTS)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testcrash.lks ${CMAKE_CURRENT_BINARY_DIR}/testcrash.lks COPYONLY)
 
+    set(test_desktopapp_SRCS
+        testmainwindow.cpp
+    )
+
     cmake_language(CALL
         qt${QT_MAJOR_VERSION}_wrap_cpp
         test_desktopapp_SRCS
@@ -152,10 +156,9 @@ if (COMPILE_TESTS)
 
     macro(ADD_DESKTOP_TEST TEST_NAME FILE_NAME)
         add_executable(${TEST_NAME}
-            ${test_desktopapp_SRCS}
             ${FILE_NAME}
+            ${test_desktopapp_SRCS}
             apptesting_fixture.cpp
-            testmainwindow.cpp
             apptesting_fixture.h
         )
 
@@ -165,7 +168,8 @@ if (COMPILE_TESTS)
             Codethink::lvttst_tmpdir
             codevis_lib
             ${SYSTEM_EXTRA_LIBRARIES}
-            Qt::Test
+            ${CODEVIS_DESKTOP_QT_LIBRARIES}
+            Qt${QT_MAJOR_VERSION}::Test
         )
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
     endmacro()
@@ -180,7 +184,7 @@ if (COMPILE_TESTS)
     ADD_DESKTOP_TEST(mainwindow_test_autosave mainwindow_test_autosave.t.cpp)
     ADD_DESKTOP_TEST(mainwindow_test_tool_selection mainwindow_test_tool_selection.t.cpp)
 
-    # This test doesn't work on Qt5 because of Bad API'
+    # This test doesn't work on Qt5 because of Bad API
     if (QT_MAJOR_VERSION STREQUAL "6")
         ADD_DESKTOP_TEST(mainwindow_test_element_move mainwindow_test_element_move.t.cpp)
     endif()
@@ -190,8 +194,9 @@ if (COMPILE_TESTS)
         Codethink::lvttst
         Codethink::lvttst_fixture_qt
         codevis_lib
-        ${EXTRA_SYSTEM_LIBRARIES}
-        Qt::Test
+        ${SYSTEM_EXTRA_LIBRARIES}
+        ${CODEVIS_DESKTOP_QT_LIBRARIES}
+        Qt${QT_MAJOR_VERSION}::Test
     )
     add_test(NAME test_projectsettingsdialog COMMAND test_projectsettingsdialog)
 endif()

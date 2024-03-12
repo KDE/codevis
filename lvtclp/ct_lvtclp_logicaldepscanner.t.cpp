@@ -188,5 +188,25 @@ TEST_CASE("Test global free functions with same name in different compilation un
         REQUIRE(allGlobalFunctions.contains("f@hello.m.cpp"));
         REQUIRE(allGlobalFunctions.contains("f@other.cpp"));
         REQUIRE(allGlobalFunctions.contains("g@third.cpp"));
+
+        {
+            auto gFuncLock = allGlobalFunctions["main@hello.m.cpp"]->readOnlyLock();
+            auto mainCallees = allGlobalFunctions["main@hello.m.cpp"]->callees();
+            REQUIRE(mainCallees.size() == 2);
+
+            auto hasCalleeNamed = [&mainCallees](std::string const& calleeFunctionName) {
+                return std::find_if(mainCallees.begin(),
+                                    mainCallees.end(),
+                                    [&calleeFunctionName](auto *calleeF) {
+                                        auto calleeFLock = calleeF->readOnlyLock();
+                                        return calleeF->qualifiedName() == calleeFunctionName;
+                                    })
+                    != mainCallees.end();
+            };
+            REQUIRE(hasCalleeNamed("f@hello.m.cpp"));
+
+            // Wrong: Should be "g@third.cpp"
+            REQUIRE(hasCalleeNamed("g@hello.m.cpp"));
+        }
     });
 }

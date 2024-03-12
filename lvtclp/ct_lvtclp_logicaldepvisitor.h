@@ -257,6 +257,11 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
     static std::string getTemplateParameters(const clang::FunctionDecl *functionDecl);
     // Format the template parameters (if present) is a function decl
 
+    lvtmdb::FunctionObject *getOrAddFreeFunctionToDb(const clang::FunctionDecl *functionDecl,
+                                                     std::string const& sourceFile);
+    void processMethodDecl(clang::CXXMethodDecl *methodDecl);
+    void processFreeFunctionDecl(clang::FunctionDecl *functionDecl);
+
   public:
     // CREATORS
     LogicalDepVisitor(clang::ASTContext *context,

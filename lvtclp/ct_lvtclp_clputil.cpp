@@ -548,8 +548,10 @@ std::vector<std::unique_ptr<ClpUtil::SemanticPackingRule>> ClpUtil::getAllSemant
     if (const char *env_p = std::getenv("SEMRULES_PATH")) {
         searchPaths.emplace_back(env_p);
     }
-    auto appPath = QDir(QCoreApplication::applicationDirPath() + "/semrules").path().toStdString();
-    searchPaths.emplace_back(appPath);
+    if (QCoreApplication::instance()) {
+        auto appPath = QDir(QCoreApplication::applicationDirPath() + "/semrules").path().toStdString();
+        searchPaths.emplace_back(appPath);
+    }
     auto homePath = QDir(QDir::homePath() + "/semrules").path().toStdString();
     searchPaths.emplace_back(homePath);
 

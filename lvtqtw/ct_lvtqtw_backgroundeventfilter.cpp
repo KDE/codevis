@@ -31,10 +31,6 @@
 
 #include <ct_lvtshr_debug_categories.h>
 
-CODEVIS_DECLARE_LOGGING_CATEGORIES(graphics,
-                                   "org.codevis.background",
-                                   Codethink::lvtshr::LoggingCategory::BackgroundGraphics)
-
 namespace Codethink::lvtqtw {
 
 struct BackgroundEventFilter::Private {

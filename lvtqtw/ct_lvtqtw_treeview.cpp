@@ -33,8 +33,6 @@
 
 #include <ct_lvtshr_debug_categories.h>
 
-CODEVIS_DECLARE_LOGGING_CATEGORIES(treeview, "org.codevis.treeview", Codethink::lvtshr::LoggingCategory::TreeView)
-
 namespace Codethink::lvtqtw {
 
 struct TreeView::TreeViewPrivate {

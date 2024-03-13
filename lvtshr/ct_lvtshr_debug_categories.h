@@ -20,33 +20,17 @@
 #define INCLUDED_CT_DEBUG_CATEGORIES_H
 
 #include <QLoggingCategory>
+#include <map>
 
 #include <lvtshr_export.h>
 
 namespace Codethink::lvtshr {
-enum class LoggingCategory { Parsing = 0, BackgroundGraphics = 1, TreeView = 2, Graphics = 3, Interface = 4 };
 
-class LVTSHR_EXPORT CategoryManager {
-  public:
-    static CategoryManager& instance();
-    void add(LoggingCategory cat, const QLoggingCategory *);
+enum class LoggingCategory { Parsing = 0, BackgroundGraphics = 1, TreeView = 2, Graphics = 3, Interface = 4, _End };
 
-  private:
-    CategoryManager();
-    QMap<LoggingCategory, const QLoggingCategory *> categories;
-};
+LVTSHR_EXPORT const std::map<LoggingCategory, std::unique_ptr<QLoggingCategory>>& logCategories();
+LVTSHR_EXPORT const QLoggingCategory& logCategory(LoggingCategory const& catEnum);
 
 } // namespace Codethink::lvtshr
-
-// Use this only on .cpp - not on .h. I'm not sure if the best approach is
-// a stringfied name or an enum, but this works on small tests.'
-#define CODEVIS_DECLARE_LOGGING_CATEGORIES(category, name, loggingCategory)                                            \
-    Q_LOGGING_CATEGORY(category, name);                                                                                \
-    namespace {                                                                                                        \
-    auto __val__##category = []() -> bool {                                                                            \
-        Codethink::lvtshr::CategoryManager::instance().add(loggingCategory, &category());                              \
-        return true;                                                                                                   \
-    }();                                                                                                               \
-    }
 
 #endif

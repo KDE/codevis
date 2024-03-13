@@ -93,6 +93,8 @@
 
 #include <kwidgetsaddons_version.h>
 
+#include <ct_lvtshr_debug_categories.h>
+
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(LogWindow)
 
@@ -134,6 +136,14 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 {
     using namespace Codethink::lvtqtw;
     using namespace Codethink::lvtmdl;
+    using namespace Codethink::lvtshr;
+
+    std::cout << "Hi\n";
+    qCDebug(logCategory(LoggingCategory::TreeView)) << "Hi";
+    qCDebug(logCategory(LoggingCategory::TreeView)) << "Hi";
+    qCDebug(logCategory(LoggingCategory::Parsing)) << "Hi";
+    qCDebug(logCategory(LoggingCategory::Interface)) << "Hi";
+    qDebug() << "Hi!";
 
     ui.setupUi(this);
 

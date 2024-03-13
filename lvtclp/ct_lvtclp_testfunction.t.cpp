@@ -59,12 +59,14 @@ int function(int arg0, const int& arg1)
     ObjectStore session;
     REQUIRE(Test_Util::runOnCode(session, source, "testFunctionDecl.cpp"));
 
-    NamespaceObject *foo;
+    NamespaceObject *foo = nullptr;
     FunctionObject *fn = nullptr;
-
     session.withROLock([&] {
         foo = session.getNamespace("foo");
-        fn = session.getFunction("foo::function", "function(int arg0, const int & arg1)", std::string{}, "int");
+        fn = session.getFunction("foo::function@testFunctionDecl",
+                                 "function(int arg0, const int & arg1)",
+                                 std::string{},
+                                 "int");
     });
 
     REQUIRE(foo);
@@ -113,8 +115,8 @@ int foo(int arg)
     FunctionObject *foo1 = nullptr;
 
     session.withROLock([&] {
-        foo0 = session.getFunction("foo", "foo()", std::string{}, "int");
-        foo1 = session.getFunction("foo", "foo(int arg)", std::string{}, "int");
+        foo0 = session.getFunction("foo@testFuncOverload", "foo()", std::string{}, "int");
+        foo1 = session.getFunction("foo@testFuncOverload", "foo(int arg)", std::string{}, "int");
     });
 
     REQUIRE(foo0);
@@ -122,7 +124,7 @@ int foo(int arg)
 
     for (const auto& fn : {foo0, foo1}) {
         auto lock = fn->readOnlyLock();
-        REQUIRE(fn->qualifiedName() == "foo");
+        REQUIRE(fn->qualifiedName() == "foo@testFuncOverload");
         REQUIRE(fn->returnType() == "int");
         REQUIRE(fn->templateParameters().empty());
         REQUIRE(!fn->parent());
@@ -172,7 +174,10 @@ void instantiateSpecialization()
 
     FunctionObject *clone = nullptr;
     session.withROLock([&] {
-        clone = session.getFunction("clone", "clone(const T & t)", "template <typename T>", "type-parameter-0-0");
+        clone = session.getFunction("clone@testFnTemplate",
+                                    "clone(const T & t)",
+                                    "template <typename T>",
+                                    "type-parameter-0-0");
 
         // check we didn't separately add clone<int>
         REQUIRE(session.functions().size() == 2);
@@ -206,7 +211,10 @@ int function(int &arg1, const int arg0 = 0)
     FunctionObject *fn = nullptr;
     session.withROLock([&] {
         foo = session.getNamespace("foo");
-        fn = session.getFunction("foo::function", "function(int & arg1, const int arg0 = 0)", std::string{}, "int");
+        fn = session.getFunction("foo::function@testFnDefaultParams",
+                                 "function(int & arg1, const int arg0 = 0)",
+                                 std::string{},
+                                 "int");
     });
 
     REQUIRE(foo);

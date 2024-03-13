@@ -184,14 +184,14 @@ TEST_CASE("Test global free functions with same name in different compilation un
         }
         REQUIRE(allGlobalFunctions.size() == 4);
 
-        REQUIRE(allGlobalFunctions.contains("main@hello.m.cpp"));
-        REQUIRE(allGlobalFunctions.contains("f@hello.m.cpp"));
-        REQUIRE(allGlobalFunctions.contains("f@other.cpp"));
-        REQUIRE(allGlobalFunctions.contains("g@third.cpp"));
+        REQUIRE(allGlobalFunctions.contains("main@hello.m"));
+        REQUIRE(allGlobalFunctions.contains("f@hello.m"));
+        REQUIRE(allGlobalFunctions.contains("f@other"));
+        REQUIRE(allGlobalFunctions.contains("g@third"));
 
         {
-            auto gFuncLock = allGlobalFunctions["main@hello.m.cpp"]->readOnlyLock();
-            auto mainCallees = allGlobalFunctions["main@hello.m.cpp"]->callees();
+            auto gFuncLock = allGlobalFunctions["main@hello.m"]->readOnlyLock();
+            auto mainCallees = allGlobalFunctions["main@hello.m"]->callees();
             REQUIRE(mainCallees.size() == 2);
 
             auto hasCalleeNamed = [&mainCallees](std::string const& calleeFunctionName) {
@@ -203,10 +203,10 @@ TEST_CASE("Test global free functions with same name in different compilation un
                                     })
                     != mainCallees.end();
             };
-            REQUIRE(hasCalleeNamed("f@hello.m.cpp"));
+            REQUIRE(hasCalleeNamed("f@hello.m"));
 
-            // Wrong: Should be "g@third.cpp"
-            REQUIRE(hasCalleeNamed("g@hello.m.cpp"));
+            // Note: This assumes that 'g' function is declared in the same component that it's defined.
+            REQUIRE(hasCalleeNamed("g@third"));
         }
     });
 }

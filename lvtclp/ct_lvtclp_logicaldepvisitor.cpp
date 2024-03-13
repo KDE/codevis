@@ -680,12 +680,13 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
     std::string name = functionDecl->getNameAsString();
 
     // Heuristically defines that the qualified name for a free function takes in consideration
-    // it's file name. This is not an ideal solution, as we don't take in consideration files with
+    // it's stem file name (component name). This is not an ideal solution, as we don't take in consideration files with
     // same name in different paths with the same functions inside.
-    auto filename = std::filesystem::path{sourceFile}.filename().string();
-    std::string qualifiedName = functionDecl->getQualifiedNameAsString() + "@" + filename;
+    auto stemFilename = std::filesystem::path{sourceFile}.stem().string();
+    std::string qualifiedName = functionDecl->getQualifiedNameAsString();
+    std::string extendedQualifiedName = qualifiedName + "@" + stemFilename;
 
-    std::string parentNamespaceName = "global";
+    std::string parentNamespaceName = qualifiedName.substr(0, qualifiedName.length() - name.length() - 2);
     std::string signature = getSignature(functionDecl);
     std::string templateParameters = getTemplateParameters(functionDecl);
     std::string returnType = getReturnType(functionDecl);
@@ -694,7 +695,7 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
     lvtmdb::NamespaceObject *parentNamespace = nullptr;
     d_memDb.withRWLock([&] {
         parentNamespace = d_memDb.getNamespace(parentNamespaceName);
-        function = d_memDb.getOrAddFunction(qualifiedName,
+        function = d_memDb.getOrAddFunction(extendedQualifiedName,
                                             std::move(name),
                                             std::move(signature),
                                             std::move(returnType),

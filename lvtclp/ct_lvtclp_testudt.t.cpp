@@ -741,7 +741,7 @@ TEST_CASE("C functions")
     }();
     {
         using Expected = decltype(obtainedFunctionNames);
-        REQUIRE(obtainedFunctionNames == Expected{"f", "g", "h"});
+        REQUIRE(obtainedFunctionNames == Expected{"f@testFreeFunction", "g@testFreeFunction", "h@testFreeFunction"});
     }
 
     auto obtainedFunctionsInFiles = [&]() {
@@ -764,6 +764,6 @@ TEST_CASE("C functions")
     }();
     {
         using Expected = decltype(obtainedFunctionsInFiles);
-        REQUIRE(obtainedFunctionsInFiles == Expected{"f", "g", "h"});
+        REQUIRE(obtainedFunctionsInFiles == Expected{"f@testFreeFunction", "g@testFreeFunction", "h@testFreeFunction"});
     }
 }

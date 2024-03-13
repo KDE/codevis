@@ -32,8 +32,10 @@
 #include <ct_lvtmdb_variableobject.h>
 
 #include <cassert>
-#include <iostream>
 #include <unordered_map>
+
+#include <ct_lvtmdb_soci_reader.h>
+#include <ct_lvtmdb_soci_writer.h>
 
 namespace {
 

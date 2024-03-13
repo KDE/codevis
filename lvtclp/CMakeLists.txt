@@ -130,7 +130,7 @@ add_lvtclp_exec(
 add_lvtclp_exec(
     NAME codevis_merge_databases
     SOURCES ct_lvtclp_merge_databases.m.cpp
-    LIBRARIES Qt${QT_MAJOR_VERSION}::Core Threads::Threads
+    LIBRARIES Qt${QT_MAJOR_VERSION}::Core Threads::Threads Codethink::codevis_project_helpers
 )
 
 add_lvtclp_exec(

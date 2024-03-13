@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include <filesystem>
 #include <mainwindow.h>
 
 #include <QDesktopServices>
@@ -78,9 +79,8 @@
 
 #include <ct_lvtcgn_app_adapter.h>
 
-#include <chrono>
-#include <fstream>
 #include <memory>
+#include <merge_project_databases.h>
 
 #include <preferences.h>
 #include <projectsettingsdialog.h>
@@ -327,113 +327,73 @@ void MainWindow::dropEvent(QDropEvent *e)
         }
     }
 
+    std::vector<std::filesystem::path> projectUrls;
+    for (const auto& url : urls) {
+        projectUrls.push_back(url.toLocalFile().toStdString());
+    }
+
     if (projectFile().isOpen()) {
         QMessageBox messageBox;
         messageBox.setWindowTitle(tr("Open Project File"));
 
         messageBox.setText(tr("You have an open project currently, what do you want to do?"));
 
-        auto *closeCurrent = messageBox.addButton(tr("Close current project"), QMessageBox::AcceptRole);
-        connect(closeCurrent, &QAbstractButton::clicked, this, [this, urls] {
-            mergeProjects(urls, tr("Untitled.lks"));
-        });
-
         const QString currProjName = QString::fromStdString(projectFile().projectName());
         auto *loadWithinAction = messageBox.addButton(tr("Add to current project"), QMessageBox::AcceptRole);
-        connect(loadWithinAction, &QAbstractButton::clicked, this, [this, &urls] {
+        connect(loadWithinAction, &QAbstractButton::clicked, this, [this, &projectUrls] {
             const QString currProjFile = QString::fromStdString(projectFile().location().string());
-            urls.push_back(QUrl::fromLocalFile(currProjFile));
-            mergeProjects(urls, currProjFile);
+            projectUrls.push_back(currProjFile.toStdString());
+            mergeProjects(projectUrls, currProjFile);
         });
 
         auto *createMergedProject =
             messageBox.addButton(tr("Merge files in new project").arg(currProjName), QMessageBox::AcceptRole);
 
-        connect(createMergedProject, &QAbstractButton::clicked, this, [this, &urls, &getProjectName] {
+        connect(createMergedProject, &QAbstractButton::clicked, this, [this, &projectUrls, &getProjectName] {
             const std::string stdStrCurrFile = projectFile().location().string();
             const QString currentFile = QString::fromStdString(stdStrCurrFile);
-            urls.push_back(QUrl::fromLocalFile(currentFile));
-            mergeProjects(urls, getProjectName());
+            projectUrls.push_back(currentFile.toStdString());
+            mergeProjects(projectUrls, getProjectName());
         });
 
         messageBox.exec();
         return;
     }
 
-    mergeProjects(urls, getProjectName());
+    mergeProjects(projectUrls, getProjectName());
 }
 
-namespace {
-void mergePrjFunc(const QList<QUrl>& projectFiles, const QString& newFileName)
-{
-    // uncompress the dropped list of projects to fetch the database path
-    // for each one. Note, projects must be opened untill the merge is finished.
-    // closing a project will delete it's temporary files.
-    std::vector<std::unique_ptr<ProjectFile>> projectsFromPath;
-    for (const auto& prjUrl : projectFiles) {
-        auto prjFromPath = std::make_unique<ProjectFile>();
-        std::filesystem::path prjPath = prjUrl.toLocalFile().toStdString();
-        cpp::result<void, ProjectFileError> res = prjFromPath->open(prjPath);
-        if (res.has_error()) {
-            std::cout << "Error uncompressing project\n";
-        }
-        projectsFromPath.push_back(std::move(prjFromPath));
-    }
-
-    // After the projects are uncompressed, fetch the list of in disk databases.
-    // and prepare the arguments for `codevis_merge_databases`
-    QStringList arguments;
-    for (auto& prj : projectsFromPath) {
-        arguments.append("--database");
-        arguments.append(QString::fromStdString(prj->codeDatabasePath().string()));
-    }
-    // use QProcess to call `codevis_merge_databases` with the list of databases.
-    QTemporaryDir tempDir;
-    QProcess process;
-
-    const QString outputFile = tempDir.path() + "/code_database.db";
-    const QString outputProject = tempDir.path() + "/untitled.lks";
-
-    arguments.append("--output");
-    arguments.append(outputFile);
-
-    process.execute("codevis_merge_databases", arguments);
-    process.waitForFinished(-1); // wait untill finished.
-    if (process.exitCode() != 0) {
-        qDebug() << "Error merging databases";
-        qDebug() << process.errorString();
-        return;
-    }
-
-    process.execute("codevis_create_prj_from_db", QStringList{outputFile, outputProject});
-    process.waitForFinished(-1); // wait untill finished.
-    if (process.exitCode() != 0) {
-        qDebug() << "Error generating project file";
-        qDebug() << process.errorString();
-        return;
-    }
-
-    QFile project(outputProject);
-    project.copy(outputProject, newFileName);
-}
-} // namespace
-
-void MainWindow::mergeProjects(const QList<QUrl>& projectFiles, const QString& newFileName)
+void MainWindow::mergeProjects(const std::vector<std::filesystem::path>& projectFiles, const QString& newFileName)
 {
     if (newFileName.isEmpty()) {
         return;
     }
 
     closeProject();
-    showMessage(tr("While we process multiple databases the application will be unresponsive."
-                   "\nPlease wait a moment."),
-                KMessageWidget::Information);
+    showMessage(tr("Merging projects, please stand by"), KMessageWidget::Information);
 
-    auto thread = QThread::create(mergePrjFunc, projectFiles, newFileName);
+    auto threadCall = [projectFiles, newFileName] {
+        auto messageCallback = [](int idx, int database_size, const std::string& db_name) {};
+        const auto err =
+            Codethink::MergeProjects::mergeDatabases(projectFiles, newFileName.toStdString(), messageCallback);
+        // TODO: Get the error message from the thread.
+        std::ignore = err;
+    };
+
+    auto thread = QThread::create(threadCall);
     connect(thread, &QThread::finished, this, [this, newFileName] {
-        std::ignore = openProjectFromPath(newFileName);
-        showMessage(QString(), KMessageWidget::Information);
+        QFileInfo info(newFileName);
+        if (!info.exists()) {
+            showMessage(tr("Error merging databases"), KMessageWidget::Information);
+            return;
+        }
+
+        showMessage(tr("Database merged successfully."), KMessageWidget::Information);
+        {
+            std::ignore = openProjectFromPath(newFileName);
+        }
     });
+
     thread->start();
 }
 

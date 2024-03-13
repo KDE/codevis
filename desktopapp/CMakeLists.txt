@@ -113,6 +113,7 @@ target_link_libraries(
     Codethink::lvtqtc
     Codethink::lvtplg
     Codethink::lvtcgn_adapter
+    Codethink::codevis_project_helpers
 
     resources
 

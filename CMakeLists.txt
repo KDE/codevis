@@ -330,6 +330,7 @@ add_subdirectory(lvtmdb)
 add_subdirectory(lvtprj)
 add_subdirectory(lvtshr)
 add_subdirectory(lvttst)
+add_subdirectory(project_helpers)
 
 if (BUILD_DESKTOP_APP)
     kconfig_add_kcfg_files(CONFIGURATION_SRCS GENERATE_MOC preferences.kcfgc)

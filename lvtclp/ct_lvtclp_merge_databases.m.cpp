@@ -22,12 +22,10 @@
 #include <ct_lvtmdb_soci_reader.h>
 #include <ct_lvtmdb_soci_writer.h>
 
-#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include <QtGlobal>
 
@@ -37,6 +35,8 @@
 #else
 #include <csignal>
 #endif
+
+#include <project_helpers/merge_project_databases.h>
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
@@ -172,40 +172,26 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    const int database_size = args.databases.count();
-    int idx = 0;
+    auto progressReportCallback = [](int idx, int database_size, const std::string& db_name) {
+        std::cout << "[" << idx << " of " << database_size << ": Loading data from" << db_name << "\n";
+    };
+    auto progressReportCallbackSilent = [](int idx, int database_size, const std::string& db_name) {
+        std::ignore = idx;
+        std::ignore = database_size;
+        std::ignore = db_name;
+    };
 
-    if (args.force) {
-        if (std::filesystem::exists(outputDbPath)) {
-            std::filesystem::remove(outputDbPath);
-        }
+    std::vector<std::filesystem::path> databases;
+    for (const QString& db : args.databases) {
+        databases.push_back(db.toStdString());
     }
 
-    for (const QString& db : std::as_const(args.databases)) {
-        Codethink::lvtmdb::SociReader dbReader;
-        Codethink::lvtmdb::SociWriter dbWriter;
-
-        Codethink::lvtmdb::ObjectStore inMemoryDb;
-
-        auto loaded = inMemoryDb.readFromDatabase(dbReader, db.toStdString());
-        if (loaded.has_error()) {
-            std::cout << "Error opening database " << loaded.error().what << "\n";
-            return EXIT_FAILURE;
-        }
-
-        if (!args.silent) {
-            idx += 1;
-            std::cout << "[" << idx << " of " << database_size << ": Loading data from" << db.toStdString() << "\n";
-        }
-
-        if (!dbWriter.createOrOpen(outputDbPath.string())) {
-            std::cerr << "Could not open resulting database\n";
-            return EXIT_FAILURE;
-        }
-
-        inMemoryDb.writeToDatabase(dbWriter);
+    auto err =
+        Codethink::MergeProjects::mergeDatabases(databases,
+                                                 outputDbPath,
+                                                 args.silent ? progressReportCallbackSilent : progressReportCallback);
+    if (err.has_error()) {
+        std::cout << "Database file saved correctly in " << outputDbPath << "\n";
     }
-
-    std::cout << "Database file saved correctly in " << outputDbPath << "\n";
     return EXIT_SUCCESS;
 }

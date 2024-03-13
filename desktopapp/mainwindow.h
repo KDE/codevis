@@ -218,7 +218,7 @@ class MainWindow : public KXmlGuiWindow {
     Q_SLOT void showErrorMessage(const QString& message);
     Q_SLOT void showSuccessMessage(const QString& message);
     Q_SLOT void showMessage(const QString& message, KMessageWidget::MessageType type);
-    Q_SLOT void mergeProjects(const QList<QUrl>& projectFiles, const QString& newFileName);
+    Q_SLOT void mergeProjects(const std::vector<std::filesystem::path>& projectFiles, const QString& newFileName);
 
     Q_SLOT void requestSearch();
     // Show / Hide the search box on the selected widget, if the widget is searchable.

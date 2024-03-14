@@ -103,7 +103,8 @@ class LVTCLP_EXPORT FilesystemScanner {
 
     void addSourceFile(const std::filesystem::path& path, const std::string& package);
 
-    std::string addSourcePackage(const std::filesystem::path& path, const std::string& parent, bool isStandalone);
+    std::string
+    addLakosianSourcePackage(const std::filesystem::path& path, const std::string& parent, bool isStandalone);
     // returns the qualified name of the package
 
     IncrementalResult addToDatabase();
@@ -114,6 +115,10 @@ class LVTCLP_EXPORT FilesystemScanner {
                                       const std::string& parentName,
                                       const std::string& filePath,
                                       const std::string& repositoryName);
+
+    bool tryProcessFileUsingSemanticRules(const std::filesystem::path& path);
+    void processFileUsingLakosianRules(const std::filesystem::path& path);
+    void processFile(const std::filesystem::path& path);
 };
 
 } // namespace Codethink::lvtclp

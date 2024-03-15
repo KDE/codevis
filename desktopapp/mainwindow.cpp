@@ -363,6 +363,8 @@ void MainWindow::dropEvent(QDropEvent *e)
     mergeProjects(projectUrls, getProjectName());
 }
 
+static std::optional<Codethink::MergeProjects::MergeProjectError> maybeError;
+
 void MainWindow::mergeProjects(const std::vector<std::filesystem::path>& projectFiles, const QString& newFileName)
 {
     if (newFileName.isEmpty()) {
@@ -372,19 +374,28 @@ void MainWindow::mergeProjects(const std::vector<std::filesystem::path>& project
     closeProject();
     showMessage(tr("Merging projects, please stand by"), KMessageWidget::Information);
 
-    auto threadCall = [projectFiles, newFileName] {
-        auto messageCallback = [](int idx, int database_size, const std::string& db_name) {};
-        const auto err =
-            Codethink::MergeProjects::mergeDatabases(projectFiles, newFileName.toStdString(), messageCallback);
-        // TODO: Get the error message from the thread.
-        std::ignore = err;
+    auto threadCall = [this, projectFiles, newFileName] {
+        auto messageCallback = [this](int idx, int database_size, const std::string& db_name) {
+            QMetaObject::invokeMethod(qApp, [this, idx, database_size] {
+                showMessage(tr("Merging database %1 of %2").arg(idx + 1).arg(database_size),
+                            KMessageWidget::Information);
+            });
+        };
+
+        auto err = Codethink::MergeProjects::mergeDatabases(projectFiles, newFileName.toStdString(), messageCallback);
+        if (err.has_error()) {
+            maybeError.emplace(err.error());
+        } else {
+            maybeError = std::nullopt;
+        }
     };
 
     auto thread = QThread::create(threadCall);
     connect(thread, &QThread::finished, this, [this, newFileName] {
         QFileInfo info(newFileName);
         if (!info.exists()) {
-            showMessage(tr("Error merging databases"), KMessageWidget::Information);
+            showMessage(tr("Error merging databases: %1").arg(QString::fromStdString(maybeError.value().what)),
+                        KMessageWidget::Information);
             return;
         }
 

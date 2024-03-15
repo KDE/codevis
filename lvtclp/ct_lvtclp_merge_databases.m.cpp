@@ -191,7 +191,8 @@ int main(int argc, char **argv)
                                                  outputDbPath,
                                                  args.silent ? progressReportCallbackSilent : progressReportCallback);
     if (err.has_error()) {
-        std::cout << "Database file saved correctly in " << outputDbPath << "\n";
+        std::cout << err.error().what << "\n";
     }
+
     return EXIT_SUCCESS;
 }

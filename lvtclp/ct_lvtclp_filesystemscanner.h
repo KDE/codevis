@@ -118,7 +118,6 @@ class LVTCLP_EXPORT FilesystemScanner {
 
     bool tryProcessFileUsingSemanticRules(const std::filesystem::path& path);
     void processFileUsingLakosianRules(const std::filesystem::path& path);
-    void processFile(const std::filesystem::path& path);
 };
 
 } // namespace Codethink::lvtclp

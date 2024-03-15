@@ -74,11 +74,6 @@ bool isLakosianRulesEnabled()
     //    return false;
 }
 
-inline QString asLinuxPath(QString path)
-{
-    return path.replace("\\", "/");
-}
-
 } // namespace
 
 namespace Codethink::lvtclp {
@@ -300,42 +295,6 @@ void FilesystemScanner::processFileUsingLakosianRules(const std::filesystem::pat
     }
 }
 
-void FilesystemScanner::processFile(const std::filesystem::path& path)
-{
-    auto const LINUX_SEP = QString{"/"}; // Uses linux separator even on Windows. Paths must be converted on Windows.
-
-    // Files in the same path as the source folders are added into a package named as the source folder name
-    auto repositoryName = QString{}; // Empty repository by default
-    auto prefixAsString = asLinuxPath(QString::fromStdString(d->prefix.string()));
-    auto mainFolderName = prefixAsString.split(LINUX_SEP).last();
-    auto virtualWorkPath = QString{"${SOURCE_DIR}/"};
-    if (mainFolderName.isEmpty()) {
-        mainFolderName = "<unnamed>";
-    }
-    d->foundPkgGrps[mainFolderName.toStdString()] =
-        PackageHelper{repositoryName.toStdString(), mainFolderName.toStdString(), virtualWorkPath.toStdString()};
-
-    auto pathAsString = asLinuxPath(QString::fromStdString(path.parent_path().string()));
-    pathAsString.remove(prefixAsString);
-    auto folders = pathAsString.split(QDir::separator());
-    auto parentName = mainFolderName;
-    for (auto const& folderName : folders) {
-        if (folderName.isEmpty()) {
-            continue;
-        }
-
-        virtualWorkPath = virtualWorkPath + LINUX_SEP + folderName;
-        d->foundPkgs.emplace_back(FoundPackage{parentName.toStdString(),
-                                               folderName.toStdString(),
-                                               virtualWorkPath.toStdString(),
-                                               repositoryName.toStdString()});
-        parentName = folderName;
-    }
-
-    virtualWorkPath = virtualWorkPath + LINUX_SEP + QString::fromStdString(path.filename().string());
-    d->foundFiles.push_back(FoundThing{parentName.toStdString(), path.string(), virtualWorkPath.toStdString()});
-}
-
 void FilesystemScanner::scanPath(const std::filesystem::path& path)
 {
     if (!std::filesystem::is_regular_file(path)) {
@@ -353,7 +312,7 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
     if (isLakosianRulesEnabled()) {
         processFileUsingLakosianRules(path);
     } else {
-        processFile(path);
+        nonLakosian::ClpUtil::writeSourceFile(d->memDb, path, d->prefix.string(), d->prefix.string());
     }
 }
 

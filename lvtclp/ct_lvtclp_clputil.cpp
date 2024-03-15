@@ -22,6 +22,7 @@
 #include <ct_lvtclp_componentutil.h>
 
 #include <ct_lvtmdb_componentobject.h>
+#include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_packageobject.h>
@@ -575,5 +576,130 @@ std::vector<std::unique_ptr<ClpUtil::SemanticPackingRule>> ClpUtil::getAllSemant
     }
     return rules;
 }
+
+namespace nonLakosian {
+
+inline QString asLinuxPath(QString path)
+{
+    return path.replace("\\", "/");
+}
+
+lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
+                                             const std::string& filepath,
+                                             const std::filesystem::path& sourceDirectory,
+                                             const std::filesystem::path& inclusionPrefixPath)
+{
+    auto memDbLock = memDb.rwLock();
+
+    auto const LINUX_SEP = QString{"/"}; // Uses linux separator even on Windows. Paths must be converted on Windows.
+
+    auto mainFolderName = QString{};
+    auto currentVirtualWorkPath = QString{};
+    auto relativePath = QString{};
+    if (QString::fromStdString(filepath).contains(QString::fromStdString(sourceDirectory.string()))) {
+        // If it is a file in the source directory, it takes precedence for qualified name deduction
+        auto prefixAsString = asLinuxPath(QString::fromStdString(sourceDirectory.string()));
+        mainFolderName = prefixAsString.split(LINUX_SEP).last();
+        if (mainFolderName.isEmpty()) {
+            mainFolderName = "Unnamed Project";
+        }
+        currentVirtualWorkPath = "${SOURCE_DIR}/";
+        relativePath = QString::fromStdString(filepath).replace(QString::fromStdString(sourceDirectory.string()), "");
+    } else {
+        // Anything else will be moved to a global "external" pseudo-folder
+        // TODO: Let the user provide more information regarding what is not "external".
+        mainFolderName = "ExternalLibraries";
+        currentVirtualWorkPath = "${EXTERNAL_LIBS_DIR}/";
+        relativePath = asLinuxPath(QString::fromStdString(inclusionPrefixPath.string()));
+    }
+
+    auto *parentPkg = memDb.getOrAddPackage(
+        /*qualifiedName=*/mainFolderName.toStdString(),
+        /*name=*/mainFolderName.toStdString(),
+        /*diskPath=*/currentVirtualWorkPath.toStdString(),
+        /*parent=*/nullptr,
+        /*repository=*/nullptr);
+
+    auto relativePathAsVec = relativePath.split(LINUX_SEP);
+    auto filename = relativePathAsVec.takeLast();
+    for (auto const& folderName : relativePathAsVec) {
+        if (folderName.isEmpty()) {
+            continue;
+        }
+
+        currentVirtualWorkPath = currentVirtualWorkPath + folderName + LINUX_SEP;
+        parentPkg = memDb.getOrAddPackage(
+            /*qualifiedName=*/folderName.toStdString(),
+            /*name=*/folderName.toStdString(),
+            /*diskPath=*/currentVirtualWorkPath.toStdString(),
+            /*parent=*/parentPkg,
+            /*repository=*/nullptr);
+    }
+
+    auto componentName = std::filesystem::path{filename.toStdString()}.stem().string();
+    auto *component = memDb.getOrAddComponent(componentName, componentName, parentPkg);
+    auto *file = memDb.getOrAddFile(
+        /*qualifiedName=*/(currentVirtualWorkPath + filename).toStdString(),
+        /*name=*/(currentVirtualWorkPath + filename).toStdString(),
+        /*isHeader=*/false,
+        /*hash=*/"",
+        /*package=*/parentPkg,
+        /*component=*/component);
+
+    return file;
+}
+
+void ClpUtil::addSourceFileRelationWithParentPropagation(lvtmdb::FileObject *fromFileObj, lvtmdb::FileObject *toFileObj)
+{
+    if (!fromFileObj || !toFileObj) {
+        return;
+    }
+    lvtmdb::FileObject::addIncludeRelation(fromFileObj, toFileObj);
+
+    auto *fromComponent = [&fromFileObj]() {
+        auto lock = fromFileObj->readOnlyLock();
+        return fromFileObj->component();
+    }();
+    auto *toComponent = [&toFileObj]() {
+        auto lock = toFileObj->readOnlyLock();
+        return toFileObj->component();
+    }();
+    if (!fromComponent || !toComponent) {
+        return;
+    }
+    lvtmdb::ComponentObject::addDependency(fromComponent, toComponent);
+
+    // Important note: Package dependencies are propagated by "same level", but maybe they should be
+    // rethink to support multi-level dependency, since the folder structure between the dependencies
+    // may be different. Example:
+    // '/a/b/c/xx.c' -[includes]-> '/d/yy.h'
+    // We'll only persist the "package-dependency" 'c'->'d'. The discussion is not if the dependencies
+    // 'b'->'d' and 'a'->'d' should exist or not - The discussion is weather this information isn't
+    // already implicitly defined when we say that 'xx.c' depends on 'yy.h', so possibly all package-level
+    // dependencies on the database are irrelevant.
+    // (Extra note: Even component-to/from-package dependencies should appear on GUI, IMO).
+    auto *fromPackage = [&fromComponent]() {
+        auto lock = fromComponent->readOnlyLock();
+        return fromComponent->package();
+    }();
+    auto *toPackage = [&toComponent]() {
+        auto lock = toComponent->readOnlyLock();
+        return toComponent->package();
+    }();
+    while (fromPackage && toPackage) {
+        lvtmdb::PackageObject::addDependency(fromPackage, toPackage);
+
+        fromPackage = [&fromPackage]() {
+            auto lock = fromPackage->readOnlyLock();
+            return fromPackage->parent();
+        }();
+        toPackage = [&toPackage]() {
+            auto lock = toPackage->readOnlyLock();
+            return toPackage->parent();
+        }();
+    }
+}
+
+} // namespace nonLakosian
 
 } // end namespace Codethink::lvtclp

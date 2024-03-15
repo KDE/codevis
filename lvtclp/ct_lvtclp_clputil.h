@@ -207,6 +207,20 @@ class LvtCompilationDatabase : public clang::tooling::CompilationDatabase {
     // qualified name in the compilation database
 };
 
+namespace nonLakosian {
+
+struct LVTCLP_EXPORT ClpUtil {
+    static lvtmdb::FileObject *writeSourceFile(lvtmdb::ObjectStore& memDb,
+                                               const std::string& filepath,
+                                               const std::filesystem::path& sourceDirectory,
+                                               const std::filesystem::path& inclusionPrefixPath);
+
+    static void addSourceFileRelationWithParentPropagation(lvtmdb::FileObject *fromFileObj,
+                                                           lvtmdb::FileObject *toFileObj);
+};
+
+} // namespace nonLakosian
+
 } // end namespace lvtclp
 
 } // end namespace Codethink

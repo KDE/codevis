@@ -20,9 +20,12 @@
 #ifndef CT_LVTCGN_TESTUTILS_H_INCLUDED
 #define CT_LVTCGN_TESTUTILS_H_INCLUDED
 
+#include <ct_lvtcgn_generatecode.h>
+
 #include <memory>
-#include <unordered_map>
+#include <optional>
 #include <utility>
+#include <vector>
 
 using namespace Codethink::lvtcgn::mdl;
 

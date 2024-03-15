@@ -19,6 +19,8 @@
 
 #include <ct_lvtmdb_functionobject.h>
 
+#include <cassert>
+
 namespace Codethink::lvtmdb {
 
 FunctionObject::FunctionObject(std::string qualifiedName,

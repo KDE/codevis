@@ -29,7 +29,6 @@
 #include <lvtclp_export.h>
 
 #include <clang/Basic/Diagnostic.h>
-#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>

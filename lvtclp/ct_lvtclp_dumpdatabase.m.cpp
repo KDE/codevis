@@ -22,10 +22,10 @@
 // isn't useful because it shows the database IDs).
 //
 // Obviously, this outputs a huge amount of text.
-#include "ct_lvtmdb_methodobject.h"
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_fieldobject.h>
 #include <ct_lvtmdb_fileobject.h>
+#include <ct_lvtmdb_methodobject.h>
 #include <ct_lvtmdb_namespaceobject.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_packageobject.h>
@@ -40,9 +40,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-#include <iostream>
-#include <iterator>
-#include <memory>
 #include <vector>
 
 #include <QDebug>

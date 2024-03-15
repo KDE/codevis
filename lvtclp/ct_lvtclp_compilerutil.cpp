@@ -20,10 +20,7 @@
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtshr_stringhelpers.h>
 
-#include <filesystem>
 #include <initializer_list>
-#include <iostream>
-#include <istream>
 #include <optional>
 
 #include <QDebug>

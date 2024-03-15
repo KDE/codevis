@@ -29,7 +29,6 @@
 #include <pybind11/pybind11.h>
 #pragma pop_macro("slots")
 
-#include <ctime>
 #include <test-project-paths.h>
 
 using namespace Codethink::lvtcgn::app;

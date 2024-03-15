@@ -33,7 +33,6 @@
 #include <filesystem>
 #include <functional>
 #include <llvm/Support/GlobPattern.h>
-#include <memory>
 #include <optional>
 #include <vector>
 

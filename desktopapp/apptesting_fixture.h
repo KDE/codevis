@@ -22,7 +22,7 @@
 #include <QObject>
 #include <QToolButton>
 #include <QtTest/QTest>
-#include <algorithm>
+
 #include <ct_lvtldr_nodestorage.h>
 #include <ct_lvtqtc_graphicsview.h>
 #include <ct_lvtqtc_lakosentity.h>
@@ -38,7 +38,6 @@
 #include <testmainwindow.h>
 #include <ui_ct_lvtqtw_graphtabelement.h>
 
-#include <any>
 #include <memory>
 #include <variant>
 

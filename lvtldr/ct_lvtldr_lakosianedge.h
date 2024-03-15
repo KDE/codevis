@@ -25,11 +25,6 @@
 #include <ct_lvtshr_graphenums.h>
 #include <ct_lvtshr_uniqueid.h>
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include <result/result.hpp>
 
 namespace Codethink::lvtldr {

@@ -24,14 +24,10 @@
 
 #include <lvtmdb_export.h>
 
-#include <atomic>
-#include <cassert>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
-#include <string>
 #include <utility>
 
 #ifndef NDEBUG

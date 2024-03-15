@@ -26,7 +26,6 @@
 #include <ct_lvtclp_testutil.h>
 
 #include <algorithm>
-#include <iostream>
 
 #include <catch2-local-includes.h>
 

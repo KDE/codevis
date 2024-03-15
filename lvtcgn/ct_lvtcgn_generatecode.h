@@ -24,7 +24,6 @@
 
 #include <result/result.hpp>
 
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>

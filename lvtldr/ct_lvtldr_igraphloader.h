@@ -26,9 +26,6 @@
 #include <ct_lvtshr_graphstorage.h>
 #include <ct_lvtshr_loaderinfo.h>
 
-#include <optional>
-#include <vector>
-
 namespace Codethink::lvtqtc {
 class LakosEntity;
 class LakosRelation;

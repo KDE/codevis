@@ -24,7 +24,6 @@
 #include <ct_lvtmdb_packageobject.h>
 
 #include <filesystem>
-#include <memory>
 
 namespace Codethink::lvtclp {
 

@@ -28,7 +28,6 @@
 
 #include <filesystem>
 #include <iostream>
-#include <unordered_set>
 
 #include <catch2-local-includes.h>
 

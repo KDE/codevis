@@ -26,7 +26,6 @@
 #include <ct_lvtshr_stringhelpers.h>
 
 #include <cassert>
-#include <optional>
 #include <unordered_set>
 
 // TODO: Have a way to enable debugs from application

@@ -21,8 +21,6 @@
 
 #include <catch2-local-includes.h>
 
-#include <iostream>
-
 using namespace Codethink::lvtclr;
 
 // Extends ColorManagement to avoid touching 'Preferences' directly

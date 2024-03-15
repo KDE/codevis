@@ -23,8 +23,6 @@
 
 #include <clang/AST/DeclTemplate.h>
 
-#include <cassert>
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

@@ -30,7 +30,6 @@
 #pragma pop_macro("slots")
 
 #include <fstream>
-#include <memory>
 #include <string>
 
 using namespace std::string_literals;

@@ -47,7 +47,6 @@
 
 #include <QDebug>
 #include <QFile>
-#include <unordered_set>
 
 #include <boost/functional/hash.hpp>
 

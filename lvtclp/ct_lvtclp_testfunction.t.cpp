@@ -29,7 +29,6 @@
 
 #include <ct_lvtclp_testutil.h>
 
-#include <initializer_list>
 #include <iostream>
 
 #include <catch2-local-includes.h>

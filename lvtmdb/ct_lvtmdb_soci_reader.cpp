@@ -22,7 +22,6 @@
 #include <ct_lvtshr_graphenums.h>
 
 #include <filesystem>
-#include <optional>
 
 #include <soci/soci-backend.h>
 #include <soci/soci.h>

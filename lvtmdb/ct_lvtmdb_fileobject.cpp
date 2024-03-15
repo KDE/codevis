@@ -22,7 +22,6 @@
 #include <ct_lvtmdb_util.h>
 
 #include <cassert>
-#include <iostream>
 
 namespace Codethink::lvtmdb {
 

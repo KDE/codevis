@@ -20,7 +20,6 @@
 #include <ct_lvtmdl_basetablemodel.h>
 
 #include <cassert>
-#include <climits>
 
 namespace {
 

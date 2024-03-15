@@ -21,7 +21,6 @@
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_util.h>
 
-#include <iostream>
 #include <memory>
 #include <thread>
 

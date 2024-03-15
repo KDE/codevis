@@ -36,9 +36,6 @@
 #include <ct_lvttst_tmpdir.h>
 
 #include <catch2-local-includes.h>
-#include <variant>
-
-#include "ct_lvtclr_colormanagement.h"
 
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(LogTest)

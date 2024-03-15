@@ -28,7 +28,7 @@
 #include <catch2-local-includes.h>
 #include <filesystem>
 #include <fstream>
-#include <initializer_list>
+#include <iostream>
 
 #include <ct_lvtmdb_componentobject.h>
 #include <ct_lvtmdb_fileobject.h>

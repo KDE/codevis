@@ -24,7 +24,6 @@
 
 #include <ct_lvtmdl_basetablemodel.h>
 
-#include <memory>
 #include <string>
 #include <vector>
 

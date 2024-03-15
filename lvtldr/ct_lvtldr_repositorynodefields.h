@@ -22,7 +22,6 @@
 
 #include <ct_lvtshr_uniqueid.h>
 
-#include <optional>
 #include <string>
 #include <vector>
 

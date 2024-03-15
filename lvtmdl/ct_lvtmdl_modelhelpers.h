@@ -28,7 +28,6 @@
 #include <QStandardItem>
 #include <QString>
 
-#include <memory>
 #include <optional>
 
 namespace Codethink::lvtldr {

@@ -33,10 +33,10 @@
 
 #include <clang/Tooling/CommonOptionsParser.h>
 
+#include <iostream>
 #include <llvm/Support/GlobPattern.h>
 #include <mutex>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <utility>

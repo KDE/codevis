@@ -20,7 +20,6 @@
 #include <ct_lvtmdl_physicaltablemodels.h>
 
 #include <QDebug>
-#include <functional>
 
 namespace Codethink::lvtmdl {
 

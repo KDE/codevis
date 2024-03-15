@@ -29,7 +29,6 @@
 #include <QStandardItemModel>
 
 #include <deque>
-#include <memory>
 
 namespace Codethink::lvtmdl {
 

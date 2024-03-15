@@ -16,6 +16,8 @@
  */
 
 #include <filesystem>
+#include <iostream>
+
 #include <merge_project_databases.h>
 
 #include <ct_lvtmdb_soci_reader.h>

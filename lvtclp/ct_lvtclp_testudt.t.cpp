@@ -30,7 +30,7 @@
 #include <ct_lvtshr_graphenums.h>
 
 #include <algorithm>
-#include <initializer_list>
+
 #include <string>
 #include <tuple>
 #include <unordered_set>

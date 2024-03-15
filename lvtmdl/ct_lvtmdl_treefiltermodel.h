@@ -23,7 +23,6 @@
 #include <lvtmdl_export.h>
 
 #include <memory>
-#include <string>
 
 //@PURPOSE: Filters the data from the original model
 //

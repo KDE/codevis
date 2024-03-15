@@ -23,7 +23,6 @@
 #include <ct_lvtmdb_soci_writer.h>
 
 #include <filesystem>
-#include <iostream>
 
 #include <catch2-local-includes.h>
 

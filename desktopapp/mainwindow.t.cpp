@@ -24,7 +24,6 @@
 
 #include <apptesting_fixture.h>
 #include <catch2-local-includes.h>
-#include <variant>
 
 #include <preferences.h>
 

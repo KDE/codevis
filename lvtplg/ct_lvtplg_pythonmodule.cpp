@@ -27,7 +27,6 @@
 #include <pybind11/stl.h>
 #pragma pop_macro("slots")
 
-#include <optional>
 #include <string>
 
 #if defined AS_EMBEDDED

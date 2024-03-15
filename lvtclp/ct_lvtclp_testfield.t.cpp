@@ -27,8 +27,6 @@
 #include <ct_lvtshr_graphenums.h>
 
 #include <algorithm>
-#include <cstdlib>
-#include <iostream>
 
 #include <catch2-local-includes.h>
 #include <clang/Basic/Version.h>

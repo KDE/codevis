@@ -53,21 +53,6 @@ target_include_directories(lvtldr
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/../thirdparty/
 )
 
-add_executable(codevis_physicalloader ct_lvtldr_physicalloader.m.cpp)
-target_link_libraries(codevis_physicalloader
-    Codethink::lvtldr
-    ${SYSTEM_EXTRA_LIBRARIES}
-    Soci::core
-    Soci::sqlite3
-    Qt${QT_MAJOR_VERSION}::Core
-    ${SQLite3_LIBRARIES}
-)
-install(TARGETS codevis_physicalloader ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-target_include_directories(codevis_physicalloader
-    PRIVATE
-    ${SQLite3_INCLUDE_DIRS}
-)
-
 if (COMPILE_TESTS)
     add_executable(
         test_ct_lvtldr_lakosiannode

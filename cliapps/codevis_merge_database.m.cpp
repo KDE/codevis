@@ -36,7 +36,7 @@
 #include <csignal>
 #endif
 
-#include <project_helpers/merge_project_databases.h>
+#include <merge_project_databases.h>
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>

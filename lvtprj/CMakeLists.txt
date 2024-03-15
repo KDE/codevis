@@ -19,21 +19,6 @@ AddTargetLibrary(
     Codethink::lvtshr
 )
 
-add_executable(codevis_create_prj_from_db
-    ct_lvtprj_create_prj_from_db.m.cpp
-)
-target_link_libraries(codevis_create_prj_from_db
-    Codethink::lvtprj
-    Codethink::lvtldr
-    ${SQLite3_LIBRARIES}
-)
-target_include_directories(codevis_create_prj_from_db
-    PRIVATE
-    ${SQLite3_INCLUDE_DIRS}
-)
-
-install(TARGETS codevis_create_prj_from_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-
 if (COMPILE_TESTS)
     add_executable(test_lvtprj_project ct_lvtprj_projectfile.t.cpp)
     target_link_libraries(test_lvtprj_project Codethink::lvtprj lvttst)

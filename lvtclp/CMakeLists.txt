@@ -3,6 +3,8 @@ include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
 find_package(Python COMPONENTS Development REQUIRED)
 
+include (AddCodevisExecutable)
+
 ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
 LINK_DIRECTORIES(
@@ -94,47 +96,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
-# add_lvtclp_exec(
-#     NAME exec_name
-#     SOURCES foo.cpp bar.cpp)
-function(add_lvtclp_exec)
-    set(options NONE)
-    set(oneValueArgs NAME)
-    set(multiValueArgs SOURCES LIBRARIES)
-    cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    add_executable(${clp_NAME} ${clp_SOURCES})
-
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        set_target_properties(${clp_NAME}
-            PROPERTIES COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${SKIP_CLANG_WARNINGS}")
-    endif()
-
-    target_link_libraries(${clp_NAME}
-        Codethink::lvtclp
-        Codethink::lvtshr
-        ${clp_LIBRARIES}
-    )
-endfunction()
-
 if (ENABLE_FORTRAN_SCANNER)
     set(CTFortranLibsIfAvailable "lvtclp_fortran")
 endif()
-
-add_lvtclp_exec(
-    NAME codevis_create_codebase_db
-    SOURCES ct_lvtclp_create_codebase_db.m.cpp
-    LIBRARIES Qt${QT_MAJOR_VERSION}::Core ${CTFortranLibsIfAvailable})
-
-add_lvtclp_exec(
-    NAME codevis_merge_databases
-    SOURCES ct_lvtclp_merge_databases.m.cpp
-    LIBRARIES Qt${QT_MAJOR_VERSION}::Core Threads::Threads Codethink::codevis_project_helpers
-)
-
-add_lvtclp_exec(
-    NAME codevis_dump_database
-    SOURCES ct_lvtclp_dumpdatabase.m.cpp)
 
 if (COMPILE_TESTS)
     function(add_lvtclp_test)
@@ -143,7 +107,7 @@ if (COMPILE_TESTS)
         set(multiValueArgs SOURCES LIBRARIES)
         cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-        add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_test ${clp_LIBRARIES} lvttst)
+        add_codevis_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_test ${clp_LIBRARIES} lvttst NOINSTALL)
         add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
     endfunction()
 
@@ -285,10 +249,6 @@ configure_file(
     autogen-test-variables.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/autogen-test-variables.h
 )
-
-install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 if (APPLE)
     # See desktopapp/CMakeLists.txt for copying the headers into the bundle

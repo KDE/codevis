@@ -163,6 +163,10 @@
             <label>Entity background color</label>
             <default>#AAD7D9</default>
         </entry>
+        <entry name="entityHoverColor" type="Color">
+            <label>Entity background color</label>
+            <default>#92d9a3</default>
+        </entry>
         <entry name="selectedEntityBackgroundColor" type="Color">
             <label>Selected entity background color</label>
             <default>#92C7CF</default>

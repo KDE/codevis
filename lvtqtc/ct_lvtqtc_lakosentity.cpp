@@ -1301,7 +1301,7 @@ void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
     }
 
     if (d->showBackground) {
-        QBrush thisBrush = brush();
+        QBrush thisBrush = Preferences::entityHoverColor();
         const QColor& thisColor = thisBrush.color().darker();
         setBrush(QBrush(thisColor));
     }

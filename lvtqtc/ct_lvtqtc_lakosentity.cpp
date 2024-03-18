@@ -289,11 +289,7 @@ LakosEntity::~LakosEntity()
 
 void LakosEntity::setNotes(const std::string& notes)
 {
-    if (notes.empty()) {
-        d->notesIcon->hide();
-    } else {
-        d->notesIcon->show();
-    }
+    d->notesIcon->setVisible(!notes.empty());
     recalculateRectangle();
 }
 

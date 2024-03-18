@@ -442,6 +442,7 @@ void ParseCodebaseDialog::validateUserInputFolders()
     }
 
     if (build_folder_validation == BuildFolderValidationResult::BuildFolderOk) {
+        ui->projectBuildFolderError->setText("");
         ui->projectBuildFolderError->setVisible(false);
         ui->compileCommandsFolder->setStyleSheet(QString());
     }
@@ -464,6 +465,7 @@ void ParseCodebaseDialog::validateUserInputFolders()
 
     if (source_folder_validation == SourceFolderValidationResult::SourceFolderOk) {
         ui->projectSourceFolderError->setVisible(false);
+        ui->projectSourceFolderError->setText("");
         ui->sourceFolder->setStyleSheet(QString());
     }
 

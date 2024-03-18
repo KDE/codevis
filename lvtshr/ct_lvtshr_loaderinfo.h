@@ -37,11 +37,11 @@ namespace Codethink::lvtshr {
 class LVTSHR_EXPORT LoaderInfo {
   private:
     // PRIVATE DATA
-    bool d_valid = false;
+    bool d_valid : 1 = false;
 
-    bool d_hasAllChildren = false;
-    bool d_hasParent = false;
-    bool d_hasAllEdges = false;
+    bool d_hasAllChildren : 1 = false;
+    bool d_hasParent : 1 = false;
+    bool d_hasAllEdges : 1 = false;
 
   public:
     // CREATORS

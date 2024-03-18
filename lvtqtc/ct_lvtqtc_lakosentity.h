@@ -63,11 +63,11 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     Q_OBJECT
 
   public:
-    enum PresentationFlags { NoFlag = 0x00, Highlighted = 0x01 };
+    enum class PresentationFlags : short { NoFlag = 0x00, Highlighted = 0x01 };
 
     enum class RelayoutBehavior : short { e_DoNotRelayout, e_RequestRelayout };
 
-    enum class LevelizationLayoutType { Horizontal, Vertical };
+    enum class LevelizationLayoutType : short { Horizontal, Vertical };
 
     enum { Type = QtcUtil::LAKOSENTITY_TYPE };
     // for qgraphicsitem_cast magic

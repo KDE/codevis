@@ -156,10 +156,6 @@ struct LakosEntity::Private {
     Qt::BrushStyle fillPattern = Qt::BrushStyle::SolidPattern;
     // The brush pattern for this node.
 
-    lvtshr::LoaderInfo loaderInfo;
-    // the instance of the class that holds the information on how
-    // this entity should be loaded.
-
     EllipsisTextItem *text = nullptr;
     // Pointer owned by Qt (it should be a child object of this Container)
 
@@ -189,13 +185,16 @@ struct LakosEntity::Private {
     QFont font = QFont();
 
     // the current font being used by this node
-    int presentationFlags = PresentationFlags::NoFlag;
+    lvtshr::LoaderInfo loaderInfo;
+    EntityFlags flags;
+    short presentationFlags = static_cast<short>(PresentationFlags::NoFlag);
+
+    // the instance of the class that holds the information on how
+    // this entity should be loaded.
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
 
     QGraphicsRectItem *selectionPath = nullptr;
-
-    EntityFlags flags;
 };
 
 LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node, lvtshr::LoaderInfo loaderInfo):
@@ -619,12 +618,12 @@ void LakosEntity::setName(const std::string& name)
 void LakosEntity::setPresentationFlags(PresentationFlags flags, bool value)
 {
     if (value) {
-        d->presentationFlags |= flags;
+        d->presentationFlags |= static_cast<short>(flags);
     } else {
-        d->presentationFlags &= ~flags;
+        d->presentationFlags &= ~static_cast<short>(flags);
     }
 
-    if (d->presentationFlags & PresentationFlags::Highlighted) {
+    if (d->presentationFlags & static_cast<short>(PresentationFlags::Highlighted)) {
         setZValue(1000);
     } else {
         setZValue(1);

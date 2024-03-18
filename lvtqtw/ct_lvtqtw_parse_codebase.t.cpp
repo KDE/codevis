@@ -26,13 +26,14 @@
 
 #include <filesystem>
 
-#include <catch2-local-includes.h>
-
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
+
+#include <catch2-local-includes.h>
+#include <test-project-paths.h>
 using namespace Codethink::lvtqtw;
 
 class ExposingParseCodebaseDialog : public ParseCodebaseDialog {
@@ -52,6 +53,11 @@ class ExposingParseCodebaseDialog : public ParseCodebaseDialog {
         ui->compileCommandsFolder->setText(compileCommandsFolder);
     }
 
+    void compileCommandsFolder()
+    {
+        qDebug() << ui->compileCommandsFolder->text();
+    }
+
     void setSourceFolder(const QString& sourceFolder)
     {
         ui->sourceFolder->setText(sourceFolder);
@@ -68,18 +74,18 @@ class ExposingParseCodebaseDialog : public ParseCodebaseDialog {
     }
 };
 
-QString sample_compile_commands_json()
+std::string sample_compile_commands_json()
 {
-    return QString(R"(
-        [
-        {
-            'directory': "/home/user/kde/build/codevis",
-            "command": "some command here",
-            "file": "some file here",
-            "output": "some output here",
-        }
-        ]
-           )");
+    auto PREFIX = std::string{TEST_QTW_PATH};
+    auto compile_commands_json_path = PREFIX + "/sample_compile_commands.json";
+    auto file = QFile(QString(compile_commands_json_path.c_str()));
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "sample_compile_commands.json was not found in the testfiles folder for lvtqtw";
+    }
+    QTextStream in(&file);
+    auto content = in.readAll();
+    file.close();
+    return content.toStdString();
 }
 
 std::filesystem::path createFolderWithCompileCommandsJson(const std::string& folder_name)
@@ -99,6 +105,12 @@ std::filesystem::path createFolderWithCompileCommandsJson(const std::string& fol
     return folder_path;
 }
 
+bool file_exists(const QString& file_path)
+{
+    QFileInfo inf(file_path);
+    return inf.exists();
+}
+
 TEST_CASE_METHOD(QTApplicationFixture, "Build Folder Validation works correctly")
 {
     // depending on requirements those tests can be more general(just that an error is shown)
@@ -106,27 +118,44 @@ TEST_CASE_METHOD(QTApplicationFixture, "Build Folder Validation works correctly"
     auto parseCodeBaseDialog = ExposingParseCodebaseDialog{};
     parseCodeBaseDialog.show();
 
-    auto folder_has_compile_commands_json = createFolderWithCompileCommandsJson("parse_codebase_temp");
+    // auto tempDir = TmpDir("parse_codebase_temp");
+    // auto file = tempDir.createTextFile("compile_commands.json", sample_compile_commands_json());
+    // auto folder_has_compile_commands_json = tempDir.path();
+    // parseCodeBaseDialog.setCompileCommandsFolder(QString(folder_has_compile_commands_json.c_str()));
+    // parseCodeBaseDialog.compileCommandsFolder();
+    // qDebug() << parseCodeBaseDialog.buildFolderError() + "<-- message of build folder error";
+    // auto checkedFilePath =
+    //     QString(folder_has_compile_commands_json.c_str()) + QDir::separator() + "compile_commands.json";
+    // // REQUIRE(file_exists(QString(checkedFilePath)));
+    // REQUIRE(!parseCodeBaseDialog.buildFolderErrorIsVisible());
+    /*
+        QString filesInTmpDir;
+        for (const auto& entry : std::filesystem::directory_iterator(tempDir.path())) {
+            filesInTmpDir.append("File: ").append(entry.path().c_str());
+        }
 
-    parseCodeBaseDialog.setCompileCommandsFolder(QString(folder_has_compile_commands_json.string().c_str()));
+        qDebug() << QString(tempDir.path().c_str()) + QDir::separator() + "compile_commands.json";
+        auto file_info = QFileInfo(QString(file.c_str()));
+        qDebug() << "Full File path: " << file_info.absoluteFilePath().toStdString();
+
+        qDebug() << "File List: "
+                 << "\n"
+                 << filesInTmpDir;*/
+    auto folder_has_compile_commands_json = createFolderWithCompileCommandsJson("parse_codebase_temp");
     qDebug() << parseCodeBaseDialog.buildFolderError() + "<-- message of build folder error";
+    parseCodeBaseDialog.setCompileCommandsFolder(QString(folder_has_compile_commands_json.c_str()));
     REQUIRE(!parseCodeBaseDialog.buildFolderErrorIsVisible());
     std::filesystem::remove_all(folder_has_compile_commands_json);
-    // should not show error
 
-    // set a wsl folder
     parseCodeBaseDialog.setCompileCommandsFolder(QString("wsl://kde/build/codevis"));
     REQUIRE(parseCodeBaseDialog.buildFolderErrorIsVisible());
     REQUIRE(parseCodeBaseDialog.buildFolderError().contains("wsl"));
-    // should show an error
 
-    // set empty string folder
     parseCodeBaseDialog.setCompileCommandsFolder(QString(""));
     REQUIRE(parseCodeBaseDialog.buildFolderError().contains("empty"));
     REQUIRE(parseCodeBaseDialog.buildFolderErrorIsVisible());
-    // should show an error
 
-    // set folder without compile_commands_json
+    // folder without compile_commands_json
     auto dir2 = QTemporaryDir();
 
     parseCodeBaseDialog.setCompileCommandsFolder(dir2.path());

@@ -190,6 +190,7 @@ if (COMPILE_TESTS)
 
     set(TEST_PRJ_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lvtclp/systemtests)
     set(TEST_PLG_PATH ${CMAKE_BINARY_DIR}/lvtplg/testplugins)
+    set(TEST_QTW_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lvtqtw/testfiles)
     set(LAKOSDIAGRAM_PYSCRIPTS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/python/codegeneration)
 
     configure_file(

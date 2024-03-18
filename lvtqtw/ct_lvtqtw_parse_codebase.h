@@ -95,7 +95,7 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
     void startParse();
     // Actually starts the parsing process.
 
-    void endParse();
+    void endParseStage();
     void cleanupTools();
     void notifyUserForFinishedStage();
     void displayStopError();

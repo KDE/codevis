@@ -1,0 +1,8 @@
+[
+        {
+            "directory": "/home/user/kde/build/codevis",
+            "command": "some command here",
+            "file": "some file here",
+            "output": "some output here",
+        }
+]

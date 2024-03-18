@@ -341,7 +341,7 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
             if (d->tool_p) {
                 d->tool_p->cancelRun();
             }
-            // endParse will emit parseFinished
+            // endParseStage will emit parseFinished
         } else {
             Q_EMIT parseFinished(State::Idle);
         }
@@ -727,7 +727,6 @@ void ParseCodebaseDialog::initParse()
     const auto mustGenerateCompileCommands = physicalRun && (!compileCommandsExists || ui->runCmake->checkState());
     const auto ignoreList = ignoredItemsAsStdVec();
     const auto nonLakosianDirs = nonLakosianDirsAsStdVec();
-    // parse remains a bit vague
     if (mustGenerateCompileCommands) {
         runCMakeAndStartParse(compileCommandsJson, ignoreList, nonLakosianDirs);
     } else {
@@ -967,7 +966,7 @@ void ParseCodebaseDialog::updateDatabase()
             });
     }
 
-    endParse();
+    endParseStage();
 }
 
 void ParseCodebaseDialog::cleanupTools()
@@ -1007,16 +1006,15 @@ void ParseCodebaseDialog::displayStopError()
     }
 }
 
-void ParseCodebaseDialog::endParse()
+void ParseCodebaseDialog::endParseStage()
 {
     assert(d->dialogState != State::Idle);
     resetUiForNextParse();
     cleanupTools();
     auto parsingDidNotFinishSuccessfully = [this]() {
         return d->dialogState == State::Killed || !d->threadSuccess;
-    };
-
-    if (parsingDidNotFinishSuccessfully()) {
+    }();
+    if (parsingDidNotFinishSuccessfully) {
         displayStopError();
         return;
     }
@@ -1071,7 +1069,7 @@ void ParseCodebaseDialog::notifyUserForFinishedStage()
             return "Physical Parse finished with: %1<br/>Starting Logical Parse.";
         }
 
-        return "This Code path was not meant to be followed";
+        return "This Code path was not meant to be followed, with info: %1";
     };
     QTime time(0, 0);
     time = time.addMSecs(d->parseTimer.elapsed());

@@ -41,6 +41,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
     std::function<void(const std::string&)> d_filenameCallback;
     std::vector<llvm::GlobPattern> d_ignoreGlobs;
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> d_headerLocationCallback;
+    bool d_enableLakosianRules;
 
   public:
     FrontendAction(lvtmdb::ObjectStore& memDb,
@@ -49,14 +50,16 @@ class FrontendAction : public clang::PreprocessOnlyAction {
                    std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                    std::function<void(const std::string&)> filenameCallback,
                    std::vector<llvm::GlobPattern> ignoreGlobs,
-                   std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
+                   std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback,
+                   bool enableLakosianRules):
         d_memDb(memDb),
         d_prefix(std::move(prefix)),
         d_nonLakosianDirs(std::move(nonLakosians)),
         d_thirdPartyDirs(std::move(thirdPartyDirs)),
         d_filenameCallback(std::move(filenameCallback)),
         d_ignoreGlobs(std::move(ignoreGlobs)),
-        d_headerLocationCallback(std::move(headerLocationCallback))
+        d_headerLocationCallback(std::move(headerLocationCallback)),
+        d_enableLakosianRules(enableLakosianRules)
     {
     }
 
@@ -78,6 +81,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
                                                                     d_nonLakosianDirs,
                                                                     d_thirdPartyDirs,
                                                                     d_ignoreGlobs,
+                                                                    d_enableLakosianRules,
                                                                     d_headerLocationCallback));
 
         // try our best not to bail on compilation errors
@@ -120,6 +124,7 @@ struct DepScanActionFactory::Private {
     std::function<void(const std::string&)> filenameCallback;
     std::vector<llvm::GlobPattern> ignoreGlobs;
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback;
+    bool enableLakosianRules;
 
     Private(lvtmdb::ObjectStore& memDb,
             std::filesystem::path prefix,
@@ -127,14 +132,16 @@ struct DepScanActionFactory::Private {
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
             std::function<void(const std::string&)> filenameCallback,
             std::vector<llvm::GlobPattern> ignoreGlobs,
-            std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
+            std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback,
+            bool enableLakosianRules):
         memDb(memDb),
         prefix(std::move(prefix)),
         nonLakosianDirs(std::move(nonLakosians)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         filenameCallback(std::move(filenameCallback)),
         ignoreGlobs(std::move(ignoreGlobs)),
-        headerLocationCallback(std::move(headerLocationCallback))
+        headerLocationCallback(std::move(headerLocationCallback)),
+        enableLakosianRules(enableLakosianRules)
     {
     }
 };
@@ -146,6 +153,7 @@ DepScanActionFactory::DepScanActionFactory(
     const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
     std::function<void(const std::string&)> filenameCallback,
     std::vector<llvm::GlobPattern> ignoreGlobs,
+    bool enableLakosianRules,
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
     d(std::make_unique<DepScanActionFactory::Private>(memDb,
                                                       prefix,
@@ -153,7 +161,8 @@ DepScanActionFactory::DepScanActionFactory(
                                                       thirdPartyDirs,
                                                       std::move(filenameCallback),
                                                       std::move(ignoreGlobs),
-                                                      std::move(headerLocationCallback)))
+                                                      std::move(headerLocationCallback),
+                                                      enableLakosianRules))
 {
 }
 
@@ -167,7 +176,8 @@ std::unique_ptr<clang::FrontendAction> DepScanActionFactory::create()
                                             d->thirdPartyDirs,
                                             d->filenameCallback,
                                             d->ignoreGlobs,
-                                            d->headerLocationCallback);
+                                            d->headerLocationCallback,
+                                            d->enableLakosianRules);
 }
 
 } // namespace Codethink::lvtclp

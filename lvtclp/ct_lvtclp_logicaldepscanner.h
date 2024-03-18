@@ -75,6 +75,8 @@ class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendAct
 
     std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
 
+    bool d_enableLakosianRules;
+
   public:
     // CREATORS
     LogicalDepActionFactory(lvtmdb::ObjectStore& memDb,
@@ -84,6 +86,7 @@ class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendAct
                             std::function<void(const std::string&)> filenameCallback,
                             std::optional<std::function<void(const std::string&, long)>> messageCallback,
                             bool catchCodeAnalysisOutput,
+                            bool enableLakosianRules,
                             std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt);
 
     // MANIPULATORS

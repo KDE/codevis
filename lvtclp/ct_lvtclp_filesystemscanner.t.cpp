@@ -140,7 +140,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
         std::filesystem::remove("test.db");
 
         lvtmdb::ObjectStore memDb;
-        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {});
+        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {}, /*enableLakosianRules=*/true);
         FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
 
         lvtmdb::SociWriter writer;
@@ -272,7 +272,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
         auto ret = memDb.readFromDatabase(reader, "test.db");
         REQUIRE(ret.has_value());
 
-        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {});
+        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {}, /*enableLakosianRules=*/true);
         FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
 
         // nothing changed:
@@ -298,7 +298,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
         REQUIRE(ret.has_value());
 
         // scan
-        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {});
+        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {}, /*enableLakosianRules=*/true);
         FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
 
         {
@@ -356,7 +356,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
         auto ret = memDb.readFromDatabase(reader, "test.db");
         REQUIRE(ret.has_value());
 
-        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {});
+        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {}, /*enableLakosianRules=*/true);
         FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
 
         // file was modified
@@ -392,7 +392,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
         lvtmdb::ObjectStore memDb;
 
         // Scan original files.
-        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {});
+        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {}, /*enableLakosianRules=*/true);
         FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
 
         REQUIRE(compareResultList({"groups/two",
@@ -464,7 +464,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
 
         // scan
         lvtmdb::ObjectStore memDb;
-        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {});
+        FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {}, /*enableLakosianRules=*/true);
         FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
 
         // delete a package group
@@ -551,7 +551,14 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Non Lakosian")
     // scan
     lvtmdb::ObjectStore memDb;
 
-    FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {topLevel / "thirdparty"}, {});
+    FilesystemScanner scanner(memDb,
+                              topLevel,
+                              cdb,
+                              messageCallback,
+                              false,
+                              {topLevel / "thirdparty"},
+                              {},
+                              /*enableLakosianRules=*/true);
     FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
 
     // Dump to disk.
@@ -717,7 +724,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Semantic packing")
 
     lvtmdb::ObjectStore memDb;
 
-    FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {});
+    FilesystemScanner scanner(memDb, topLevel, cdb, messageCallback, false, {}, {}, /*enableLakosianRules=*/true);
     FilesystemScanner::IncrementalResult res = scanner.scanCompilationDb();
     auto lock = memDb.readOnlyLock();
 

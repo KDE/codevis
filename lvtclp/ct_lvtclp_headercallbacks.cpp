@@ -32,21 +32,15 @@
 #include <filesystem>
 #include <utility>
 
-bool isLakosianRulesEnabled()
-{
-    // TODO: Make this runtime option instead
-    return true;
-    //    return false;
-}
-
 namespace Codethink::lvtclp {
 
 HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
                                  lvtmdb::ObjectStore& memDb,
-                                 std::filesystem::path prefix,
+                                 std::filesystem::path const& prefix,
                                  std::vector<std::filesystem::path> nonLakosians,
                                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                                  std::vector<llvm::GlobPattern> ignoreGlobs,
+                                 bool enableLakosianRules,
                                  std::optional<HeaderLocationCallback_f> headerLocationCallback):
     sourceManager(*sm),
     d_memDb(memDb),
@@ -54,7 +48,8 @@ HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_ignoreGlobs(std::move(ignoreGlobs)),
-    d_headerLocationCallback(std::move(headerLocationCallback))
+    d_headerLocationCallback(std::move(headerLocationCallback)),
+    d_enableLakosianRules(enableLakosianRules)
 {
 }
 
@@ -84,7 +79,7 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
     }
 
     lvtmdb::FileObject *filePtr = nullptr;
-    if (isLakosianRulesEnabled()) {
+    if (d_enableLakosianRules) {
         filePtr = ClpUtil::writeSourceFile(realPathStr, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
     } else {
         filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPathStr, d_prefix.string(), RelativePath.str());
@@ -104,7 +99,7 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
         (*d_headerLocationCallback)(sourceFile, includedFile, lineNo);
     }
 
-    if (isLakosianRulesEnabled()) {
+    if (d_enableLakosianRules) {
         // add include relationship d_sourceFile_p -> filePtr
         lvtmdb::FileObject::addIncludeRelation(d_sourceFile_p, filePtr);
 
@@ -171,7 +166,7 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
         return;
     }
 
-    if (isLakosianRulesEnabled()) {
+    if (d_enableLakosianRules) {
         const FileType type = ClpUtil::categorisePath(realPath);
         bool isHeader = (type == FileType::e_Header);
         d_sourceFile_p =

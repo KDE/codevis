@@ -74,7 +74,8 @@ class LVTCLP_EXPORT FilesystemScanner {
                                std::function<void(const std::string&, long)> messageCallback,
                                bool catchCodeAnalysisOutput,
                                std::vector<std::filesystem::path> nonLakosianDirs,
-                               std::vector<llvm::GlobPattern> ignoreGlobs);
+                               std::vector<llvm::GlobPattern> ignoreGlobs,
+                               bool enableLakosianRules);
     // cdb and memDb must live at least as long as this FilesystemScanner
 
     ~FilesystemScanner() noexcept;

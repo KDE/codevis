@@ -113,6 +113,8 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
 
     bool d_catchCodeAnalysisOutput;
 
+    bool d_enableLakosianRules;
+
     // MANIPULATORS
     static const clang::CXXRecordDecl *qualTypeToRecordDecl(clang::QualType qualType);
     // Converts a QualType to an underlying C++ class type. If the QualType
@@ -273,7 +275,8 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
                       std::shared_ptr<VisitLog> visitLog,
                       std::shared_ptr<StaticFnHandler> staticFnHandler,
                       std::optional<std::function<void(const std::string&, long)>> d_messageCallback,
-                      bool catchCodeAnalysisOutput);
+                      bool catchCodeAnalysisOutput,
+                      bool enableLakosianRules);
     // Instantiate a new LogicalDepVisitor for the given file as a
     // translation unit
 

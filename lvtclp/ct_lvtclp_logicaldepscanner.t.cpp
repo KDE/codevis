@@ -102,6 +102,7 @@ TEST_CASE("Optional comment callbacks")
         [](const std::string&) {},
         std::nullopt,
         false,
+        /*enableLakosianRules=*/true,
         saveCommentsCallback));
     REQUIRE(foundComments.size() == 4);
     REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.h", "klass", 7, 7}) != foundComments.end());
@@ -136,7 +137,8 @@ TEST_CASE("Smoke test partial template specialization - Must not crash")
         std::vector<std::pair<std::string, std::string>>{},
         [](const std::string&) {},
         std::nullopt,
-        false));
+        false,
+        /*enableLakosianRules=*/false));
 }
 
 TEST_CASE("Test global free functions with same name in different compilation units")

@@ -56,6 +56,8 @@ class LogicalDepConsumer : public clang::ASTConsumer {
     std::string d_filename;
     clang::ASTContext *d_context;
 
+    bool d_enableLakosianRules;
+
   public:
     // CREATORS
     LogicalDepConsumer(clang::ASTContext *context,
@@ -68,6 +70,7 @@ class LogicalDepConsumer : public clang::ASTConsumer {
                        const std::shared_ptr<StaticFnHandler>& staticFnHandler,
                        std::optional<std::function<void(const std::string&, long)>> messageCallback,
                        bool catchCodeAnalysisOutput,
+                       bool enableLakosianRules,
                        std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
 
         // Instantiates a new LogicalDepConsumer for the given file as a
@@ -81,7 +84,8 @@ class LogicalDepConsumer : public clang::ASTConsumer {
                   visitLog,
                   staticFnHandler,
                   std::move(messageCallback),
-                  catchCodeAnalysisOutput),
+                  catchCodeAnalysisOutput,
+                  enableLakosianRules),
         d_handleCppCommentsCallback(std::move(handleCppCommentsCallback)),
         d_filename(file.str()),
         d_context(context)
@@ -145,6 +149,8 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
 
     std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
 
+    bool d_enableLakosianRules;
+
   public:
     // CREATORS
     LogicalDepFrontendAction(lvtmdb::ObjectStore& memDb,
@@ -154,6 +160,7 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
                              std::function<void(const std::string&)> filenameCallback,
                              std::optional<std::function<void(const std::string&, long)>> messageCallback,
                              bool catchCodeAnalysisOutput,
+                             bool enableLakosianRules,
                              std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
         d_memDb(memDb),
         d_prefix(std::move(prefix)),
@@ -164,7 +171,8 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
         d_filenameCallback(std::move(filenameCallback)),
         d_messageCallback(std::move(messageCallback)),
         d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-        d_handleCppCommentsCallback(std::move(handleCppCommentsCallback))
+        d_handleCppCommentsCallback(std::move(handleCppCommentsCallback)),
+        d_enableLakosianRules(enableLakosianRules)
     {
     }
 
@@ -192,6 +200,7 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
                                                     d_staticFnHandler_p,
                                                     d_messageCallback,
                                                     d_catchCodeAnalysisOutput,
+                                                    d_enableLakosianRules,
                                                     d_handleCppCommentsCallback);
     }
 
@@ -222,6 +231,7 @@ LogicalDepActionFactory::LogicalDepActionFactory(
     std::function<void(const std::string&)> filenameCallback,
     std::optional<std::function<void(const std::string&, long)>> messageCallback,
     bool catchCodeAnalysisOutput,
+    bool enableLakosianRules,
     std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback):
     d_memDb(memDb),
     d_prefix(std::move(prefix)),
@@ -230,7 +240,8 @@ LogicalDepActionFactory::LogicalDepActionFactory(
     d_filenameCallback(std::move(filenameCallback)),
     d_messageCallback(std::move(messageCallback)),
     d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-    d_handleCppCommentsCallback(std::move(handleCppCommentsCallback))
+    d_handleCppCommentsCallback(std::move(handleCppCommentsCallback)),
+    d_enableLakosianRules(enableLakosianRules)
 {
 }
 
@@ -243,6 +254,7 @@ std::unique_ptr<clang::FrontendAction> LogicalDepActionFactory::create()
                                                       d_filenameCallback,
                                                       d_messageCallback,
                                                       d_catchCodeAnalysisOutput,
+                                                      d_enableLakosianRules,
                                                       d_handleCppCommentsCallback);
 }
 

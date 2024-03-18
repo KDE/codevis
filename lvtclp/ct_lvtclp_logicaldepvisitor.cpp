@@ -115,13 +115,6 @@ void searchClangStmtAST(const clang::Stmt *top, std::function<void(const TARGET 
     });
 }
 
-bool isLakosianRulesEnabled()
-{
-    // TODO: Make this runtime option instead
-    return true;
-    // return false;
-}
-
 } // unnamed namespace
 
 namespace Codethink::lvtclp {
@@ -135,7 +128,8 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
                                      std::shared_ptr<VisitLog> visitLog,
                                      std::shared_ptr<StaticFnHandler> staticFnHandler,
                                      std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                                     bool catchCodeAnalysisOutput):
+                                     bool catchCodeAnalysisOutput,
+                                     bool enableLakosianRules):
     Context(Context),
     d_memDb(memDb),
     d_prefix(std::filesystem::weakly_canonical(prefix)),
@@ -144,9 +138,10 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
     d_visitLog_p(std::move(visitLog)),
     d_staticFnHandler_p(std::move(staticFnHandler)),
     d_messageCallback(std::move(messageCallback)),
-    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput)
+    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
+    d_enableLakosianRules(enableLakosianRules)
 {
-    if (isLakosianRulesEnabled()) {
+    if (d_enableLakosianRules) {
         sourceFilePtr =
             ClpUtil::writeSourceFile(file.str(), false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
     } else {
@@ -192,7 +187,7 @@ bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
     std::string sourceFile = ClpUtil::getRealPath(namespaceDecl->getLocation(), srcMgr);
 
     lvtmdb::FileObject *filePtr = [&]() {
-        if (isLakosianRulesEnabled()) {
+        if (d_enableLakosianRules) {
             return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
         } else {
             return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
@@ -1779,7 +1774,7 @@ void LogicalDepVisitor::addUDTSourceFile(lvtmdb::TypeObject *udt, const clang::D
     const std::string sourceFile = ClpUtil::getRealPath(decl->getLocation(), Context->getSourceManager());
 
     lvtmdb::FileObject *filePtr = [&]() {
-        if (isLakosianRulesEnabled()) {
+        if (d_enableLakosianRules) {
             return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
         } else {
             return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());

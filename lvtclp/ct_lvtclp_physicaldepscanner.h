@@ -69,6 +69,7 @@ class LVTCLP_EXPORT DepScanActionFactory : public clang::tooling::FrontendAction
         const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
         std::function<void(const std::string&)> filenameCallback, // callback that sends the current filename to the UI
         std::vector<llvm::GlobPattern> ignoreGlobs,
+        bool enableLakosianRules,
         std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback = std::nullopt);
 
     ~DepScanActionFactory() noexcept override;

@@ -67,13 +67,6 @@ struct FoundThingHash {
     }
 };
 
-bool isLakosianRulesEnabled()
-{
-    // TODO: Make this runtime option instead
-    return true;
-    //    return false;
-}
-
 } // namespace
 
 namespace Codethink::lvtclp {
@@ -108,20 +101,24 @@ struct FilesystemScanner::Private {
 
     std::vector<llvm::GlobPattern> ignoreGlobs;
 
+    bool enableLakosianRules;
+
     explicit Private(lvtmdb::ObjectStore& memDb,
                      std::filesystem::path prefix,
                      const LvtCompilationDatabase& cdb,
                      std::function<void(const std::string, long)> messageCallback,
                      std::vector<std::filesystem::path> nonLakosianDirs,
                      bool catchCodeAnalysisOutput,
-                     std::vector<llvm::GlobPattern> ignoreGlobs):
+                     std::vector<llvm::GlobPattern> ignoreGlobs,
+                     bool enableLakosianRules):
         memDb(memDb),
         prefix(std::move(prefix)),
         cdb(cdb),
         nonLakosianDirs(std::move(nonLakosianDirs)),
         messageCallback(std::move(messageCallback)),
         catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-        ignoreGlobs(std::move(ignoreGlobs))
+        ignoreGlobs(std::move(ignoreGlobs)),
+        enableLakosianRules(enableLakosianRules)
     {
     }
 };
@@ -132,14 +129,16 @@ FilesystemScanner::FilesystemScanner(lvtmdb::ObjectStore& memDb,
                                      std::function<void(const std::string&, long)> messageCallback,
                                      bool catchCodeAnalysisOutput,
                                      std::vector<std::filesystem::path> nonLakosianDirs,
-                                     std::vector<llvm::GlobPattern> ignoreGlobs):
+                                     std::vector<llvm::GlobPattern> ignoreGlobs,
+                                     bool enableLakosianRules):
     d(std::make_unique<FilesystemScanner::Private>(memDb,
                                                    prefix,
                                                    cdb,
                                                    std::move(messageCallback),
                                                    std::move(nonLakosianDirs),
                                                    catchCodeAnalysisOutput,
-                                                   std::move(ignoreGlobs)))
+                                                   std::move(ignoreGlobs),
+                                                   enableLakosianRules))
 {
 }
 
@@ -309,7 +308,7 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
         return;
     }
 
-    if (isLakosianRulesEnabled()) {
+    if (d->enableLakosianRules) {
         processFileUsingLakosianRules(path);
     } else {
         nonLakosian::ClpUtil::writeSourceFile(d->memDb, path.string(), d->prefix.string(), d->prefix.string());

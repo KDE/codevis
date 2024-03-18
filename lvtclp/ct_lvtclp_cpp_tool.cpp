@@ -413,6 +413,8 @@ struct CppTool::Private {
     // Flag that indicates that database errors should be
     // reported to the UI.
 
+    bool enableLakosianRules;
+
     [[nodiscard]] lvtmdb::ObjectStore& memDb()
     {
         return sharedMemDb ? *sharedMemDb : localMemDb;
@@ -465,6 +467,7 @@ struct CppTool::Private {
             const std::vector<std::string>& ignoreList,
             const std::vector<std::filesystem::path>& nonLakosians,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+            bool enableLakosianRules,
             bool inPrintToConsole = true):
         sourcePath(std::move(inSourcePath)),
         messageCallback([tool](const std::string& msg, long tid) {
@@ -473,7 +476,8 @@ struct CppTool::Private {
         compileCommandsJsons(std::move(inCompileCommandsJsons)),
         databasePath(std::move(inDatabasePath)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
-        printToConsole(inPrintToConsole)
+        printToConsole(inPrintToConsole),
+        enableLakosianRules(enableLakosianRules)
     {
         setNumThreads(numThreadsIn);
         setIgnoreList(ignoreList);
@@ -487,6 +491,7 @@ struct CppTool::Private {
             const std::vector<std::string>& ignoreList,
             const std::vector<std::filesystem::path>& nonLakosians,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+            bool enableLakosianRules,
             bool inPrintToConsole = true):
         sourcePath(std::move(inSourcePath)),
         compileCommand(std::in_place, compileCommand),
@@ -495,7 +500,8 @@ struct CppTool::Private {
         }),
         databasePath(std::move(inDatabasePath)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
-        printToConsole(inPrintToConsole)
+        printToConsole(inPrintToConsole),
+        enableLakosianRules(enableLakosianRules)
     {
         setNumThreads(1);
         setIgnoreList(ignoreList);
@@ -510,6 +516,7 @@ struct CppTool::Private {
             const std::vector<std::string>& ignoreList,
             std::vector<std::filesystem::path> nonLakosianDirs,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+            bool enableLakosianRules,
             bool inPrintToConsole):
         sourcePath(std::move(inSourcePath)),
         messageCallback([tool](const std::string& msg, long tid) {
@@ -519,7 +526,8 @@ struct CppTool::Private {
         nonLakosianDirs(std::move(nonLakosianDirs)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         printToConsole(inPrintToConsole),
-        compilationDb(std::in_place, sourcePath, compileCommands, messageCallback)
+        compilationDb(std::in_place, sourcePath, compileCommands, messageCallback),
+        enableLakosianRules(enableLakosianRules)
     {
         setNumThreads(numThreadsIn);
         setIgnoreList(ignoreList);
@@ -533,6 +541,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  const std::vector<std::string>& ignoreList,
                  const std::vector<std::filesystem::path>& nonLakosianDirs,
                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 bool enableLakosianRules,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
                                          std::move(sourcePath),
@@ -542,6 +551,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                                          ignoreList,
                                          nonLakosianDirs,
                                          std::move(thirdPartyDirs),
+                                         enableLakosianRules,
                                          printToConsole))
 {
 }
@@ -552,6 +562,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  const std::vector<std::string>& ignoreList,
                  const std::vector<std::filesystem::path>& nonLakosianDirs,
                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 bool enableLakosianRules,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
                                          std::move(sourcePath),
@@ -560,6 +571,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                                          ignoreList,
                                          nonLakosianDirs,
                                          std::move(thirdPartyDirs),
+                                         enableLakosianRules,
                                          printToConsole))
 {
 }
@@ -571,6 +583,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  const std::vector<std::string>& ignoreList,
                  const std::vector<std::filesystem::path>& nonLakosianDirs,
                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 bool enableLakosianRules,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
                                          std::move(sourcePath),
@@ -580,6 +593,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                                          ignoreList,
                                          nonLakosianDirs,
                                          std::move(thirdPartyDirs),
+                                         enableLakosianRules,
                                          printToConsole))
 {
     d->compilationDb->setup(UseSystemHeaders::e_Query, !printToConsole);
@@ -783,7 +797,8 @@ bool CppTool::findPhysicalEntities(bool doIncremental)
                               d->messageCallback,
                               d->printToConsole,
                               d->nonLakosianDirs,
-                              d->ignoreList);
+                              d->ignoreList,
+                              d->enableLakosianRules);
 
     {
         std::unique_lock<std::mutex> lock(d->executorMutex);
@@ -865,6 +880,7 @@ bool CppTool::runPhysical(bool skipScan)
                                                d->thirdPartyDirs,
                                                filenameCallback,
                                                d->ignoreList,
+                                               d->enableLakosianRules,
                                                d->headerLocationCallback);
 
     Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());
@@ -962,6 +978,7 @@ bool CppTool::runFull(bool skipPhysical)
                                                   filenameCallback,
                                                   messageOpt,
                                                   d->printToConsole,
+                                                  d->enableLakosianRules,
                                                   d->handleCppCommentsCallback);
 
     Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());

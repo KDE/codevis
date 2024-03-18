@@ -85,14 +85,17 @@ class HeaderCallbacks : public clang::PPCallbacks {
     std::vector<llvm::GlobPattern> d_ignoreGlobs;
     std::optional<HeaderLocationCallback_f> d_headerLocationCallback;
 
+    bool d_enableLakosianRules;
+
   public:
     // CREATORS
     HeaderCallbacks(clang::SourceManager *sm,
                     lvtmdb::ObjectStore& memDb,
-                    std::filesystem::path prefix,
+                    std::filesystem::path const& prefix,
                     std::vector<std::filesystem::path> nonLakosians,
                     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                     std::vector<llvm::GlobPattern> ignoreGlobs,
+                    bool enableLakosianRules,
                     std::optional<HeaderLocationCallback_f> headerLocationCallback = std::nullopt);
 
     // MANIPULATORS

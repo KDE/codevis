@@ -140,6 +140,8 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // The color id is used to
     // fetch a specific color from the ColorManagement.
 
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
+
     [[nodiscard]] QColor color() const;
     // returns the current color of this node.
     // TODO: Change this, the color is not important, but the brush is.

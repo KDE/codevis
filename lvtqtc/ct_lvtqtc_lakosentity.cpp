@@ -61,7 +61,6 @@
 #include <QVector2D>
 
 #include <cmath>
-#include <fstream>
 #include <optional>
 #include <preferences.h>
 
@@ -76,6 +75,7 @@ constexpr int TITLE_LAYER = 1;
 constexpr int ONE_CHILD_BORDER = 20;
 constexpr int DEFAULT_BORDER = 10;
 constexpr int SHRINK_BORDER = 20;
+constexpr int SELECTION_LAYER = 100;
 
 } // namespace
 
@@ -195,6 +195,8 @@ struct LakosEntity::Private {
     int presentationFlags = PresentationFlags::NoFlag;
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
+
+    QGraphicsRectItem *selectionPath = nullptr;
 };
 
 LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node, lvtshr::LoaderInfo loaderInfo):
@@ -1724,6 +1726,19 @@ QVariant LakosEntity::itemChange(QGraphicsItem::GraphicsItemChange change, const
         for (auto&& e : d->targetEdges) {
             e->toggleRelationFlags(EdgeCollection::RelationIsSelected, value.value<bool>());
         }
+        if (value.toBool()) {
+            QColor selectionColor = Preferences::defaultBackgroundColorValue();
+            selectionColor.setAlpha(125);
+
+            d->selectionPath = new QGraphicsRectItem(boundingRect(), this);
+            d->selectionPath->setBrush(selectionColor);
+            d->selectionPath->setPen(Qt::PenStyle::NoPen);
+            d->selectionPath->setZValue(SELECTION_LAYER);
+            d->selectionPath->setVisible(true);
+        } else {
+            delete d->selectionPath;
+            d->selectionPath = nullptr;
+        }
         break;
     }
     default:
@@ -2085,6 +2100,15 @@ void LakosEntity::setColor(const QColor& color)
 void LakosEntity::setPluginManager(Codethink::lvtplg::PluginManager& pm)
 {
     d->pluginManager = pm;
+}
+
+void LakosEntity::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    std::ignore = widget;
+    QStyleOptionGraphicsItem myoption = (*option);
+    myoption.state &= ~QStyle::State_Selected;
+
+    GraphicsRectItem::paint(painter, &myoption, widget);
 }
 
 } // end namespace Codethink::lvtqtc

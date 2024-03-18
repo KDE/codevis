@@ -164,7 +164,8 @@ TEST_CASE("Test global free functions with same name in different compilation un
         std::vector<std::pair<std::string, std::string>>{},
         [](const std::string&) {},
         std::nullopt,
-        false));
+        false,
+        /*enableLakosianRules=*/true));
 
     memDb.withROLock([&memDb]() {
         auto files = memDb.getAllFiles();

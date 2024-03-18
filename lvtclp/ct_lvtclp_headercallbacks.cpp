@@ -166,6 +166,11 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
         return;
     }
 
+    if (realPath.empty()) {
+        d_sourceFile_p = nullptr;
+        return;
+    }
+
     if (d_enableLakosianRules) {
         const FileType type = ClpUtil::categorisePath(realPath);
         bool isHeader = (type == FileType::e_Header);

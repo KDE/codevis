@@ -243,6 +243,8 @@ struct ParseCodebaseDialog::Private {
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
     QElapsedTimer parseTimer;
+
+    bool enableLakosianRules = true;
 };
 
 ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
@@ -738,6 +740,7 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
                                                       ignoreList,
                                                       nonLakosianDirs,
                                                       d->thirdPartyPathMapping,
+                                                      d->enableLakosianRules,
                                                       catchCodeAnalysisOutput);
     }
 #ifdef CT_ENABLE_FORTRAN_SCANNER

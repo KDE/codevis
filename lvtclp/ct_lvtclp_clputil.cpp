@@ -610,7 +610,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
         // TODO: Let the user provide more information regarding what is not "external".
         mainFolderName = "ExternalLibraries";
         currentVirtualWorkPath = "${EXTERNAL_LIBS_DIR}/";
-        relativePath = asLinuxPath(QString::fromStdString(inclusionPrefixPath.string()));
+        relativePath = asLinuxPath(QString::fromStdString(filepath));
     }
 
     auto *parentPkg = memDb.getOrAddPackage(
@@ -628,16 +628,26 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
         }
 
         currentVirtualWorkPath = currentVirtualWorkPath + folderName + LINUX_SEP;
-        parentPkg = memDb.getOrAddPackage(
+        auto *newPkg = memDb.getOrAddPackage(
             /*qualifiedName=*/folderName.toStdString(),
             /*name=*/folderName.toStdString(),
             /*diskPath=*/currentVirtualWorkPath.toStdString(),
             /*parent=*/parentPkg,
             /*repository=*/nullptr);
+        {
+            auto lock = parentPkg->rwLock();
+            parentPkg->addChild(newPkg);
+        }
+        parentPkg = newPkg;
     }
 
     auto componentName = std::filesystem::path{filename.toStdString()}.stem().string();
     auto *component = memDb.getOrAddComponent(componentName, componentName, parentPkg);
+    {
+        auto lock = parentPkg->rwLock();
+        parentPkg->addComponent(component);
+    }
+
     auto *file = memDb.getOrAddFile(
         /*qualifiedName=*/(currentVirtualWorkPath + filename).toStdString(),
         /*name=*/(currentVirtualWorkPath + filename).toStdString(),
@@ -645,6 +655,10 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
         /*hash=*/"",
         /*package=*/parentPkg,
         /*component=*/component);
+    {
+        auto lock = component->rwLock();
+        component->addFile(file);
+    }
 
     return file;
 }

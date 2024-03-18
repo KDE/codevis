@@ -82,6 +82,7 @@ struct CommandLineArgs {
     bool update = false;
     bool physicalOnly = false;
     bool silent = false;
+    bool disableLakosianRules = false;
     Codethink::lvtclp::CppTool::UseSystemHeaders useSystemHeaders =
         Codethink::lvtclp::CppTool::UseSystemHeaders::e_Query;
 };
@@ -133,6 +134,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
     const QCommandLineOption replace("replace", "replaces an existing database file");
     const QCommandLineOption physicalOnly("physical-only", "Only look for physical entities and relationships");
     const QCommandLineOption silent("silent", "supress stdout");
+    const QCommandLineOption disableLakosianRules("no-lakos-rules", "Disable John Lakos' rules for C++ code parsing");
     const QCommandLineOption queryHeaders(
         "query-system-headers",
         "Query if we need system headers. the return code will be 0 for no and 1 for yes.");
@@ -157,6 +159,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
                        replace,
                        physicalOnly,
                        silent,
+                       disableLakosianRules,
                        queryHeaders,
                        useSystemHeaders});
 
@@ -275,6 +278,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
     // physicalOnly
     args.physicalOnly = parser.isSet(physicalOnly);
     args.silent = parser.isSet(silent);
+    args.disableLakosianRules = parser.isSet(disableLakosianRules);
     args.sourcePath = parser.value(sourcePath).toStdString();
 
     return CommandLineParseResult::Ok;
@@ -434,6 +438,7 @@ int main(int argc, char **argv)
                                                                                    args.ignoreList,
                                                                                    args.nonLakosianDirs,
                                                                                    args.packageMappings,
+                                                                                   !args.disableLakosianRules,
                                                                                    !args.silent)
                                                        : std::make_unique<CppTool>(args.sourcePath,
                                                                                    compileCommand.value(),
@@ -441,6 +446,7 @@ int main(int argc, char **argv)
                                                                                    args.ignoreList,
                                                                                    args.nonLakosianDirs,
                                                                                    args.packageMappings,
+                                                                                   !args.disableLakosianRules,
                                                                                    !args.silent);
     clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);

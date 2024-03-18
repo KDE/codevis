@@ -17,7 +17,6 @@
 #include <merge_project_databases.h>
 
 #include <catch2-local-includes.h>
-#include <clang/Basic/Version.h>
 
 #include <QTemporaryDir>
 

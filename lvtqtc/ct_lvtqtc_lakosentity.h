@@ -149,14 +149,6 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // and if we change the color of a brush that has a gradient, nothing
     // will change on the painted item.
 
-    void setMainEntity();
-    // Draws a different background to highlight that this is the main node.
-    // TODO: rename to setAsMainEntity(). setMainEntity means that we are
-    // setting a mainEntity inside of this element.
-
-    [[nodiscard]] bool isMainEntity() const;
-    // returns if this is the main node or not.
-
     LakosEntity *getTopLevelParent();
     // Get the top-most LakosEntity in the parent/child hierarchy
 

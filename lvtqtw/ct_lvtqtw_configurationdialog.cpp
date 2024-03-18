@@ -43,9 +43,6 @@
 #include <KPluginWidget>
 #endif
 
-// std
-#include <cassert>
-
 namespace Codethink::lvtqtw {
 
 struct ConfigurationDialog::Private {
@@ -144,10 +141,6 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
     connect(d->ui.selectedEntityBackgroundColor, &KColorButton::changed, this, [this] {
         Preferences::setSelectedEntityBackgroundColor(d->ui.selectedEntityBackgroundColor->color());
     });
-    connect(d->ui.chkSelectedEntityHasGradient,
-            &QCheckBox::toggled,
-            Preferences::self(),
-            &Preferences::setEnableGradientOnMainNode);
 
     connect(d->ui.edgeColor, &KColorButton::changed, this, [this] {
         Preferences::setEdgeColor(d->ui.edgeColor->color());

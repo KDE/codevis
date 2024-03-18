@@ -175,9 +175,6 @@ struct LakosEntity::Private {
     bool highlighted = false;
     // is this highlighted ?
 
-    bool isMainNode = false;
-    // is this the main node on the visualization?
-
     bool showBackground = true;
     // are we showing the bg?
 
@@ -188,10 +185,8 @@ struct LakosEntity::Private {
     // the in-memory node that represents this visual node
 
     QFont font = QFont();
+
     // the current font being used by this node
-
-    bool enableGradientOnMainNode = true;
-
     int presentationFlags = PresentationFlags::NoFlag;
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
@@ -262,17 +257,12 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     layoutIgnoredItems();
 
     d->color = Preferences::entityBackgroundColor();
-    d->enableGradientOnMainNode = Preferences::enableGradientOnMainNode();
     d->selectedNodeColor = Preferences::selectedEntityBackgroundColor();
     connect(Preferences::self(), &Preferences::lakosEntityNamePosChanged, this, [this] {
         layoutIgnoredItems();
     });
     connect(Preferences::self(), &Preferences::entityBackgroundColorChanged, this, [this] {
         d->color = Preferences::entityBackgroundColor();
-        updateBackground();
-    });
-    connect(Preferences::self(), &Preferences::enableGradientOnMainNodeChanged, this, [this] {
-        d->enableGradientOnMainNode = Preferences::enableGradientOnMainNode();
         updateBackground();
     });
     connect(Preferences::self(), &Preferences::selectedEntityBackgroundColorChanged, this, [this] {
@@ -856,14 +846,12 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(action);
     }
 
-    if (!isMainEntity()) {
-        auto *action = new QAction();
-        action->setText(tr("Navigate to %1").arg(QString::fromStdString(d->qualifiedName)));
-        connect(action, &QAction::triggered, this, [this] {
-            Q_EMIT navigateRequested();
-        });
-        retValues.append(action);
-    }
+    auto *action = new QAction();
+    action->setText(tr("Navigate to %1").arg(QString::fromStdString(d->qualifiedName)));
+    connect(action, &QAction::triggered, this, [this] {
+        Q_EMIT navigateRequested();
+    });
+    retValues.append(action);
 
     auto *removeAction = new QAction(tr("Remove"));
     removeAction->setToolTip(tr("Removes this entity from the database"));
@@ -1271,12 +1259,6 @@ void LakosEntity::layoutAllRelations()
     }
 }
 
-void LakosEntity::setMainEntity()
-{
-    d->isMainNode = true;
-    updateBackground();
-}
-
 void LakosEntity::recursiveEdgeHighlight(bool highlight)
 {
     for (auto *item : childItems()) {
@@ -1318,13 +1300,12 @@ void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
         }
     }
 
-    if (!isMainEntity()) {
-        if (d->showBackground) {
-            QBrush thisBrush = brush();
-            const QColor& thisColor = thisBrush.color();
-            setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue(), 180)));
-        }
+    if (d->showBackground) {
+        QBrush thisBrush = brush();
+        const QColor& thisColor = thisBrush.color().darker();
+        setBrush(QBrush(thisColor));
     }
+
     d->zValueBeforeHoverEnter = zValue();
     setZValue(QtcUtil::e_NODE_HOVER_LAYER);
 }
@@ -1341,13 +1322,11 @@ void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
 
     setFlag(QGraphicsItem::ItemIgnoresTransformations, false);
 
-    if (!isMainEntity()) {
-        if (d->showBackground) {
-            QBrush thisBrush = brush();
-            const QColor& thisColor = thisBrush.color();
-            setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue())));
-        }
+    if (d->showBackground) {
+        QBrush thisBrush = Preferences::entityBackgroundColor();
+        setBrush(thisBrush);
     }
+
     if (d->zValueBeforeHoverEnter.has_value()) {
         setZValue(d->zValueBeforeHoverEnter.value());
         d->zValueBeforeHoverEnter = std::nullopt;
@@ -1367,26 +1346,10 @@ void LakosEntity::updateBackground()
         return;
     }
 
-    if (d->isMainNode) {
-        const QRectF bRect = rect();
-        if (d->enableGradientOnMainNode) {
-            QLinearGradient linearGrad(bRect.topLeft(), bRect.bottomRight());
-            linearGrad.setColorAt(0, d->color);
-            linearGrad.setColorAt(1, d->color.lighter());
-            setBrush(QBrush(linearGrad));
-        } else {
-            QBrush b = brush();
-            b.setColor(d->selectedNodeColor);
-            b.setStyle(d->fillPattern);
-            setBrush(b);
-        }
-        setPen(QPen(QBrush(Qt::blue), 1));
-    } else {
-        QBrush b = brush();
-        b.setColor(d->color);
-        b.setStyle(d->fillPattern);
-        setBrush(b);
-    }
+    QBrush b = brush();
+    b.setColor(d->color);
+    b.setStyle(d->fillPattern);
+    setBrush(b);
 }
 
 void LakosEntity::setColorManagement(lvtclr::ColorManagement *colorManagement)
@@ -1927,11 +1890,6 @@ const std::string& LakosEntity::uniqueIdStr() const
 bool LakosEntity::highlighted() const
 {
     return d->highlighted;
-}
-
-bool LakosEntity::isMainEntity() const
-{
-    return d->isMainNode;
 }
 
 void LakosEntity::setRelationRedundant(const std::shared_ptr<EdgeCollection>& edgeCollection)

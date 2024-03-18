@@ -1690,7 +1690,7 @@ QVariant LakosEntity::itemChange(QGraphicsItem::GraphicsItemChange change, const
             e->toggleRelationFlags(EdgeCollection::RelationIsSelected, value.value<bool>());
         }
         if (value.toBool()) {
-            QColor selectionColor = Preferences::defaultBackgroundColorValue();
+            QColor selectionColor = Preferences::selectedEntityBackgroundColor();
             selectionColor.setAlpha(125);
 
             d->selectionPath = new QGraphicsRectItem(boundingRect(), this);

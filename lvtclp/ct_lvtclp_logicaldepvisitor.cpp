@@ -115,6 +115,13 @@ void searchClangStmtAST(const clang::Stmt *top, std::function<void(const TARGET 
     });
 }
 
+bool isLakosianRulesEnabled()
+{
+    // TODO: Make this runtime option instead
+    return true;
+    // return false;
+}
+
 } // unnamed namespace
 
 namespace Codethink::lvtclp {
@@ -139,7 +146,13 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
     d_messageCallback(std::move(messageCallback)),
     d_catchCodeAnalysisOutput(catchCodeAnalysisOutput)
 {
-    sourceFilePtr = ClpUtil::writeSourceFile(file.str(), false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+    if (isLakosianRulesEnabled()) {
+        sourceFilePtr =
+            ClpUtil::writeSourceFile(file.str(), false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+    } else {
+        sourceFilePtr =
+            nonLakosian::ClpUtil::writeSourceFile(d_memDb, file.str(), d_prefix.string(), d_prefix.string());
+    }
 }
 
 bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
@@ -177,8 +190,15 @@ bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
 
     const clang::SourceManager& srcMgr = Context->getSourceManager();
     std::string sourceFile = ClpUtil::getRealPath(namespaceDecl->getLocation(), srcMgr);
-    lvtmdb::FileObject *filePtr =
-        ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+
+    lvtmdb::FileObject *filePtr = [&]() {
+        if (isLakosianRulesEnabled()) {
+            return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        } else {
+            return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+        }
+    }();
+
     if (namespacePtr) {
         namespacePtr->withRWLock([&] {
             namespacePtr->addFile(filePtr);
@@ -1758,8 +1778,13 @@ void LogicalDepVisitor::addUDTSourceFile(lvtmdb::TypeObject *udt, const clang::D
     assert(udt);
     const std::string sourceFile = ClpUtil::getRealPath(decl->getLocation(), Context->getSourceManager());
 
-    lvtmdb::FileObject *filePtr =
-        ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+    lvtmdb::FileObject *filePtr = [&]() {
+        if (isLakosianRulesEnabled()) {
+            return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        } else {
+            return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+        }
+    }();
     if (!filePtr) {
         return;
     }

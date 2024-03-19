@@ -729,8 +729,19 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
     if (functionDecl->isDefined() || mayBeDefinedInFortran) {
         // Only persist the associated file if it is where the function is _defined_
         // (not if it is merely _declared_).
-        lvtmdb::FileObject *filePtr =
-            ClpUtil::writeSourceFile(sourceFile, false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        lvtmdb::FileObject *filePtr = [&]() {
+            if (d_enableLakosianRules) {
+                return ClpUtil::writeSourceFile(sourceFile,
+                                                false,
+                                                d_memDb,
+                                                d_prefix,
+                                                d_nonLakosianDirs,
+                                                d_thirdPartyDirs);
+            } else {
+                return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+            }
+        }();
+
         filePtr->withRWLock([&] {
             filePtr->addGlobalFunction(function);
         });

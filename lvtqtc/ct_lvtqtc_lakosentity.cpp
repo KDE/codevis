@@ -82,24 +82,25 @@ constexpr int SELECTION_LAYER = 100;
 namespace Codethink::lvtqtc {
 
 struct EntityFlags {
+    // Is this item expanded or collapsed?
     bool isExpanded : 1 = true;
 
-    // Is this item expanded or collapsed?
-    bool initialConstruction : 1 = true;
     // Are we just constructing this item or it's already constructed?
+    bool initialConstruction : 1 = true;
 
-    bool layoutUpdatesEnabled : 1 = false;
     // is this item layout automatically being triggered?
+    bool layoutUpdatesEnabled : 1 = false;
 
-    bool showRedundantEdges : 1 = false;
     // Are we showing redundant edges on this entity?
+    bool showRedundantEdges : 1 = false;
 
-    bool highlighted : 1 = false;
     // is this highlighted ?
+    bool highlighted : 1 = false;
 
-    bool showBackground : 1 = true;
     // are we showing the bg?
+    bool showBackground : 1 = true;
 
+    // Show or hide the level number on the entities.
     bool forceHideLevelNr : 1 = false;
 };
 

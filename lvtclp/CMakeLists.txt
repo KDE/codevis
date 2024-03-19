@@ -107,7 +107,7 @@ if (COMPILE_TESTS)
         set(multiValueArgs SOURCES LIBRARIES)
         cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-        add_codevis_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_test ${clp_LIBRARIES} lvttst NOINSTALL)
+        add_codevis_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_test ${clp_LIBRARIES} lvttst lvttst_tmpdir NOINSTALL)
         add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
     endfunction()
 

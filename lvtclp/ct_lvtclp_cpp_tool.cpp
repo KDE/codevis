@@ -189,7 +189,9 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
     }
 
     // MANIPULATORS
-    void setup(Codethink::lvtclp::CppTool::UseSystemHeaders useSystemHeaders, bool printToConsole)
+    void setup(Codethink::lvtclp::CppTool::UseSystemHeaders useSystemHeaders,
+               const std::vector<std::string>& userProvidedExtraArgs,
+               bool printToConsole)
     {
         using Codethink::lvtclp::CompilerUtil;
         std::vector<std::string> sysIncludes;
@@ -250,6 +252,9 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
 
             // add system includes
             std::copy(sysIncludes.begin(), sysIncludes.end(), std::back_inserter(cmd.CommandLine));
+
+            // add extra (user provided) includes
+            std::copy(userProvidedExtraArgs.begin(), userProvidedExtraArgs.end(), std::back_inserter(cmd.CommandLine));
         }
 
         shrinkToFit();
@@ -414,6 +419,7 @@ struct CppTool::Private {
     // reported to the UI.
 
     bool enableLakosianRules;
+    std::vector<std::string> userProvidedExtraCompileCommandsArgs;
 
     [[nodiscard]] lvtmdb::ObjectStore& memDb()
     {
@@ -467,6 +473,7 @@ struct CppTool::Private {
             const std::vector<std::string>& ignoreList,
             const std::vector<std::filesystem::path>& nonLakosians,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
             bool enableLakosianRules,
             bool inPrintToConsole = true):
         sourcePath(std::move(inSourcePath)),
@@ -477,7 +484,8 @@ struct CppTool::Private {
         databasePath(std::move(inDatabasePath)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         printToConsole(inPrintToConsole),
-        enableLakosianRules(enableLakosianRules)
+        enableLakosianRules(enableLakosianRules),
+        userProvidedExtraCompileCommandsArgs(userProvidedExtraCompileCommandsArgs)
     {
         setNumThreads(numThreadsIn);
         setIgnoreList(ignoreList);
@@ -491,6 +499,7 @@ struct CppTool::Private {
             const std::vector<std::string>& ignoreList,
             const std::vector<std::filesystem::path>& nonLakosians,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
             bool enableLakosianRules,
             bool inPrintToConsole = true):
         sourcePath(std::move(inSourcePath)),
@@ -501,7 +510,8 @@ struct CppTool::Private {
         databasePath(std::move(inDatabasePath)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         printToConsole(inPrintToConsole),
-        enableLakosianRules(enableLakosianRules)
+        enableLakosianRules(enableLakosianRules),
+        userProvidedExtraCompileCommandsArgs(userProvidedExtraCompileCommandsArgs)
     {
         setNumThreads(1);
         setIgnoreList(ignoreList);
@@ -516,6 +526,7 @@ struct CppTool::Private {
             const std::vector<std::string>& ignoreList,
             std::vector<std::filesystem::path> nonLakosianDirs,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
             bool enableLakosianRules,
             bool inPrintToConsole):
         sourcePath(std::move(inSourcePath)),
@@ -527,7 +538,8 @@ struct CppTool::Private {
         thirdPartyDirs(std::move(thirdPartyDirs)),
         printToConsole(inPrintToConsole),
         compilationDb(std::in_place, sourcePath, compileCommands, messageCallback),
-        enableLakosianRules(enableLakosianRules)
+        enableLakosianRules(enableLakosianRules),
+        userProvidedExtraCompileCommandsArgs(userProvidedExtraCompileCommandsArgs)
     {
         setNumThreads(numThreadsIn);
         setIgnoreList(ignoreList);
@@ -541,6 +553,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  const std::vector<std::string>& ignoreList,
                  const std::vector<std::filesystem::path>& nonLakosianDirs,
                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
                  bool enableLakosianRules,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
@@ -551,6 +564,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                                          ignoreList,
                                          nonLakosianDirs,
                                          std::move(thirdPartyDirs),
+                                         userProvidedExtraCompileCommandsArgs,
                                          enableLakosianRules,
                                          printToConsole))
 {
@@ -562,6 +576,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  const std::vector<std::string>& ignoreList,
                  const std::vector<std::filesystem::path>& nonLakosianDirs,
                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
                  bool enableLakosianRules,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
@@ -571,6 +586,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                                          ignoreList,
                                          nonLakosianDirs,
                                          std::move(thirdPartyDirs),
+                                         userProvidedExtraCompileCommandsArgs,
                                          enableLakosianRules,
                                          printToConsole))
 {
@@ -583,6 +599,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  const std::vector<std::string>& ignoreList,
                  const std::vector<std::filesystem::path>& nonLakosianDirs,
                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                 std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
                  bool enableLakosianRules,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
@@ -593,10 +610,11 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                                          ignoreList,
                                          nonLakosianDirs,
                                          std::move(thirdPartyDirs),
+                                         userProvidedExtraCompileCommandsArgs,
                                          enableLakosianRules,
                                          printToConsole))
 {
-    d->compilationDb->setup(UseSystemHeaders::e_Query, !printToConsole);
+    d->compilationDb->setup(UseSystemHeaders::e_Query, d->userProvidedExtraCompileCommandsArgs, !printToConsole);
 }
 
 CppTool::~CppTool() noexcept = default;
@@ -668,7 +686,7 @@ bool CppTool::processCompilationDatabase()
     }
 
     d->compilationDb->setIgnoreGlobs(d->ignoreList);
-    d->compilationDb->setup(d->useSystemHeaders, !d->printToConsole);
+    d->compilationDb->setup(d->useSystemHeaders, d->userProvidedExtraCompileCommandsArgs, !d->printToConsole);
     return true;
 }
 

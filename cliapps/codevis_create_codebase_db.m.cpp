@@ -85,6 +85,7 @@ struct CommandLineArgs {
     bool disableLakosianRules = false;
     Codethink::lvtclp::CppTool::UseSystemHeaders useSystemHeaders =
         Codethink::lvtclp::CppTool::UseSystemHeaders::e_Query;
+    std::vector<std::string> userProvidedExtraCompileCommandsArgs;
 };
 
 enum class CommandLineParseResult {
@@ -130,6 +131,12 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
                                              "group. This may be specified more than once.",
                                              "NON-LAKOSIANS",
                                              {});
+    const QCommandLineOption userProvidedExtraCompileCommandsArgsOption(
+        "add-compile-command-arg",
+        "Add an extra option in each entry of the compile commands that will be "
+        "passed to clang This may be specified more than once.",
+        "EXTRA-COMPILE-COMMAND-ARGS",
+        {});
     const QCommandLineOption update("update", "updates an existing database file");
     const QCommandLineOption replace("replace", "replaces an existing database file");
     const QCommandLineOption physicalOnly("physical-only", "Only look for physical entities and relationships");
@@ -155,6 +162,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
                        ignoreList,
                        pkgmap,
                        nonlakosianDirs,
+                       userProvidedExtraCompileCommandsArgsOption,
                        update,
                        replace,
                        physicalOnly,
@@ -236,6 +244,16 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
                    [](const QString& dir) {
                        return dir.toStdString();
                    });
+
+    {
+        QStringList values = parser.values(userProvidedExtraCompileCommandsArgsOption);
+        std::transform(values.begin(),
+                       values.end(),
+                       std::back_inserter(args.userProvidedExtraCompileCommandsArgs),
+                       [](const QString& dir) {
+                           return dir.toStdString();
+                       });
+    }
 
     // incremental update
     args.update = parser.isSet(update);
@@ -431,23 +449,26 @@ int main(int argc, char **argv)
     }
 
     auto sharedObjectStore = std::make_shared<Codethink::lvtmdb::ObjectStore>();
-    auto clang_tool = !args.compilationDbPaths.empty() ? std::make_unique<CppTool>(args.sourcePath,
-                                                                                   args.compilationDbPaths,
-                                                                                   args.dbPath,
-                                                                                   args.numThreads,
-                                                                                   args.ignoreList,
-                                                                                   args.nonLakosianDirs,
-                                                                                   args.packageMappings,
-                                                                                   !args.disableLakosianRules,
-                                                                                   !args.silent)
-                                                       : std::make_unique<CppTool>(args.sourcePath,
-                                                                                   compileCommand.value(),
-                                                                                   args.dbPath,
-                                                                                   args.ignoreList,
-                                                                                   args.nonLakosianDirs,
-                                                                                   args.packageMappings,
-                                                                                   !args.disableLakosianRules,
-                                                                                   !args.silent);
+    auto clang_tool = !args.compilationDbPaths.empty()
+        ? std::make_unique<CppTool>(args.sourcePath,
+                                    args.compilationDbPaths,
+                                    args.dbPath,
+                                    args.numThreads,
+                                    args.ignoreList,
+                                    args.nonLakosianDirs,
+                                    args.packageMappings,
+                                    args.userProvidedExtraCompileCommandsArgs,
+                                    !args.disableLakosianRules,
+                                    !args.silent)
+        : std::make_unique<CppTool>(args.sourcePath,
+                                    compileCommand.value(),
+                                    args.dbPath,
+                                    args.ignoreList,
+                                    args.nonLakosianDirs,
+                                    args.packageMappings,
+                                    args.userProvidedExtraCompileCommandsArgs,
+                                    !args.disableLakosianRules,
+                                    !args.silent);
     clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 

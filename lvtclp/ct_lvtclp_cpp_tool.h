@@ -71,6 +71,7 @@ class LVTCLP_EXPORT CppTool : public QObject {
             const std::vector<std::string>& ignoreList = {},
             const std::vector<std::filesystem::path>& nonLakosianDirs = {},
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
+            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs = {},
             bool enableLakosianRules = true,
             bool printToConsole = false);
 
@@ -80,6 +81,7 @@ class LVTCLP_EXPORT CppTool : public QObject {
             const std::vector<std::string>& ignoreList = {},
             const std::vector<std::filesystem::path>& nonLakosianDirs = {},
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
+            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs = {},
             bool enableLakosianRules = true,
             bool printToConsole = false);
 
@@ -90,6 +92,7 @@ class LVTCLP_EXPORT CppTool : public QObject {
             const std::vector<std::string>& ignoreList = {},
             const std::vector<std::filesystem::path>& nonLakosianDirs = {},
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
+            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs = {},
             bool enableLakosianRules = true,
             bool printToConsole = false);
 

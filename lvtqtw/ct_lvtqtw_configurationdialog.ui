@@ -599,13 +599,65 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QCheckBox" name="enableCodeParseDebugOutput">
-           <property name="text">
-            <string>Enable Code Parse Debug Output</string>
-           </property>
-          </widget>
-         </item>
+
+
+      <item>
+      <widget class="QWidget" name="logFilteringSettings">
+        <layout class="QGridLayout" name="gridLayoutLogFilters">
+            <item row="0" column="0">
+            <widget class="QLabel" name="label_debug">
+            <property name="text">
+                <string>Debug</string>
+            </property>
+            </widget>
+           </item>
+            <item row="0" column="1">
+            <widget class="QLabel" name="label_info">
+            <property name="text">
+                <string>Info</string>
+            </property>
+            </widget>
+           </item>
+            <item row="0" column="2">
+            <widget class="QLabel" name="label_warning">
+            <property name="text">
+                <string>Warning</string>
+            </property>
+            </widget>
+           </item>
+            <item row="0" column="3">
+            <widget class="QLabel" name="label_critical">
+            <property name="text">
+                <string>Critical</string>
+            </property>
+            </widget>
+           </item>
+            <item row="1" column="4">
+            <widget class="QLabel" name="label_all">
+            <property name="text">
+                <string>All</string>
+            </property>
+            </widget>
+           </item>
+            <item row="1" column="0">
+            <widget class="QCheckBox" name="allDebugsCheckbox">
+            </widget>
+           </item>
+            <item row="1" column="1">
+            <widget class="QCheckBox" name="allInfosCheckbox">
+            </widget>
+           </item>
+            <item row="1" column="2">
+            <widget class="QCheckBox" name="allWarningsCheckbox">
+            </widget>
+           </item>
+            <item row="1" column="3">
+            <widget class="QCheckBox" name="allCriticalCheckbox">
+            </widget>
+           </item>
+        </layout>
+       </widget>
+       </item>
          <item>
           <widget class="QCheckBox" name="storeDebugOutput">
            <property name="text">

@@ -61,6 +61,7 @@ class LVTQTW_EXPORT ConfigurationDialog : public QDialog {
 
   private:
     void populateMouseTabOptions();
+    void loadCategoryFilteringSettings();
 
     struct Private;
     std::unique_ptr<Private> d;

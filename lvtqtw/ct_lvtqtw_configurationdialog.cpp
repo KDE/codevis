@@ -42,12 +42,25 @@
 #ifndef KDE_FRAMEWORKS_IS_OLD
 #include <KPluginWidget>
 #endif
+#include <QCheckBox>
+#include <ct_lvtshr_debug_categories.h>
+
+// TODO: this is a workaround for enable/disable uncategorised qDebug, qInfo, etc. logs temporarily.
+// As qDebug, qInfo, etc. logs has "default" category by default.
+// PS: No need to declare this in every class that has uncategorised logs. This is added here once
+// just to be able to make checkboxes and filtering for enabling/disabling them easily.
+// Should be removed after every uncategorised qDebugs are sorted into a category.
+CODEVIS_LOGGING_CATEGORIES(uncategorised, "default")
 
 namespace Codethink::lvtqtw {
 
 struct ConfigurationDialog::Private {
     Ui::ConfigurationDialog ui;
     Codethink::lvtplg::PluginManager *pluginManager;
+    QStringList enabledDebugCategoryNames;
+    QStringList enabledInfoCategoryNames;
+    QStringList enabledWarningCategoryNames;
+    QStringList enabledCriticalCategoryNames;
 };
 
 namespace {
@@ -80,13 +93,7 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
             this,
             &Codethink::lvtqtw::ConfigurationDialog::getNewScriptFinished);
 #endif
-
     connect(d->ui.debugContextMenu, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableSceneContextMenu);
-    connect(d->ui.enableDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableDebugOutput);
-    connect(d->ui.enableCodeParseDebugOutput,
-            &QCheckBox::toggled,
-            Preferences::self(),
-            &Preferences::setEnableCodeParseDebugOutput);
     connect(d->ui.storeDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setStoreDebugOutput);
 
     connect(d->ui.isARelation, &QCheckBox::toggled, Preferences::self(), &Preferences::setShowIsARelation);
@@ -277,11 +284,118 @@ void ConfigurationDialog::updatePluginInformation()
 #endif
 }
 
+void ConfigurationDialog::loadCategoryFilteringSettings()
+{
+    static constexpr int s_debugColumn = 0;
+    static constexpr int s_infoColumn = 1;
+    static constexpr int s_warningColumn = 2;
+    static constexpr int s_criticalColumn = 3;
+    static constexpr int s_categoryNameColumn = 4;
+
+    static constexpr int s_dynamicRowsStart = 2;
+
+    const QHash<int, QStringList *> columnsAndCategories = {{s_debugColumn, &d->enabledDebugCategoryNames},
+                                                            {s_infoColumn, &d->enabledInfoCategoryNames},
+                                                            {s_warningColumn, &d->enabledWarningCategoryNames},
+                                                            {s_criticalColumn, &d->enabledCriticalCategoryNames}};
+
+    const auto savedCategories = Codethink::lvtshr::CategoryManager::instance().getCategories();
+    d->ui.gridLayoutLogFilters->setAlignment(Qt::AlignVCenter);
+
+    for (int i = 0; i < savedCategories.size(); i++) {
+        const auto cat = savedCategories.at(i);
+        const auto categoryNameStr = QString::fromStdString(cat->categoryName());
+        const auto categoryNameColumnLabel = new QLabel(categoryNameStr);
+        d->ui.gridLayoutLogFilters->addWidget(categoryNameColumnLabel, s_dynamicRowsStart + i, s_categoryNameColumn);
+
+        for (int j = 0; j < columnsAndCategories.size(); j++) {
+            auto usedEnabledList = columnsAndCategories.value(j);
+            auto checkBox = new QCheckBox();
+            checkBox->setChecked(usedEnabledList->contains(categoryNameStr));
+
+            connect(checkBox, &QCheckBox::toggled, this, [j, usedEnabledList, checkBox, categoryNameStr, this] {
+                if (checkBox->isChecked()) {
+                    *usedEnabledList << categoryNameStr;
+                } else {
+                    usedEnabledList->removeAll(categoryNameStr);
+                }
+                switch (j) {
+                case 0: // Debug column
+                    Preferences::setEnabledDebugCategories(*usedEnabledList);
+                    break;
+                case 1: // Info column
+                    Preferences::setEnabledInfoCategories(*usedEnabledList);
+                    break;
+                case 2: // Warning column
+                    Preferences::setEnabledWarningCategories(*usedEnabledList);
+                    break;
+                case 3: // Critical column
+                    Preferences::setEnabledCriticalCategories(*usedEnabledList);
+                    break;
+
+                default:
+                    break;
+                }
+            });
+            d->ui.gridLayoutLogFilters->addWidget(checkBox, s_dynamicRowsStart + i, j);
+        }
+
+        const int savedCategoriesSize = savedCategories.size();
+        const QHash<int, QCheckBox *> columnsAndAllCheckboxes = {{s_debugColumn, d->ui.allDebugsCheckbox},
+                                                                 {s_infoColumn, d->ui.allInfosCheckbox},
+                                                                 {s_warningColumn, d->ui.allWarningsCheckbox},
+                                                                 {s_criticalColumn, d->ui.allCriticalCheckbox}};
+
+        for (int j = 0; j < columnsAndAllCheckboxes.size(); j++) {
+            connect(columnsAndAllCheckboxes.value(j),
+                    &QCheckBox::toggled,
+                    this,
+                    [this, j, columnsAndAllCheckboxes, savedCategoriesSize] {
+                        auto usedCheckbox = columnsAndAllCheckboxes.value(j);
+                        switch (j) {
+                        case 0: // Debug column
+                            Preferences::setDebugGroupEnabled(usedCheckbox->isChecked());
+                            break;
+                        case 1: // Info column
+                            Preferences::setInfoGroupEnabled(usedCheckbox->isChecked());
+                            break;
+                        case 2: // Warning column
+                            Preferences::setWarningGroupEnabled(usedCheckbox->isChecked());
+                            break;
+                        case 3: // Critical column
+                            Preferences::setCriticalGroupEnabled(usedCheckbox->isChecked());
+                            break;
+
+                        default:
+                            break;
+                        }
+
+                        for (int i = 0; i < savedCategoriesSize; i++) {
+                            auto *checkBox{qobject_cast<QCheckBox *>(
+                                d->ui.gridLayoutLogFilters->itemAtPosition(i + s_dynamicRowsStart, j)->widget())};
+                            if (checkBox != nullptr) {
+                                checkBox->setChecked(usedCheckbox->isChecked());
+                                checkBox->setEnabled(!usedCheckbox->isChecked());
+                            }
+                        }
+                    });
+        }
+    }
+    d->ui.allDebugsCheckbox->setChecked(Preferences::debugGroupEnabled());
+    d->ui.allInfosCheckbox->setChecked(Preferences::infoGroupEnabled());
+    d->ui.allWarningsCheckbox->setChecked(Preferences::warningGroupEnabled());
+    d->ui.allCriticalCheckbox->setChecked(Preferences::criticalGroupEnabled());
+    const int stretchRow = d->ui.gridLayoutLogFilters->rowCount() + 1;
+    d->ui.gridLayoutLogFilters->setRowStretch(stretchRow, 1);
+}
 void ConfigurationDialog::load()
 {
+    d->enabledDebugCategoryNames = Preferences::enabledDebugCategories();
+    d->enabledInfoCategoryNames = Preferences::enabledInfoCategories();
+    d->enabledWarningCategoryNames = Preferences::enabledWarningCategories();
+    d->enabledCriticalCategoryNames = Preferences::enabledCriticalCategories();
+    loadCategoryFilteringSettings();
     d->ui.debugContextMenu->setChecked(Preferences::enableSceneContextMenu());
-    d->ui.enableDebugOutput->setChecked(Preferences::enableDebugOutput());
-    d->ui.enableCodeParseDebugOutput->setChecked(Preferences::enableCodeParseDebugOutput());
     d->ui.storeDebugOutput->setChecked(Preferences::storeDebugOutput());
     d->ui.showProviders->setChecked(Preferences::showProviders());
     d->ui.showClients->setChecked(Preferences::showClients());

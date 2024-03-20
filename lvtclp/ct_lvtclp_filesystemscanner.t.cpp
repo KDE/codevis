@@ -37,8 +37,10 @@
 #include <ct_lvtmdb_soci_reader.h>
 #include <ct_lvtmdb_soci_writer.h>
 
+#include <ct_lvtshr_debug_categories.h>
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
+CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing", Codethink::lvtshr::LoggingCategory::Parsing)
 
 using namespace Codethink;
 
@@ -450,7 +452,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
         REQUIRE(res.deletedFiles.empty());
 
         for (const auto& pkg : res.newPkgs) {
-            std::cout << "New packages added " << pkg << "\n";
+            qCDebug(parsing) << "New packages added " << pkg;
         }
 
         REQUIRE(compareResultList({"groups/one", "groups/one/onepkg"}, res.newPkgs));
@@ -459,7 +461,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
 
     // delete a package group and add it back again
     {
-        std::cout << "---------------------\n";
+        qCDebug(parsing) << "---------------------";
         createTestEnv(topLevel);
 
         // scan
@@ -604,7 +606,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Non Lakosian")
     // lakosian files
     for (const auto& [_1, comp] : memDb.components()) {
         comp->withROLock([&comp = comp] {
-            std::cout << "Component name: " << comp->qualifiedName() << "\n";
+            qCDebug(parsing) << "Component name: " << comp->qualifiedName();
         });
     }
     REQUIRE(memDb.getComponent("groups/one/onepkg/onepkg_foo"));
@@ -738,7 +740,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Semantic packing")
     // lakosian files
     for (const auto& [_1, pkg] : memDb.packages()) {
         pkg->withROLock([&pkg = pkg] {
-            std::cout << "Component name: " << pkg->qualifiedName() << "\n";
+            qCDebug(parsing) << "Component name: " << pkg->qualifiedName();
         });
     }
 

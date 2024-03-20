@@ -29,6 +29,9 @@
 #include <iostream>
 #include <type_traits>
 
+#include <ct_lvtshr_debug_categories.h>
+CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing", Codethink::lvtshr::LoggingCategory::Parsing)
+
 namespace {
 bool srcFileContainsSrcCode(std::string const& guessedSrcFile, std::string const& targetSrcCode)
 {
@@ -170,8 +173,8 @@ struct ParseTreeVisitor {
                 // If the definition file is not found, returns the "current" (in process) file, to avoid
                 // missing source.
                 // TODO: Proper warning message propagation.
-                std::cout << "WARNING: Could not find proper source code for function " << functionName
-                          << " - Will fallback to " << currentFilePath.string() << "\n";
+                qCDebug(parsing) << "WARNING: Could not find proper source code for function " << functionName
+                                 << " - Will fallback to " << currentFilePath.string();
                 return currentFilePath.string();
             }();
 

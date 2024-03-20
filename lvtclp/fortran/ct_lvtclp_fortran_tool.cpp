@@ -37,6 +37,9 @@
 #include <iostream>
 #include <memory>
 
+#include <ct_lvtshr_debug_categories.h>
+CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing", Codethink::lvtshr::LoggingCategory::Parsing)
+
 using namespace Fortran::frontend;
 using namespace clang::tooling;
 
@@ -53,7 +56,7 @@ void run(FrontendAction& act, CompileCommand const& cmd)
     flang->createDiagnostics();
     if (!flang->hasDiagnostics()) {
         // TODO: Proper error management
-        std::cout << "Could not create flang diagnostics.\n";
+        qCDebug(parsing) << "Could not create flang diagnostics.\n";
         return;
     }
 
@@ -81,14 +84,14 @@ void run(FrontendAction& act, CompileCommand const& cmd)
 
     if (!success) {
         // TODO: Proper error management
-        std::cout << "Could not prepare the flang object.\n";
+        qCDebug(parsing) << "Could not prepare the flang object.";
         return;
     }
 
     success = flang->executeAction(act);
     if (!success) {
         // TODO: Proper error management
-        std::cout << "Action failed.\n";
+        qCDebug(parsing) << "Action failed.";
         return;
     }
 
@@ -113,7 +116,7 @@ std::unique_ptr<Tool> Tool::fromCompileCommands(std::filesystem::path const& com
                                                         clang::tooling::JSONCommandLineSyntax::AutoDetect);
     // TODO: Proper error management
     if (!errorMessage.empty()) {
-        std::cout << "Tool::fromCompileCommands error: " << errorMessage;
+        qCDebug(parsing) << "Tool::fromCompileCommands error: " << errorMessage;
         return nullptr;
     }
 

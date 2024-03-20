@@ -19,12 +19,13 @@
 
 #include <QDebug>
 #include <QDir>
-#include <QLoggingCategory>
 #include <QMutex>
 
 #include <preferences.h>
 
-Q_LOGGING_CATEGORY(debugModel, "lakoswidgets.lvtmdl.basetablemodel")
+#include <ct_lvtshr_debug_categories.h>
+
+CODEVIS_LOGGING_CATEGORIES(debugModel, "org.codevis.debugmodel", Codethink::lvtshr::LoggingCategory::DebugModel)
 
 namespace {
 
@@ -212,15 +213,36 @@ void DebugModel::debugMessageHandler(QtMsgType msgType, const QMessageLogContext
         d.version = context.version;
         self->addData(d);
     }
-
-    if (!Preferences::enableDebugOutput()) {
-        return;
-    }
-
     if (message.trimmed().isEmpty()) {
         return;
     }
-
+    if (context.category != nullptr) {
+        QString categoryString = QString::fromStdString(context.category);
+        switch (msgType) {
+        case QtMsgType::QtCriticalMsg:
+            if (!Preferences::enabledCriticalCategories().contains(categoryString)) {
+                return;
+            }
+            break;
+        case QtMsgType::QtWarningMsg:
+            if (!Preferences::enabledWarningCategories().contains(categoryString)) {
+                return;
+            }
+            break;
+        case QtMsgType::QtInfoMsg:
+            if (!Preferences::enabledInfoCategories().contains(categoryString)) {
+                return;
+            }
+            break;
+        case QtMsgType::QtDebugMsg:
+            if (!Preferences::enabledDebugCategories().contains(categoryString)) {
+                return;
+            }
+            break;
+        default:
+            break;
+        }
+    }
     // clang-tidy cert-err33-c requires us to check the return value of printf
     auto checkRet = [](int ret) {
         assert(ret > 0);

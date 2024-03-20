@@ -788,7 +788,11 @@ void LogicalDepVisitor::processMethodDecl(clang::CXXMethodDecl *methodDecl)
                                            std::move(templateParameters),
                                            static_cast<lvtshr::AccessSpecifier>(methodDecl->getAccess()),
                                            methodDecl->isVirtual(),
+#if LLVM_VERSION_MAJOR >= 18
+                                           methodDecl->isPureVirtual(),
+#else
                                            methodDecl->isPure(),
+#endif
                                            methodDecl->isStatic(),
                                            methodDecl->isConst(),
                                            parentClassPtr);

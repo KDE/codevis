@@ -27,7 +27,7 @@
 
 namespace Codethink::lvtmdl {
 
-FieldsTreeModel::FieldsTreeModel(){};
+FieldsTreeModel::FieldsTreeModel() = default;
 FieldsTreeModel::~FieldsTreeModel() = default;
 
 void FieldsTreeModel::refreshData(LakosianNodes selectedNodes)

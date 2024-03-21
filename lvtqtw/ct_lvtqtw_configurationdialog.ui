@@ -70,7 +70,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>6</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="colorsPage">
         <layout class="QFormLayout" name="formLayout_4">
@@ -108,14 +108,14 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item row="3" column="0">
           <widget class="QLabel" name="label_selected_entity_bg_color">
            <property name="text">
             <string>Selected entity background color:</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
+         <item row="3" column="1">
           <widget class="KColorButton" name="selectedEntityBackgroundColor">
            <property name="maximumSize">
             <size>
@@ -125,14 +125,14 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
+         <item row="4" column="0">
           <widget class="QLabel" name="label_edge_color">
            <property name="text">
             <string>Edge color:</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
+         <item row="4" column="1">
           <widget class="KColorButton" name="edgeColor">
            <property name="maximumSize">
             <size>
@@ -142,14 +142,14 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
+         <item row="5" column="0">
           <widget class="QLabel" name="label_highlight_edge_color">
            <property name="text">
             <string>Highlight edge color:</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
+         <item row="5" column="1">
           <widget class="KColorButton" name="highlightEdgeColor">
            <property name="maximumSize">
             <size>
@@ -159,28 +159,28 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="0" colspan="2">
+         <item row="6" column="0" colspan="2">
           <widget class="QCheckBox" name="chkSelectedEntityHasGradient">
            <property name="text">
             <string>Use gradient color on selected entities</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="0" colspan="2">
+         <item row="7" column="0" colspan="2">
           <widget class="QCheckBox" name="chkColorBlindness">
            <property name="text">
             <string>Adjust for colorblindness</string>
            </property>
           </widget>
          </item>
-         <item row="7" column="0" colspan="2">
+         <item row="8" column="0" colspan="2">
           <widget class="QCheckBox" name="chkColorPattern">
            <property name="text">
             <string>Use patterns instead of solid colors</string>
            </property>
           </widget>
          </item>
-         <item row="8" column="0">
+         <item row="9" column="0">
           <spacer name="verticalSpacer_3">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -192,6 +192,23 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Entity hover color</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="KColorButton" name="entityHoverColor">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>100</height>
+            </size>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -461,7 +478,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="KFontRequester" name="pkgGroupFont" native="true"/>
+              <widget class="KFontRequester" name="pkgGroupFont"/>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_11">
@@ -471,7 +488,7 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="KFontRequester" name="pkgFont" native="true"/>
+              <widget class="KFontRequester" name="pkgFont"/>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_12">
@@ -481,7 +498,7 @@
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="KFontRequester" name="componentFont" native="true"/>
+              <widget class="KFontRequester" name="componentFont"/>
              </item>
              <item row="3" column="0">
               <widget class="QLabel" name="label_13">
@@ -491,7 +508,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="KFontRequester" name="classFont" native="true"/>
+              <widget class="KFontRequester" name="classFont"/>
              </item>
              <item row="4" column="0">
               <widget class="QLabel" name="label_14">
@@ -501,7 +518,7 @@
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="KFontRequester" name="structFont" native="true"/>
+              <widget class="KFontRequester" name="structFont"/>
              </item>
              <item row="5" column="0">
               <widget class="QLabel" name="label_15">
@@ -511,7 +528,7 @@
               </widget>
              </item>
              <item row="5" column="1">
-              <widget class="KFontRequester" name="enumFont" native="true"/>
+              <widget class="KFontRequester" name="enumFont"/>
              </item>
             </layout>
            </widget>
@@ -658,15 +675,14 @@
            </property>
           </widget>
          </item>
-
-         <item row="1" column="0">
+         <item>
           <widget class="QLabel" name="label_spaceBetweenLevels">
            <property name="text">
             <string>Space between levels:</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item>
           <widget class="QSpinBox" name="spaceBetweenLevels">
            <property name="suffix">
             <string>  px</string>
@@ -679,15 +695,14 @@
            </property>
           </widget>
          </item>
-
-         <item row="2" column="0">
+         <item>
           <widget class="QLabel" name="label_spaceBetweenSublevels">
            <property name="text">
             <string>Space between sublevels:</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
+         <item>
           <widget class="QSpinBox" name="spaceBetweenSublevels">
            <property name="suffix">
             <string>  px</string>
@@ -700,15 +715,14 @@
            </property>
           </widget>
          </item>
-
-         <item row="3" column="0">
+         <item>
           <widget class="QLabel" name="label_spaceBetweenEntities">
            <property name="text">
             <string>Space between entities:</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
+         <item>
           <widget class="QSpinBox" name="spaceBetweenEntities">
            <property name="suffix">
             <string>  px</string>
@@ -721,15 +735,14 @@
            </property>
           </widget>
          </item>
-
-         <item row="4" column="0">
+         <item>
           <widget class="QLabel" name="label_maxEntitiesPerLevel">
            <property name="text">
             <string>Max. entities per level:</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
+         <item>
           <widget class="QSpinBox" name="maxEntitiesPerLevel">
            <property name="suffix">
             <string>  px</string>
@@ -742,7 +755,6 @@
            </property>
           </widget>
          </item>
-
          <item>
           <spacer name="verticalSpacer_5">
            <property name="orientation">

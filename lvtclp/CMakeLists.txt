@@ -2,7 +2,8 @@ include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
 find_package(Python COMPONENTS Development REQUIRED)
-find_package(Threads REQUIRED)
+
+include (AddCodevisExecutable)
 
 ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
@@ -123,21 +124,6 @@ else()
     set(CTFortranLibsIfAvailable "")
 endif()
 
-add_lvtclp_exec(
-        NAME codevis_create_codebase_db
-        SOURCES ct_lvtclp_create_codebase_db.m.cpp
-        LIBRARIES Qt${QT_MAJOR_VERSION}::Core ${CTFortranLibsIfAvailable})
-
-add_lvtclp_exec(
-        NAME codevis_merge_databases
-        SOURCES ct_lvtclp_merge_databases.m.cpp
-        LIBRARIES Qt${QT_MAJOR_VERSION}::Core Threads::Threads
-)
-
-add_lvtclp_exec(
-        NAME codevis_dump_database
-        SOURCES ct_lvtclp_dumpdatabase.m.cpp)
-
 if (COMPILE_TESTS)
     function(add_lvtclp_test)
         set(options NONE)
@@ -145,7 +131,7 @@ if (COMPILE_TESTS)
         set(multiValueArgs SOURCES LIBRARIES)
         cmake_parse_arguments(clp "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-        add_lvtclp_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_test ${clp_LIBRARIES} lvttst)
+        add_codevis_exec(NAME ${clp_NAME} SOURCES ${clp_SOURCES} LIBRARIES lvtclp_test ${clp_LIBRARIES} lvttst lvttst_tmpdir NOINSTALL)
         add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
     endfunction()
 
@@ -287,10 +273,6 @@ configure_file(
         autogen-test-variables.h.in
         ${CMAKE_CURRENT_BINARY_DIR}/autogen-test-variables.h
 )
-
-install(TARGETS codevis_merge_databases ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(TARGETS codevis_create_codebase_db ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(TARGETS codevis_dump_database ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 if (APPLE)
     # See desktopapp/CMakeLists.txt for copying the headers into the bundle

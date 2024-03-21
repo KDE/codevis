@@ -33,7 +33,6 @@ const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 TEST_CASE("Source file")
 {
-    // test ClpUtil::writeSourceFile
     const static char *empty = "";
     Codethink::lvtmdb::ObjectStore session;
     REQUIRE(Test_Util::runOnCode(session, empty, "test/SourceFile.cpp"));

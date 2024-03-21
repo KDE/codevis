@@ -84,7 +84,7 @@ struct PackageQueryParams {
 
 // This loads the packages in order so we don't need to worry about having
 // not loaded the parent yet.
-void loadPackages(ObjectStore& store, soci::session& db, Maps& maps, std::optional<int> parent_id)
+void loadPackages(ObjectStore& store, soci::session& db, Maps& maps)
 {
     // soci prepared statements didn't work for null vs value, neither with std::optional.'
     std::string query =
@@ -101,8 +101,7 @@ left join
 	source_package pp on sp.parent_id = pp.id
 left join
     source_repository re on sp.source_repository_id = re.id
-where sp.parent_id is )"
-        + (parent_id.has_value() ? std::to_string(parent_id.value()) : "NULL");
+order by sp.parent_id ASC )";
 
     PackageQueryParams params;
     soci::statement st = (db.prepare << query,
@@ -135,10 +134,6 @@ where sp.parent_id is )"
             (void) lock;
             parent->addChild(pkg);
         }
-    }
-
-    for (const auto current_parent : current_parents) {
-        loadPackages(store, db, maps, current_parent);
     }
 }
 
@@ -268,7 +263,7 @@ struct NamespaceQueryParams {
     std::string qualified_name;
 };
 
-void loadNamespaces(ObjectStore& store, soci::session& db, Maps& maps, std::optional<int> parent_id)
+void loadNamespaces(ObjectStore& store, soci::session& db, Maps& maps)
 {
     std::string query =
         R"(select
@@ -278,8 +273,7 @@ void loadNamespaces(ObjectStore& store, soci::session& db, Maps& maps, std::opti
         pns.qualified_name
     from namespace_declaration ns
     left join namespace_declaration pns on ns.parent_id = pns.id
-    where ns.parent_id is )"
-        + (parent_id.has_value() ? std::to_string(parent_id.value()) : "NULL");
+    order by ns.parent_id ASC)";
 
     NamespaceQueryParams params;
     soci::statement st = (db.prepare << query,
@@ -299,10 +293,6 @@ void loadNamespaces(ObjectStore& store, soci::session& db, Maps& maps, std::opti
         auto *ns = store.getOrAddNamespace(params.qualified_name, params.name, parent);
         current_parents.push_back(params.id);
         maps.namespaceMap[params.qualified_name] = ns;
-    }
-
-    for (const auto current_parent : current_parents) {
-        loadNamespaces(store, db, maps, current_parent);
     }
 }
 
@@ -427,7 +417,7 @@ struct UserDefinedTypeQueryParams {
     int access = 0;
 };
 
-void loadUserDefinedTypes(ObjectStore& store, soci::session& db, Maps& maps, std::optional<int> parent_id)
+void loadUserDefinedTypes(ObjectStore& store, soci::session& db, Maps& maps)
 {
     // soci prepared statements didn't work for null vs value, neither with std::optional.'
     std::string query =
@@ -446,8 +436,7 @@ left join
 	source_package sp on sp.id = cd.parent_package_id
 left join
     namespace_declaration ns on ns.id = cd.parent_namespace_id
-where class_namespace_id is )"
-        + (parent_id.has_value() ? std::to_string(parent_id.value()) : "NULL");
+order by class_namespace_id ASC)";
 
     UserDefinedTypeQueryParams params;
     soci::statement st = (db.prepare << query,
@@ -507,10 +496,6 @@ where class_namespace_id is )"
             (void) lock;
             parent_class->addChild(udt);
         }
-    }
-
-    for (const int id : current_parents) {
-        loadUserDefinedTypes(store, db, maps, id);
     }
 }
 
@@ -658,16 +643,17 @@ where dep.source_id = (
 
 void loadComponentRelations(ObjectStore& store, soci::session& db, const Maps& maps)
 {
-    for (const auto& [id, source] : maps.componentMap) {
-        int target_id = 0;
-        soci::statement st = (db.prepare << "select target_id from component_relation where source_id = :s",
-                              soci::into(target_id),
-                              soci::use(id));
-        st.execute();
-        while (st.fetch()) {
-            ComponentObject *target = maps.componentMap.at(target_id);
-            ComponentObject::addDependency(source, target);
-        }
+    int target_id = 0;
+    int source_id = 0;
+    soci::statement st = (db.prepare << "select source_id, target_id from component_relation",
+                          soci::into(source_id),
+                          soci::into(target_id));
+
+    st.execute();
+    while (st.fetch()) {
+        ComponentObject *target = maps.componentMap.at(target_id);
+        ComponentObject *source = maps.componentMap.at(source_id);
+        ComponentObject::addDependency(source, target);
     }
 }
 
@@ -710,47 +696,57 @@ void loadFileRelations(ObjectStore& store, soci::session& db, const Maps& maps)
 
 void loadUserDefinedTypeRelations(ObjectStore& store, soci::session& db, const Maps& maps)
 {
-    for (const auto& [source_id, source] : maps.userDefinedTypeMap) {
-        // uses_in_the_interface.
+    {
+        int source_id = 0;
         int target_id = 0;
-        soci::statement st = (db.prepare << "select target_id from uses_in_the_interface where source_id = :s",
-                              soci::into(target_id),
-                              soci::use(source_id));
+        soci::statement st = (db.prepare << "select source_id, target_id from uses_in_the_interface",
+                              soci::into(source_id),
+                              soci::into(target_id));
         st.execute();
         while (st.fetch()) {
+            TypeObject *source = maps.userDefinedTypeMap.at(source_id);
             TypeObject *target = maps.userDefinedTypeMap.at(target_id);
             TypeObject::addUsesInTheInterface(source, target);
         }
+    }
 
-        // uses_in_the_implementation
-        target_id = 0;
-        st = (db.prepare << "select target_id from uses_in_the_implementation where source_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
+    {
+        int source_id = 0;
+        int target_id = 0;
+        soci::statement st = (db.prepare << "select source_id, target_id from uses_in_the_implementation",
+                              soci::into(source_id),
+                              soci::into(target_id));
         st.execute();
         while (st.fetch()) {
+            TypeObject *source = maps.userDefinedTypeMap.at(source_id);
             TypeObject *target = maps.userDefinedTypeMap.at(target_id);
             TypeObject::addUsesInTheImplementation(source, target);
         }
+    }
 
-        // class_hierarchy
-        target_id = 0;
-        st = (db.prepare << "select target_id from class_hierarchy where source_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
+    {
+        int source_id = 0;
+        int target_id = 0;
+        soci::statement st = (db.prepare << "select source_id, target_id from class_hierarchy",
+                              soci::into(source_id),
+                              soci::into(target_id));
         st.execute();
         while (st.fetch()) {
+            TypeObject *source = maps.userDefinedTypeMap.at(source_id);
             TypeObject *target = maps.userDefinedTypeMap.at(target_id);
             TypeObject::addIsARelationship(source, target);
         }
+    }
 
-        // components
-        target_id = 0;
-        st = (db.prepare << "select component_id from udt_component where udt_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
+    {
+        int source_id = 0;
+        int target_id = 0;
+        soci::statement st = (db.prepare << "select udt_id, component_id from udt_component",
+                              soci::into(source_id),
+                              soci::into(target_id));
         st.execute();
         while (st.fetch()) {
+            TypeObject *source = maps.userDefinedTypeMap.at(source_id);
             ComponentObject *target = maps.componentMap.at(target_id);
             {
                 auto lock = target->rwLock();
@@ -763,14 +759,17 @@ void loadUserDefinedTypeRelations(ObjectStore& store, soci::session& db, const M
                 source->addComponent(target);
             }
         }
+    }
 
-        // source files.
-        target_id = 0;
-        st = (db.prepare << "select source_file_id from class_source_file where class_id = :s",
-              soci::into(target_id),
-              soci::use(source_id));
+    {
+        int source_id = 0;
+        int target_id = 0;
+        soci::statement st = (db.prepare << "select class_id, source_file_id from class_source_file",
+                              soci::into(source_id),
+                              soci::into(target_id));
         st.execute();
         while (st.fetch()) {
+            TypeObject *source = maps.userDefinedTypeMap.at(source_id);
             FileObject *target = maps.filesMap.at(target_id);
             {
                 auto lock = target->rwLock();
@@ -788,42 +787,44 @@ void loadUserDefinedTypeRelations(ObjectStore& store, soci::session& db, const M
 
 void loadFieldRelations(ObjectStore& store, soci::session& db, const Maps& maps)
 {
-    for (const auto& [source_id, source] : maps.fieldMap) {
-        int target_id = 0;
-        soci::statement st = (db.prepare << "select type_class_id from field_type where field_id = :s",
-                              soci::into(target_id),
-                              soci::use(source_id));
-        st.execute();
-        while (st.fetch()) {
-            TypeObject *target = maps.userDefinedTypeMap.at(target_id);
-            {
-                auto lock = target->rwLock();
-                (void) lock;
-                target->addField(source);
-            }
-            {
-                auto lock = source->rwLock();
-                (void) lock;
-                source->addType(target);
-            }
+    int udt_id = 0;
+    int field_id = 0;
+
+    soci::statement st =
+        (db.prepare << "select type_class_id, field_id from field_type", soci::into(udt_id), soci::into(field_id));
+
+    while (st.fetch()) {
+        FieldObject *source = maps.fieldMap.at(field_id);
+        TypeObject *target = maps.userDefinedTypeMap.at(udt_id);
+        {
+            auto lock = target->rwLock();
+            (void) lock;
+            target->addField(source);
+        }
+        {
+            auto lock = source->rwLock();
+            (void) lock;
+            source->addType(target);
         }
     }
 }
 
 void loadMethodRelations(ObjectStore& store, soci::session& db, const Maps& maps)
 {
-    for (const auto& [source_id, source] : maps.methodMap) {
-        int target_id = 0;
-        soci::statement st = (db.prepare << "select type_class_id from method_argument_class where method_id = :s",
-                              soci::into(target_id),
-                              soci::use(source_id));
-        st.execute();
-        while (st.fetch()) {
-            TypeObject *target = maps.userDefinedTypeMap.at(target_id);
-            auto lock = target->rwLock();
-            (void) lock;
-            target->addMethod(source);
-        }
+    int udt_id = 0;
+    int method_id = 0;
+
+    soci::statement st = (db.prepare << "select type_class_id, method_id from method_argument_class",
+                          soci::into(udt_id),
+                          soci::into(method_id));
+
+    st.execute();
+    while (st.fetch()) {
+        MethodObject *source = maps.methodMap.at(method_id);
+        TypeObject *target = maps.userDefinedTypeMap.at(udt_id);
+        auto lock = target->rwLock();
+        (void) lock;
+        target->addMethod(source);
     }
 }
 
@@ -854,14 +855,14 @@ cpp::result<void, ObjectStore::ReadFromDatabaseError> SociReader::readInto(Objec
     Maps maps;
 
     loadRepositories(store, db, maps);
-    loadPackages(store, db, maps, std::nullopt);
+    loadPackages(store, db, maps);
     loadComponents(store, db, maps);
     loadFiles(store, db, maps);
     loadErrors(store, db, maps);
-    loadNamespaces(store, db, maps, std::nullopt);
+    loadNamespaces(store, db, maps);
     loadVariables(store, db, maps);
     loadFunctions(store, db, maps);
-    loadUserDefinedTypes(store, db, maps, std::nullopt);
+    loadUserDefinedTypes(store, db, maps);
     loadFields(store, db, maps);
     loadMethods(store, db, maps);
 

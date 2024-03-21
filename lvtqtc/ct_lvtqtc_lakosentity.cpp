@@ -61,7 +61,6 @@
 #include <QVector2D>
 
 #include <cmath>
-#include <fstream>
 #include <optional>
 #include <preferences.h>
 
@@ -76,10 +75,34 @@ constexpr int TITLE_LAYER = 1;
 constexpr int ONE_CHILD_BORDER = 20;
 constexpr int DEFAULT_BORDER = 10;
 constexpr int SHRINK_BORDER = 20;
+constexpr int SELECTION_LAYER = 100;
 
 } // namespace
 
 namespace Codethink::lvtqtc {
+
+struct EntityFlags {
+    // Is this item expanded or collapsed?
+    bool isExpanded : 1 = true;
+
+    // Are we just constructing this item or it's already constructed?
+    bool initialConstruction : 1 = true;
+
+    // is this item layout automatically being triggered?
+    bool layoutUpdatesEnabled : 1 = false;
+
+    // Are we showing redundant edges on this entity?
+    bool showRedundantEdges : 1 = false;
+
+    // is this highlighted ?
+    bool highlighted : 1 = false;
+
+    // are we showing the bg?
+    bool showBackground : 1 = true;
+
+    // Show or hide the level number on the entities.
+    bool forceHideLevelNr : 1 = false;
+};
 
 struct LakosEntity::Private {
     std::string name;
@@ -125,18 +148,14 @@ struct LakosEntity::Private {
     // movement we did at each mouseMove event.
     // TODO: pack this together with isMoving?
 
-    QColor color = QColor(204, 229, 255);
+    QColor color;
     // The background color of the entity
 
-    QColor selectedNodeColor = QColor(204, 229, 255);
+    QColor selectedNodeColor;
     // The background color of the entity when it's selected
 
     Qt::BrushStyle fillPattern = Qt::BrushStyle::SolidPattern;
     // The brush pattern for this node.
-
-    lvtshr::LoaderInfo loaderInfo;
-    // the instance of the class that holds the information on how
-    // this entity should be loaded.
 
     EllipsisTextItem *text = nullptr;
     // Pointer owned by Qt (it should be a child object of this Container)
@@ -146,8 +165,6 @@ struct LakosEntity::Private {
 
     QGraphicsSimpleTextItem *levelNr = nullptr;
     // The level number on this entity.
-
-    bool forceHideLevelNr = false;
 
     QGraphicsEllipseItem *centerDbg = nullptr;
     QGraphicsRectItem *boundingRectDbg = nullptr;
@@ -160,27 +177,6 @@ struct LakosEntity::Private {
     QPropertyAnimation *expandAnimation = nullptr;
     // handles animated expanding / shrink.
 
-    bool isExpanded = true;
-    // Is this item expanded or collapsed?
-
-    bool initialConstruction = true;
-    // Are we just constructing this item or it's already constructed?
-
-    bool layoutUpdatesEnabled = false;
-    // is this item layout automatically being triggered?
-
-    bool showRedundantEdges = false;
-    // Are we showing redundant edges on this entity?
-
-    bool highlighted = false;
-    // is this highlighted ?
-
-    bool isMainNode = false;
-    // is this the main node on the visualization?
-
-    bool showBackground = true;
-    // are we showing the bg?
-
     std::optional<qreal> zValueBeforeHoverEnter;
     // holds the zValue (if any) before changing temporarily due to hovering.
 
@@ -188,13 +184,18 @@ struct LakosEntity::Private {
     // the in-memory node that represents this visual node
 
     QFont font = QFont();
+
     // the current font being used by this node
+    lvtshr::LoaderInfo loaderInfo;
+    EntityFlags flags;
+    short presentationFlags = static_cast<short>(PresentationFlags::NoFlag);
 
-    bool enableGradientOnMainNode = true;
-
-    int presentationFlags = PresentationFlags::NoFlag;
+    // the instance of the class that holds the information on how
+    // this entity should be loaded.
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
+
+    QGraphicsRectItem *selectionPath = nullptr;
 };
 
 LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node, lvtshr::LoaderInfo loaderInfo):
@@ -244,7 +245,7 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
         recursiveEdgeRelayout();
     });
 
-    d->isExpanded = true;
+    d->flags.isExpanded = true;
     toggleExpansion(QtcUtil::CreateUndoAction::e_No);
 
     QObject::connect(d->node, &lvtldr::LakosianNode::onChildCountChanged, this, [this](size_t) {
@@ -260,7 +261,6 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     layoutIgnoredItems();
 
     d->color = Preferences::entityBackgroundColor();
-    d->enableGradientOnMainNode = Preferences::enableGradientOnMainNode();
     d->selectedNodeColor = Preferences::selectedEntityBackgroundColor();
     connect(Preferences::self(), &Preferences::lakosEntityNamePosChanged, this, [this] {
         layoutIgnoredItems();
@@ -269,17 +269,13 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
         d->color = Preferences::entityBackgroundColor();
         updateBackground();
     });
-    connect(Preferences::self(), &Preferences::enableGradientOnMainNodeChanged, this, [this] {
-        d->enableGradientOnMainNode = Preferences::enableGradientOnMainNode();
-        updateBackground();
-    });
     connect(Preferences::self(), &Preferences::selectedEntityBackgroundColorChanged, this, [this] {
         d->selectedNodeColor = Preferences::selectedEntityBackgroundColor();
         updateBackground();
     });
 
     connect(Preferences::self(), &Preferences::showLevelNumbersChanged, this, [this] {
-        d->levelNr->setVisible(Preferences::showLevelNumbers() && !d->forceHideLevelNr);
+        d->levelNr->setVisible(Preferences::showLevelNumbers() && !d->flags.forceHideLevelNr);
     });
 
     // static, we don't need to open the file more than once.
@@ -287,7 +283,7 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     static auto pixmap = QPixmap::fromImage(QImage(":/icons/notes").scaled(fm.height(), fm.height()));
 
     d->notesIcon->setPixmap(pixmap);
-    d->levelNr->setVisible(Preferences::showLevelNumbers() && !d->forceHideLevelNr);
+    d->levelNr->setVisible(Preferences::showLevelNumbers() && !d->flags.forceHideLevelNr);
 }
 
 LakosEntity::~LakosEntity()
@@ -297,11 +293,7 @@ LakosEntity::~LakosEntity()
 
 void LakosEntity::setNotes(const std::string& notes)
 {
-    if (notes.empty()) {
-        d->notesIcon->hide();
-    } else {
-        d->notesIcon->show();
-    }
+    d->notesIcon->setVisible(!notes.empty());
     recalculateRectangle();
 }
 
@@ -310,13 +302,13 @@ void LakosEntity::setFont(const QFont& f)
     d->text->setFont(f);
     d->levelNr->setFont(f);
 
-    const bool updatesEnabled = d->layoutUpdatesEnabled;
+    const bool updatesEnabled = d->flags.layoutUpdatesEnabled;
 
-    d->layoutUpdatesEnabled = true;
+    d->flags.layoutUpdatesEnabled = true;
     recalculateRectangle();
     update();
 
-    d->layoutUpdatesEnabled = updatesEnabled;
+    d->flags.layoutUpdatesEnabled = updatesEnabled;
 }
 
 lvtldr::LakosianNode *LakosEntity::internalNode() const
@@ -348,7 +340,7 @@ void LakosEntity::layoutIgnoredItems()
     const auto textRect = d->text->boundingRect();
 
     const auto x = [&]() -> qreal {
-        if (d->isExpanded && !d->lakosChildren.empty()) {
+        if (d->flags.isExpanded && !d->lakosChildren.empty()) {
             if (titleCorner == Qt::TopLeftCorner || titleCorner == Qt::BottomLeftCorner) {
                 return boundingRect().left();
             }
@@ -358,7 +350,7 @@ void LakosEntity::layoutIgnoredItems()
     }();
 
     const auto y = [&]() -> qreal {
-        if (d->isExpanded && !d->lakosChildren.empty()) {
+        if (d->flags.isExpanded && !d->lakosChildren.empty()) {
             if (titleCorner == Qt::TopLeftCorner || titleCorner == Qt::TopRightCorner) {
                 return boundingRect().top() - textRect.height();
             }
@@ -399,7 +391,7 @@ void LakosEntity::expand(QtcUtil::CreateUndoAction createUndoAction,
     // because when the layout update is re-enabled, it will
     // run the layout logic and needs to know the form factor.
 
-    d->isExpanded = true;
+    d->flags.isExpanded = true;
     if (!layoutUpdatesEnabled()) {
         return;
     }
@@ -421,9 +413,9 @@ void LakosEntity::expand(QtcUtil::CreateUndoAction createUndoAction,
     }
     const QRectF nextRect = childrenBoundingRect().adjusted(-border, -border, border, border);
 
-    if (d->initialConstruction) {
+    if (d->flags.initialConstruction) {
         setRectangle(nextRect);
-        d->initialConstruction = false;
+        d->flags.initialConstruction = false;
         recalculateRectangle();
         Q_EMIT formFactorChanged();
         return;
@@ -474,7 +466,7 @@ void LakosEntity::collapse(QtcUtil::CreateUndoAction createUndoAction,
     // should be set even if layout updates are disabled
     // because when the layout update is re-enabled, it will
     // run the layout logic and needs to know the form factor.
-    d->isExpanded = false;
+    d->flags.isExpanded = false;
     if (!layoutUpdatesEnabled()) {
         qDebug() << "Layout updates disabled!";
         return;
@@ -498,10 +490,10 @@ void LakosEntity::collapse(QtcUtil::CreateUndoAction createUndoAction,
 
     setRelationshipVisibility(QtcUtil::VisibilityMode::e_Hidden);
 
-    if (d->initialConstruction) {
+    if (d->flags.initialConstruction) {
         // skip animation, going straight to how things should be
         setRectangle(nextRect);
-        d->initialConstruction = false;
+        d->flags.initialConstruction = false;
         layoutIgnoredItems();
         Q_EMIT formFactorChanged();
         setRelationshipVisibility(QtcUtil::VisibilityMode::e_Visible);
@@ -545,7 +537,8 @@ void LakosEntity::setRelationshipVisibility(QtcUtil::VisibilityMode mode)
 {
     for (const auto& vec : {d->edges, d->targetEdges}) {
         for (const auto& collection : vec) {
-            if (mode == QtcUtil::VisibilityMode::e_Visible && collection->isRedundant() && !d->showRedundantEdges) {
+            if (mode == QtcUtil::VisibilityMode::e_Visible && collection->isRedundant()
+                && !d->flags.showRedundantEdges) {
                 continue;
             }
 
@@ -563,9 +556,9 @@ void LakosEntity::layoutEdges(LakosEntity *child)
     }
     // top level call to layout edges for the container
     const EdgeCollection::PointFrom pointFrom =
-        d->isExpanded ? EdgeCollection::PointFrom::SOURCE : EdgeCollection::PointFrom::PARENT;
+        d->flags.isExpanded ? EdgeCollection::PointFrom::SOURCE : EdgeCollection::PointFrom::PARENT;
     const EdgeCollection::PointTo pointTo =
-        d->isExpanded ? EdgeCollection::PointTo::TARGET : EdgeCollection::PointTo::PARENT;
+        d->flags.isExpanded ? EdgeCollection::PointTo::TARGET : EdgeCollection::PointTo::PARENT;
 
     layoutEdges(child, pointFrom, pointTo);
 }
@@ -602,11 +595,11 @@ LakosEntity *LakosEntity::getTopLevelParent()
 
 void LakosEntity::setHighlighted(bool highlighted)
 {
-    if (d->highlighted == highlighted) {
+    if (d->flags.highlighted == highlighted) {
         return;
     }
 
-    d->highlighted = highlighted;
+    d->flags.highlighted = highlighted;
 
     if (layoutUpdatesEnabled()) {
         update();
@@ -626,12 +619,12 @@ void LakosEntity::setName(const std::string& name)
 void LakosEntity::setPresentationFlags(PresentationFlags flags, bool value)
 {
     if (value) {
-        d->presentationFlags |= flags;
+        d->presentationFlags |= static_cast<short>(flags);
     } else {
-        d->presentationFlags &= ~flags;
+        d->presentationFlags &= ~static_cast<short>(flags);
     }
 
-    if (d->presentationFlags & PresentationFlags::Highlighted) {
+    if (d->presentationFlags & static_cast<short>(PresentationFlags::Highlighted)) {
         setZValue(1000);
     } else {
         setZValue(1);
@@ -647,10 +640,10 @@ void LakosEntity::setQualifiedName(const std::string& qname)
 void LakosEntity::setText(const std::string& text)
 {
     d->text->setText(QString::fromStdString(text));
-    auto tmp = d->layoutUpdatesEnabled;
-    d->layoutUpdatesEnabled = true;
+    auto tmp = d->flags.layoutUpdatesEnabled;
+    d->flags.layoutUpdatesEnabled = true;
     this->recalculateRectangle();
-    d->layoutUpdatesEnabled = tmp;
+    d->flags.layoutUpdatesEnabled = tmp;
 }
 
 void LakosEntity::setTooltipString(const std::string& tt)
@@ -854,21 +847,19 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(action);
     }
 
-    if (!isMainEntity()) {
-        auto *action = new QAction();
-        action->setText(tr("Navigate to %1").arg(QString::fromStdString(d->qualifiedName)));
-        connect(action, &QAction::triggered, this, [this] {
-            Q_EMIT navigateRequested();
-        });
-        retValues.append(action);
-    }
+    auto *action = new QAction();
+    action->setText(tr("Navigate to %1").arg(QString::fromStdString(d->qualifiedName)));
+    connect(action, &QAction::triggered, this, [this] {
+        Q_EMIT navigateRequested();
+    });
+    retValues.append(action);
 
     auto *removeAction = new QAction(tr("Remove"));
     removeAction->setToolTip(tr("Removes this entity from the database"));
     connect(removeAction, &QAction::triggered, this, &LakosEntity::requestRemoval);
     retValues.append(removeAction);
 
-    if (d->showRedundantEdges) {
+    if (d->flags.showRedundantEdges) {
         auto *hideEdgesAction = new QAction();
         hideEdgesAction->setText(tr("Hide redundant edges"));
         connect(hideEdgesAction, &QAction::triggered, this, [this] {
@@ -890,7 +881,7 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         return retValues;
     }
 
-    if (d->isExpanded) {
+    if (d->flags.isExpanded) {
         auto *action = new QAction(tr("Collapse"));
         connect(action, &QAction::triggered, this, [this, scenePosition] {
             toggleExpansion(QtcUtil::CreateUndoAction::e_Yes, scenePosition, RelayoutBehavior::e_RequestRelayout);
@@ -1006,10 +997,10 @@ void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosit
     if (debugMenu) {
         auto *toggleBackgroundAction = debugMenu->addAction(tr("Toggle background"));
         toggleBackgroundAction->setCheckable(true);
-        toggleBackgroundAction->setChecked(d->showBackground);
+        toggleBackgroundAction->setChecked(d->flags.showBackground);
 
         connect(toggleBackgroundAction, &QAction::triggered, this, [this] {
-            d->showBackground = !d->showBackground;
+            d->flags.showBackground = !d->flags.showBackground;
             updateBackground();
         });
 
@@ -1243,13 +1234,13 @@ void LakosEntity::recursiveEdgeRelayout()
     }
 
     for (auto& edges : d->edges) {
-        if (!edges->isRedundant() || d->showRedundantEdges) {
+        if (!edges->isRedundant() || d->flags.showRedundantEdges) {
             edges->layoutRelations();
         }
     }
 
     for (auto& edges : d->targetEdges) {
-        if (!edges->isRedundant() || d->showRedundantEdges) {
+        if (!edges->isRedundant() || d->flags.showRedundantEdges) {
             edges->layoutRelations();
         }
     }
@@ -1267,12 +1258,6 @@ void LakosEntity::layoutAllRelations()
     for (auto& edges : d->targetEdges) {
         edges->layoutRelations();
     }
-}
-
-void LakosEntity::setMainEntity()
-{
-    d->isMainNode = true;
-    updateBackground();
 }
 
 void LakosEntity::recursiveEdgeHighlight(bool highlight)
@@ -1311,18 +1296,17 @@ void LakosEntity::hoverEnterEvent(QGraphicsSceneHoverEvent *ev)
 
     auto *ourScene = qobject_cast<GraphicsScene *>(scene());
     if (ourScene && !ourScene->blockNodeResizeOnHover()) {
-        if (!d->isExpanded) {
+        if (!d->flags.isExpanded) {
             setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
         }
     }
 
-    if (!isMainEntity()) {
-        if (d->showBackground) {
-            QBrush thisBrush = brush();
-            const QColor& thisColor = thisBrush.color();
-            setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue(), 180)));
-        }
+    if (d->flags.showBackground) {
+        QBrush thisBrush = Preferences::entityHoverColor();
+        const QColor& thisColor = thisBrush.color().darker();
+        setBrush(QBrush(thisColor));
     }
+
     d->zValueBeforeHoverEnter = zValue();
     setZValue(QtcUtil::e_NODE_HOVER_LAYER);
 }
@@ -1339,13 +1323,11 @@ void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
 
     setFlag(QGraphicsItem::ItemIgnoresTransformations, false);
 
-    if (!isMainEntity()) {
-        if (d->showBackground) {
-            QBrush thisBrush = brush();
-            const QColor& thisColor = thisBrush.color();
-            setBrush(QBrush(QColor(thisColor.red(), thisColor.green(), thisColor.blue())));
-        }
+    if (d->flags.showBackground) {
+        QBrush thisBrush = Preferences::entityBackgroundColor();
+        setBrush(thisBrush);
     }
+
     if (d->zValueBeforeHoverEnter.has_value()) {
         setZValue(d->zValueBeforeHoverEnter.value());
         d->zValueBeforeHoverEnter = std::nullopt;
@@ -1354,7 +1336,7 @@ void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
 
 void LakosEntity::updateBackground()
 {
-    if (!d->showBackground) {
+    if (!d->flags.showBackground) {
         QBrush b = QBrush();
         b.setColor(QColor(10, 10, 10, 0));
         setBrush(b);
@@ -1365,26 +1347,10 @@ void LakosEntity::updateBackground()
         return;
     }
 
-    if (d->isMainNode) {
-        const QRectF bRect = rect();
-        if (d->enableGradientOnMainNode) {
-            QLinearGradient linearGrad(bRect.topLeft(), bRect.bottomRight());
-            linearGrad.setColorAt(0, d->color);
-            linearGrad.setColorAt(1, d->color.lighter());
-            setBrush(QBrush(linearGrad));
-        } else {
-            QBrush b = brush();
-            b.setColor(d->selectedNodeColor);
-            b.setStyle(d->fillPattern);
-            setBrush(b);
-        }
-        setPen(QPen(QBrush(Qt::blue), 1));
-    } else {
-        QBrush b = brush();
-        b.setColor(d->color);
-        b.setStyle(d->fillPattern);
-        setBrush(b);
-    }
+    QBrush b = brush();
+    b.setColor(d->color);
+    b.setStyle(d->fillPattern);
+    setBrush(b);
 }
 
 void LakosEntity::setColorManagement(lvtclr::ColorManagement *colorManagement)
@@ -1440,13 +1406,13 @@ void LakosEntity::setColorId(const std::string& colorId)
 
 void LakosEntity::enableLayoutUpdates()
 {
-    d->layoutUpdatesEnabled = true;
+    d->flags.layoutUpdatesEnabled = true;
 
     // We need to invert the logic of the isExpanded
     // here, because we set it when the layout updates
     // where disabled, so invert, and toggle back to
     // the correct value - doing the calculations.
-    d->isExpanded = !d->isExpanded;
+    d->flags.isExpanded = !d->flags.isExpanded;
     toggleExpansion(QtcUtil::CreateUndoAction::e_No);
 
     updateBackground();
@@ -1584,7 +1550,7 @@ void LakosEntity::calculateEdgeVisibility(const std::shared_ptr<EdgeCollection>&
     }
 
     // Rule 2 - hide redudant edges, if we can.
-    if (ec->isRedundant() && !d->showRedundantEdges) {
+    if (ec->isRedundant() && !d->flags.showRedundantEdges) {
         ec->setVisible(false);
         return;
     }
@@ -1656,7 +1622,7 @@ void LakosEntity::reactChildAdded(QGraphicsItem *child)
 {
     if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(child)) {
         d->lakosChildren.append(lEntity);
-        if (d->lakosChildren.size() == 1 && !d->isExpanded) {
+        if (d->lakosChildren.size() == 1 && !d->flags.isExpanded) {
             // Automatically expand a package that just received it's first item
             expand(QtcUtil::CreateUndoAction::e_No);
         }
@@ -1724,6 +1690,19 @@ QVariant LakosEntity::itemChange(QGraphicsItem::GraphicsItemChange change, const
         for (auto&& e : d->targetEdges) {
             e->toggleRelationFlags(EdgeCollection::RelationIsSelected, value.value<bool>());
         }
+        if (value.toBool()) {
+            QColor selectionColor = d->selectedNodeColor;
+            selectionColor.setAlpha(125);
+
+            d->selectionPath = new QGraphicsRectItem(boundingRect(), this);
+            d->selectionPath->setBrush(selectionColor);
+            d->selectionPath->setPen(Qt::PenStyle::NoPen);
+            d->selectionPath->setZValue(SELECTION_LAYER);
+            d->selectionPath->setVisible(true);
+        } else {
+            delete d->selectionPath;
+            d->selectionPath = nullptr;
+        }
         break;
     }
     default:
@@ -1735,7 +1714,7 @@ QVariant LakosEntity::itemChange(QGraphicsItem::GraphicsItemChange change, const
 
 void LakosEntity::showRedundantRelations(bool show)
 {
-    d->showRedundantEdges = show;
+    d->flags.showRedundantEdges = show;
     calculateEdgeVisibility();
 }
 
@@ -1765,7 +1744,7 @@ std::string LakosEntity::legendText() const
     information += "Color ID: " + colorIdText() + "\n";
 
     if (QtcUtil::isDebugMode() && Preferences::enableSceneContextMenu()) {
-        information += "Expanded Status: " + std::to_string(d->isExpanded) + "\n";
+        information += "Expanded Status: " + std::to_string(d->flags.isExpanded) + "\n";
         information += "Pos: " + std::to_string(pos().x()) + ',' + std::to_string(pos().y()) + "\n";
         information +=
             "Top Left: " + std::to_string(bRect.topLeft().x()) + ',' + std::to_string(bRect.topLeft().y()) + "\n";
@@ -1808,7 +1787,7 @@ void LakosEntity::recalculateRectangle()
     }
 
     constexpr int TEXT_ADJUST = 20;
-    if (!d->isExpanded) {
+    if (!d->flags.isExpanded) {
         const QRectF textRect = d->text->boundingRect().adjusted(-TEXT_ADJUST, // x1
                                                                  -TEXT_ADJUST, // y1
                                                                  TEXT_ADJUST, // x2
@@ -1887,7 +1866,7 @@ std::vector<std::shared_ptr<EdgeCollection>>& LakosEntity::edgesCollection() con
 
 bool LakosEntity::layoutUpdatesEnabled() const
 {
-    return d->layoutUpdatesEnabled;
+    return d->flags.layoutUpdatesEnabled;
 }
 
 std::string LakosEntity::tooltipString() const
@@ -1911,12 +1890,7 @@ const std::string& LakosEntity::uniqueIdStr() const
 //  either we fix this (rename for a correct meaning) or remove it.
 bool LakosEntity::highlighted() const
 {
-    return d->highlighted;
-}
-
-bool LakosEntity::isMainEntity() const
-{
-    return d->isMainNode;
+    return d->flags.highlighted;
 }
 
 void LakosEntity::setRelationRedundant(const std::shared_ptr<EdgeCollection>& edgeCollection)
@@ -1950,7 +1924,7 @@ const lvtshr::LoaderInfo& LakosEntity::loaderInfo() const
 
 bool LakosEntity::isExpanded() const
 {
-    return d->isExpanded;
+    return d->flags.isExpanded;
 }
 
 void LakosEntity::addTargetCollection(const std::shared_ptr<EdgeCollection>& collection)
@@ -1990,7 +1964,7 @@ void LakosEntity::levelizationLayout(LevelizationLayoutType type, int direction,
 {
     auto entityToLevel = childrenLevels();
     for (auto [entity, level] : entityToLevel) {
-        if (!entity->d->forceHideLevelNr) {
+        if (!entity->d->flags.forceHideLevelNr) {
             entity->d->levelNr->setText(QString::number(level + 1));
         }
         entity->layoutIgnoredItems();
@@ -2023,7 +1997,7 @@ void LakosEntity::truncateTitle(EllipsisTextItem::Truncate v)
 
 void LakosEntity::forceHideLevelNumbers()
 {
-    d->forceHideLevelNr = true;
+    d->flags.forceHideLevelNr = true;
     d->levelNr->setVisible(false);
 }
 
@@ -2085,6 +2059,15 @@ void LakosEntity::setColor(const QColor& color)
 void LakosEntity::setPluginManager(Codethink::lvtplg::PluginManager& pm)
 {
     d->pluginManager = pm;
+}
+
+void LakosEntity::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    std::ignore = widget;
+    QStyleOptionGraphicsItem myoption = (*option);
+    myoption.state &= ~QStyle::State_Selected;
+
+    GraphicsRectItem::paint(painter, &myoption, widget);
 }
 
 } // end namespace Codethink::lvtqtc

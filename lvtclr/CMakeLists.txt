@@ -15,7 +15,7 @@ if (COMPILE_TESTS)
     target_link_libraries(test_ct_lvtclr_colormanagement
         Codethink::lvttst
         Codethink::lvtclr
-        ${EXTRA_SYSTEM_LIBRARIES}
+        ${SYSTEM_EXTRA_LIBRARIES}
     )
     add_test(NAME test_ct_lvtclr_colormanagement COMMAND test_ct_lvtclr_colormanagement)
 endif()

@@ -92,6 +92,7 @@ TEST_CASE("Optional include location callbacks")
         std::vector<std::pair<std::string, std::string>>{},
         [](auto&& _) {},
         std::vector<llvm::GlobPattern>{},
+        /*enableLakosianRules=*/true,
         headerLocationCallback));
 
     REQUIRE(!err);

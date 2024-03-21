@@ -88,6 +88,9 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     ~GraphicsScene() noexcept override;
     // Destructor
 
+    std::vector<LakosEntity *> vertices() const;
+    std::vector<LakosRelation *> edges() const;
+
     void updateBoundingRect();
     // recalculates and updates the bounding rectangle based
     // on the children bounding rect.

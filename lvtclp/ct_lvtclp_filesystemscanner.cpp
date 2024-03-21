@@ -101,20 +101,24 @@ struct FilesystemScanner::Private {
 
     std::vector<llvm::GlobPattern> ignoreGlobs;
 
+    bool enableLakosianRules;
+
     explicit Private(lvtmdb::ObjectStore& memDb,
                      std::filesystem::path prefix,
                      const LvtCompilationDatabase& cdb,
                      std::function<void(const std::string, long)> messageCallback,
                      std::vector<std::filesystem::path> nonLakosianDirs,
                      bool catchCodeAnalysisOutput,
-                     std::vector<llvm::GlobPattern> ignoreGlobs):
+                     std::vector<llvm::GlobPattern> ignoreGlobs,
+                     bool enableLakosianRules):
         memDb(memDb),
         prefix(std::move(prefix)),
         cdb(cdb),
         nonLakosianDirs(std::move(nonLakosianDirs)),
         messageCallback(std::move(messageCallback)),
         catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-        ignoreGlobs(std::move(ignoreGlobs))
+        ignoreGlobs(std::move(ignoreGlobs)),
+        enableLakosianRules(enableLakosianRules)
     {
     }
 };
@@ -125,14 +129,16 @@ FilesystemScanner::FilesystemScanner(lvtmdb::ObjectStore& memDb,
                                      std::function<void(const std::string&, long)> messageCallback,
                                      bool catchCodeAnalysisOutput,
                                      std::vector<std::filesystem::path> nonLakosianDirs,
-                                     std::vector<llvm::GlobPattern> ignoreGlobs):
+                                     std::vector<llvm::GlobPattern> ignoreGlobs,
+                                     bool enableLakosianRules):
     d(std::make_unique<FilesystemScanner::Private>(memDb,
                                                    prefix,
                                                    cdb,
                                                    std::move(messageCallback),
                                                    std::move(nonLakosianDirs),
                                                    catchCodeAnalysisOutput,
-                                                   std::move(ignoreGlobs)))
+                                                   std::move(ignoreGlobs),
+                                                   enableLakosianRules))
 {
 }
 
@@ -220,6 +226,74 @@ void FilesystemScanner::scanHeader(const std::filesystem::path& path)
     }
 }
 
+bool FilesystemScanner::tryProcessFileUsingSemanticRules(const std::filesystem::path& path)
+{
+    auto addPkgFromSemanticRulesProcessing = [this](std::string const& qualifiedName,
+                                                    std::optional<std::string> parentQualifiedName = std::nullopt,
+                                                    std::optional<std::string> repositoryName = std::nullopt,
+                                                    std::optional<std::string> path = std::nullopt) {
+        if (d->foundPkgNames.count(qualifiedName) > 0) {
+            return;
+        }
+
+        if (repositoryName) {
+            d->foundRepositories.emplace_back(RepositoryHelper{*repositoryName, ""});
+        }
+
+        if (parentQualifiedName) {
+            if (d->foundPkgNames.count(*parentQualifiedName) == 0) {
+                d->foundPkgs.emplace_back(
+                    FoundPackage{"", *parentQualifiedName, "", repositoryName ? *repositoryName : ""});
+                d->foundPkgNames.insert(*parentQualifiedName);
+            }
+        }
+
+        d->foundPkgs.emplace_back(FoundPackage{parentQualifiedName ? *parentQualifiedName : "",
+                                               qualifiedName,
+                                               path ? *path : "",
+                                               repositoryName ? *repositoryName : ""});
+        d->foundPkgNames.insert(qualifiedName);
+    };
+
+    auto filePathQString = QString::fromStdString(path.string());
+    auto fullFilePath = QDir::fromNativeSeparators(filePathQString).toStdString();
+    for (auto const& semanticPackingRule : ClpUtil::getAllSemanticPackingRules()) {
+        if (semanticPackingRule->accept(fullFilePath)) {
+            auto pkg = semanticPackingRule->process(fullFilePath, addPkgFromSemanticRulesProcessing);
+            addSourceFile(path, pkg);
+            return true;
+        }
+    }
+    return false;
+}
+
+void FilesystemScanner::processFileUsingLakosianRules(const std::filesystem::path& path)
+{
+    if (ClpUtil::isComponentOnStandalonePackage(path)) {
+        const auto pkgPath = path.parent_path();
+        const auto pkg = addLakosianSourcePackage(pkgPath, "", true);
+        addSourceFile((pkgPath / path.filename()).string(), pkg);
+    } else if (ClpUtil::isComponentOnPackageGroup(path)) {
+        const auto pkgPath = path.parent_path();
+        const auto pkgGrpPath = pkgPath.parent_path();
+        const auto pkgGrp = addLakosianSourcePackage(pkgGrpPath, "", false);
+        const auto pkg = addLakosianSourcePackage(pkgPath, pkgGrp, false);
+        addSourceFile((pkgPath / path.filename()).string(), pkg);
+    } else {
+        const static std::string nonLakosianGroup(ClpUtil::NON_LAKOSIAN_GROUP_NAME);
+        if (!d->foundPkgGrps.count(nonLakosianGroup)) {
+            d->foundPkgGrps[nonLakosianGroup] = PackageHelper{"", nonLakosianGroup, std::string{}};
+        }
+        const auto pkgPath = path.parent_path();
+        const auto pkg = addLakosianSourcePackage(pkgPath, ClpUtil::NON_LAKOSIAN_GROUP_NAME, false);
+        if (!pkg.empty()) {
+            addSourceFile(path, pkg);
+        } else {
+            addSourceFile(path, nonLakosianGroup);
+        }
+    }
+}
+
 void FilesystemScanner::scanPath(const std::filesystem::path& path)
 {
     if (!std::filesystem::is_regular_file(path)) {
@@ -230,62 +304,14 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
         return;
     }
 
-    auto addPkg = [&](std::string const& qualifiedName,
-                      std::optional<std::string> parentQualifiedName = std::nullopt,
-                      std::optional<std::string> repositoryName = std::nullopt,
-                      std::optional<std::string> path = std::nullopt) {
-        if (d->foundPkgNames.count(qualifiedName) > 0) {
-            return;
-        }
-
-        if (repositoryName) {
-            d->foundRepositories.emplace_back(RepositoryHelper{*repositoryName, ""});
-        }
-        if (parentQualifiedName) {
-            if (d->foundPkgNames.count(*parentQualifiedName) == 0) {
-                d->foundPkgs.emplace_back(
-                    FoundPackage{"", *parentQualifiedName, "", repositoryName ? *repositoryName : ""});
-                d->foundPkgNames.insert(*parentQualifiedName);
-            }
-        }
-        d->foundPkgs.emplace_back(FoundPackage{parentQualifiedName ? *parentQualifiedName : "",
-                                               qualifiedName,
-                                               path ? *path : "",
-                                               repositoryName ? *repositoryName : ""});
-        d->foundPkgNames.insert(qualifiedName);
-    };
-    auto filePathQString = QString::fromStdString(path.string());
-    auto fullFilePath = QDir::fromNativeSeparators(filePathQString).toStdString();
-    for (auto&& semanticPackingRule : ClpUtil::getAllSemanticPackingRules()) {
-        if (semanticPackingRule->accept(fullFilePath)) {
-            auto pkg = semanticPackingRule->process(fullFilePath, addPkg);
-            addSourceFile(path, pkg);
-            return;
-        }
+    if (tryProcessFileUsingSemanticRules(path)) {
+        return;
     }
 
-    if (ClpUtil::isComponentOnStandalonePackage(path)) {
-        const auto pkgPath = path.parent_path();
-        const auto pkg = addSourcePackage(pkgPath, "", true);
-        addSourceFile((pkgPath / path.filename()).string(), pkg);
-    } else if (ClpUtil::isComponentOnPackageGroup(path)) {
-        const auto pkgPath = path.parent_path();
-        const auto pkgGrpPath = pkgPath.parent_path();
-        const auto pkgGrp = addSourcePackage(pkgGrpPath, "", false);
-        const auto pkg = addSourcePackage(pkgPath, pkgGrp, false);
-        addSourceFile((pkgPath / path.filename()).string(), pkg);
+    if (d->enableLakosianRules) {
+        processFileUsingLakosianRules(path);
     } else {
-        const static std::string nonLakosianGroup(ClpUtil::NON_LAKOSIAN_GROUP_NAME);
-        if (!d->foundPkgGrps.count(nonLakosianGroup)) {
-            d->foundPkgGrps[nonLakosianGroup] = PackageHelper{"", nonLakosianGroup, std::string{}};
-        }
-        const auto pkgPath = path.parent_path();
-        const auto pkg = addSourcePackage(pkgPath, ClpUtil::NON_LAKOSIAN_GROUP_NAME, false);
-        if (!pkg.empty()) {
-            addSourceFile(path, pkg);
-        } else {
-            addSourceFile(path, nonLakosianGroup);
-        }
+        nonLakosian::ClpUtil::writeSourceFile(d->memDb, path.string(), d->prefix.string(), d->prefix.string());
     }
 }
 
@@ -294,8 +320,9 @@ void FilesystemScanner::addSourceFile(const std::filesystem::path& path, const s
     d->foundFiles.push_back({package, path.string(), std::string{}});
 }
 
-std::string
-FilesystemScanner::addSourcePackage(const std::filesystem::path& path, const std::string& inParent, bool isStandalone)
+std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::path& path,
+                                                        const std::string& inParent,
+                                                        bool isStandalone)
 {
     std::string parent = inParent;
 
@@ -424,7 +451,7 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
     }
 
     // add packages
-    for (auto&& pkg : d->foundPkgs) {
+    for (auto const& pkg : d->foundPkgs) {
         addPackage(out, existingPkgs, pkg.qualifiedName, pkg.parent, pkg.filePath, pkg.repositoryName);
     }
 

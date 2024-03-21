@@ -63,11 +63,11 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     Q_OBJECT
 
   public:
-    enum PresentationFlags { NoFlag = 0x00, Highlighted = 0x01 };
+    enum class PresentationFlags : short { NoFlag = 0x00, Highlighted = 0x01 };
 
     enum class RelayoutBehavior : short { e_DoNotRelayout, e_RequestRelayout };
 
-    enum class LevelizationLayoutType { Horizontal, Vertical };
+    enum class LevelizationLayoutType : short { Horizontal, Vertical };
 
     enum { Type = QtcUtil::LAKOSENTITY_TYPE };
     // for qgraphicsitem_cast magic
@@ -140,20 +140,14 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // The color id is used to
     // fetch a specific color from the ColorManagement.
 
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
+
     [[nodiscard]] QColor color() const;
     // returns the current color of this node.
     // TODO: Change this, the color is not important, but the brush is.
     // That's because the brush can hold more things than just a color,
     // and if we change the color of a brush that has a gradient, nothing
     // will change on the painted item.
-
-    void setMainEntity();
-    // Draws a different background to highlight that this is the main node.
-    // TODO: rename to setAsMainEntity(). setMainEntity means that we are
-    // setting a mainEntity inside of this element.
-
-    [[nodiscard]] bool isMainEntity() const;
-    // returns if this is the main node or not.
 
     LakosEntity *getTopLevelParent();
     // Get the top-most LakosEntity in the parent/child hierarchy

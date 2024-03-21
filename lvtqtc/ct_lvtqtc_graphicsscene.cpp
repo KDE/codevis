@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtshr_graphstorage.h"
 #include <any>
 #include <ct_lvtqtc_graphicsscene.h>
 
@@ -377,6 +378,16 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
 }
 
 GraphicsScene::~GraphicsScene() noexcept = default;
+
+std::vector<LakosRelation *> GraphicsScene::edges() const
+{
+    return d->relationVec;
+}
+
+std::vector<LakosEntity *> GraphicsScene::vertices() const
+{
+    return d->verticesVec;
+}
 
 LakosEntity *GraphicsScene::findLakosEntityFromUid(lvtshr::UniqueId uid) const
 {

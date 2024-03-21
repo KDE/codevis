@@ -47,6 +47,9 @@
 
 #include <QDebug>
 #include <QFile>
+#include <unordered_set>
+
+#include <boost/functional/hash.hpp>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QtSystemDetection>
@@ -161,6 +164,13 @@ bool run_migration(soci::session& db, const std::string& db_schema_id)
     return true;
 }
 
+// Fast access cache for query_id_from_qual_name;
+namespace {
+// the std::pair is table_name, qualified_name.
+using KeyType = std::pair<std::string, std::string>;
+std::unordered_map<KeyType, int, boost::hash<KeyType>> id_from_qual_name;
+} // namespace
+
 std::optional<std::pair<int, soci::indicator>>
 query_id_from_qual_name(soci::session& db, const std::string& table_name, const std::string& qual_name)
 {
@@ -168,6 +178,11 @@ query_id_from_qual_name(soci::session& db, const std::string& table_name, const 
 
     if (qual_name.empty()) {
         return std::nullopt;
+    }
+
+    auto it = id_from_qual_name.find(std::make_pair(table_name, qual_name));
+    if (it != id_from_qual_name.end()) {
+        return std::make_pair(it->second, soci::indicator::i_ok);
     }
 
     int id = 0;
@@ -180,6 +195,7 @@ query_id_from_qual_name(soci::session& db, const std::string& table_name, const 
         return std::nullopt;
     }
 
+    id_from_qual_name[std::make_pair(table_name, qual_name)] = id;
     return std::make_pair(id, ind);
 }
 
@@ -446,18 +462,9 @@ void exportMethod(MethodObject *method, soci::session& db)
         soci::use(access), soci::use(isVirtual), soci::use(isPure), soci::use(isStatic), soci::use(isConst);
 }
 
-void exportPkgRelations(PackageObject *pkg, soci::session& db)
+void exportPkgRelations(const ObjectStore& store, soci::session& db)
 {
-    auto lock = pkg->readOnlyLock();
-    (void) lock;
-
-    auto res = query_id_from_qual_name(db, "source_package", pkg->qualifiedName());
-    if (!res.has_value()) {
-        // TODO: Investigate data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << pkg->qualifiedName() << "' for exportPkgRelations. IGNORING.\n";
-        return;
-    }
-    const int this_id = res.value().first;
+    int this_id = 0;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -465,36 +472,39 @@ void exportPkgRelations(PackageObject *pkg, soci::session& db)
          soci::use(this_id),
          soci::use(dep_id));
 
-    for (PackageObject *dep : pkg->forwardDependencies()) {
-        auto _lock = dep->readOnlyLock();
-        (void) _lock;
+    for (const auto& [_, pkg] : store.packages()) {
+        (void) _;
+        auto lock = pkg->readOnlyLock();
+        (void) lock;
 
-        auto res = query_id_from_qual_name(db, "source_package", dep->qualifiedName());
+        auto res = query_id_from_qual_name(db, "source_package", pkg->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << dep->qualifiedName()
-                      << "' for exportPkgRelations forward deps. IGNORING.\n";
+            std::cout << "WARNING: Could not find '" << pkg->qualifiedName() << "' for exportPkgRelations. IGNORING.\n";
             continue;
         }
-        dep_id = res.value().first;
-        insert_st.execute(true);
+        this_id = res.value().first;
+
+        for (PackageObject *dep : pkg->forwardDependencies()) {
+            auto _lock = dep->readOnlyLock();
+            (void) _lock;
+
+            auto inner_res = query_id_from_qual_name(db, "source_package", dep->qualifiedName());
+            if (!inner_res.has_value()) {
+                // TODO: Investigate data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find '" << dep->qualifiedName()
+                          << "' for exportPkgRelations forward deps. IGNORING.\n";
+                continue;
+            }
+            dep_id = inner_res.value().first;
+            insert_st.execute(true);
+        }
     }
 }
 
-void exportCompRelations(ComponentObject *comp, soci::session& db)
+void exportCompRelations(const ObjectStore& store, soci::session& db)
 {
-    auto lock = comp->readOnlyLock();
-    (void) lock;
-
-    // types handled in exportUserDefinedTypeRelations
-    // dependencies
-    auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
-    if (!res.has_value()) {
-        // TODO: Investigate data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << comp->qualifiedName() << "' for exportCompRelations. IGNORING.\n";
-        return;
-    }
-    const int this_id = res.value().first;
+    int this_id = 0;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -502,37 +512,46 @@ void exportCompRelations(ComponentObject *comp, soci::session& db)
          soci::use(this_id),
          soci::use(dep_id));
 
-    for (ComponentObject *dep : comp->forwardDependencies()) {
-        auto _lock = dep->readOnlyLock();
-        (void) _lock;
+    for (const auto& [_, comp] : store.components()) {
+        (void) _;
+        auto lock = comp->readOnlyLock();
+        (void) lock;
 
-        auto res = query_id_from_qual_name(db, "source_component", dep->qualifiedName());
+        // types handled in exportUserDefinedTypeRelations
+        // dependencies
+        auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << dep->qualifiedName()
-                      << "' for exportCompRelations forward deps. IGNORING.\n";
+            std::cout << "WARNING: Could not find '" << comp->qualifiedName()
+                      << "' for exportCompRelations. IGNORING.\n";
             continue;
         }
-        dep_id = res.value().first;
+        this_id = res.value().first;
 
-        insert_st.execute(true);
+        for (ComponentObject *dep : comp->forwardDependencies()) {
+            auto _lock = dep->readOnlyLock();
+            (void) _lock;
+
+            auto inner_res = query_id_from_qual_name(db, "source_component", dep->qualifiedName());
+            if (!inner_res.has_value()) {
+                // TODO: Investigate data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find '" << dep->qualifiedName()
+                          << "' for exportCompRelations forward deps. IGNORING.\n";
+                continue;
+            }
+            dep_id = inner_res.value().first;
+
+            insert_st.execute(true);
+        }
     }
 }
 
-void exportFileRelations(FileObject *file, soci::session& db)
+void exportFileRelations(const ObjectStore& store, soci::session& db)
 {
-    auto lock = file->readOnlyLock();
-    (void) lock;
-
-    auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
-    if (!res.has_value()) {
-        // TODO: Investigate missing data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << file->qualifiedName() << "' for exportFileRelations. IGNORING.\n";
-        return;
-    }
-    const int this_id = res.value().first;
+    int this_id = 0;
     int other_source_id = 0;
     int namespace_id = 0;
+    int global_func_id = 0;
 
     soci::statement other_source_insert =
         (db.prepare << "insert into includes(source_id, target_id) values (:s, :t) on conflict do nothing",
@@ -544,69 +563,81 @@ void exportFileRelations(FileObject *file, soci::session& db)
                                         soci::use(this_id),
                                         soci::use(namespace_id));
 
-    // includes
-    for (FileObject *include : file->forwardIncludes()) {
-        auto _lock = include->readOnlyLock();
-        (void) _lock;
-        auto res = query_id_from_qual_name(db, "source_file", include->qualifiedName());
+    soci::statement free_func_insert =
+        (db.prepare
+             << "insert into global_function_source_file(source_file_id, function_id) values (:s, :t) on conflict do "
+                "nothing",
+         soci::use(this_id),
+         soci::use(global_func_id));
+
+    for (const auto& [_, file] : store.files()) {
+        (void) _;
+        auto lock = file->readOnlyLock();
+        (void) lock;
+
+        auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
         if (!res.has_value()) {
-            // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find fwd include '" << include->qualifiedName()
+            // TODO: Investigate missing data that only happens in specific codebases.
+            std::cout << "WARNING: Could not find '" << file->qualifiedName()
                       << "' for exportFileRelations. IGNORING.\n";
             continue;
         }
-        other_source_id = res.value().first;
-        other_source_insert.execute(true);
-    }
 
-    // namespaces
-    for (NamespaceObject *nmspc : file->namespaces()) {
-        auto _lock = nmspc->readOnlyLock();
-        (void) _lock;
-        auto res = query_id_from_qual_name(db, "namespace_declaration", nmspc->qualifiedName());
-        if (!res.has_value()) {
-            // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find namespace '" << nmspc->qualifiedName()
-                      << "' for exportFileRelations. IGNORING.\n";
-            continue;
+        this_id = res.value().first;
+        other_source_id = 0;
+        namespace_id = 0;
+
+        // includes
+        for (FileObject *include : file->forwardIncludes()) {
+            auto _lock = include->readOnlyLock();
+            (void) _lock;
+            auto res = query_id_from_qual_name(db, "source_file", include->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find fwd include '" << include->qualifiedName()
+                          << "' for exportFileRelations. IGNORING.\n";
+                continue;
+            }
+            other_source_id = res.value().first;
+            other_source_insert.execute(true);
         }
-        namespace_id = res.value().first;
-        namespace_insert.execute(true);
-    }
 
-    // free functions
-    for (FunctionObject *fnc : file->globalFunctions()) {
-        auto _lock = fnc->readOnlyLock();
-        (void) _lock;
-
-        auto res = query_id_from_qual_name(db, "function_declaration", fnc->qualifiedName());
-        if (!res.has_value()) {
-            // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find global function '" << fnc->qualifiedName()
-                      << "' for exportFileRelations. IGNORING.\n";
-            continue;
+        // namespaces
+        for (NamespaceObject *nmspc : file->namespaces()) {
+            auto _lock = nmspc->readOnlyLock();
+            (void) _lock;
+            auto res = query_id_from_qual_name(db, "namespace_declaration", nmspc->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find namespace '" << nmspc->qualifiedName()
+                          << "' for exportFileRelations. IGNORING.\n";
+                continue;
+            }
+            namespace_id = res.value().first;
+            namespace_insert.execute(true);
         }
-        int dep_id = res.value().first;
-        db << "insert into global_function_source_file(source_file_id, function_id) values (:s, :t) on conflict do "
-              "nothing",
-            soci::use(this_id), soci::use(dep_id);
+
+        // free functions
+        for (FunctionObject *fnc : file->globalFunctions()) {
+            auto _lock = fnc->readOnlyLock();
+            (void) _lock;
+
+            auto res = query_id_from_qual_name(db, "function_declaration", fnc->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find global function '" << fnc->qualifiedName()
+                          << "' for exportFileRelations. IGNORING.\n";
+                continue;
+            }
+            global_func_id = res.value().first;
+            free_func_insert.execute(true);
+        }
     }
 }
 
-void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
+void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
 {
-    auto lock = type->readOnlyLock();
-    (void) lock;
-
-    auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
-    if (!res.has_value()) {
-        // TODO: Investigate missing data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << type->qualifiedName()
-                  << "' for exportUserDefinedTypeRelations. IGNORING.\n";
-        return;
-    }
-    const int this_id = res.value().first;
-
+    int this_id = 0;
     int subclass_id = 0;
     int uses_in_interface_id = 0;
     int uses_in_impl_id = 0;
@@ -638,98 +669,103 @@ void exportUserDefinedTypeRelations(TypeObject *type, soci::session& db)
         (db.prepare << "insert into class_source_file(class_id, source_file_id) values (:s, :t) on conflict do nothing",
          soci::use(this_id),
          soci::use(file_id));
-    // isA
-    for (TypeObject *subclass : type->subclasses()) {
-        auto _lock = subclass->readOnlyLock();
-        (void) _lock;
 
-        auto res = query_id_from_qual_name(db, "class_declaration", subclass->qualifiedName());
+    for (const auto& [_, type] : store.types()) {
+        auto lock = type->readOnlyLock();
+        (void) lock;
+
+        auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find subclass '" << subclass->qualifiedName()
+            std::cout << "WARNING: Could not find '" << type->qualifiedName()
                       << "' for exportUserDefinedTypeRelations. IGNORING.\n";
             continue;
         }
-        subclass_id = res.value().first;
+        this_id = res.value().first;
 
-        subclass_insert_st.execute(true);
-    }
+        for (TypeObject *subclass : type->subclasses()) {
+            auto _lock = subclass->readOnlyLock();
+            (void) _lock;
 
-    // usesInTheInterface
-    for (TypeObject *dep : type->usesInTheInterface()) {
-        auto _lock = dep->readOnlyLock();
-        (void) _lock;
+            auto res = query_id_from_qual_name(db, "class_declaration", subclass->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate missing data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find subclass '" << subclass->qualifiedName()
+                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                continue;
+            }
+            subclass_id = res.value().first;
 
-        auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
-        if (!res.has_value()) {
-            // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find usesInTheInterface '" << dep->qualifiedName()
-                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
-            continue;
+            subclass_insert_st.execute(true);
         }
-        uses_in_interface_id = res.value().first;
-        uses_in_interface_insert_st.execute(true);
-    }
 
-    // usesInTheImplementation
-    for (TypeObject *dep : type->usesInTheImplementation()) {
-        auto _lock = dep->readOnlyLock();
-        (void) _lock;
+        // usesInTheInterface
+        for (TypeObject *dep : type->usesInTheInterface()) {
+            auto _lock = dep->readOnlyLock();
+            (void) _lock;
 
-        auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
-        if (!res.has_value()) {
-            // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find usesInTheImplementation '" << dep->qualifiedName()
-                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
-            continue;
+            auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate missing data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find usesInTheInterface '" << dep->qualifiedName()
+                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                continue;
+            }
+            uses_in_interface_id = res.value().first;
+            uses_in_interface_insert_st.execute(true);
         }
-        uses_in_impl_id = res.value().first;
-        uses_in_impl_insert_st.execute(true);
-    }
 
-    for (ComponentObject *comp : type->components()) {
-        auto _lock = comp->readOnlyLock();
-        (void) _lock;
+        // usesInTheImplementation
+        for (TypeObject *dep : type->usesInTheImplementation()) {
+            auto _lock = dep->readOnlyLock();
+            (void) _lock;
 
-        auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
-        if (!res.has_value()) {
-            // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find component '" << comp->qualifiedName()
-                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
-            continue;
+            auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate missing data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find usesInTheImplementation '" << dep->qualifiedName()
+                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                continue;
+            }
+            uses_in_impl_id = res.value().first;
+            uses_in_impl_insert_st.execute(true);
         }
-        component_id = res.value().first;
-        component_insert_st.execute(true);
-    }
 
-    for (FileObject *file : type->files()) {
-        auto _lock = file->readOnlyLock();
-        (void) _lock;
+        for (ComponentObject *comp : type->components()) {
+            auto _lock = comp->readOnlyLock();
+            (void) _lock;
 
-        auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
-        if (!res.has_value()) {
-            // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find file '" << file->qualifiedName()
-                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
-            continue;
+            auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate missing data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find component '" << comp->qualifiedName()
+                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                continue;
+            }
+            component_id = res.value().first;
+            component_insert_st.execute(true);
         }
-        file_id = res.value().first;
-        file_insert_st.execute(true);
+
+        for (FileObject *file : type->files()) {
+            auto _lock = file->readOnlyLock();
+            (void) _lock;
+
+            auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate missing data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find file '" << file->qualifiedName()
+                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                continue;
+            }
+            file_id = res.value().first;
+            file_insert_st.execute(true);
+        }
     }
 }
 
-void exportFieldRelations(FieldObject *field, soci::session& db)
+void exportFieldRelations(const ObjectStore& store, soci::session& db)
 {
-    auto lock = field->readOnlyLock();
-    (void) lock;
-
-    auto res = query_id_from_qual_name(db, "field_declaration", field->qualifiedName());
-    if (!res.has_value()) {
-        // TODO: Investigate missing data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << field->qualifiedName() << "' for exportFieldRelations. IGNORING.\n";
-        return;
-    }
-    int this_id = res.value().first;
+    int this_id = 0;
     int dep_id = 0;
 
     soci::statement insert_st =
@@ -737,20 +773,41 @@ void exportFieldRelations(FieldObject *field, soci::session& db)
          soci::use(this_id),
          soci::use(dep_id));
 
-    // variable types
-    for (TypeObject *type : field->variableTypes()) {
-        auto _lock = type->readOnlyLock();
-        (void) _lock;
+    for (const auto& [_, field] : store.fields()) {
+        (void) _;
 
-        auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
+        auto lock = field->readOnlyLock();
+        (void) lock;
+
+        auto res = query_id_from_qual_name(db, "field_declaration", field->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find variable type '" << type->qualifiedName()
+            std::cout << "WARNING: Could not find '" << field->qualifiedName()
                       << "' for exportFieldRelations. IGNORING.\n";
-            continue;
+            return;
         }
-        dep_id = res.value().first;
-        insert_st.execute(true);
+        this_id = res.value().first;
+
+        soci::statement insert_st =
+            (db.prepare << "insert into field_type(field_id, type_class_id) values (:s, :t) on conflict do nothing",
+             soci::use(this_id),
+             soci::use(dep_id));
+
+        // variable types
+        for (TypeObject *type : field->variableTypes()) {
+            auto _lock = type->readOnlyLock();
+            (void) _lock;
+
+            auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
+            if (!res.has_value()) {
+                // TODO: Investigate missing data that only happens in specific codebases.
+                std::cout << "WARNING: Could not find variable type '" << type->qualifiedName()
+                          << "' for exportFieldRelations. IGNORING.\n";
+                continue;
+            }
+            dep_id = res.value().first;
+            insert_st.execute(true);
+        }
     }
 }
 
@@ -884,6 +941,10 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
 
 void SociWriter::writeFrom(const ObjectStore& store)
 {
+    // Reset our information from the current db.
+    // this might be used from multiple dbs.
+    id_from_qual_name.clear();
+
     QElapsedTimer timer;
     timer.start();
     assert(!d_path.empty());
@@ -945,30 +1006,12 @@ void SociWriter::writeFrom(const ObjectStore& store)
         (void) _;
         exportMethod(method.get(), d_db);
     }
-    for (const auto& [_, pkg] : store.packages()) {
-        (void) _;
-        exportPkgRelations(pkg.get(), d_db);
-    }
 
-    for (const auto& [_, comp] : store.components()) {
-        (void) _;
-        exportCompRelations(comp.get(), d_db);
-    }
-
-    for (const auto& [_, file] : store.files()) {
-        (void) _;
-        exportFileRelations(file.get(), d_db);
-    }
-
-    for (const auto& [_, type] : store.types()) {
-        (void) _;
-        exportUserDefinedTypeRelations(type.get(), d_db);
-    }
-
-    for (const auto& [_, field] : store.fields()) {
-        (void) _;
-        exportFieldRelations(field.get(), d_db);
-    }
+    exportPkgRelations(store, d_db);
+    exportCompRelations(store, d_db);
+    exportFileRelations(store, d_db);
+    exportUserDefinedTypeRelations(store, d_db);
+    exportFieldRelations(store, d_db);
 
     for (const auto& [_, method] : store.methods()) {
         (void) _;

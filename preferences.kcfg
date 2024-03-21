@@ -119,10 +119,6 @@
             <label>Use a stronger fill brush on ColorBlind mode</label>
             <default>false</default>
         </entry>
-        <entry name="enableGradientOnMainNode" type="Bool">
-            <label>Use a gradient on the selected node</label>
-            <default>false</default>
-        </entry>
         <entry name="showRedundantEdgesDefault" type="Bool">
             <label>Show all edges (even the redundant ones) by default</label>
             <default>false</default>
@@ -166,6 +162,10 @@
         <entry name="entityBackgroundColor" type="Color">
             <label>Entity background color</label>
             <default>#AAD7D9</default>
+        </entry>
+        <entry name="entityHoverColor" type="Color">
+            <label>Entity background color</label>
+            <default>#92d9a3</default>
         </entry>
         <entry name="selectedEntityBackgroundColor" type="Color">
             <label>Selected entity background color</label>

@@ -43,9 +43,6 @@
 #include <KPluginWidget>
 #endif
 
-// std
-#include <cassert>
-
 namespace Codethink::lvtqtw {
 
 struct ConfigurationDialog::Private {
@@ -144,10 +141,9 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
     connect(d->ui.selectedEntityBackgroundColor, &KColorButton::changed, this, [this] {
         Preferences::setSelectedEntityBackgroundColor(d->ui.selectedEntityBackgroundColor->color());
     });
-    connect(d->ui.chkSelectedEntityHasGradient,
-            &QCheckBox::toggled,
-            Preferences::self(),
-            &Preferences::setEnableGradientOnMainNode);
+    connect(d->ui.entityHoverColor, &KColorButton::changed, this, [this] {
+        Preferences::setEntityHoverColor(d->ui.entityHoverColor->color());
+    });
 
     connect(d->ui.edgeColor, &KColorButton::changed, this, [this] {
         Preferences::setEdgeColor(d->ui.edgeColor->color());
@@ -297,7 +293,6 @@ void ConfigurationDialog::load()
     d->ui.classLimit->setValue(Preferences::classLimit());
     d->ui.relationLimit->setValue(Preferences::relationLimit());
     d->ui.zoomLevel->setValue(Preferences::zoomLevel());
-
     d->ui.chkColorBlindness->setChecked(Preferences::colorBlindMode());
     d->ui.chkColorPattern->setChecked(Preferences::useColorBlindFill());
     d->ui.showLevelNumbers->setChecked(Preferences::showLevelNumbers());
@@ -314,6 +309,7 @@ void ConfigurationDialog::load()
     d->ui.selectedEntityBackgroundColor->setColor(Preferences::selectedEntityBackgroundColor());
     d->ui.edgeColor->setColor(Preferences::edgeColor());
     d->ui.highlightEdgeColor->setColor(Preferences::highlightEdgeColor());
+    d->ui.entityHoverColor->setColor(Preferences::entityHoverColor());
 
     const Qt::Corner cnr = static_cast<Qt::Corner>(Preferences::lakosEntityNamePos());
     d->ui.entityNamePos->setCurrentText(cnr == Qt::TopLeftCorner          ? tr("Top Left")

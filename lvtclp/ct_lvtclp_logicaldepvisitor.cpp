@@ -57,6 +57,7 @@ namespace {
 
 using namespace Codethink::lvtmdb;
 
+/*
 void recursiveAddComponentDependency(ComponentObject *sourceComponent, ComponentObject *targetComponent)
 {
     using namespace Codethink::lvtmdb;
@@ -108,6 +109,7 @@ ComponentObject *findComponentForFunction(ObjectStore& memDb, FunctionObject *f)
     }
     return nullptr;
 }
+*/
 
 // clang::Type::isTypedefNameType (not in older clang)
 // Determines whether this type is written as a typedef-name.
@@ -182,7 +184,8 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
                                      std::shared_ptr<VisitLog> visitLog,
                                      std::shared_ptr<StaticFnHandler> staticFnHandler,
                                      std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                                     bool catchCodeAnalysisOutput):
+                                     bool catchCodeAnalysisOutput,
+                                     bool enableLakosianRules):
     Context(Context),
     d_memDb(memDb),
     d_prefix(std::filesystem::weakly_canonical(prefix)),
@@ -191,9 +194,16 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
     d_visitLog_p(std::move(visitLog)),
     d_staticFnHandler_p(std::move(staticFnHandler)),
     d_messageCallback(std::move(messageCallback)),
-    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput)
+    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
+    d_enableLakosianRules(enableLakosianRules)
 {
-    sourceFilePtr = ClpUtil::writeSourceFile(file.str(), false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+    if (d_enableLakosianRules) {
+        sourceFilePtr =
+            ClpUtil::writeSourceFile(file.str(), false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+    } else {
+        sourceFilePtr =
+            nonLakosian::ClpUtil::writeSourceFile(d_memDb, file.str(), d_prefix.string(), d_prefix.string());
+    }
 }
 
 bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
@@ -231,8 +241,15 @@ bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
 
     const clang::SourceManager& srcMgr = Context->getSourceManager();
     std::string sourceFile = ClpUtil::getRealPath(namespaceDecl->getLocation(), srcMgr);
-    lvtmdb::FileObject *filePtr =
-        ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+
+    lvtmdb::FileObject *filePtr = [&]() {
+        if (d_enableLakosianRules) {
+            return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        } else {
+            return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+        }
+    }();
+
     if (namespacePtr) {
         namespacePtr->withRWLock([&] {
             namespacePtr->addFile(filePtr);
@@ -728,158 +745,183 @@ std::string LogicalDepVisitor::getTemplateParameters(const clang::FunctionDecl *
     return templateParameters;
 }
 
-bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
+lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang::FunctionDecl *functionDecl,
+                                                                    std::string const& sourceFile)
 {
-    if (d_visitLog_p->alreadyVisited(functionDecl, clang::Decl::Kind::Function, functionDecl->getTemplatedKind())) {
-        return true;
+    std::string name = functionDecl->getNameAsString();
+
+    // Heuristically defines that the qualified name for a free function takes in consideration
+    // it's stem file name (component name). This is not an ideal solution, as we don't take in consideration files with
+    // same name in different paths with the same functions inside.
+    auto stemFilename = std::filesystem::path{sourceFile}.stem().string();
+    std::string qualifiedName = functionDecl->getQualifiedNameAsString();
+    std::string extendedQualifiedName = qualifiedName + "@" + stemFilename;
+
+    std::string parentNamespaceName = qualifiedName.substr(0, qualifiedName.length() - name.length() - 2);
+    std::string signature = getSignature(functionDecl);
+    std::string templateParameters = getTemplateParameters(functionDecl);
+    std::string returnType = getReturnType(functionDecl);
+
+    lvtmdb::FunctionObject *function = nullptr;
+    lvtmdb::NamespaceObject *parentNamespace = nullptr;
+    d_memDb.withRWLock([&] {
+        parentNamespace = d_memDb.getNamespace(parentNamespaceName);
+        function = d_memDb.getOrAddFunction(extendedQualifiedName,
+                                            std::move(name),
+                                            std::move(signature),
+                                            std::move(returnType),
+                                            std::move(templateParameters),
+                                            parentNamespace);
+    });
+    if (parentNamespace) {
+        parentNamespace->withRWLock([&] {
+            parentNamespace->addFunction(function);
+        });
     }
 
-    auto addFunctionToDb = [this](const clang::FunctionDecl *functionDecl) {
-        std::string name = functionDecl->getNameAsString();
-        std::string qualifiedName = functionDecl->getQualifiedNameAsString();
-        std::string parentName = qualifiedName.substr(0, qualifiedName.length() - name.length() - 2);
-        std::string signature = getSignature(functionDecl);
-        std::string templateParameters = getTemplateParameters(functionDecl);
-        std::string returnType = getReturnType(functionDecl);
-
-        lvtmdb::FunctionObject *function = nullptr;
-        lvtmdb::NamespaceObject *parentNamespace = nullptr;
-        d_memDb.withRWLock([&] {
-            parentNamespace = d_memDb.getNamespace(parentName);
-            function = d_memDb.getOrAddFunction(qualifiedName,
-                                                std::move(name),
-                                                std::move(signature),
-                                                std::move(returnType),
-                                                std::move(templateParameters),
-                                                parentNamespace);
-        });
-        if (parentNamespace) {
-            parentNamespace->withRWLock([&] {
-                parentNamespace->addFunction(function);
-            });
-        }
-
-        // Heuristically assume that functions that have "_" suffix will have their definition in Fortran,
-        // so accept the C counterpart.
-        auto mayBeDefinedInFortran = qualifiedName.ends_with('_');
-        if (functionDecl->isDefined() || mayBeDefinedInFortran) {
-            // Only persist the associated file if it is where the function is _defined_
-            // (not if it is merely _declared_).
-            const clang::SourceManager& srcMgr = Context->getSourceManager();
-            std::string sourceFile = ClpUtil::getRealPath(functionDecl->getLocation(), srcMgr);
-            lvtmdb::FileObject *filePtr =
-                ClpUtil::writeSourceFile(sourceFile, false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
-            filePtr->withRWLock([&] {
-                filePtr->addGlobalFunction(function);
-            });
-        }
-        return function;
-    };
-
-    const auto *methodDecl = llvm::dyn_cast<clang::CXXMethodDecl>(functionDecl);
-    if (methodDecl) {
-        if (methodIsTemplateSpecialization(methodDecl)) {
-            return true;
-        }
-        if (!methodDecl->hasExternalFormalLinkage()) {
-            // internal linkage
-            return true;
-        }
-
-        lvtmdb::TypeObject *parentClassPtr = lookupUDT(methodDecl->getParent(), "method parent class");
-        if (!parentClassPtr) {
-            return true;
-        }
-
-        std::string name = functionDecl->getNameAsString();
-        std::string qualifiedName = functionDecl->getQualifiedNameAsString();
-        std::string parentName = qualifiedName.substr(0, qualifiedName.length() - name.length() - 2);
-        std::string signature = getSignature(functionDecl);
-        std::string templateParameters = getTemplateParameters(functionDecl);
-        std::string returnType = getReturnType(functionDecl);
-
-        lvtmdb::MethodObject *methodPtr = nullptr;
-        d_memDb.withROLock([&] {
-            methodPtr = d_memDb.getMethod(qualifiedName, signature, templateParameters, returnType);
-        });
-        if (methodPtr) {
-            return true; // RETURN
-        }
-
-        d_memDb.withRWLock([&] {
-            methodPtr = d_memDb.getOrAddMethod(std::move(qualifiedName),
-                                               std::move(name),
-                                               std::move(signature),
-                                               std::move(returnType),
-                                               std::move(templateParameters),
-                                               static_cast<lvtshr::AccessSpecifier>(methodDecl->getAccess()),
-                                               methodDecl->isVirtual(),
-                                               methodDecl->isPure(),
-                                               methodDecl->isStatic(),
-                                               methodDecl->isConst(),
-                                               parentClassPtr);
-        });
-        parentClassPtr->withRWLock([&] {
-            parentClassPtr->addMethod(methodPtr);
-        });
-    } else {
-        if (funcIsTemplateSpecialization(functionDecl)) {
-            return true;
-        }
-
-        if (!functionDecl->isDefined()) {
-            return true;
-        }
-
-        auto *function = addFunctionToDb(functionDecl);
-
-        // find out what classes this function uses in its implementation
-        // and store them in the StaticFnHandler
-        // (local var decls are handled separately)
-        std::vector<lvtmdb::TypeObject *> usesInImpls =
-            listChildStatementRelations(functionDecl, functionDecl->getBody(), nullptr);
-        for (lvtmdb::TypeObject *dep : usesInImpls) {
-            if (!dep) {
-                continue;
+    // Heuristically assume that functions that have "_" suffix will have their definition in Fortran,
+    // so accept the C counterpart.
+    auto mayBeDefinedInFortran = qualifiedName.ends_with('_');
+    if (functionDecl->isDefined() || mayBeDefinedInFortran) {
+        // Only persist the associated file if it is where the function is _defined_
+        // (not if it is merely _declared_).
+        lvtmdb::FileObject *filePtr = [&]() {
+            if (d_enableLakosianRules) {
+                return ClpUtil::writeSourceFile(sourceFile,
+                                                false,
+                                                d_memDb,
+                                                d_prefix,
+                                                d_nonLakosianDirs,
+                                                d_thirdPartyDirs);
+            } else {
+                return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
             }
-            d_staticFnHandler_p->addFnUses(functionDecl, dep);
+        }();
+
+        filePtr->withRWLock([&] {
+            filePtr->addGlobalFunction(function);
+        });
+    }
+
+    return function;
+}
+
+void LogicalDepVisitor::processMethodDecl(clang::CXXMethodDecl *methodDecl)
+{
+    if (methodIsTemplateSpecialization(methodDecl)) {
+        return;
+    }
+    if (!methodDecl->hasExternalFormalLinkage()) {
+        // internal linkage
+        return;
+    }
+
+    lvtmdb::TypeObject *parentClassPtr = lookupUDT(methodDecl->getParent(), "method parent class");
+    if (!parentClassPtr) {
+        return;
+    }
+
+    std::string name = methodDecl->getNameAsString();
+    std::string qualifiedName = methodDecl->getQualifiedNameAsString();
+    std::string parentName = qualifiedName.substr(0, qualifiedName.length() - name.length() - 2);
+    std::string signature = getSignature(methodDecl);
+    std::string templateParameters = getTemplateParameters(methodDecl);
+    std::string returnType = getReturnType(methodDecl);
+
+    lvtmdb::MethodObject *methodPtr = nullptr;
+    d_memDb.withROLock([&] {
+        methodPtr = d_memDb.getMethod(qualifiedName, signature, templateParameters, returnType);
+    });
+    if (methodPtr) {
+        return; // RETURN
+    }
+
+    d_memDb.withRWLock([&] {
+        methodPtr = d_memDb.getOrAddMethod(std::move(qualifiedName),
+                                           std::move(name),
+                                           std::move(signature),
+                                           std::move(returnType),
+                                           std::move(templateParameters),
+                                           static_cast<lvtshr::AccessSpecifier>(methodDecl->getAccess()),
+                                           methodDecl->isVirtual(),
+#if LLVM_VERSION_MAJOR >= 18
+                                           methodDecl->isPureVirtual(),
+#else
+                                           methodDecl->isPure(),
+#endif
+                                           methodDecl->isStatic(),
+                                           methodDecl->isConst(),
+                                           parentClassPtr);
+    });
+    parentClassPtr->withRWLock([&] {
+        parentClassPtr->addMethod(methodPtr);
+    });
+}
+
+void LogicalDepVisitor::processFreeFunctionDecl(clang::FunctionDecl *functionDecl)
+{
+    if (funcIsTemplateSpecialization(functionDecl)) {
+        return;
+    }
+
+    if (!functionDecl->isDefined()) {
+        return;
+    }
+
+    std::string sourceFile = ClpUtil::getRealPath(functionDecl->getLocation(), Context->getSourceManager());
+    auto *function = this->getOrAddFreeFunctionToDb(functionDecl, sourceFile);
+
+    // find out what classes this function uses in its implementation
+    // and store them in the StaticFnHandler
+    // (local var decls are handled separately)
+    std::vector<lvtmdb::TypeObject *> usesInImpls =
+        listChildStatementRelations(functionDecl, functionDecl->getBody(), nullptr);
+    for (lvtmdb::TypeObject *dep : usesInImpls) {
+        if (!dep) {
+            continue;
+        }
+        d_staticFnHandler_p->addFnUses(functionDecl, dep);
+    }
+
+    // find out if this function calls any other functions
+    auto visitCallExpr = [this, functionDecl, function](const clang::CallExpr *callExpr) {
+        auto lock = function->readOnlyLock();
+        (void) lock;
+
+        const clang::FunctionDecl *callee = callExpr->getDirectCallee();
+        if (!callee) {
+            return;
+        }
+        d_staticFnHandler_p->addFnUses(functionDecl, callee);
+
+        if (callee->isCXXClassMember()) {
+            // We do not follow calls to methods. This may be reviewed.
+            return;
         }
 
-        // find out if this function calls any functions
-        auto callerComponent = findComponentForFunction(this->d_memDb, function);
-        auto visitCallExpr =
-            [this, functionDecl, function, &addFunctionToDb, &callerComponent](const clang::CallExpr *callExpr) {
-                auto lock = function->readOnlyLock();
-                (void) lock;
+        if (callee->isTemplateInstantiation()) {
+            auto *primaryTemplate = callee->getPrimaryTemplate();
+            if (primaryTemplate) {
+                callee = primaryTemplate->getTemplatedDecl();
+            }
+        }
+        auto calleeSourceFile = ClpUtil::getRealPath(callee->getLocation(), Context->getSourceManager());
 
-                const clang::FunctionDecl *callee = callExpr->getDirectCallee();
-                if (!callee) {
-                    return;
-                }
-                d_staticFnHandler_p->addFnUses(functionDecl, callee);
+        auto *calledFunction = this->getOrAddFreeFunctionToDb(callee, calleeSourceFile);
+        d_staticFnHandler_p->addCallgraphDep(function, calledFunction);
+    };
+    searchClangStmtAST<clang::CallExpr>(functionDecl->getBody(), visitCallExpr);
+}
 
-                if (callee->isCXXClassMember()) {
-                    // We do not follow calls to methods. This may be reviewed.
-                    return;
-                }
-
-                if (callee->isTemplateInstantiation()) {
-                    auto *primaryTemplate = callee->getPrimaryTemplate();
-                    if (primaryTemplate) {
-                        callee = primaryTemplate->getTemplatedDecl();
-                    }
-                }
-                auto *calledFunction = addFunctionToDb(callee);
-                d_staticFnHandler_p->addCallgraphDep(function, calledFunction);
-                // If the component where the function is defined is known, then update the dependency graph
-                if (callerComponent) {
-                    auto calleeComponent = findComponentForFunction(this->d_memDb, calledFunction);
-                    if (calleeComponent) {
-                        recursiveAddComponentDependency(callerComponent, calleeComponent);
-                    }
-                }
-            };
-        searchClangStmtAST<clang::CallExpr>(functionDecl->getBody(), visitCallExpr);
+bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
+{
+    if (!d_visitLog_p->alreadyVisited(functionDecl, clang::Decl::Kind::Function, functionDecl->getTemplatedKind())) {
+        auto *methodDecl = llvm::dyn_cast<clang::CXXMethodDecl>(functionDecl);
+        if (methodDecl) {
+            this->processMethodDecl(methodDecl);
+        } else {
+            this->processFreeFunctionDecl(functionDecl);
+        }
     }
 
     return true;
@@ -1802,8 +1844,13 @@ void LogicalDepVisitor::addUDTSourceFile(lvtmdb::TypeObject *udt, const clang::D
     assert(udt);
     const std::string sourceFile = ClpUtil::getRealPath(decl->getLocation(), Context->getSourceManager());
 
-    lvtmdb::FileObject *filePtr =
-        ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+    lvtmdb::FileObject *filePtr = [&]() {
+        if (d_enableLakosianRules) {
+            return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        } else {
+            return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+        }
+    }();
     if (!filePtr) {
         return;
     }

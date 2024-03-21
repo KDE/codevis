@@ -240,9 +240,12 @@ struct ParseCodebaseDialog::Private {
     using ThirdPartyPath = std::string;
     using ThirdPartyPackageName = std::string;
     std::vector<std::pair<ThirdPartyPath, ThirdPartyPackageName>> thirdPartyPathMapping;
+    std::vector<std::string> userProvidedExtraCompileCommandsArgs;
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
     QElapsedTimer parseTimer;
+
+    bool enableLakosianRules = true;
 };
 
 ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
@@ -738,6 +741,8 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
                                                       ignoreList,
                                                       nonLakosianDirs,
                                                       d->thirdPartyPathMapping,
+                                                      d->userProvidedExtraCompileCommandsArgs,
+                                                      d->enableLakosianRules,
                                                       catchCodeAnalysisOutput);
     }
 #ifdef CT_ENABLE_FORTRAN_SCANNER

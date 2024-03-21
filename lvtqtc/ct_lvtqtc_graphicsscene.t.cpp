@@ -92,18 +92,22 @@ TEST_CASE_METHOD(QTApplicationFixture, "Relayout Single Entity")
     Q_EMIT pkgComp3->toggleSelection();
     REQUIRE(valid);
 
-    const int original_size = gs->items().size();
-    REQUIRE(original_size != 0);
+    const size_t original_edges_size = gs->edges().size();
+    const size_t original_vertices_size = gs->vertices().size();
+
+    REQUIRE(original_vertices_size != 0);
     // Save the state in json
     const QJsonObject json = gs->toJson();
 
     gs->clearGraph();
+
     // Item "Drag to View"
     REQUIRE(gs->items().size() == 1);
 
     gs->fromJson(json);
 
-    REQUIRE(gs->items().size() == original_size);
+    REQUIRE(gs->vertices().size() == original_vertices_size);
+    REQUIRE(gs->edges().size() == original_edges_size);
 }
 
 TEST_CASE_METHOD(QTApplicationFixture, "Add and remove edges")

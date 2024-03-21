@@ -104,19 +104,13 @@ struct LakosRelation::Private {
     qreal thickness = 0.5;
     // thickness of the line being drawn.
 
-    bool dashed = false;
     Qt::PenStyle penStyle = Qt::PenStyle::SolidLine;
 
+    bool dashed = false;
     bool shouldBeHidden = false;
     // This will not be touched by Qt when we show() or hide()
     // an item, so it's an way to *really* hide the items.
     // TODO: create a StateMachine to control visibility.
-
-    QGraphicsPathItem *fromIntersectionItem = nullptr;
-    QGraphicsPathItem *toIntersectionItem = nullptr;
-
-    QPainterPath fromIntersection;
-    QPainterPath toIntersection;
 
     QRectF boundingRect;
     QPainterPath shape;
@@ -131,13 +125,6 @@ LakosRelation::LakosRelation(LakosEntity *source, LakosEntity *target): d(std::m
 {
     d->pointsFrom = source;
     d->pointsTo = target;
-
-    d->fromIntersectionItem = new QGraphicsPathItem(d->fromIntersection, this);
-    d->toIntersectionItem = new QGraphicsPathItem(d->toIntersection, this);
-    d->fromIntersectionItem->setZValue(DEBUG_PATH_LAYER);
-    d->toIntersectionItem->setZValue(DEBUG_PATH_LAYER);
-    d->fromIntersectionItem->setVisible(false);
-    d->toIntersectionItem->setVisible(false);
 
     d->color = Preferences::edgeColor();
     d->highlightColor = Preferences::highlightEdgeColor();
@@ -265,12 +252,6 @@ void LakosRelation::setLine(const QLineF& line)
     assert(rhs);
 
     auto [intersection1, intersection2] = calculateIntersection(lhs, rhs);
-
-    d->fromIntersection = intersection1;
-    d->toIntersection = intersection2;
-
-    d->fromIntersectionItem->setPath(d->fromIntersection);
-    d->toIntersectionItem->setPath(d->toIntersection);
 
     // The hit position will be the element (point) of the rectangle that is the
     // closest to where the projectile was fired from.
@@ -635,8 +616,6 @@ void LakosRelation::toggleOriginalLine()
 
 void LakosRelation::updateDebugInformation()
 {
-    d->fromIntersectionItem->setVisible(s_showIntersectionPaths);
-    d->toIntersectionItem->setVisible(s_showIntersectionPaths);
     update();
 }
 

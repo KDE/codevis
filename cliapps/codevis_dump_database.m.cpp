@@ -40,9 +40,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-#include <iostream>
-#include <iterator>
-#include <memory>
 #include <vector>
 
 #include <QDebug>

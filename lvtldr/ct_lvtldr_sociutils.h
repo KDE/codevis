@@ -516,7 +516,7 @@ class SociDatabaseHandler : public DatabaseHandler {
 
         {
             soci::rowset<soci::row> rs =
-                (d_db.prepare << "select id, name from method_declarations where class_id = :k", soci::use(dao.id));
+                (d_db.prepare << "select id, name from method_declaration where class_id = :k", soci::use(dao.id));
             for (auto&& row : rs) {
                 dao.methodIds.emplace_back(row.get<int>(0));
                 dao.methodNames.emplace_back(row.get<std::string>(1));

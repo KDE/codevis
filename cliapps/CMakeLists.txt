@@ -3,6 +3,12 @@ include(AddCodevisExecutable)
 include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 
+if (ENABLE_FORTRAN_SCANNER)
+    set(CTFortranLibsIfAvailable "lvtclp_fortran")
+else()
+    set(CTFortranLibsIfAvailable "")
+endif()
+
 include_directories(
     ${SQLite3_INCLUDE_DIRS}
 )
@@ -14,7 +20,7 @@ add_codevis_exec(
         Codethink::lvtclp
         Codethink::lvtshr
         ${CTFortranLibsIfAvailable}
-    )
+)
 
 add_codevis_exec(
     NAME codevis_merge_databases

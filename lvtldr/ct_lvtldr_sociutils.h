@@ -506,18 +506,11 @@ class SociDatabaseHandler : public DatabaseHandler {
         }
 
         {
-            soci::rowset<RecordNumberType> rs =
-                (d_db.prepare << "select id from field_declaration where class_id = :k", soci::use(dao.id));
-            for (auto&& i : rs) {
-                dao.fieldIds.emplace_back(i);
-            }
-        }
-
-        {
-            soci::rowset<std::string> rs =
-                (d_db.prepare << "select name from field_declaration where class_id = :k", soci::use(dao.id));
-            for (auto&& i : rs) {
-                dao.fieldNames.emplace_back(i);
+            soci::rowset<soci::row> rs =
+                (d_db.prepare << "select id, name from field_declaration where class_id = :k", soci::use(dao.id));
+            for (auto&& row : rs) {
+                dao.fieldIds.emplace_back(row.get<int>(0));
+                dao.fieldNames.emplace_back(row.get<std::string>(1));
             }
         }
 

@@ -58,6 +58,7 @@ class NamespaceTreeModel;
 class PackageTreeModel;
 class TreeFilterModel;
 class BaseTableModel;
+class MethodsTableModel;
 } // namespace Codethink::lvtmdl
 
 namespace Codethink::lvtqtc {
@@ -253,6 +254,7 @@ class MainWindow : public KXmlGuiWindow {
 
     QList<Codethink::lvtmdl::BaseTableModel *> tableModels;
     Codethink::lvtmdl::FieldsTreeModel *fieldsModel;
+    Codethink::lvtmdl::MethodsTableModel *methodsTableModel;
 
     // TODO: Maybe we should move these variables to a GraphWidgetManager of sorts.
     Codethink::lvtqtc::GraphicsView *currentGraphWidget = nullptr;

@@ -19,43 +19,57 @@
 
 #include <ct_lvtmdl_methodstablemodel.h>
 
+#include <ct_lvtldr_lakosiannode.h>
+#include <ct_lvtldr_nodestorage.h>
+#include <ct_lvtldr_typenode.h>
+#include <ct_lvtshr_stringhelpers.h>
+
 namespace Codethink::lvtmdl {
 
-struct MethodsTableModel::Private { };
-
-MethodsTableModel::MethodsTableModel(): BaseTableModel(1), d(std::make_unique<MethodsTableModel::Private>())
-{
-    setHeader({"Signature"});
-}
-
 MethodsTableModel::~MethodsTableModel() = default;
+MethodsTableModel::MethodsTableModel() = default;
 
-void MethodsTableModel::refreshData()
+void MethodsTableModel::refreshData(LakosianNodes selectedNodes)
 {
     clear();
-    if (fullyQualifiedName().empty()) {
+
+    if (selectedNodes.empty()) {
         return;
     }
 
-    if (type() != lvtshr::DiagramType::ClassType) {
-        return;
-    }
+    using namespace Codethink::lvtldr;
+    using namespace Codethink::lvtshr;
 
-    // TODO: Populate from lvtldr
-    //    Transaction transaction(*session());
-    //
-    //    ptr<lvtcdb::UserDefinedType> userDefinedTypePtr =
-    //        lvtcdb::CdbUtil::getByQualifiedName<lvtcdb::UserDefinedType>(fullyQualifiedName(), session());
-    //
-    //    if (!userDefinedTypePtr) {
-    //        qDebug() << "No Class Declaration for" << fullyQualifiedName();
-    //        return;
-    //    }
-    //
-    //    lvtcdb::CdbUtil::MethodDeclarationList methods = userDefinedTypePtr->methods();
-    //    for (auto& method : methods) {
-    //        addRow(method->methodSignature());
-    //    }
+    QStandardItem *root = invisibleRootItem();
+
+    auto createItemFromClassNode = [](LakosianNode *node) {
+        auto *item = new QStandardItem();
+        item->setText(QString::fromStdString(node->name()));
+        item->setEditable(false);
+        item->setIcon(QIcon(":/icons/class"));
+        return item;
+    };
+
+    auto createItemFromString = [](std::string name) {
+        auto *item = new QStandardItem();
+        item->setText(QString::fromStdString(name));
+        item->setEditable(false);
+        return item;
+    };
+
+    for (const auto& lakosianNode : selectedNodes) {
+        if (lakosianNode->type() == DiagramType::ClassType) {
+            const auto classNode = dynamic_cast<TypeNode *>(lakosianNode);
+            auto classItem = createItemFromClassNode(classNode);
+
+            const auto fields = classNode->getFields();
+            for (const auto& name : fields.methodNames) {
+                classItem->appendRow(createItemFromString(name));
+            }
+
+            root->appendRow(classItem);
+        }
+    }
 }
 
 } // end namespace Codethink::lvtmdl

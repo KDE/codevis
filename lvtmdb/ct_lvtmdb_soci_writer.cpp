@@ -49,8 +49,6 @@
 #include <QFile>
 #include <unordered_set>
 
-#include <boost/functional/hash.hpp>
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QtSystemDetection>
 #endif
@@ -166,9 +164,18 @@ bool run_migration(soci::session& db, const std::string& db_schema_id)
 
 // Fast access cache for query_id_from_qual_name;
 namespace {
-// the std::pair is table_name, qualified_name.
-using KeyType = std::pair<std::string, std::string>;
-std::unordered_map<KeyType, int, boost::hash<KeyType>> id_from_qual_name;
+using DatabaseTableName = std::string;
+using QualifiedName = std::string;
+using KeyType = std::pair<DatabaseTableName, QualifiedName>;
+
+struct KeyTypeHashFunc {
+    size_t operator()(KeyType const& data) const
+    {
+        return std::hash<std::string>{}(std::get<0>(data)) ^ std::hash<std::string>{}(std::get<1>(data));
+    }
+};
+
+std::unordered_map<KeyType, int, KeyTypeHashFunc> id_from_qual_name;
 } // namespace
 
 std::optional<std::pair<int, soci::indicator>>

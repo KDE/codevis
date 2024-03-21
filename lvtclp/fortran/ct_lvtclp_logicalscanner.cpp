@@ -30,7 +30,7 @@
 #include <type_traits>
 
 #include <ct_lvtshr_debug_categories.h>
-CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing", Codethink::lvtshr::LoggingCategory::Parsing)
+CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing")
 
 namespace {
 bool srcFileContainsSrcCode(std::string const& guessedSrcFile, std::string const& targetSrcCode)

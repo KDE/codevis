@@ -40,7 +40,7 @@
 #include <ct_lvtshr_debug_categories.h>
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
-CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing", Codethink::lvtshr::LoggingCategory::Parsing)
+CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing")
 
 using namespace Codethink;
 

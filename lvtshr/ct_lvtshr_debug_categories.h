@@ -26,36 +26,26 @@
 
 namespace Codethink::lvtshr {
 
-enum class LoggingCategory {
-    Parsing = 0,
-    Graphics = 1,
-    DebugModel = 2,
-    // Should be removed after every uncategorised qDebugs are sorted into a category.
-    Uncategorised = 9999,
-    _End
-};
-
 class LVTSHR_EXPORT CategoryManager {
   public:
     static CategoryManager& instance();
-    void add(LoggingCategory cat, const QLoggingCategory *);
-    const QLoggingCategory *getCategory(LoggingCategory cat);
+    void add(const QLoggingCategory *);
     QList<const QLoggingCategory *> getCategories();
 
   private:
     CategoryManager();
-    QMap<LoggingCategory, const QLoggingCategory *> categories;
+    QList<const QLoggingCategory *> categories;
 };
 
 } // namespace Codethink::lvtshr
 
 // Use this only on .cpp - not on .h. I'm not sure if the best approach is
 // a stringfied name or an enum, but this works on small tests.'
-#define CODEVIS_LOGGING_CATEGORIES(category, name, loggingCategory)                                                    \
+#define CODEVIS_LOGGING_CATEGORIES(category, name)                                                                     \
     Q_LOGGING_CATEGORY(category, name);                                                                                \
     namespace {                                                                                                        \
     auto __val__##category = []() -> bool {                                                                            \
-        Codethink::lvtshr::CategoryManager::instance().add(loggingCategory, &category());                              \
+        Codethink::lvtshr::CategoryManager::instance().add(&category());                                               \
         return true;                                                                                                   \
     }();                                                                                                               \
     }

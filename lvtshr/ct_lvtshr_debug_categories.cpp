@@ -10,15 +10,11 @@ CategoryManager& CategoryManager::instance()
     return self;
 }
 
-void CategoryManager::add(LoggingCategory cat, const QLoggingCategory *val)
+void CategoryManager::add(const QLoggingCategory *val)
 {
-    categories[cat] = val;
-}
-const QLoggingCategory *CategoryManager::getCategory(LoggingCategory cat)
-{
-    return categories.value(cat);
+    categories.append(val);
 }
 QList<const QLoggingCategory *> CategoryManager::getCategories()
 {
-    return categories.values();
+    return categories;
 }

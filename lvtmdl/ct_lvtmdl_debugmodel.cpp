@@ -25,7 +25,7 @@
 
 #include <ct_lvtshr_debug_categories.h>
 
-CODEVIS_LOGGING_CATEGORIES(debugModel, "org.codevis.debugmodel", Codethink::lvtshr::LoggingCategory::DebugModel)
+CODEVIS_LOGGING_CATEGORIES(debugModel, "org.codevis.debugmodel")
 
 namespace {
 

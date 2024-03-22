@@ -53,7 +53,11 @@
 CODEVIS_LOGGING_CATEGORIES(uncategorised, "default")
 
 namespace Codethink::lvtqtw {
-
+static constexpr int s_debugColumn = 0;
+static constexpr int s_infoColumn = 1;
+static constexpr int s_warningColumn = 2;
+static constexpr int s_criticalColumn = 3;
+static constexpr int s_categoryNameColumn = 4;
 struct ConfigurationDialog::Private {
     Ui::ConfigurationDialog ui;
     Codethink::lvtplg::PluginManager *pluginManager;
@@ -71,6 +75,25 @@ Qt::Corner stringToCorner(const QString& txt)
         : txt == QObject::tr("Bottom Left") ? Qt::BottomLeftCorner
                                             : Qt::BottomRightCorner;
 }
+
+typedef std::function<void(QStringList)> saveStringListsToPreferences;
+typedef std::function<void(bool)> saveCheckBoxGroupStatesToPreferences;
+
+// Create a map that maps QStringLists to corresponding Preferences functions
+std::map<int, saveStringListsToPreferences> saveStringListsToPreferencesMap{
+    {s_debugColumn, Preferences::setEnabledDebugCategories},
+    {s_infoColumn, Preferences::setEnabledInfoCategories},
+    {s_warningColumn, Preferences::setEnabledWarningCategories},
+    {s_criticalColumn, Preferences::setEnabledCriticalCategories},
+};
+
+// Create a map that maps bools to corresponding Preferences functions
+std::map<int, saveCheckBoxGroupStatesToPreferences> saveCheckBoxGroupStatesToPreferencesMap{
+    {s_debugColumn, Preferences::setDebugGroupEnabled},
+    {s_infoColumn, Preferences::setInfoGroupEnabled},
+    {s_warningColumn, Preferences::setWarningGroupEnabled},
+    {s_criticalColumn, Preferences::setCriticalGroupEnabled},
+};
 } // namespace
 
 ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, QWidget *parent):
@@ -286,12 +309,6 @@ void ConfigurationDialog::updatePluginInformation()
 
 void ConfigurationDialog::loadCategoryFilteringSettings()
 {
-    static constexpr int s_debugColumn = 0;
-    static constexpr int s_infoColumn = 1;
-    static constexpr int s_warningColumn = 2;
-    static constexpr int s_criticalColumn = 3;
-    static constexpr int s_categoryNameColumn = 4;
-
     static constexpr int s_dynamicRowsStart = 2;
 
     const QHash<int, QStringList *> columnsAndCategories = {{s_debugColumn, &d->enabledDebugCategoryNames},
@@ -319,23 +336,7 @@ void ConfigurationDialog::loadCategoryFilteringSettings()
                 } else {
                     usedEnabledList->removeAll(categoryNameStr);
                 }
-                switch (j) {
-                case 0: // Debug column
-                    Preferences::setEnabledDebugCategories(*usedEnabledList);
-                    break;
-                case 1: // Info column
-                    Preferences::setEnabledInfoCategories(*usedEnabledList);
-                    break;
-                case 2: // Warning column
-                    Preferences::setEnabledWarningCategories(*usedEnabledList);
-                    break;
-                case 3: // Critical column
-                    Preferences::setEnabledCriticalCategories(*usedEnabledList);
-                    break;
-
-                default:
-                    break;
-                }
+                saveStringListsToPreferencesMap.at(j)(*usedEnabledList);
             });
             d->ui.gridLayoutLogFilters->addWidget(checkBox, s_dynamicRowsStart + i, j);
         }
@@ -352,24 +353,7 @@ void ConfigurationDialog::loadCategoryFilteringSettings()
                     this,
                     [this, j, columnsAndAllCheckboxes, savedCategoriesSize] {
                         auto usedCheckbox = columnsAndAllCheckboxes.value(j);
-                        switch (j) {
-                        case 0: // Debug column
-                            Preferences::setDebugGroupEnabled(usedCheckbox->isChecked());
-                            break;
-                        case 1: // Info column
-                            Preferences::setInfoGroupEnabled(usedCheckbox->isChecked());
-                            break;
-                        case 2: // Warning column
-                            Preferences::setWarningGroupEnabled(usedCheckbox->isChecked());
-                            break;
-                        case 3: // Critical column
-                            Preferences::setCriticalGroupEnabled(usedCheckbox->isChecked());
-                            break;
-
-                        default:
-                            break;
-                        }
-
+                        saveCheckBoxGroupStatesToPreferencesMap.at(j)(usedCheckbox->isChecked());
                         for (int i = 0; i < savedCategoriesSize; i++) {
                             auto *checkBox{qobject_cast<QCheckBox *>(
                                 d->ui.gridLayoutLogFilters->itemAtPosition(i + s_dynamicRowsStart, j)->widget())};

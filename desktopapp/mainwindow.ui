@@ -85,6 +85,9 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="objectHierarchyDoc">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Object Hierarchy</string>
    </property>
@@ -218,6 +221,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="usesInTheInterfaceDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Uses in the interface</string>
    </property>
@@ -261,6 +267,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="methodsDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Methods</string>
    </property>
@@ -295,6 +304,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="usesInTheImplDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Uses in the implementation</string>
    </property>
@@ -338,6 +350,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="fieldsDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Fields</string>
    </property>
@@ -378,6 +393,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="providersDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Providers</string>
    </property>
@@ -421,6 +439,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="clientsDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Clients</string>
    </property>
@@ -464,6 +485,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="errorDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Error List</string>
    </property>
@@ -483,6 +507,9 @@
    </property>
   </widget>
   <widget class="QDockWidget" name="pluginEditorDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>Plugin Editor</string>
    </property>

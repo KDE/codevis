@@ -40,7 +40,7 @@ class LVTMDL_EXPORT MethodsTableModel : public QStandardItemModel {
     MethodsTableModel();
     ~MethodsTableModel() override;
 
-    void refreshData(LakosianNodes selectedNodes);
+    void refreshData(const LakosianNodes& selectedNodes);
 };
 
 } // end namespace Codethink::lvtmdl

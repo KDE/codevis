@@ -40,7 +40,7 @@ class LVTMDL_EXPORT FieldsTreeModel : public QStandardItemModel {
     FieldsTreeModel();
     ~FieldsTreeModel() override;
 
-    void refreshData(LakosianNodes selectedNodes);
+    void refreshData(const LakosianNodes& selectedNodes);
 };
 
 } // end namespace Codethink::lvtmdl

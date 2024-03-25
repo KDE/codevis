@@ -29,7 +29,7 @@ namespace Codethink::lvtmdl {
 MethodsTableModel::~MethodsTableModel() = default;
 MethodsTableModel::MethodsTableModel() = default;
 
-void MethodsTableModel::refreshData(LakosianNodes selectedNodes)
+void MethodsTableModel::refreshData(const LakosianNodes& selectedNodes)
 {
     clear();
 

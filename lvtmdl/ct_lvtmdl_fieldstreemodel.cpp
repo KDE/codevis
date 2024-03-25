@@ -30,7 +30,7 @@ namespace Codethink::lvtmdl {
 FieldsTreeModel::FieldsTreeModel() = default;
 FieldsTreeModel::~FieldsTreeModel() = default;
 
-void FieldsTreeModel::refreshData(LakosianNodes selectedNodes)
+void FieldsTreeModel::refreshData(const LakosianNodes& selectedNodes)
 {
     clear();
 

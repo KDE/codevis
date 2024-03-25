@@ -138,12 +138,18 @@ void LakosianNode::invalidateProviders()
 {
     // TODO [#455]: It is possible to update providers, instead of fetching all over again from database.
     d->providersLoaded = false;
+    // TODO: Providers are fetched when we fetch the fields.
+    // We need to split field fetching into multiple methods.
+    d->fieldsLoaded = false;
     d->providers.clear();
 }
 
 void LakosianNode::invalidateChildren()
 {
     d->childrenLoaded = false;
+    // TODO: Children are fetched when we fetch the fields.
+    // We need to split field fetching into multiple methods.
+    d->fieldsLoaded = false;
     d->children.clear();
 }
 
@@ -151,6 +157,9 @@ void LakosianNode::invalidateParent()
 {
     d->parentLoaded = false;
     d->parent = nullptr;
+    // TODO: Parents are fetched when we fetch the fields.
+    // We need to split field fetching into multiple methods.
+    d->fieldsLoaded = false;
 }
 
 const std::vector<LakosianEdge>& LakosianNode::clients()
@@ -165,6 +174,10 @@ void LakosianNode::invalidateClients()
     // TODO [#455]: It is possible to update clients, instead of fetching all over again from database.
     d->clientsLoaded = false;
     d->clients.clear();
+
+    // TODO: Parents are fetched when we fetch the fields.
+    // We need to split field fetching into multiple methods.
+    d->fieldsLoaded = false;
 }
 
 bool LakosianNode::hasProvider(LakosianNode *other)

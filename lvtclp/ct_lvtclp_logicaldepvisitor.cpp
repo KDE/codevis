@@ -829,9 +829,6 @@ void LogicalDepVisitor::processFreeFunctionDecl(clang::FunctionDecl *functionDec
 
     // find out if this function calls any other functions
     auto visitCallExpr = [this, functionDecl, function](const clang::CallExpr *callExpr) {
-        auto lock = function->readOnlyLock();
-        (void) lock;
-
         const clang::FunctionDecl *callee = callExpr->getDirectCallee();
         if (!callee) {
             return;

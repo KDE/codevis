@@ -130,9 +130,9 @@ order by sp.parent_id ASC )";
         maps.packageMap[params.qualified_name] = pkg;
 
         if (parent) {
-            auto lock = parent->rwLock();
-            (void) lock;
-            parent->addChild(pkg);
+            parent->withRWLock([&]() {
+                parent->addChild(pkg);
+            });
         }
     }
 }

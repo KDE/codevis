@@ -271,18 +271,19 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(const std::string& inFilename,
         return "";
     }();
 
-    auto lock = memDb.rwLock();
-    (void) lock; // cppcheck
-    lvtmdb::PackageObject *package = getPackageForPath(path, memDb, prefix, nonLakosianDirs, thirdPartyDirs);
-    lvtmdb::ComponentObject *component = ComponentUtil::addComponent(path, package, memDb);
-    lvtmdb::FileObject *file =
-        memDb.getOrAddFile(filename, path.filename().string(), isHeader, hash, package, component);
+    auto file = memDb.withRWLock([&]() {
+        auto *package = getPackageForPath(path, memDb, prefix, nonLakosianDirs, thirdPartyDirs);
+        auto *component = ComponentUtil::addComponent(path, package, memDb);
+        auto *file = memDb.getOrAddFile(filename, path.filename().string(), isHeader, hash, package, component);
 
-    component->withRWLock([&] {
-        component->addFile(file);
-    });
-    package->withRWLock([&] {
-        package->addComponent(component);
+        component->withRWLock([&] {
+            component->addFile(file);
+        });
+        package->withRWLock([&] {
+            package->addComponent(component);
+        });
+
+        return file;
     });
 
     return file;
@@ -634,19 +635,18 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
             /*diskPath=*/currentVirtualWorkPath.toStdString(),
             /*parent=*/parentPkg,
             /*repository=*/nullptr);
-        {
-            auto lock = parentPkg->rwLock();
+
+        parentPkg->withRWLock([&]() {
             parentPkg->addChild(newPkg);
-        }
+        });
         parentPkg = newPkg;
     }
 
     auto componentName = std::filesystem::path{filename.toStdString()}.stem().string();
     auto *component = memDb.getOrAddComponent(componentName, componentName, parentPkg);
-    {
-        auto lock = parentPkg->rwLock();
+    parentPkg->withRWLock([&]() {
         parentPkg->addComponent(component);
-    }
+    });
 
     auto *file = memDb.getOrAddFile(
         /*qualifiedName=*/(currentVirtualWorkPath + filename).toStdString(),
@@ -655,11 +655,10 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
         /*hash=*/"",
         /*package=*/parentPkg,
         /*component=*/component);
-    {
-        auto lock = component->rwLock();
-        component->addFile(file);
-    }
 
+    component->withRWLock([&]() {
+        component->addFile(file);
+    });
     return file;
 }
 
@@ -670,14 +669,12 @@ void ClpUtil::addSourceFileRelationWithParentPropagation(lvtmdb::FileObject *fro
     }
     lvtmdb::FileObject::addIncludeRelation(fromFileObj, toFileObj);
 
-    auto *fromComponent = [&fromFileObj]() {
-        auto lock = fromFileObj->readOnlyLock();
+    auto *fromComponent = fromFileObj->withROLock([&fromFileObj]() {
         return fromFileObj->component();
-    }();
-    auto *toComponent = [&toFileObj]() {
-        auto lock = toFileObj->readOnlyLock();
+    });
+    auto *toComponent = toFileObj->withROLock([&toFileObj]() {
         return toFileObj->component();
-    }();
+    });
     if (!fromComponent || !toComponent) {
         return;
     }
@@ -692,25 +689,21 @@ void ClpUtil::addSourceFileRelationWithParentPropagation(lvtmdb::FileObject *fro
     // already implicitly defined when we say that 'xx.c' depends on 'yy.h', so possibly all package-level
     // dependencies on the database are irrelevant.
     // (Extra note: Even component-to/from-package dependencies should appear on GUI, IMO).
-    auto *fromPackage = [&fromComponent]() {
-        auto lock = fromComponent->readOnlyLock();
+    auto *fromPackage = fromComponent->withROLock([&fromComponent]() {
         return fromComponent->package();
-    }();
-    auto *toPackage = [&toComponent]() {
-        auto lock = toComponent->readOnlyLock();
+    });
+    auto *toPackage = toComponent->withROLock([&toComponent]() {
         return toComponent->package();
-    }();
+    });
     while (fromPackage && toPackage) {
         lvtmdb::PackageObject::addDependency(fromPackage, toPackage);
 
-        fromPackage = [&fromPackage]() {
-            auto lock = fromPackage->readOnlyLock();
+        fromPackage = fromPackage->withROLock([&fromPackage]() {
             return fromPackage->parent();
-        }();
-        toPackage = [&toPackage]() {
-            auto lock = toPackage->readOnlyLock();
+        });
+        toPackage = toPackage->withROLock([&toPackage]() {
             return toPackage->parent();
-        }();
+        });
     }
 }
 

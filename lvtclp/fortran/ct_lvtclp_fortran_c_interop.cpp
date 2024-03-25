@@ -27,6 +27,9 @@ using namespace Codethink::lvtmdb;
 
 void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedMemDb)
 {
+    // Warning: This function is designed to run sequentially (not thread safe).
+    // The locks being acquired is just to avoid dynamic check fails, as we don't have a mechanism them.
+
     // Heuristically find bindings from/to C/Fortran code
     auto& all_functions = sharedMemDb.functions();
     auto bindDependencies = std::vector<std::pair<FunctionObject *, FunctionObject *>>{};
@@ -59,7 +62,7 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
         bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
     }
 
-    sharedMemDb.withRWLock([&]() {
+    sharedMemDb.withROLock([&]() {
         // There is no back-mapping from functions to the components in the database, so we create a local one.
         auto functionObjToComponentObj = std::unordered_map<FunctionObject *, ComponentObject *>{};
         for (auto& [_, component] : sharedMemDb.components()) {
@@ -81,8 +84,8 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
             if (fromComponent && toComponent && fromComponent != toComponent) {
                 ComponentObject::addDependency(fromComponent, toComponent);
 
-                auto fromComponentLock = fromComponent->rwLock();
-                auto toComponentLock = toComponent->rwLock();
+                auto fromComponentLock = fromComponent->readOnlyLock();
+                auto toComponentLock = toComponent->readOnlyLock();
                 auto fromPackage = fromComponent->package();
                 auto toPackage = toComponent->package();
                 while (fromPackage && toPackage && fromPackage != toPackage) {

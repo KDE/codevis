@@ -17,45 +17,47 @@
 // limitations under the License.
 */
 
+#include <ct_lvtldr_typenode.h>
 #include <ct_lvtmdl_usesintheimpltablemodel.h>
 
 namespace Codethink::lvtmdl {
 
-struct UsesInTheImplTableModel::Private { };
-
-UsesInTheImplTableModel::UsesInTheImplTableModel():
-    BaseTableModel(1), d(std::make_unique<UsesInTheImplTableModel::Private>())
-{
-    setHeader({"Qualified Name"});
-}
-
+UsesInTheImplTableModel::UsesInTheImplTableModel() = default;
 UsesInTheImplTableModel::~UsesInTheImplTableModel() = default;
 
-void UsesInTheImplTableModel::refreshData()
+void UsesInTheImplTableModel::refreshData(const LakosianNodes& selectedNodes)
 {
     clear();
-    if (fullyQualifiedName().empty()) {
+
+    if (selectedNodes.empty()) {
         return;
     }
 
-    if (type() != lvtshr::DiagramType::ClassType) {
-        return;
-    }
+    using namespace Codethink::lvtldr;
+    using namespace Codethink::lvtshr;
 
-    // TODO: Populate from lvtldr
-    //    Transaction transaction(*session());
-    //
-    //    ptr<lvtcdb::UserDefinedType> userDefinedTypePtr =
-    //        lvtcdb::CdbUtil::getByQualifiedName<lvtcdb::UserDefinedType>(fullyQualifiedName(), session());
-    //
-    //    if (!userDefinedTypePtr) {
-    //        qDebug() << "No class declaration for" << fullyQualifiedName();
-    //        return;
-    //    }
-    //
-    //    for (const auto& relation : userDefinedTypePtr->usesInTheImplementation()) {
-    //        addRow(relation->target()->qualifiedName());
-    //    }
+    QStandardItem *root = invisibleRootItem();
+
+    auto createItemFromClassNode = [](LakosianNode *node) {
+        auto *item = new QStandardItem();
+        item->setText(QString::fromStdString(node->name()));
+        item->setEditable(false);
+        item->setIcon(QIcon(":/icons/class"));
+        return item;
+    };
+
+    for (const auto& lakosianNode : selectedNodes) {
+        if (lakosianNode->type() == DiagramType::ClassType) {
+            const auto classNode = dynamic_cast<TypeNode *>(lakosianNode);
+            auto classItem = createItemFromClassNode(classNode);
+
+            for (auto *node : classNode->usesInTheImplementation()) {
+                auto innerItem = createItemFromClassNode(node);
+                classItem->appendRow(innerItem);
+            }
+            root->appendRow(classItem);
+        }
+    }
 }
 
 } // end namespace Codethink::lvtmdl

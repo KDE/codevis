@@ -22,22 +22,23 @@
 
 #include <lvtmdl_export.h>
 
+#include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtmdl_basetablemodel.h>
 
-#include <memory>
+#include <deque>
+
+#include <qstandarditemmodel.h>
 
 namespace Codethink::lvtmdl {
 
-class LVTMDL_EXPORT UsesInTheImplTableModel : public BaseTableModel {
+using LakosianNodes = std::deque<Codethink::lvtldr::LakosianNode *>;
+
+class LVTMDL_EXPORT UsesInTheImplTableModel : public QStandardItemModel {
     Q_OBJECT
   public:
     UsesInTheImplTableModel();
     ~UsesInTheImplTableModel() override;
-    void refreshData() override;
-
-  private:
-    struct Private;
-    std::unique_ptr<Private> d;
+    void refreshData(const LakosianNodes& selectedNodes);
 };
 
 } // end namespace Codethink::lvtmdl

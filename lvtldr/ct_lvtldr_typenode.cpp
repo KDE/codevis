@@ -150,27 +150,21 @@ cpp::result<void, AddChildError> TypeNode::addChild(LakosianNode *child)
 
 bool TypeNode::isA(TypeNode *other)
 {
-    // TODO: Lazy check instead of getting info from database
-    d_fields = (d_dbHandler->get()).getUdtFieldsById(d_fields.id);
-
+    loadFields();
     auto& v = d_fields.isAIds;
     return std::find(v.begin(), v.end(), other->id()) != v.end();
 }
 
 bool TypeNode::hasUsesInTheImplementation(TypeNode *other)
 {
-    // TODO: Lazy check instead of getting info from database
-    d_fields = (d_dbHandler->get()).getUdtFieldsById(d_fields.id);
-
+    loadFields();
     auto& v = d_fields.usesInImplementationIds;
     return std::find(v.begin(), v.end(), other->id()) != v.end();
 }
 
 bool TypeNode::hasUsesInTheInterface(TypeNode *other)
 {
-    // TODO: Lazy check instead of getting info from database
-    d_fields = (d_dbHandler->get()).getUdtFieldsById(d_fields.id);
-
+    loadFields();
     auto& v = d_fields.usesInInterfaceIds;
     return std::find(v.begin(), v.end(), other->id()) != v.end();
 }
@@ -180,7 +174,7 @@ void TypeNode::loadProviders()
     if (d->providersLoaded) {
         return;
     }
-    d_fields = d_dbHandler->get().getUdtFieldsById(d_fields.id);
+    loadFields();
     d->providersLoaded = true;
 
     d->providers.reserve(d_fields.isAIds.size() + d_fields.usesInInterfaceIds.size()
@@ -223,7 +217,7 @@ void TypeNode::loadClients()
     if (d->clientsLoaded) {
         return;
     }
-    d_fields = d_dbHandler->get().getUdtFieldsById(d_fields.id);
+    loadFields();
     d->clientsLoaded = true;
 
     d->clients.reserve(d_fields.isBaseOfIds.size() + d_fields.usedByInterfaceIds.size()

@@ -248,20 +248,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTableView" name="usesInTheInterfaceTable">
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
-       </property>
-       <attribute name="horizontalHeaderVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="horizontalHeaderStretchLastSection">
-        <bool>true</bool>
-       </attribute>
-       <attribute name="verticalHeaderVisible">
-        <bool>false</bool>
-       </attribute>
-      </widget>
+      <widget class="QTreeView" name="usesInTheInterfaceTable"/>
      </item>
     </layout>
    </widget>
@@ -331,20 +318,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTableView" name="usesInTheImplTable">
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
-       </property>
-       <attribute name="horizontalHeaderVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="horizontalHeaderStretchLastSection">
-        <bool>true</bool>
-       </attribute>
-       <attribute name="verticalHeaderVisible">
-        <bool>false</bool>
-       </attribute>
-      </widget>
+      <widget class="QTreeView" name="usesInTheImplTable"/>
      </item>
     </layout>
    </widget>

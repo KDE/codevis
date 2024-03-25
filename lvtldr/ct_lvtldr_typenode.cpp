@@ -157,7 +157,7 @@ bool TypeNode::isA(TypeNode *other)
     return std::find(v.begin(), v.end(), other->id()) != v.end();
 }
 
-bool TypeNode::usesInTheImplementation(TypeNode *other)
+bool TypeNode::hasUsesInTheImplementation(TypeNode *other)
 {
     // TODO: Lazy check instead of getting info from database
     d_fields = (d_dbHandler->get()).getUdtFieldsById(d_fields.id);
@@ -166,7 +166,7 @@ bool TypeNode::usesInTheImplementation(TypeNode *other)
     return std::find(v.begin(), v.end(), other->id()) != v.end();
 }
 
-bool TypeNode::usesInTheInterface(TypeNode *other)
+bool TypeNode::hasUsesInTheInterface(TypeNode *other)
 {
     // TODO: Lazy check instead of getting info from database
     d_fields = (d_dbHandler->get()).getUdtFieldsById(d_fields.id);

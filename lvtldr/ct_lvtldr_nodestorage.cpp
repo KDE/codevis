@@ -543,14 +543,14 @@ NodeStorage::removeLogicalRelation(TypeNode *source, TypeNode *target, LakosRela
             return {};
         }
         if (type == LakosRelationType::UsesInTheImplementation) {
-            if (!dynamic_cast<TypeNode *>(source)->usesInTheImplementation(dynamic_cast<TypeNode *>(target))) {
+            if (!dynamic_cast<TypeNode *>(source)->hasUsesInTheImplementation(dynamic_cast<TypeNode *>(target))) {
                 return cpp::fail(ErrorRemoveLogicalRelation{Kind::InexistentRelation});
             }
             d->dbHandler->removeImplementationRelationship(source->id(), target->id());
             return {};
         }
         if (type == LakosRelationType::UsesInTheInterface) {
-            if (!dynamic_cast<TypeNode *>(source)->usesInTheInterface(dynamic_cast<TypeNode *>(target))) {
+            if (!dynamic_cast<TypeNode *>(source)->hasUsesInTheInterface(dynamic_cast<TypeNode *>(target))) {
                 return cpp::fail(ErrorRemoveLogicalRelation{Kind::InexistentRelation});
             }
             d->dbHandler->removeInterfaceRelationship(source->id(), target->id());

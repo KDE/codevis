@@ -79,8 +79,8 @@ class LVTLDR_EXPORT TypeNode : public LakosianNode {
     [[nodiscard]] lvtshr::UDTKind kind() const;
     cpp::result<void, AddChildError> addChild(LakosianNode *child) override;
     bool isA(TypeNode *other);
-    bool usesInTheImplementation(TypeNode *other);
-    bool usesInTheInterface(TypeNode *other);
+    bool hasUsesInTheImplementation(TypeNode *other);
+    bool hasUsesInTheInterface(TypeNode *other);
 
     [[nodiscard]] std::string qualifiedName() const override;
     [[nodiscard]] std::string parentName() override;

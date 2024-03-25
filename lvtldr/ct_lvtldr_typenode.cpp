@@ -148,6 +148,33 @@ cpp::result<void, AddChildError> TypeNode::addChild(LakosianNode *child)
     return {};
 }
 
+std::vector<TypeNode *> TypeNode::usesInTheImplementation()
+{
+    loadFields();
+
+    // TODO: check if we need to memoize // store this.
+    // I believe we don't need to since we don't call this often.
+    std::vector<TypeNode *> res;
+    res.reserve(d_fields.usesInImplementationIds.size());
+
+    for (auto&& id : d_fields.usesInImplementationIds) {
+        res.emplace_back(static_cast<TypeNode *>(d->store.findById({DiagramType::ClassType, id})));
+    }
+    return res;
+}
+
+std::vector<TypeNode *> TypeNode::usesInTheInterface()
+{
+    loadFields();
+    std::vector<TypeNode *> res;
+    res.reserve(d_fields.usesInInterfaceIds.size());
+
+    for (auto&& id : d_fields.usesInInterfaceIds) {
+        res.emplace_back(static_cast<TypeNode *>(d->store.findById({DiagramType::ClassType, id})));
+    }
+    return res;
+}
+
 bool TypeNode::isA(TypeNode *other)
 {
     loadFields();

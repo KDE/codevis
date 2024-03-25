@@ -91,6 +91,9 @@ class LVTLDR_EXPORT TypeNode : public LakosianNode {
 
     [[nodiscard]] bool hasClassNamespace() const;
     [[nodiscard]] lvtshr::UniqueId::RecordNumberType classNamespaceId() const;
+
+    [[nodiscard]] std::vector<TypeNode *> usesInTheImplementation();
+    [[nodiscard]] std::vector<TypeNode *> usesInTheInterface();
 };
 
 template<>

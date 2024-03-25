@@ -248,7 +248,11 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTreeView" name="usesInTheInterfaceTable"/>
+      <widget class="QTreeView" name="usesInTheInterfaceTable">
+       <attribute name="headerVisible">
+        <bool>false</bool>
+       </attribute>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -318,7 +322,11 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTreeView" name="usesInTheImplTable"/>
+      <widget class="QTreeView" name="usesInTheImplTable">
+       <attribute name="headerVisible">
+        <bool>false</bool>
+       </attribute>
+      </widget>
      </item>
     </layout>
    </widget>

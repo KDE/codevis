@@ -139,13 +139,13 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 
     fieldsModel = new FieldsTreeModel();
     methodsTableModel = new Codethink::lvtmdl::MethodsTableModel();
+    usesInTheImplTableModel = new Codethink::lvtmdl::UsesInTheImplTableModel();
+    usesInTheInterfaceTableModel = new Codethink::lvtmdl::UsesInTheInterfaceTableModel();
 
-    auto *usesInTheImplTableModel = new UsesInTheImplTableModel();
-    auto *usesInTheInterfaceTableModel = new UsesInTheInterfaceTableModel();
     auto *providersTableModel = new PhysicalProvidersTableModel();
     auto *clientsTableModel = new PhysicalClientsTableModel();
 
-    tableModels.append({usesInTheImplTableModel, usesInTheInterfaceTableModel, providersTableModel, clientsTableModel});
+    tableModels.append({providersTableModel, clientsTableModel});
 
     ui.topMessageWidget->setVisible(false);
     ui.topMessageWidget->setWordWrap(true);
@@ -1149,6 +1149,8 @@ void MainWindow::updateTableModels(std::deque<Codethink::lvtldr::LakosianNode *>
 {
     fieldsModel->refreshData(selectedNodes);
     methodsTableModel->refreshData(selectedNodes);
+    usesInTheImplTableModel->refreshData(selectedNodes);
+    usesInTheInterfaceTableModel->refreshData(selectedNodes);
 }
 
 void MainWindow::createReport(std::string const& title, std::string const& htmlContents)

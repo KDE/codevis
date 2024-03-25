@@ -20,6 +20,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "ct_lvtmdl_usesintheimpltablemodel.h"
+#include "ct_lvtmdl_usesintheinterfacetablemodel.h"
 #include <ct_lvtshr_graphenums.h>
 
 #include <ct_lvtmdl_debugmodel.h>
@@ -59,6 +61,8 @@ class PackageTreeModel;
 class TreeFilterModel;
 class BaseTableModel;
 class MethodsTableModel;
+class UsesInTheImplTableModel;
+class UsesInTheInterfaceTableModel;
 } // namespace Codethink::lvtmdl
 
 namespace Codethink::lvtqtc {
@@ -255,6 +259,8 @@ class MainWindow : public KXmlGuiWindow {
     QList<Codethink::lvtmdl::BaseTableModel *> tableModels;
     Codethink::lvtmdl::FieldsTreeModel *fieldsModel;
     Codethink::lvtmdl::MethodsTableModel *methodsTableModel;
+    Codethink::lvtmdl::UsesInTheImplTableModel *usesInTheImplTableModel;
+    Codethink::lvtmdl::UsesInTheInterfaceTableModel *usesInTheInterfaceTableModel;
 
     // TODO: Maybe we should move these variables to a GraphWidgetManager of sorts.
     Codethink::lvtqtc::GraphicsView *currentGraphWidget = nullptr;

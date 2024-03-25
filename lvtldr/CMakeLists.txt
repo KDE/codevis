@@ -36,7 +36,6 @@ AddTargetLibrary(
         ct_lvtldr_lakosiannode.h
     LIBRARIES
         Codethink::lvtshr
-        Codethink::lvtmdb # Used only for testing, but clazy will complain if not added as a dependency explicitly
         Soci::core
         Soci::sqlite3
         Qt${QT_MAJOR_VERSION}::Core

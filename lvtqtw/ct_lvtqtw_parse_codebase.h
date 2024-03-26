@@ -114,7 +114,7 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
     void validateUserInputFolders();
 
     Q_SLOT void processingFileNotification(const QString& path);
-    Q_SLOT void aboutToCallClangNotification(int size);
+    Q_SLOT void aboutToCallClangNotification(const QString& progressBarText, int size);
     Q_SLOT void receivedMessage(const QString& message, long threadId);
     Q_SLOT void saveOutput();
     // creates a zip file containing all the information from the system

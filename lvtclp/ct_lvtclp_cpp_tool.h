@@ -157,7 +157,7 @@ class LVTCLP_EXPORT CppTool : public QObject {
     Q_SIGNAL void processingFileNotification(QString path);
     // notifies when we have a clang::FrontendAction::BeginSourceFileAction
 
-    Q_SIGNAL void aboutToCallClangNotification(int size);
+    Q_SIGNAL void aboutToCallClangNotification(QString notificationMessage, int size);
     // publishes the size of the compilation database before we hand it to
     // clang
 

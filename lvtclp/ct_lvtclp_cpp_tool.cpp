@@ -901,7 +901,7 @@ bool CppTool::runPhysical(bool skipScan)
                                                d->enableLakosianRules,
                                                d->headerLocationCallback);
 
-    Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());
+    Q_EMIT aboutToCallClangNotification(tr("Physical Parse"), d->incrementalCdb->numCompileCommands());
 
     d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, messageCallback, d->memDb());
 
@@ -999,7 +999,7 @@ bool CppTool::runFull(bool skipPhysical)
                                                   d->enableLakosianRules,
                                                   d->handleCppCommentsCallback);
 
-    Q_EMIT aboutToCallClangNotification(d->incrementalCdb->numCompileCommands());
+    Q_EMIT aboutToCallClangNotification(tr("Logical Parse"), d->incrementalCdb->numCompileCommands());
 
     d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, d->messageCallback, d->memDb());
 
@@ -1033,11 +1033,6 @@ bool CppTool::runFull(bool skipPhysical)
         if (d->printToConsole) {
             qDebug() << "Collating output database";
         }
-        Q_EMIT processingFileNotification(tr("Collating output database"));
-        // d->memDb().withROLock([&] {
-        //    d->memDb().writeToDb(d->outputDb.session());
-        //    d->outputDb.setState(static_cast<lvtmdb::ObjectStore::State>(d->memDb().state()));
-        // });
     }
 
     if (!LogicalPostProcessUtil::postprocess(d->memDb(), d->printToConsole)) {

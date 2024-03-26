@@ -1096,8 +1096,9 @@ void ParseCodebaseDialog::processingFileNotification(const QString& path)
     Q_EMIT parseStep(d->dialogState, ui->progressBar->value(), ui->progressBar->maximum());
 }
 
-void ParseCodebaseDialog::aboutToCallClangNotification(int size)
+void ParseCodebaseDialog::aboutToCallClangNotification(const QString& progressBarText, int size)
 {
+    Q_UNUSED(progressBarText)
     d->progress = 0;
 
     ui->progressBar->setMaximum(size);

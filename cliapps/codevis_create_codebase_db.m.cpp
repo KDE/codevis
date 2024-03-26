@@ -51,6 +51,7 @@
 #include <QString>
 #include <QStringList>
 
+#include <commandlineprogressbar.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_soci_writer.h>
 
@@ -81,7 +82,7 @@ struct CommandLineArgs {
     std::vector<std::filesystem::path> nonLakosianDirs;
     bool update = false;
     bool physicalOnly = false;
-    bool silent = false;
+    bool verbose = false;
     bool disableLakosianRules = false;
     Codethink::lvtclp::CppTool::UseSystemHeaders useSystemHeaders =
         Codethink::lvtclp::CppTool::UseSystemHeaders::e_Query;
@@ -140,7 +141,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
     const QCommandLineOption update("update", "updates an existing database file");
     const QCommandLineOption replace("replace", "replaces an existing database file");
     const QCommandLineOption physicalOnly("physical-only", "Only look for physical entities and relationships");
-    const QCommandLineOption silent("silent", "supress stdout");
+    const QCommandLineOption verbose("verbose", "see detailed progress");
     const QCommandLineOption disableLakosianRules("no-lakos-rules", "Disable John Lakos' rules for C++ code parsing");
     const QCommandLineOption queryHeaders(
         "query-system-headers",
@@ -166,7 +167,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
                        update,
                        replace,
                        physicalOnly,
-                       silent,
+                       verbose,
                        disableLakosianRules,
                        queryHeaders,
                        useSystemHeaders});
@@ -295,7 +296,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
 
     // physicalOnly
     args.physicalOnly = parser.isSet(physicalOnly);
-    args.silent = parser.isSet(silent);
+    args.verbose = parser.isSet(verbose);
     args.disableLakosianRules = parser.isSet(disableLakosianRules);
     args.sourcePath = parser.value(sourcePath).toStdString();
 
@@ -459,7 +460,7 @@ int main(int argc, char **argv)
                                     args.packageMappings,
                                     args.userProvidedExtraCompileCommandsArgs,
                                     !args.disableLakosianRules,
-                                    !args.silent)
+                                    args.verbose)
         : std::make_unique<CppTool>(args.sourcePath,
                                     compileCommand.value(),
                                     args.dbPath,
@@ -468,7 +469,22 @@ int main(int argc, char **argv)
                                     args.packageMappings,
                                     args.userProvidedExtraCompileCommandsArgs,
                                     !args.disableLakosianRules,
-                                    !args.silent);
+                                    args.verbose);
+    CommandLineProgressBar cmdLineProgressBar;
+    if (!args.verbose) {
+        QObject::connect(clang_tool.get(),
+                         &CppTool::aboutToCallClangNotification,
+                         &cmdLineProgressBar,
+                         &CommandLineProgressBar::setupProgressBar,
+                         Qt::DirectConnection);
+
+        QObject::connect(clang_tool.get(),
+                         &CppTool::processingFileNotification,
+                         &cmdLineProgressBar,
+                         &CommandLineProgressBar::advance,
+                         Qt::DirectConnection);
+    }
+
     clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 
@@ -516,6 +532,5 @@ int main(int argc, char **argv)
         }
         sharedObjectStore->writeToDatabase(writer);
     }
-
     return EXIT_SUCCESS;
 }

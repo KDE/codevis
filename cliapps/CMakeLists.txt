@@ -13,12 +13,27 @@ include_directories(
     ${SQLite3_INCLUDE_DIRS}
 )
 
+AddTargetLibrary(
+  LIBRARY_NAME
+    commandlineprogressbar
+    QT_HEADERS
+        commandlineprogressbar.h
+    SOURCES 
+        commandlineprogressbar.cpp
+        
+    LIBRARIES Qt${QT_MAJOR_VERSION}::Core
+)
+
+
 add_codevis_exec(
     NAME codevis_create_codebase_db
-    SOURCES codevis_create_codebase_db.m.cpp
+    SOURCES 
+        codevis_create_codebase_db.m.cpp
+        
     LIBRARIES Qt${QT_MAJOR_VERSION}::Core
         Codethink::lvtclp
         Codethink::lvtshr
+        commandlineprogressbar
         ${CTFortranLibsIfAvailable}
 )
 

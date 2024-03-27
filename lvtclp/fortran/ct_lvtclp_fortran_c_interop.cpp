@@ -62,6 +62,9 @@ void Codethink::lvtclp::fortran::solveFortranToCInteropDeps(ObjectStore& sharedM
 
 void heuristicallyFindCallsFromFortranToC(ObjectStore& sharedMemDb, LocalSharedData& localSharedData)
 {
+    // Warning: This function is designed to run sequentially (not thread safe).
+    // The locks being acquired is just to avoid dynamic check fails, as we don't have a mechanism them.
+
     // Fortran code can call functions without having them declared anywhere.
     // This means the Fortran parser may have found a function that is called, but doesn't know where
     // the function comes from. Such functions may have been defined in C, with a "_" suffix.
@@ -69,6 +72,8 @@ void heuristicallyFindCallsFromFortranToC(ObjectStore& sharedMemDb, LocalSharedD
     std::cout << "heuristicallyFindCallsFromFortranToC...\n";
 
     using namespace Codethink::lvtclp::fortran;
+
+    // Heuristically find bindings from/to C/Fortran code
     auto& all_functions = sharedMemDb.functions();
     auto& functionObjToComponentObj = localSharedData.functionObjToComponentObj;
 
@@ -141,9 +146,41 @@ void heuristicallyFindCallsFromCToFortran(ObjectStore& sharedMemDb, LocalSharedD
         bindDependencies.emplace_back(std::make_pair(cFunc, fortranFunc));
     }
 
-    sharedMemDb.withRWLock([&]() {
+    sharedMemDb.withROLock([&]() {
+        // There is no back-mapping from functions to the components in the database, so we create a local one.
+        auto functionObjToComponentObj = std::unordered_map<FunctionObject *, ComponentObject *>{};
+        for (auto& [_, component] : sharedMemDb.components()) {
+            auto componentLock = component->readOnlyLock();
+            for (auto *file : component->files()) {
+                auto fileLock = file->readOnlyLock();
+                for (auto *function : file->globalFunctions()) {
+                    functionObjToComponentObj[function] = component.get();
+                }
+            }
+        }
+
         for (auto& [from, to] : bindDependencies) {
-            addFunctionDependencyAndPropagate(from, to, localSharedData);
+            FunctionObject::addDependency(from, to);
+
+            // Propagate dependency to parents
+            auto *fromComponent = functionObjToComponentObj[from];
+            auto *toComponent = functionObjToComponentObj[to];
+            if (fromComponent && toComponent && fromComponent != toComponent) {
+                ComponentObject::addDependency(fromComponent, toComponent);
+
+                auto fromComponentLock = fromComponent->readOnlyLock();
+                auto toComponentLock = toComponent->readOnlyLock();
+                auto fromPackage = fromComponent->package();
+                auto toPackage = toComponent->package();
+                while (fromPackage && toPackage && fromPackage != toPackage) {
+                    PackageObject::addDependency(fromPackage, toPackage);
+
+                    auto srcParentLock = fromPackage->readOnlyLock();
+                    auto trgParentLock = toPackage->readOnlyLock();
+                    fromPackage = fromPackage->parent();
+                    toPackage = toPackage->parent();
+                }
+            }
         }
     });
 }

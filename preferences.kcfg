@@ -276,4 +276,36 @@
         <label>Recent Files</label>
     </entry>
     </group>
+    <group name="Enabled Categories StringLists">
+        <entry name="enabledCriticalCategories" type="StringList">
+            <label>Enabled Critical Categories</label>
+        </entry>
+        <entry name="enabledWarningCategories" type="StringList">
+            <label>Enabled Warning Categories</label>
+        </entry>
+        <entry name="enabledInfoCategories" type="StringList">
+            <label>Enabled Info Categories</label>
+        </entry>
+        <entry name="enabledDebugCategories" type="StringList">
+            <label>Enabled Debug Categories</label>
+        </entry>
+    </group>
+    <group name="EnabledCategoryGroups">
+        <entry name="debugGroupEnabled" type="Bool">
+            <label>Enable/Disable debug group as a whole</label>
+            <default>false</default>
+        </entry>
+        <entry name="infoGroupEnabled" type="Bool">
+            <label>Enable/Disable info group as a whole</label>
+            <default>false</default>
+        </entry>
+        <entry name="warningGroupEnabled" type="Bool">
+            <label>Enable/Disable warning group as a whole</label>
+            <default>false</default>
+        </entry>
+        <entry name="criticalGroupEnabled" type="Bool">
+            <label>Enable/Disable critical group as a whole</label>
+            <default>false</default>
+        </entry>
+    </group>
 </kcfg>

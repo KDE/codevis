@@ -58,13 +58,13 @@ void setUdtFile(TypeObject *udt, FileObject *file, bool debugOutput)
     });
 
     if (debugOutput) {
-        auto fileLock = file->readOnlyLock();
-        auto udtLock = udt->readOnlyLock();
-        (void) fileLock;
-        (void) udtLock;
-
-        qDebug() << "Set file for " << QString::fromStdString(udt->qualifiedName()) << " to "
-                 << QString::fromStdString(file->qualifiedName());
+        auto udtQName = udt->withROLock([&]() {
+            return QString::fromStdString(udt->qualifiedName());
+        });
+        auto fileQName = file->withROLock([&]() {
+            return QString::fromStdString(file->qualifiedName());
+        });
+        qDebug() << "Set file for " << udtQName << " to " << fileQName;
     }
 }
 
@@ -82,10 +82,10 @@ bool fixUdt(TypeObject *udt, bool debugOutput)
 
     if (numFiles == 0) {
         if (debugOutput) {
-            auto udtLock = udt->readOnlyLock();
-            (void) udtLock;
-
-            qDebug() << "WARN: UDT " << QString::fromStdString(udt->qualifiedName()) << " has no source files";
+            auto udtQName = udt->withROLock([&]() {
+                return QString::fromStdString(udt->qualifiedName());
+            });
+            qDebug() << "WARN: UDT " << udtQName << " has no source files";
         }
         // this is just a warning not a database killing error so return success
         return true;

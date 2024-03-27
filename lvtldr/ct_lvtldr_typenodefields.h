@@ -49,7 +49,9 @@ struct TypeNodeFields {
     std::vector<RecordNumberType> usedByInterfaceIds;
     std::vector<RecordNumberType> usedByImplementationIds;
     std::vector<RecordNumberType> fieldIds;
+    std::vector<RecordNumberType> methodIds;
     std::vector<std::string> fieldNames;
+    std::vector<std::string> methodNames;
 };
 
 } // namespace Codethink::lvtldr

@@ -138,17 +138,14 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     ui.setupUi(this);
 
     fieldsModel = new FieldsTreeModel();
+    methodsTableModel = new Codethink::lvtmdl::MethodsTableModel();
+
     auto *usesInTheImplTableModel = new UsesInTheImplTableModel();
     auto *usesInTheInterfaceTableModel = new UsesInTheInterfaceTableModel();
-    auto *methodsTableModel = new MethodsTableModel();
     auto *providersTableModel = new PhysicalProvidersTableModel();
     auto *clientsTableModel = new PhysicalClientsTableModel();
 
-    tableModels.append({usesInTheImplTableModel,
-                        usesInTheInterfaceTableModel,
-                        methodsTableModel,
-                        providersTableModel,
-                        clientsTableModel});
+    tableModels.append({usesInTheImplTableModel, usesInTheInterfaceTableModel, providersTableModel, clientsTableModel});
 
     ui.topMessageWidget->setVisible(false);
     ui.topMessageWidget->setWordWrap(true);
@@ -188,7 +185,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     ui.fieldsTree->setModel(fieldsModel);
     ui.usesInTheImplTable->setModel(usesInTheImplTableModel);
     ui.usesInTheInterfaceTable->setModel(usesInTheInterfaceTableModel);
-    ui.methodsTable->setModel(methodsTableModel);
+    ui.methodsTree->setModel(methodsTableModel);
     ui.providersTable->setModel(providersTableModel);
     ui.clientsTable->setModel(clientsTableModel);
     ui.errorView->setModel(d_errorModel_p);
@@ -1151,6 +1148,7 @@ void MainWindow::updatePluginData()
 void MainWindow::updateTableModels(std::deque<Codethink::lvtldr::LakosianNode *> selectedNodes)
 {
     fieldsModel->refreshData(selectedNodes);
+    methodsTableModel->refreshData(selectedNodes);
 }
 
 void MainWindow::createReport(std::string const& title, std::string const& htmlContents)

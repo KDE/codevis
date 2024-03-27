@@ -53,6 +53,9 @@
 #include <QtSystemDetection>
 #endif
 
+#include <ct_lvtshr_debug_categories.h>
+CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing")
+
 using namespace Codethink::lvtmdb;
 
 // must be called on the global namespace.
@@ -77,14 +80,16 @@ bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std
 
     QFile thisFile = QString::fromStdString(":/db/" + db_schema_id);
     if (!thisFile.exists()) {
-        qDebug() << "FATAL Error, can't access resource file from Qt - use Gammaray to verify if names are correct";
+        qCDebug(parsing)
+            << "FATAL Error, can't access resource file from Qt - use Gammaray to verify if names are correct";
         return false;
     }
 
     if (!std::filesystem::exists(db_schema_path)) {
         bool res = std::filesystem::create_directories(db_schema_path);
         if (!res) {
-            qDebug() << "error, could not create data folder" << QString::fromStdString(db_schema_path.string());
+            qCDebug(parsing) << "error, could not create data folder"
+                             << QString::fromStdString(db_schema_path.string());
             return false;
         }
     }
@@ -96,14 +101,14 @@ bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std
             // This only happens in windows. something keeps those files open and windows
             // can't delete them. but it's safe to assume that at least, we have a database to use.
             // so even if it's an exception, we can safely return true.
-            std::cout << "Exception: " << e.what() << "\n";
+            qCDebug(parsing) << "Exception: " << e.what();
             return true;
         }
     }
 
     bool res = thisFile.copy(QString::fromStdString(resulting_file.string())); // to the filesystem.
     if (!res) {
-        qDebug() << "error, could not copy file to our internal filesystem" << thisFile.errorString();
+        qCDebug(parsing) << "error, could not copy file to our internal filesystem" << thisFile.errorString();
         return false;
     }
     return true;
@@ -127,7 +132,7 @@ bool run_migration(soci::session& db, const std::string& db_schema_id)
             return db_schema_path / db_schema_id;
         }
 
-        std::cerr << "Could not find db schema in all the searched paths.\n";
+        qCWarning(parsing) << "Could not find db schema in all the searched paths.\n";
         return {};
     }();
     if (db_schema_path.empty()) {
@@ -154,7 +159,7 @@ bool run_migration(soci::session& db, const std::string& db_schema_id)
         try {
             db << res.toStdString();
         } catch (const std::exception& e) {
-            std::cout << e.what() << "\n";
+            qCDebug(parsing) << e.what();
             return false;
         }
     }
@@ -211,7 +216,7 @@ query_id_from_qual_name(soci::session& db, const std::string& table_name, const 
 template<typename Obj>
 void print(int id, Obj *obj)
 {
-    std::cout << "Writing" << id << " " << obj->name() << " " << obj->qualifiedName() << "\n";
+    qCDebug(parsing) << "Writing" << id << " " << obj->name() << " " << obj->qualifiedName();
 }
 
 template<typename DbObject, typename callable>
@@ -230,8 +235,8 @@ get_or_add_thing(DbObject *dbobj, soci::session& db, const std::string& table_na
     // that might be empty, currently.
     // so let's this for a while until we fix that.'
     if (dbobj->name().empty() || dbobj->qualifiedName().empty()) {
-        std::cout << "We are looking for something without name and qualified name.\n";
-        std::cout << "returning an empty indicator / null item.\n";
+        qCDebug(parsing) << "We are looking for something without name and qualified name.\n";
+        qCDebug(parsing) << "returning an empty indicator / null item.\n";
         return {0, soci::indicator::i_null};
     }
 
@@ -242,10 +247,10 @@ get_or_add_thing(DbObject *dbobj, soci::session& db, const std::string& table_na
         if (!res.has_value()) {
             // TODO:
             // This should never happen but we have a problem with repositories that might fail, currently.
-            std::cout << "Failed to find object, and recover-function (fn) seems to have failed.\n";
-            std::cout << "While trying to get object with qualified name '" << dbobj->qualifiedName()
-                      << "' from table '" << table_name << "'\n";
-            std::cout << "returning an empty indicator / null item.\n";
+            qCDebug(parsing) << "Failed to find object, and recover-function (fn) seems to have failed.\n";
+            qCDebug(parsing) << "While trying to get object with qualified name '" << dbobj->qualifiedName()
+                             << "' from table '" << table_name << "'\n";
+            qCDebug(parsing) << "returning an empty indicator / null item.\n";
             return {0, soci::indicator::i_null};
         }
     }
@@ -487,7 +492,8 @@ void exportPkgRelations(const ObjectStore& store, soci::session& db)
         auto res = query_id_from_qual_name(db, "source_package", pkg->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << pkg->qualifiedName() << "' for exportPkgRelations. IGNORING.\n";
+            qCDebug(parsing) << "WARNING: Could not find '" << pkg->qualifiedName()
+                             << "' for exportPkgRelations. IGNORING.\n";
             continue;
         }
         this_id = res.value().first;
@@ -499,8 +505,8 @@ void exportPkgRelations(const ObjectStore& store, soci::session& db)
             auto inner_res = query_id_from_qual_name(db, "source_package", dep->qualifiedName());
             if (!inner_res.has_value()) {
                 // TODO: Investigate data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find '" << dep->qualifiedName()
-                          << "' for exportPkgRelations forward deps. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find '" << dep->qualifiedName()
+                                 << "' for exportPkgRelations forward deps. IGNORING.\n";
                 continue;
             }
             dep_id = inner_res.value().first;
@@ -529,8 +535,8 @@ void exportCompRelations(const ObjectStore& store, soci::session& db)
         auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << comp->qualifiedName()
-                      << "' for exportCompRelations. IGNORING.\n";
+            qCDebug(parsing) << "WARNING: Could not find '" << comp->qualifiedName()
+                             << "' for exportCompRelations. IGNORING.\n";
             continue;
         }
         this_id = res.value().first;
@@ -542,8 +548,8 @@ void exportCompRelations(const ObjectStore& store, soci::session& db)
             auto inner_res = query_id_from_qual_name(db, "source_component", dep->qualifiedName());
             if (!inner_res.has_value()) {
                 // TODO: Investigate data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find '" << dep->qualifiedName()
-                          << "' for exportCompRelations forward deps. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find '" << dep->qualifiedName()
+                                 << "' for exportCompRelations forward deps. IGNORING.\n";
                 continue;
             }
             dep_id = inner_res.value().first;
@@ -585,8 +591,8 @@ void exportFileRelations(const ObjectStore& store, soci::session& db)
         auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << file->qualifiedName()
-                      << "' for exportFileRelations. IGNORING.\n";
+            qCDebug(parsing) << "WARNING: Could not find '" << file->qualifiedName()
+                             << "' for exportFileRelations. IGNORING.\n";
             continue;
         }
 
@@ -601,8 +607,8 @@ void exportFileRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "source_file", include->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find fwd include '" << include->qualifiedName()
-                          << "' for exportFileRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find fwd include '" << include->qualifiedName()
+                                 << "' for exportFileRelations. IGNORING.\n";
                 continue;
             }
             other_source_id = res.value().first;
@@ -616,8 +622,8 @@ void exportFileRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "namespace_declaration", nmspc->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find namespace '" << nmspc->qualifiedName()
-                          << "' for exportFileRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find namespace '" << nmspc->qualifiedName()
+                                 << "' for exportFileRelations. IGNORING.\n";
                 continue;
             }
             namespace_id = res.value().first;
@@ -632,8 +638,8 @@ void exportFileRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "function_declaration", fnc->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find global function '" << fnc->qualifiedName()
-                          << "' for exportFileRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find global function '" << fnc->qualifiedName()
+                                 << "' for exportFileRelations. IGNORING.\n";
                 continue;
             }
             global_func_id = res.value().first;
@@ -684,8 +690,8 @@ void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
         auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << type->qualifiedName()
-                      << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+            qCDebug(parsing) << "WARNING: Could not find '" << type->qualifiedName()
+                             << "' for exportUserDefinedTypeRelations. IGNORING.\n";
             continue;
         }
         this_id = res.value().first;
@@ -697,8 +703,8 @@ void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "class_declaration", subclass->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate missing data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find subclass '" << subclass->qualifiedName()
-                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find subclass '" << subclass->qualifiedName()
+                                 << "' for exportUserDefinedTypeRelations. IGNORING.\n";
                 continue;
             }
             subclass_id = res.value().first;
@@ -714,8 +720,8 @@ void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate missing data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find usesInTheInterface '" << dep->qualifiedName()
-                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find usesInTheInterface '" << dep->qualifiedName()
+                                 << "' for exportUserDefinedTypeRelations. IGNORING.\n";
                 continue;
             }
             uses_in_interface_id = res.value().first;
@@ -730,8 +736,8 @@ void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "class_declaration", dep->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate missing data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find usesInTheImplementation '" << dep->qualifiedName()
-                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find usesInTheImplementation '" << dep->qualifiedName()
+                                 << "' for exportUserDefinedTypeRelations. IGNORING.\n";
                 continue;
             }
             uses_in_impl_id = res.value().first;
@@ -745,8 +751,8 @@ void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "source_component", comp->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate missing data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find component '" << comp->qualifiedName()
-                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find component '" << comp->qualifiedName()
+                                 << "' for exportUserDefinedTypeRelations. IGNORING.\n";
                 continue;
             }
             component_id = res.value().first;
@@ -760,8 +766,8 @@ void exportUserDefinedTypeRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "source_file", file->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate missing data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find file '" << file->qualifiedName()
-                          << "' for exportUserDefinedTypeRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find file '" << file->qualifiedName()
+                                 << "' for exportUserDefinedTypeRelations. IGNORING.\n";
                 continue;
             }
             file_id = res.value().first;
@@ -789,8 +795,8 @@ void exportFieldRelations(const ObjectStore& store, soci::session& db)
         auto res = query_id_from_qual_name(db, "field_declaration", field->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find '" << field->qualifiedName()
-                      << "' for exportFieldRelations. IGNORING.\n";
+            qCDebug(parsing) << "WARNING: Could not find '" << field->qualifiedName()
+                             << "' for exportFieldRelations. IGNORING.\n";
             return;
         }
         this_id = res.value().first;
@@ -808,8 +814,8 @@ void exportFieldRelations(const ObjectStore& store, soci::session& db)
             auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
             if (!res.has_value()) {
                 // TODO: Investigate missing data that only happens in specific codebases.
-                std::cout << "WARNING: Could not find variable type '" << type->qualifiedName()
-                          << "' for exportFieldRelations. IGNORING.\n";
+                qCDebug(parsing) << "WARNING: Could not find variable type '" << type->qualifiedName()
+                                 << "' for exportFieldRelations. IGNORING.\n";
                 continue;
             }
             dep_id = res.value().first;
@@ -826,8 +832,8 @@ void exportMethodRelations(MethodObject *method, soci::session& db)
     auto res = query_id_from_qual_name(db, "method_declaration", method->qualifiedName());
     if (!res.has_value()) {
         // TODO: Investigate missing data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << method->qualifiedName()
-                  << "' for exportMethodRelations. IGNORING.\n";
+        qCDebug(parsing) << "WARNING: Could not find '" << method->qualifiedName()
+                         << "' for exportMethodRelations. IGNORING.\n";
         return;
     }
     int this_id = res.value().first;
@@ -847,8 +853,8 @@ void exportMethodRelations(MethodObject *method, soci::session& db)
         auto res = query_id_from_qual_name(db, "class_declaration", type->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find type '" << type->qualifiedName()
-                      << "' for exportMethodRelations. IGNORING.\n";
+            qCDebug(parsing) << "WARNING: Could not find type '" << type->qualifiedName()
+                             << "' for exportMethodRelations. IGNORING.\n";
             continue;
         }
         dep_id = res.value().first;
@@ -864,7 +870,8 @@ void exportFunctionCallgraph(FunctionObject *fn, soci::session& db)
     auto res = query_id_from_qual_name(db, "function_declaration", fn->qualifiedName());
     if (!res.has_value()) {
         // TODO: Investigate missing data that only happens in specific codebases.
-        std::cout << "WARNING: Could not find '" << fn->qualifiedName() << "' for exportFunctionCallgraph. IGNORING.\n";
+        qCDebug(parsing) << "WARNING: Could not find '" << fn->qualifiedName()
+                         << "' for exportFunctionCallgraph. IGNORING.\n";
         return;
     }
     int this_id = res.value().first;
@@ -883,8 +890,8 @@ void exportFunctionCallgraph(FunctionObject *fn, soci::session& db)
         auto res = query_id_from_qual_name(db, "function_declaration", callee->qualifiedName());
         if (!res.has_value()) {
             // TODO: Investigate missing data that only happens in specific codebases.
-            std::cout << "WARNING: Could not find callee '" << callee->qualifiedName()
-                      << "' for exportFunctionCallgraph. IGNORING.\n";
+            qCDebug(parsing) << "WARNING: Could not find callee '" << callee->qualifiedName()
+                             << "' for exportFunctionCallgraph. IGNORING.\n";
             continue;
         }
         callee_id = res.value().first;
@@ -914,7 +921,7 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
 {
     const bool create_db = path == ":memory:" || !std::filesystem::exists(path);
 
-    std::cout << "Trying to open database at " << path << "\n";
+    qCDebug(parsing) << "Trying to open database at " << path;
 
     d_db.open(*soci::factory_sqlite3(), path);
     if (create_db) {
@@ -937,9 +944,9 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
         }
 #endif
 
-        std::cout << "Database created correctly\n";
+        qCDebug(parsing) << "Database created correctly\n";
     } else {
-        std::cout << "Using a pre-existing database\n";
+        qCDebug(parsing) << "Using a pre-existing database\n";
     }
 
     d_path = path;
@@ -957,7 +964,7 @@ void SociWriter::writeFrom(const ObjectStore& store)
     assert(!d_path.empty());
     assert(d_db.is_connected());
 
-    std::cout << "Starting to write to the database at " << d_path << "\n";
+    qCDebug(parsing) << "Starting to write to the database at " << d_path.string();
     soci::transaction tr(d_db);
 
     // TODO: To optimize this call, we need to create the queries outside of the
@@ -1043,7 +1050,7 @@ void SociWriter::writeFrom(const ObjectStore& store)
     }
 
     tr.commit();
-    std::cout << "Ending to write to the database: " << timer.elapsed() << "\n";
+    qCDebug(parsing) << "Ending to write to the database: " << timer.elapsed();
 }
 
 } // namespace Codethink::lvtmdb

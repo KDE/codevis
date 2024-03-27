@@ -18,9 +18,12 @@
 #include <fortran/ct_lvtclp_fortran_tool.h>
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
+#include <ct_lvtshr_debug_categories.h>
 
 #include <iostream>
 #include <memory>
+
+CODEVIS_LOGGING_CATEGORIES(parsing, "org.codevis.parsing")
 
 using namespace clang::tooling;
 
@@ -39,7 +42,7 @@ std::unique_ptr<Tool> Tool::fromCompileCommands(std::filesystem::path const& com
                                                         clang::tooling::JSONCommandLineSyntax::AutoDetect);
     // TODO: Proper error management
     if (!errorMessage.empty()) {
-        std::cout << "Tool::fromCompileCommands error: " << errorMessage;
+        qCDebug(parsing) << "Tool::fromCompileCommands error: " << errorMessage;
         return nullptr;
     }
 

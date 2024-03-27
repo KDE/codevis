@@ -251,24 +251,26 @@ class LVTMDB_EXPORT Lockable {
         return RWLock{*d_mutex_p, this};
     }
 
-    template<class LOCK>
-    void withLock(std::function<void(void)>& fn)
+    template<typename FTYPE, class LOCK>
+    auto withLock(FTYPE const& fn)
     // Execute fn while holding the lock
     // e.g. foo.withLock<ROLock>([] { bar(); });
     {
         auto lock = LOCK{*d_mutex_p, this};
         (void) lock; // cppcheck
-        fn();
+        return fn();
     }
 
-    inline void withROLock(std::function<void(void)> fn)
+    template<typename FTYPE>
+    inline auto withROLock(FTYPE const& fn)
     {
-        withLock<ROLock>(fn);
+        return withLock<FTYPE, ROLock>(fn);
     }
 
-    inline void withRWLock(std::function<void(void)> fn)
+    template<typename FTYPE>
+    inline auto withRWLock(FTYPE fn)
     {
-        withLock<RWLock>(fn);
+        return withLock<FTYPE, RWLock>(fn);
     }
 
     // CLASS METHODS

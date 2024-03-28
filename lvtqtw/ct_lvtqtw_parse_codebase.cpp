@@ -244,8 +244,6 @@ struct ParseCodebaseDialog::Private {
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
     QElapsedTimer parseTimer;
-
-    bool enableLakosianRules = true;
 };
 
 ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
@@ -734,6 +732,7 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
     const bool catchCodeAnalysisOutput = Preferences::enableCodeParseDebugOutput();
 
     if (!d->tool_p) {
+        auto disableLakosianRules = (ui->disableLakosianRules->checkState() == Qt::Checked);
         d->tool_p = std::make_unique<lvtclp::CppTool>(sourcePath(),
                                                       std::vector<std::filesystem::path>{compileCommandsJson},
                                                       codebasePath().toStdString(),
@@ -742,7 +741,7 @@ void ParseCodebaseDialog::initParse_Step2(const std::string& compileCommandsJson
                                                       nonLakosianDirs,
                                                       d->thirdPartyPathMapping,
                                                       d->userProvidedExtraCompileCommandsArgs,
-                                                      d->enableLakosianRules,
+                                                      /*enableLakosianRules=*/not disableLakosianRules,
                                                       catchCodeAnalysisOutput);
     }
 #ifdef CT_ENABLE_FORTRAN_SCANNER

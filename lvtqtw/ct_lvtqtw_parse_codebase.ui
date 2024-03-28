@@ -273,6 +273,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="disableLakosianRules">
+         <property name="toolTip">
+          <string>Disable Lakosian rules while parsing (Check this if you don't follow John Lakos' book rules)</string>
+         </property>
+         <property name="text">
+          <string>Disable Lakosian rules</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>

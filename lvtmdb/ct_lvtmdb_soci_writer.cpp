@@ -923,7 +923,12 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
 
     qCDebug(parsing) << "Trying to open database at " << path;
 
-    d_db.open(*soci::factory_sqlite3(), path);
+    try {
+        d_db.open(*soci::factory_sqlite3(), path);
+    } catch (soci::sqlite3_soci_error const&) {
+        return false;
+    }
+
     if (create_db) {
         const bool res = run_migration(d_db, schemaPath);
         if (!res) {

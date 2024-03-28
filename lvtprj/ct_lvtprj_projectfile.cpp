@@ -558,16 +558,22 @@ cpp::result<void, ProjectFileError> ProjectFile::resetCadDatabaseFromCodeDatabas
         const auto errorMsg = std::string{"Error removing cad database: "} + err.what();
         return cpp::fail(ProjectFileError{errorMsg});
     }
+
+    if (!isOpen()) {
+        const auto errorMsg = std::string{"Database is not open. Please make sure a project is open."};
+        return cpp::fail(ProjectFileError{errorMsg});
+    }
+
     try {
         std::filesystem::copy(codeDatabasePath(), cadDbPath);
     } catch (std::filesystem::filesystem_error& err) {
-        const auto errorMsg = std::string{"Error removing cad database: "} + err.what();
+        const auto errorMsg = std::string{"Error copying code database: "} + err.what();
         return cpp::fail(ProjectFileError{errorMsg});
     }
 
     lvtmdb::SociWriter writer;
     if (!writer.updateDbSchema(cadDbPath.string(), "cad_db.sql")) {
-        const auto errorMsg = std::string{"Error removing adding cad tables to the database."};
+        const auto errorMsg = std::string{"Error updating cad database schema."};
         return cpp::fail(ProjectFileError{errorMsg});
     }
 

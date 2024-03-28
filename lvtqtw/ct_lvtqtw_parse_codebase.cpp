@@ -859,7 +859,12 @@ void ParseCodebaseDialog::updateDatabase()
 
     {
         lvtmdb::SociWriter writer;
-        writer.createOrOpen(path);
+        if (!writer.createOrOpen(path)) {
+            ui->errorText->setText(tr("Failed to create database file"));
+            ui->errorText->show();
+            Q_EMIT parseFinished(State::Idle);
+            return;
+        }
         d->sharedMemDb->writeToDatabase(writer);
     }
 

@@ -96,7 +96,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Build Folder Validation works correctly"
         auto tempDir = TmpDir("parse_codebase_temp");
         auto file = tempDir.createTextFile("compile_commands.json", sample_compile_commands_json());
         auto folder_has_compile_commands_json = tempDir.path();
-        parseCodeBaseDialog.setCompileCommandsFolder(QString(folder_has_compile_commands_json.c_str()));
+        parseCodeBaseDialog.setCompileCommandsFolder(QString::fromStdString(folder_has_compile_commands_json.string()));
         REQUIRE(!parseCodeBaseDialog.buildFolderErrorIsVisible());
         REQUIRE(parseCodeBaseDialog.buildFolderError().isEmpty());
     }

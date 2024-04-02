@@ -88,3 +88,13 @@ this information.
 Viewing logical information requires a logical parse (done after a physical
 parse). This takes much longer because a full AST has to be generated and type
 checked and more information has to be stored about each file.
+
+
+### Codevis relational database schema
+
+Codevis processes your source code and generates a relational database representation of it.
+The relational database schema is [available here](../database-spec/), but a representation of
+it is also available below. Codevis has several internal libraries to interact with the database,
+the most important being [lvtmdb](../lvtmdb/).
+
+![example-3](images/codevis-db.png)

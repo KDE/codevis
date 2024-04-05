@@ -27,6 +27,8 @@
 
 #include <KPluginMetaData>
 #include <QCoreApplication>
+#include <ct_lvtshr_debug_categories.h>
+CODEVIS_LOGGING_CATEGORIES(pluginsmanager, "org.codevis.plugins")
 
 namespace {
 template<typename HookFunctionType, typename HandlerType>
@@ -50,7 +52,6 @@ void callAllHooks(
     HandlerType&& handler,
     std::unordered_map<std::string, std::unique_ptr<Codethink::lvtplg::AbstractLibraryDispatcher>>& libraries)
 {
-    QDebug dbg(QtDebugMsg);
     for (auto const& [_, pluginLib] : libraries) {
         if (!pluginLib->isEnabled()) {
             continue;
@@ -67,23 +68,22 @@ void tryInstallPlugin(
 {
     // TODO: This should check if the plugin is already loaded before attempting
     // to load it (because of knewstuff).
-    QDebug dbg(QtDebugMsg);
 
-    dbg << "(" << DispatcherType::name << "): Trying to install plugin " << pluginDir << "... ";
+    qCDebug(pluginsmanager) << "(" << DispatcherType::name << "): Trying to install plugin " << pluginDir << "... ";
     if (!DispatcherType::isValidPlugin(pluginDir)) {
-        dbg << "Invalid plugin.";
+        qCDebug(pluginsmanager) << "Invalid plugin.";
         return;
     }
 
     auto lib = DispatcherType::loadSinglePlugin(pluginDir);
     if (!lib) {
-        dbg << "Could not load *valid* plugin: " << pluginDir;
+        qCDebug(pluginsmanager) << "Could not load *valid* plugin: " << pluginDir;
         return;
     }
 
     auto id = lib->pluginId();
     libraries[id] = std::move(lib);
-    dbg << "Plugin successfully loaded!";
+    qCDebug(pluginsmanager) << "Plugin successfully loaded!";
 }
 
 template<typename DispatcherType>
@@ -91,12 +91,10 @@ void tryReloadPlugin(
     QString const& pluginDir,
     std::unordered_map<std::string, std::unique_ptr<Codethink::lvtplg::AbstractLibraryDispatcher>>& libraries)
 {
-    QDebug dbg(QtDebugMsg);
-
-    dbg << "(" << DispatcherType::name << "): Trying to reload plugin " << pluginDir << "... ";
+    qCDebug(pluginsmanager) << "(" << DispatcherType::name << "): Trying to reload plugin " << pluginDir << "... ";
     const bool res = DispatcherType::reloadSinglePlugin(pluginDir);
     if (!res) {
-        dbg << "Could not load *valid* plugin: " << pluginDir;
+        qCDebug(pluginsmanager) << "Could not load *valid* plugin: " << pluginDir;
         return;
     }
 }
@@ -113,36 +111,43 @@ void loadSinglePlugin(
 
 } // namespace
 namespace Codethink::lvtplg {
-
+void PluginManager::reloadLastLoadedPlugins()
+{
+    removeAllLoadedPlugins();
+    loadPlugins(m_loadPluginSearchPaths);
+    callHooksSetupPlugin();
+}
 void PluginManager::loadPlugins(const QList<QString>& searchPaths)
 {
+    m_loadPluginSearchPaths = searchPaths;
     for (const auto& pluginsStr : searchPaths) {
         QDir pluginsPath(pluginsStr);
 
-        qDebug() << "Loading plugins from " << pluginsPath.path() << "...";
+        qCDebug(pluginsmanager) << "Loading plugins from " << pluginsPath.path() << "...";
         if (!pluginsPath.exists()) {
-            qDebug() << pluginsPath.path() << "does not exists, skipping plugin search for it.";
+            qCDebug(pluginsmanager) << pluginsPath.path() << "does not exists, skipping plugin search for it.";
             continue;
         }
         if (!pluginsPath.isReadable()) {
-            qDebug() << pluginsPath.path() << "exists but it's not readable, skipping plugin search for it.";
+            qCDebug(pluginsmanager) << pluginsPath.path()
+                                    << "exists but it's not readable, skipping plugin search for it.";
             continue;
         }
 
         pluginsPath.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
         pluginsPath.setSorting(QDir::Name);
         const auto entryInfoList = pluginsPath.entryInfoList();
-        qDebug() << entryInfoList.size() << "is the size of the number of files here";
+        qCDebug(pluginsmanager) << entryInfoList.size() << "is the size of the number of files here";
         for (auto const& fileInfo : qAsConst(entryInfoList)) {
-            qDebug() << "\tTesting fileInfo" << fileInfo;
+            qCDebug(pluginsmanager) << "\tTesting fileInfo" << fileInfo;
             const auto pluginDir = fileInfo.absoluteFilePath();
             loadSinglePlugin(pluginDir, libraries);
         }
     }
 
-    qDebug() << "Loaded plugins:";
+    qCDebug(pluginsmanager) << "Loaded plugins:";
     for (auto const& [_, p] : this->libraries) {
-        qDebug() << "+ " << QString::fromStdString(p->fileName());
+        qCDebug(pluginsmanager) << "+ " << QString::fromStdString(p->fileName());
     }
 }
 
@@ -168,7 +173,20 @@ void PluginManager::reloadPlugin(const QString& pluginFolder)
     tryInstallPlugin<PythonLibraryDispatcher>(pluginPath.absoluteFilePath(), libraries);
 #endif
 }
-
+void PluginManager::removeAllLoadedPlugins()
+{
+    for (auto const& [key, p] : this->libraries) {
+        const QString loadedLibrary = QString::fromStdString(p->fileName());
+        auto handler = PluginSetupHandler{std::bind_front(&PluginManager::registerPluginData, this),
+                                          std::bind_front(&PluginManager::getPluginData, this),
+                                          std::bind_front(&PluginManager::unregisterPluginData, this),
+                                          std::bind_front(&PluginManager::getPyInterpHandler, this)};
+        qCDebug(pluginsmanager) << "Removing plugin: " << key;
+        callSingleHook<hookTeardownPlugin_f>("hookTeardownPlugin", handler, p.get());
+        p->unload();
+        this->libraries.erase(key);
+    }
+}
 void PluginManager::removePlugin(const QString& pluginFolder)
 {
     for (auto const& [key, p] : this->libraries) {

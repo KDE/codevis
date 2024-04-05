@@ -862,6 +862,13 @@
              </property>
             </widget>
            </item>
+            <item>
+            <widget class="QPushButton" name="reloadAllPlugins">
+             <property name="text">
+              <string>Reload All Plugins</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>

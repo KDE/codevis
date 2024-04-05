@@ -116,6 +116,11 @@ ConfigurationDialog::ConfigurationDialog(lvtplg::PluginManager *pluginManager, Q
             this,
             &Codethink::lvtqtw::ConfigurationDialog::getNewScriptFinished);
 #endif
+    connect(d->ui.reloadAllPlugins,
+            &QPushButton::pressed,
+            this,
+            &Codethink::lvtqtw::ConfigurationDialog::reloadAllPlugins);
+
     connect(d->ui.debugContextMenu, &QCheckBox::toggled, Preferences::self(), &Preferences::setEnableSceneContextMenu);
     connect(d->ui.storeDebugOutput, &QCheckBox::toggled, Preferences::self(), &Preferences::setStoreDebugOutput);
 
@@ -455,6 +460,11 @@ void ConfigurationDialog::changeCurrentWidgetByString(QString const& text)
         return;
     }
     d->ui.listWidget->setCurrentItem(items[0]);
+}
+
+void ConfigurationDialog::reloadAllPlugins()
+{
+    d->pluginManager->reloadLastLoadedPlugins();
 }
 
 void ConfigurationDialog::populateMouseTabOptions()

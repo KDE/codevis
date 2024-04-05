@@ -49,6 +49,7 @@ class LVTQTW_EXPORT ConfigurationDialog : public QDialog {
     void restoreDefaults();
     void changeCurrentWidgetByString(QString const& text);
     void updatePluginInformation();
+    void reloadAllPlugins();
 
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
     void getNewScriptFinished(const QList<KNSCore::Entry>& changedEntries);

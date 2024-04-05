@@ -54,6 +54,8 @@ class LVTPLG_EXPORT PluginManager {
     PluginManager operator=(PluginManager const&) = delete;
     PluginManager operator=(PluginManager&) = delete;
     void loadPlugins(const QList<QString>& paths);
+    void reloadLastLoadedPlugins();
+    void removeAllLoadedPlugins();
     std::vector<std::string> getPluginsMetadataFilePaths() const;
     std::optional<std::reference_wrapper<AbstractLibraryDispatcher>> getPluginById(std::string const& id) const;
 
@@ -129,6 +131,7 @@ class LVTPLG_EXPORT PluginManager {
     std::unordered_map<std::string, std::unique_ptr<AbstractLibraryDispatcher>> libraries;
     std::map<std::string, void *> pluginData;
     std::unordered_map<std::string, QObject *> pluginQObjects;
+    QList<QString> m_loadPluginSearchPaths;
 };
 } // namespace Codethink::lvtplg
 

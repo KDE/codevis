@@ -54,17 +54,6 @@ set_target_properties(pyLksPlugin
     SUFFIX ${PYMODULE_EXT}
 )
 
-find_program(CLANG_FORMAT NAMES
-  clang-format
-  clang-format-10
-  clang-format-11
-  clang-format-12
-  clang-format-13
-  clang-format-14
-  clang-format-15
-  clang-format-16
-  clang-format-17)
-
 set(PLUGIN_HEADERS_DIR ${CMAKE_BINARY_DIR}/plugin-headers)
 add_custom_command(
     OUTPUT
@@ -73,9 +62,7 @@ add_custom_command(
         "${PLUGIN_HEADERS_DIR}/ct_lvtplg_plugindatatypes.h"
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PLUGIN_HEADERS_DIR}/
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py ${PLUGIN_HEADERS_DIR}/
-    COMMAND ${CLANG_FORMAT} -i ${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhooks.h
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_handlers.py ${PLUGIN_HEADERS_DIR}/
-    COMMAND ${CLANG_FORMAT} -i ${PLUGIN_HEADERS_DIR}/ct_lvtplg_basicpluginhandlers.h
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ct_lvtplg_plugindatatypes.h ${PLUGIN_HEADERS_DIR}/
     DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/generate_plugin_hooks.py"

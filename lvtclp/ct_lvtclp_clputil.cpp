@@ -268,7 +268,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(const std::string& inFilename,
         }
 
         // allow failure to hash file contents because we use memory mapped files in tests
-        return "";
+        return {};
     }();
 
     auto file = memDb.withRWLock([&]() {

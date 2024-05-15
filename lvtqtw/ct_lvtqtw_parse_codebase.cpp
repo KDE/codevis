@@ -403,7 +403,7 @@ ParseCodebaseDialog::validateCompileCommandsFolder(const QString& compileCommand
         return BuildFolderValidationResult::WslBuildFolder;
     }
 
-    if (!file_exists(compileCommandsFolder + QDir::separator() + "compile_commands.json")) {
+    if (!file_exists(compileCommandsFolder)) {
         return BuildFolderValidationResult::CompileCommandsJsonNotFound;
     }
 

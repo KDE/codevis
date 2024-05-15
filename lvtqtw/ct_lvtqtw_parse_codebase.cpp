@@ -117,12 +117,6 @@ bool is_wsl_string(const QString& text)
     return text.startsWith("wsl://");
 }
 
-bool file_exists(const QString& file_path)
-{
-    QFileInfo inf(file_path);
-    return inf.exists();
-}
-
 } // namespace
 
 struct PkgMappingDialog : public QDialog {
@@ -357,7 +351,7 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
         validateUserInputFolders();
     });
 
-    ui->projectBuildFolderError->setVisible(false);
+    ui->projectCompileCommandsError->setVisible(false);
     ui->projectSourceFolderError->setVisible(false);
 
     QFile markdownFile(":/md/codebase_gen_doc");
@@ -392,22 +386,27 @@ ParseCodebaseDialog::SourceFolderValidationResult ParseCodebaseDialog::validateS
     return SourceFolderValidationResult::SourceFolderOk;
 }
 
-ParseCodebaseDialog::BuildFolderValidationResult
-ParseCodebaseDialog::validateCompileCommandsFolder(const QString& compileCommandsFolder)
+ParseCodebaseDialog::CompileCommandsValidationResult
+ParseCodebaseDialog::validateCompileCommandsFolder(const QString& compileCommands)
 {
-    if (compileCommandsFolder.isEmpty()) {
-        return BuildFolderValidationResult::NoBuildFolderProvided;
+    if (compileCommands.isEmpty()) {
+        return CompileCommandsValidationResult::NoBuildFolderProvided;
     }
 
-    if (is_wsl_string(compileCommandsFolder)) {
-        return BuildFolderValidationResult::WslBuildFolder;
+    if (is_wsl_string(compileCommands)) {
+        return CompileCommandsValidationResult::WslBuildFolder;
     }
 
-    if (!file_exists(compileCommandsFolder)) {
-        return BuildFolderValidationResult::CompileCommandsJsonNotFound;
+    QFileInfo info(compileCommands);
+    if (info.isDir()) {
+        return CompileCommandsValidationResult::CompileCommandsJsonNotFound;
     }
 
-    return BuildFolderValidationResult::BuildFolderOk;
+    if (!info.exists()) {
+        return CompileCommandsValidationResult::CompileCommandsJsonNotFound;
+    }
+
+    return CompileCommandsValidationResult::BuildFolderOk;
 }
 
 void ParseCodebaseDialog::validateUserInputFolders()
@@ -420,30 +419,30 @@ void ParseCodebaseDialog::validateUserInputFolders()
 
     const auto build_folder_validation = validateCompileCommandsFolder(ui->compileCommandsFolder->text());
 
-    if (build_folder_validation == BuildFolderValidationResult::NoBuildFolderProvided) {
-        ui->projectBuildFolderError->setVisible(true);
-        ui->projectBuildFolderError->setText(emptyErrorMsg);
+    if (build_folder_validation == CompileCommandsValidationResult::NoBuildFolderProvided) {
+        ui->projectCompileCommandsError->setVisible(true);
+        ui->projectCompileCommandsError->setText(emptyErrorMsg);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
     }
 
-    if (build_folder_validation == BuildFolderValidationResult::WslBuildFolder) {
-        ui->projectBuildFolderError->setVisible(true);
-        ui->projectBuildFolderError->setText(wslErrorMsg);
+    if (build_folder_validation == CompileCommandsValidationResult::WslBuildFolder) {
+        ui->projectCompileCommandsError->setVisible(true);
+        ui->projectCompileCommandsError->setText(wslErrorMsg);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
     }
 
-    if (build_folder_validation == BuildFolderValidationResult::CompileCommandsJsonNotFound) {
-        ui->projectBuildFolderError->setVisible(true);
-        ui->projectBuildFolderError->setText(missingCompileCommands);
+    if (build_folder_validation == CompileCommandsValidationResult::CompileCommandsJsonNotFound) {
+        ui->projectCompileCommandsError->setVisible(true);
+        ui->projectCompileCommandsError->setText(missingCompileCommands);
         ui->compileCommandsFolder->setStyleSheet(errorCss);
         disableParse = true;
     }
 
-    if (build_folder_validation == BuildFolderValidationResult::BuildFolderOk) {
-        ui->projectBuildFolderError->setText("");
-        ui->projectBuildFolderError->setVisible(false);
+    if (build_folder_validation == CompileCommandsValidationResult::BuildFolderOk) {
+        ui->projectCompileCommandsError->setText("");
+        ui->projectCompileCommandsError->setVisible(false);
         ui->compileCommandsFolder->setStyleSheet(QString());
     }
 

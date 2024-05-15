@@ -43,9 +43,9 @@ class ExposingParseCodebaseDialog : public ParseCodebaseDialog {
         return ui->projectSourceFolderError->isVisible();
     }
 
-    bool buildFolderErrorIsVisible()
+    bool compileCommandsErrorIsVisible()
     {
-        return ui->projectBuildFolderError->isVisible();
+        return ui->projectCompileCommandsError->isVisible();
     }
 
     void setCompileCommandsFolder(const QString& compileCommandsFolder)
@@ -58,9 +58,9 @@ class ExposingParseCodebaseDialog : public ParseCodebaseDialog {
         ui->sourceFolder->setText(sourceFolder);
     }
 
-    QString buildFolderError()
+    QString compileCommandsError()
     {
-        return ui->projectBuildFolderError->text();
+        return ui->projectCompileCommandsError->text();
     }
 
     QString sourceFolderError()
@@ -96,25 +96,26 @@ TEST_CASE_METHOD(QTApplicationFixture, "Build Folder Validation works correctly"
         auto tempDir = TmpDir("parse_codebase_temp");
         auto file = tempDir.createTextFile("compile_commands.json", sample_compile_commands_json());
         auto folder_has_compile_commands_json = tempDir.path();
-        parseCodeBaseDialog.setCompileCommandsFolder(QString::fromStdString(folder_has_compile_commands_json.string()));
-        REQUIRE(!parseCodeBaseDialog.buildFolderErrorIsVisible());
-        REQUIRE(parseCodeBaseDialog.buildFolderError().isEmpty());
+        parseCodeBaseDialog.setCompileCommandsFolder(QString::fromStdString(folder_has_compile_commands_json.string())
+                                                     + "/compile_commands.json");
+        REQUIRE(!parseCodeBaseDialog.compileCommandsErrorIsVisible());
+        REQUIRE(parseCodeBaseDialog.compileCommandsError().isEmpty());
     }
 
-    parseCodeBaseDialog.setCompileCommandsFolder(QString("wsl://kde/build/codevis"));
-    REQUIRE(parseCodeBaseDialog.buildFolderErrorIsVisible());
-    REQUIRE(parseCodeBaseDialog.buildFolderError().contains("wsl"));
+    parseCodeBaseDialog.setCompileCommandsFolder(QString("wsl://kde/build/codevis/compile_commands.json"));
+    REQUIRE(parseCodeBaseDialog.compileCommandsErrorIsVisible());
+    REQUIRE(parseCodeBaseDialog.compileCommandsError().contains("wsl"));
 
     parseCodeBaseDialog.setCompileCommandsFolder(QString(""));
-    REQUIRE(parseCodeBaseDialog.buildFolderError().contains("empty"));
-    REQUIRE(parseCodeBaseDialog.buildFolderErrorIsVisible());
+    REQUIRE(parseCodeBaseDialog.compileCommandsErrorIsVisible());
+    REQUIRE(parseCodeBaseDialog.compileCommandsError().contains("empty"));
 
     // folder without compile_commands_json
     auto dir2 = QTemporaryDir();
 
     parseCodeBaseDialog.setCompileCommandsFolder(dir2.path());
-    REQUIRE(parseCodeBaseDialog.buildFolderErrorIsVisible());
-    REQUIRE(parseCodeBaseDialog.buildFolderError().contains("compile_commands.json"));
+    REQUIRE(parseCodeBaseDialog.compileCommandsErrorIsVisible());
+    REQUIRE(parseCodeBaseDialog.compileCommandsError().contains("compile_commands.json"));
 }
 
 TEST_CASE_METHOD(QTApplicationFixture, "Source Folder validation works correctly")

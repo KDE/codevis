@@ -38,10 +38,17 @@ bool shouldDefaultSelectForCodegen(LakosianNode& node)
     if (node.name() == "non-lakosian group") {
         return false;
     }
+    if (node.name() == "External Libraries") {
+        return false;
+    }
+
     auto *parentNode = &node;
     while (parentNode->parent()) {
         parentNode = parentNode->parent();
         if (parentNode->name() == "non-lakosian group") {
+            return false;
+        }
+        if (parentNode->name() == "External Libraries") {
             return false;
         }
     }

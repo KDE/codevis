@@ -70,6 +70,7 @@ class LVTCLP_EXPORT FilesystemScanner {
     // CREATORS
     explicit FilesystemScanner(lvtmdb::ObjectStore& memDb,
                                const std::filesystem::path& prefix,
+                               const std::filesystem::path& buildPath,
                                const LvtCompilationDatabase& cdb,
                                std::function<void(const std::string&, long)> messageCallback,
                                bool catchCodeAnalysisOutput,

@@ -101,6 +101,7 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
     // The active database session to add objects to
 
     std::filesystem::path d_prefix;
+    std::filesystem::path d_buildFolder;
 
     std::vector<std::filesystem::path> d_nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
@@ -270,6 +271,7 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
                       clang::StringRef file,
                       lvtmdb::ObjectStore& memDb,
                       std::filesystem::path prefix,
+                      std::filesystem::path buildFolder,
                       std::vector<std::filesystem::path> nonLakosians,
                       std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
                       std::shared_ptr<VisitLog> visitLog,

@@ -97,6 +97,7 @@ TEST_CASE("Optional comment callbacks")
     (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
         memDb,
         PREFIX,
+        std::filesystem::path{},
         std::vector<std::filesystem::path>{},
         std::vector<std::pair<std::string, std::string>>{},
         [](const std::string&) {},
@@ -133,6 +134,7 @@ TEST_CASE("Smoke test partial template specialization - Must not crash")
     (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
         memDb,
         PREFIX,
+        std::filesystem::path{},
         std::vector<std::filesystem::path>{},
         std::vector<std::pair<std::string, std::string>>{},
         [](const std::string&) {},
@@ -160,6 +162,7 @@ TEST_CASE("Test global free functions with same name in different compilation un
     (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
         memDb,
         PREFIX,
+        std::filesystem::path{},
         std::vector<std::filesystem::path>{},
         std::vector<std::pair<std::string, std::string>>{},
         [](const std::string&) {},

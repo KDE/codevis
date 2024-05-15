@@ -64,6 +64,7 @@ class LogicalDepConsumer : public clang::ASTConsumer {
                        clang::StringRef file,
                        lvtmdb::ObjectStore& memDb,
                        const std::filesystem::path& prefix,
+                       const std::filesystem::path& buildFolder,
                        const std::vector<std::filesystem::path>& nonLakosians,
                        std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
                        const std::shared_ptr<VisitLog>& visitLog,
@@ -79,6 +80,7 @@ class LogicalDepConsumer : public clang::ASTConsumer {
                   file,
                   memDb,
                   prefix,
+                  buildFolder,
                   nonLakosians,
                   std::move(d_thirdPartyDirs),
                   visitLog,
@@ -132,6 +134,7 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
     lvtmdb::ObjectStore& d_memDb;
 
     std::filesystem::path d_prefix;
+    std::filesystem::path d_buildFolder;
 
     std::vector<std::filesystem::path> d_nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
@@ -155,6 +158,7 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
     // CREATORS
     LogicalDepFrontendAction(lvtmdb::ObjectStore& memDb,
                              std::filesystem::path prefix,
+                             std::filesystem::path buildFolder,
                              std::vector<std::filesystem::path> nonLakosians,
                              std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                              std::function<void(const std::string&)> filenameCallback,
@@ -164,6 +168,7 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
                              std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
         d_memDb(memDb),
         d_prefix(std::move(prefix)),
+        d_buildFolder(buildFolder),
         d_nonLakosianDirs(std::move(nonLakosians)),
         d_thirdPartyDirs(std::move(thirdPartyDirs)),
         d_visitLog_p(std::make_shared<VisitLog>()),
@@ -194,6 +199,7 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
                                                     file,
                                                     d_memDb,
                                                     d_prefix,
+                                                    d_buildFolder,
                                                     d_nonLakosianDirs,
                                                     d_thirdPartyDirs,
                                                     d_visitLog_p,
@@ -226,6 +232,7 @@ namespace Codethink::lvtclp {
 LogicalDepActionFactory::LogicalDepActionFactory(
     lvtmdb::ObjectStore& memDb,
     std::filesystem::path prefix,
+    std::filesystem::path buildFolder,
     std::vector<std::filesystem::path> nonLakosians,
     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
     std::function<void(const std::string&)> filenameCallback,
@@ -235,6 +242,7 @@ LogicalDepActionFactory::LogicalDepActionFactory(
     std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback):
     d_memDb(memDb),
     d_prefix(std::move(prefix)),
+    d_buildFolder(buildFolder),
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_filenameCallback(std::move(filenameCallback)),
@@ -249,6 +257,7 @@ std::unique_ptr<clang::FrontendAction> LogicalDepActionFactory::create()
 {
     return std::make_unique<LogicalDepFrontendAction>(d_memDb,
                                                       d_prefix,
+                                                      d_buildFolder,
                                                       d_nonLakosianDirs,
                                                       d_thirdPartyDirs,
                                                       d_filenameCallback,

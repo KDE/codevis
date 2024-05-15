@@ -462,7 +462,7 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
                                        {"-Igroups/one/onetop", "-Igroups/one/onedep"},
                                        topLevel);
 
-        CppTool tool(topLevel, cmds, topLevel / "database");
+        CppTool tool(topLevel, {}, cmds, topLevel / "database");
         ObjectStore& session = tool.getObjectStore();
 
         // initial parse
@@ -507,7 +507,7 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
             {"-Igroups/one/onetop", "-Igroups/one/onedep"},
             topLevel.string());
 
-        CppTool toolPlus(topLevel, cmdsPlus, topLevel / "database");
+        CppTool toolPlus(topLevel, {}, cmdsPlus, topLevel / "database");
 
         Test_Util::createFile(topLevel / "groups/one/onedep/onedep_newfile.h", R"(
     // onedep_newfile.h
@@ -537,7 +537,7 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
 TEST_CASE("Run Tool on example project")
 {
     StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/hello_world/");
-    CppTool tool(PREFIX + "/hello_world/", cmds, PREFIX + "/hello_world/database");
+    CppTool tool(PREFIX + "/hello_world/", {}, cmds, PREFIX + "/hello_world/database");
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runFull());
@@ -562,7 +562,7 @@ TEST_CASE("Run Tool on example project incrementally")
         "placeholder",
         {"-I" + sourcePath + "/groups/one/onepkg/", "-I" + sourcePath + "/groups/two/twodmo/"},
         sourcePath);
-    CppTool tool(sourcePath, cmds, sourcePath + "database");
+    CppTool tool(sourcePath, {}, cmds, sourcePath + "database");
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runPhysical());
@@ -618,7 +618,7 @@ TEST_CASE("Run Tool on project including other lakosian project")
                                    "placeholder",
                                    {"-I" + prjAPath + "/groups/one/oneaaa/", "-I" + prjBPath + "/groups/two/twoaaa/"},
                                    prjAPath);
-    CppTool tool(prjAPath, cmds, prjAPath + "/database");
+    CppTool tool(prjAPath, {}, cmds, prjAPath + "/database");
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runFull());
@@ -650,7 +650,7 @@ TEST_CASE("Run Tool store test-only dependencies")
         "placeholder",
         {"-I" + prjAPath + "/groups/one/oneaaa/", "-fparse-all-comments"},
         prjAPath);
-    CppTool tool(prjAPath, cmds, prjAPath + "/database");
+    CppTool tool(prjAPath, {}, cmds, prjAPath + "/database");
 
     using Filename = std::string;
     using LineNo = unsigned;
@@ -746,6 +746,7 @@ TEST_CASE("Test run tool with non-lakosian rules")
 
     auto tool = CppTool(
         /*sourcePath=*/prjPath,
+        /* buildPath=*/{},
         /*compileCommandsJsons=*/
         std::vector<std::filesystem::path>{tmpdir.path().string() + "/compile_commands.json"},
         /*databasePath=*/prjPath + "/database",

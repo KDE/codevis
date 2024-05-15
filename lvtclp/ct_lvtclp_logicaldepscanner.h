@@ -61,6 +61,7 @@ class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendAct
     // Database session generator
 
     std::filesystem::path d_prefix;
+    std::filesystem::path d_buildFolder;
 
     std::vector<std::filesystem::path> d_nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
@@ -81,6 +82,7 @@ class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendAct
     // CREATORS
     LogicalDepActionFactory(lvtmdb::ObjectStore& memDb,
                             std::filesystem::path prefix,
+                            std::filesystem::path buildFolder,
                             std::vector<std::filesystem::path> nonLakosians,
                             std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
                             std::function<void(const std::string&)> filenameCallback,

@@ -65,6 +65,7 @@ class LVTCLP_EXPORT DepScanActionFactory : public clang::tooling::FrontendAction
     DepScanActionFactory(
         lvtmdb::ObjectStore& memDb,
         const std::filesystem::path& prefix,
+        const std::filesystem::path& buildFolder,
         const std::vector<std::filesystem::path>& nonLakosians,
         const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
         std::function<void(const std::string&)> filenameCallback, // callback that sends the current filename to the UI

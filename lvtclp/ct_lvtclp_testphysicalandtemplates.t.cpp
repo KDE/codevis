@@ -295,7 +295,7 @@ TEST_CASE_METHOD(PhysicalAndTemplatesFixture, "Physical and Templates")
                                    {"-Igroups/bsl/bslma", "-Igroups/foo/foobar"},
                                    topLevel);
 
-    CppTool tool(topLevel, cmds, ":memory:");
+    CppTool tool(topLevel, {}, cmds, ":memory:");
     REQUIRE(tool.runFull());
     ObjectStore& session = tool.getObjectStore();
     testFilesExist(session);
@@ -454,7 +454,7 @@ TEST_CASE_METHOD(NonLakosianFixture, "Non-lakosian extra levels of hierarchy")
         {"-Ithirdparty"},
         d_topLevel);
 
-    CppTool tool(d_topLevel, cmds, ":memory:");
+    CppTool tool(d_topLevel, {}, cmds, ":memory:");
     REQUIRE(tool.runFull());
     ObjectStore& session = tool.getObjectStore();
 

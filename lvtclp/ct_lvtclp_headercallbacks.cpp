@@ -37,6 +37,7 @@ namespace Codethink::lvtclp {
 HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
                                  lvtmdb::ObjectStore& memDb,
                                  std::filesystem::path const& prefix,
+                                 std::filesystem::path const& buildPath,
                                  std::vector<std::filesystem::path> nonLakosians,
                                  std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                                  std::vector<llvm::GlobPattern> ignoreGlobs,
@@ -45,6 +46,7 @@ HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
     sourceManager(*sm),
     d_memDb(memDb),
     d_prefix(std::filesystem::weakly_canonical(prefix)),
+    d_buildPath(std::filesystem::weakly_canonical(buildPath)),
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_ignoreGlobs(std::move(ignoreGlobs)),
@@ -82,7 +84,11 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
     if (d_enableLakosianRules) {
         filePtr = ClpUtil::writeSourceFile(realPathStr, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
     } else {
-        filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPathStr, d_prefix.string(), RelativePath.str());
+        filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                        realPathStr,
+                                                        d_prefix.string(),
+                                                        d_buildPath.string(),
+                                                        RelativePath.str());
     }
 
     if (!filePtr || !d_sourceFile_p || filePtr == d_sourceFile_p) {
@@ -99,58 +105,59 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
         (*d_headerLocationCallback)(sourceFile, includedFile, lineNo);
     }
 
-    if (d_enableLakosianRules) {
-        // add include relationship d_sourceFile_p -> filePtr
-        lvtmdb::FileObject::addIncludeRelation(d_sourceFile_p, filePtr);
-
-        lvtmdb::ComponentObject *sourceComp = nullptr;
-        lvtmdb::PackageObject *sourcePkg = nullptr;
-        d_sourceFile_p->withROLock([&sourceComp, &sourcePkg, this]() {
-            sourceComp = d_sourceFile_p->component();
-            sourcePkg = d_sourceFile_p->package();
-        });
-
-        lvtmdb::ComponentObject *targetComp = nullptr;
-        lvtmdb::PackageObject *targetPkg = nullptr;
-        filePtr->withROLock([&targetComp, &targetPkg, &filePtr]() {
-            targetComp = filePtr->component();
-            targetPkg = filePtr->package();
-        });
-
-        if (sourceComp && targetComp && sourceComp != targetComp) {
-            lvtmdb::ComponentObject::addDependency(sourceComp, targetComp);
-        }
-
-        if (sourcePkg && targetPkg && sourcePkg != targetPkg) {
-            lvtmdb::PackageObject::addDependency(sourcePkg, targetPkg);
-
-            lvtmdb::PackageObject *sourceParent = nullptr;
-            lvtmdb::PackageObject *targetParent = nullptr;
-            sourcePkg->withROLock([&sourcePkg, &sourceParent]() {
-                sourceParent = sourcePkg->parent();
-            });
-            targetPkg->withROLock([&targetPkg, &targetParent]() {
-                targetParent = targetPkg->parent();
-            });
-
-            if (sourceParent == nullptr) {
-                // Source package is a standalone package. It is necessary to register the dependency to the package
-                // group
-                if (targetParent != nullptr) {
-                    lvtmdb::PackageObject::addDependency(sourcePkg, targetParent);
-                }
-            }
-
-            if (targetParent == nullptr) {
-                // Target package is a standalone package. It is necessary to register the dependency from the package
-                // group
-                if (sourceParent != nullptr) {
-                    lvtmdb::PackageObject::addDependency(sourceParent, targetPkg);
-                }
-            }
-        }
-    } else {
+    if (!d_enableLakosianRules) {
         nonLakosian::ClpUtil::addSourceFileRelationWithParentPropagation(d_sourceFile_p, filePtr);
+        return;
+    }
+
+    // add include relationship d_sourceFile_p -> filePtr
+    lvtmdb::FileObject::addIncludeRelation(d_sourceFile_p, filePtr);
+
+    lvtmdb::ComponentObject *sourceComp = nullptr;
+    lvtmdb::PackageObject *sourcePkg = nullptr;
+    d_sourceFile_p->withROLock([&sourceComp, &sourcePkg, this]() {
+        sourceComp = d_sourceFile_p->component();
+        sourcePkg = d_sourceFile_p->package();
+    });
+
+    lvtmdb::ComponentObject *targetComp = nullptr;
+    lvtmdb::PackageObject *targetPkg = nullptr;
+    filePtr->withROLock([&targetComp, &targetPkg, &filePtr]() {
+        targetComp = filePtr->component();
+        targetPkg = filePtr->package();
+    });
+
+    if (sourceComp && targetComp && sourceComp != targetComp) {
+        lvtmdb::ComponentObject::addDependency(sourceComp, targetComp);
+    }
+
+    if (sourcePkg && targetPkg && sourcePkg != targetPkg) {
+        lvtmdb::PackageObject::addDependency(sourcePkg, targetPkg);
+
+        lvtmdb::PackageObject *sourceParent = nullptr;
+        lvtmdb::PackageObject *targetParent = nullptr;
+        sourcePkg->withROLock([&sourcePkg, &sourceParent]() {
+            sourceParent = sourcePkg->parent();
+        });
+        targetPkg->withROLock([&targetPkg, &targetParent]() {
+            targetParent = targetPkg->parent();
+        });
+
+        if (sourceParent == nullptr) {
+            // Source package is a standalone package. It is necessary to register the dependency to the package
+            // group
+            if (targetParent != nullptr) {
+                lvtmdb::PackageObject::addDependency(sourcePkg, targetParent);
+            }
+        }
+
+        if (targetParent == nullptr) {
+            // Target package is a standalone package. It is necessary to register the dependency from the package
+            // group
+            if (sourceParent != nullptr) {
+                lvtmdb::PackageObject::addDependency(sourceParent, targetPkg);
+            }
+        }
     }
 }
 
@@ -177,7 +184,11 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
         d_sourceFile_p =
             ClpUtil::writeSourceFile(realPath, isHeader, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
     } else {
-        d_sourceFile_p = nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPath, d_prefix.string(), d_prefix.string());
+        d_sourceFile_p = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                               realPath,
+                                                               d_prefix.string(),
+                                                               d_buildPath.string(),
+                                                               d_prefix.string());
     }
 }
 

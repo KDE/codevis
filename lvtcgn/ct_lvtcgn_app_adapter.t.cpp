@@ -29,7 +29,6 @@
 #include <pybind11/pybind11.h>
 #pragma pop_macro("slots")
 
-#include <ctime>
 #include <test-project-paths.h>
 
 using namespace Codethink::lvtcgn::app;
@@ -113,6 +112,7 @@ TEST_CASE("Code generation adapter")
 TEST_CASE("CMake code generation script")
 {
     auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_PYSCRIPTS_PATH) + "/cmake/codegenerator.py";
+    std::cout << "Script Path" << cmakeGeneratorPath << std::endl;
 
     SECTION("Basic package project without package groups")
     {
@@ -161,6 +161,7 @@ TEST_CASE("CMake code generation script")
         auto *pkgGrpB = ns.addPackage("pkgGrpB", "pkgGrpB").value();
         auto *pkgB = ns.addPackage("pkgB", "pkgGrpB/pkgB", pkgGrpB).value();
         auto *componentB = ns.addComponent("componentB", "pkgGrpB/pkgB/componentB", pkgB).value();
+
         ns.addPhysicalDependency(pkgGrpA, pkgGrpB).expect("Unexpected error on relationship pkgGrpA->pkgGrpB");
         ns.addPhysicalDependency(pkgA, pkgB).expect("Unexpected error on relationship pkgA->pkgB");
         ns.addPhysicalDependency(componentA, componentB)

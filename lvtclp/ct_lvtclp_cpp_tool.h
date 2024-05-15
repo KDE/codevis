@@ -65,6 +65,7 @@ class LVTCLP_EXPORT CppTool : public QObject {
 
     // CREATORS
     CppTool(std::filesystem::path sourcePath,
+            std::filesystem::path buildPath,
             const std::vector<std::filesystem::path>& compileCommandsJsons,
             const std::filesystem::path& databasePath,
             unsigned numThreads = 1,
@@ -76,6 +77,7 @@ class LVTCLP_EXPORT CppTool : public QObject {
             bool printToConsole = false);
 
     CppTool(std::filesystem::path sourcePath,
+            std::filesystem::path buildPath,
             const clang::tooling::CompileCommand& compileCommand,
             const std::filesystem::path& databasePath,
             const std::vector<std::string>& ignoreList = {},
@@ -86,6 +88,7 @@ class LVTCLP_EXPORT CppTool : public QObject {
             bool printToConsole = false);
 
     CppTool(std::filesystem::path sourcePath,
+            std::filesystem::path buildPath,
             const clang::tooling::CompilationDatabase& db,
             const std::filesystem::path& databasePath,
             unsigned numThreads = 1,

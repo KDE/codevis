@@ -36,6 +36,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
   private:
     lvtmdb::ObjectStore& d_memDb;
     std::filesystem::path d_prefix;
+    std::filesystem::path d_buildFolder;
     std::vector<std::filesystem::path> d_nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
     std::function<void(const std::string&)> d_filenameCallback;
@@ -46,6 +47,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
   public:
     FrontendAction(lvtmdb::ObjectStore& memDb,
                    std::filesystem::path prefix,
+                   std::filesystem::path buildFolder,
                    std::vector<std::filesystem::path> nonLakosians,
                    std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                    std::function<void(const std::string&)> filenameCallback,
@@ -54,6 +56,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
                    bool enableLakosianRules):
         d_memDb(memDb),
         d_prefix(std::move(prefix)),
+        d_buildFolder(buildFolder),
         d_nonLakosianDirs(std::move(nonLakosians)),
         d_thirdPartyDirs(std::move(thirdPartyDirs)),
         d_filenameCallback(std::move(filenameCallback)),
@@ -78,6 +81,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
         pp.addPPCallbacks(std::make_unique<lvtclp::HeaderCallbacks>(&compiler.getSourceManager(),
                                                                     d_memDb,
                                                                     d_prefix,
+                                                                    d_buildFolder,
                                                                     d_nonLakosianDirs,
                                                                     d_thirdPartyDirs,
                                                                     d_ignoreGlobs,
@@ -119,6 +123,7 @@ namespace Codethink::lvtclp {
 struct DepScanActionFactory::Private {
     lvtmdb::ObjectStore& memDb;
     std::filesystem::path prefix;
+    std::filesystem::path buildFolder;
     std::vector<std::filesystem::path> nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> thirdPartyDirs;
     std::function<void(const std::string&)> filenameCallback;
@@ -128,6 +133,7 @@ struct DepScanActionFactory::Private {
 
     Private(lvtmdb::ObjectStore& memDb,
             std::filesystem::path prefix,
+            std::filesystem::path buildFolder,
             std::vector<std::filesystem::path> nonLakosians,
             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
             std::function<void(const std::string&)> filenameCallback,
@@ -136,6 +142,7 @@ struct DepScanActionFactory::Private {
             bool enableLakosianRules):
         memDb(memDb),
         prefix(std::move(prefix)),
+        buildFolder(buildFolder),
         nonLakosianDirs(std::move(nonLakosians)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         filenameCallback(std::move(filenameCallback)),
@@ -149,6 +156,7 @@ struct DepScanActionFactory::Private {
 DepScanActionFactory::DepScanActionFactory(
     lvtmdb::ObjectStore& memDb,
     const std::filesystem::path& prefix,
+    const std::filesystem::path& buildFolder,
     const std::vector<std::filesystem::path>& nonLakosians,
     const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
     std::function<void(const std::string&)> filenameCallback,
@@ -157,6 +165,7 @@ DepScanActionFactory::DepScanActionFactory(
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
     d(std::make_unique<DepScanActionFactory::Private>(memDb,
                                                       prefix,
+                                                      buildFolder,
                                                       nonLakosians,
                                                       thirdPartyDirs,
                                                       std::move(filenameCallback),
@@ -172,6 +181,7 @@ std::unique_ptr<clang::FrontendAction> DepScanActionFactory::create()
 {
     return std::make_unique<FrontendAction>(d->memDb,
                                             d->prefix,
+                                            d->buildFolder,
                                             d->nonLakosianDirs,
                                             d->thirdPartyDirs,
                                             d->filenameCallback,

@@ -62,6 +62,7 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
     void setCodebasePath(const QString& path);
     [[nodiscard]] QString codebasePath() const;
     [[nodiscard]] std::filesystem::path buildPath() const;
+    [[nodiscard]] std::filesystem::path compileCommandsPath() const;
     [[nodiscard]] std::filesystem::path sourcePath() const;
 
     Q_SLOT void updateDatabase();
@@ -122,6 +123,8 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
 
     Q_SLOT void searchForBuildFolder();
     // called when one clicks on the `search` button for the build folder.
+
+    Q_SLOT void searchForCompileCommands();
 
     Q_SLOT void searchForNonLakosianDir();
     // called when one clicks on the 'search' button for the non-lakosian dirs

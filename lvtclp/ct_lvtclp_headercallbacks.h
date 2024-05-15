@@ -79,6 +79,7 @@ class HeaderCallbacks : public clang::PPCallbacks {
     // The active in-memory database session
 
     std::filesystem::path d_prefix;
+    std::filesystem::path d_buildPath;
 
     std::vector<std::filesystem::path> d_nonLakosianDirs;
     std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
@@ -92,6 +93,7 @@ class HeaderCallbacks : public clang::PPCallbacks {
     HeaderCallbacks(clang::SourceManager *sm,
                     lvtmdb::ObjectStore& memDb,
                     std::filesystem::path const& prefix,
+                    std::filesystem::path const& buildPath,
                     std::vector<std::filesystem::path> nonLakosians,
                     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                     std::vector<llvm::GlobPattern> ignoreGlobs,

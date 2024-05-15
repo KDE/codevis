@@ -73,6 +73,7 @@ namespace {
 
 struct CommandLineArgs {
     std::filesystem::path sourcePath;
+    std::filesystem::path buildPath;
     std::filesystem::path dbPath;
     std::vector<std::filesystem::path> compilationDbPaths;
     QJsonDocument compilationCommand;
@@ -116,6 +117,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
 
     const QCommandLineOption helpOption = parser.addHelpOption();
     const QCommandLineOption sourcePath("source-path", "Path for source code", "SOURCE_PATH", "");
+    const QCommandLineOption buildPath("source-path", "Path for the build", "SOURCE_PATH", "");
     const QCommandLineOption numThreads("j", "Number of threads to use", "NUM_THREADS", "1");
     const QCommandLineOption ignoreList(
         "ignore",
@@ -159,6 +161,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
                        compileCommandsJson,
                        compileCommand,
                        sourcePath,
+                       buildPath,
                        numThreads,
                        ignoreList,
                        pkgmap,
@@ -299,7 +302,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
     args.verbose = parser.isSet(verbose);
     args.disableLakosianRules = parser.isSet(disableLakosianRules);
     args.sourcePath = parser.value(sourcePath).toStdString();
-
+    args.buildPath = parser.value(buildPath).toStdString();
     return CommandLineParseResult::Ok;
 }
 
@@ -418,12 +421,21 @@ int main(int argc, char **argv)
     if (!dbPath.endsWith(".db")) {
         args.dbPath += ".db";
     }
+
     if (!args.sourcePath.empty()) {
         if (!exists(args.sourcePath)) {
             std::cerr << "Given source path doesn't exist: '" << args.sourcePath.string() << "'\n";
             return EXIT_FAILURE;
         }
         args.sourcePath = std::filesystem::canonical(args.sourcePath).string();
+    }
+
+    if (!args.buildPath.empty()) {
+        if (!exists(args.buildPath)) {
+            std::cerr << "Given build path doesn't exist: '" << args.buildPath.string() << "'\n";
+            return EXIT_FAILURE;
+        }
+        args.buildPath = std::filesystem::canonical(args.buildPath).string();
     }
 
     if (!args.packageMappings.empty()) {
@@ -452,6 +464,7 @@ int main(int argc, char **argv)
     auto sharedObjectStore = std::make_shared<Codethink::lvtmdb::ObjectStore>();
     auto clang_tool = !args.compilationDbPaths.empty()
         ? std::make_unique<CppTool>(args.sourcePath,
+                                    args.buildPath,
                                     args.compilationDbPaths,
                                     args.dbPath,
                                     args.numThreads,
@@ -462,6 +475,7 @@ int main(int argc, char **argv)
                                     !args.disableLakosianRules,
                                     args.verbose)
         : std::make_unique<CppTool>(args.sourcePath,
+                                    args.buildPath,
                                     compileCommand.value(),
                                     args.dbPath,
                                     args.ignoreList,

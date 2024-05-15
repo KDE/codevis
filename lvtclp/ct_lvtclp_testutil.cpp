@@ -119,7 +119,7 @@ bool Test_Util::runOnCode(lvtmdb::ObjectStore& mdb, const std::string& source, c
 
     auto prefix = std::filesystem::current_path();
     LogicalDepActionFactory
-        actionFactory(mdb, prefix, {}, {}, callback, messageCallback, false, /*enableLakosianRules=*/true);
+        actionFactory(mdb, prefix, {}, {}, {}, callback, messageCallback, false, /*enableLakosianRules=*/true);
 
     auto frontendAction = actionFactory.create();
 

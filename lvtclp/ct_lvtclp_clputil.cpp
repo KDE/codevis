@@ -588,6 +588,7 @@ inline QString asLinuxPath(QString path)
 lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
                                              const std::string& filepath,
                                              const std::filesystem::path& sourceDirectory,
+                                             const std::filesystem::path& buildDirectory,
                                              const std::filesystem::path& inclusionPrefixPath)
 {
     auto memDbLock = memDb.rwLock();
@@ -597,7 +598,10 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
     auto mainFolderName = QString{};
     auto currentVirtualWorkPath = QString{};
     auto relativePath = QString{};
-    if (QString::fromStdString(filepath).contains(QString::fromStdString(sourceDirectory.string()))) {
+    const bool inSource = QString::fromStdString(filepath).contains(QString::fromStdString(sourceDirectory.string()));
+    const bool inBuild = QString::fromStdString(filepath).contains(QString::fromStdString(buildDirectory.string()));
+
+    if (inSource || inBuild) {
         // If it is a file in the source directory, it takes precedence for qualified name deduction
         auto prefixAsString = asLinuxPath(QString::fromStdString(sourceDirectory.string()));
         mainFolderName = prefixAsString.split(LINUX_SEP).last();

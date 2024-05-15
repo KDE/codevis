@@ -76,6 +76,11 @@ struct FilesystemScanner::Private {
     // Memory database
     std::filesystem::path prefix;
     // common prefix of paths
+
+    std::filesystem::path buildPath;
+    // where our project is being build
+    // needed in case of sources generated as build artifacts
+
     const LvtCompilationDatabase& cdb;
     // compilation database used so that we don't add things deliberately
     // configured out of the build
@@ -105,6 +110,7 @@ struct FilesystemScanner::Private {
 
     explicit Private(lvtmdb::ObjectStore& memDb,
                      std::filesystem::path prefix,
+                     std::filesystem::path buildPath,
                      const LvtCompilationDatabase& cdb,
                      std::function<void(const std::string, long)> messageCallback,
                      std::vector<std::filesystem::path> nonLakosianDirs,
@@ -113,6 +119,7 @@ struct FilesystemScanner::Private {
                      bool enableLakosianRules):
         memDb(memDb),
         prefix(std::move(prefix)),
+        buildPath(buildPath),
         cdb(cdb),
         nonLakosianDirs(std::move(nonLakosianDirs)),
         messageCallback(std::move(messageCallback)),
@@ -125,6 +132,7 @@ struct FilesystemScanner::Private {
 
 FilesystemScanner::FilesystemScanner(lvtmdb::ObjectStore& memDb,
                                      const std::filesystem::path& prefix,
+                                     const std::filesystem::path& buildPath,
                                      const LvtCompilationDatabase& cdb,
                                      std::function<void(const std::string&, long)> messageCallback,
                                      bool catchCodeAnalysisOutput,
@@ -133,6 +141,7 @@ FilesystemScanner::FilesystemScanner(lvtmdb::ObjectStore& memDb,
                                      bool enableLakosianRules):
     d(std::make_unique<FilesystemScanner::Private>(memDb,
                                                    prefix,
+                                                   buildPath,
                                                    cdb,
                                                    std::move(messageCallback),
                                                    std::move(nonLakosianDirs),
@@ -311,7 +320,12 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
     if (d->enableLakosianRules) {
         processFileUsingLakosianRules(path);
     } else {
-        nonLakosian::ClpUtil::writeSourceFile(d->memDb, path.string(), d->prefix.string(), d->prefix.string());
+        std::cout << "Writting source path: " << path << std::endl;
+        nonLakosian::ClpUtil::writeSourceFile(d->memDb,
+                                              path.string(),
+                                              d->prefix.string(),
+                                              d->buildPath.string(),
+                                              d->prefix.string());
     }
 }
 

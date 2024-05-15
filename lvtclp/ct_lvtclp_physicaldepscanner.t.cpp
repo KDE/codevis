@@ -88,6 +88,7 @@ TEST_CASE("Optional include location callbacks")
     auto err = executor.execute(std::make_unique<DepScanActionFactory>(
         memDb,
         PREFIX,
+        std::filesystem::path{},
         std::vector<std::filesystem::path>{},
         std::vector<std::pair<std::string, std::string>>{},
         [](auto&& _) {},

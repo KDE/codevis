@@ -213,6 +213,7 @@ struct LVTCLP_EXPORT ClpUtil {
     static lvtmdb::FileObject *writeSourceFile(lvtmdb::ObjectStore& memDb,
                                                const std::string& filepath,
                                                const std::filesystem::path& sourceDirectory,
+                                               const std::filesystem::path& buildDirectory,
                                                const std::filesystem::path& inclusionPrefixPath);
 
     static void addSourceFileRelationWithParentPropagation(lvtmdb::FileObject *fromFileObj,

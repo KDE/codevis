@@ -36,7 +36,6 @@
 #include <llvm/Support/GlobPattern.h>
 #include <mutex>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -170,16 +169,19 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
     std::function<void(const std::string&, long)> d_messageCallback;
     std::vector<clang::tooling::CompileCommand> d_compileCommands;
     std::filesystem::path d_commonParent;
+    std::filesystem::path d_buildPath;
     std::vector<llvm::GlobPattern> d_ignorePatterns;
 
   public:
     // CREATORS
     explicit PartialCompilationDatabase(std::filesystem::path sourcePath,
+                                        std::filesystem::path buildPath,
                                         std::vector<clang::tooling::CompileCommand> compileCommands,
                                         std::function<void(const std::string&, long)> messageCallback):
         d_messageCallback(std::move(messageCallback)),
         d_compileCommands(std::move(compileCommands)),
-        d_commonParent(std::move(sourcePath))
+        d_commonParent(std::move(sourcePath)),
+        d_buildPath(buildPath)
     {
     }
 
@@ -374,6 +376,7 @@ namespace Codethink::lvtclp {
 
 struct CppTool::Private {
     std::filesystem::path sourcePath;
+    std::filesystem::path buildPath;
     std::optional<clang::tooling::CompileCommand> compileCommand;
     std::function<void(const std::string&, long)> messageCallback;
     std::vector<std::filesystem::path> compileCommandsJsons;
@@ -467,6 +470,7 @@ struct CppTool::Private {
 
     Private(CppTool *tool,
             std::filesystem::path inSourcePath,
+            std::filesystem::path buildPath,
             std::vector<std::filesystem::path> inCompileCommandsJsons,
             std::filesystem::path inDatabasePath,
             unsigned numThreadsIn,
@@ -477,6 +481,7 @@ struct CppTool::Private {
             bool enableLakosianRules,
             bool inPrintToConsole = true):
         sourcePath(std::move(inSourcePath)),
+        buildPath(std::move(buildPath)),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
         }),
@@ -494,6 +499,7 @@ struct CppTool::Private {
 
     Private(CppTool *tool,
             std::filesystem::path inSourcePath,
+            std::filesystem::path buildPath,
             clang::tooling::CompileCommand compileCommand,
             std::filesystem::path inDatabasePath,
             const std::vector<std::string>& ignoreList,
@@ -503,6 +509,7 @@ struct CppTool::Private {
             bool enableLakosianRules,
             bool inPrintToConsole = true):
         sourcePath(std::move(inSourcePath)),
+        buildPath(std::move(buildPath)),
         compileCommand(std::in_place, compileCommand),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
@@ -520,6 +527,7 @@ struct CppTool::Private {
 
     Private(CppTool *tool,
             std::filesystem::path inSourcePath,
+            std::filesystem::path buildPath,
             const std::vector<clang::tooling::CompileCommand>& compileCommands,
             std::filesystem::path inDatabasePath,
             unsigned numThreadsIn,
@@ -530,6 +538,7 @@ struct CppTool::Private {
             bool enableLakosianRules,
             bool inPrintToConsole):
         sourcePath(std::move(inSourcePath)),
+        buildPath(std::move(buildPath)),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
         }),
@@ -537,7 +546,7 @@ struct CppTool::Private {
         nonLakosianDirs(std::move(nonLakosianDirs)),
         thirdPartyDirs(std::move(thirdPartyDirs)),
         printToConsole(inPrintToConsole),
-        compilationDb(std::in_place, sourcePath, compileCommands, messageCallback),
+        compilationDb(std::in_place, sourcePath, buildPath, compileCommands, messageCallback),
         enableLakosianRules(enableLakosianRules),
         userProvidedExtraCompileCommandsArgs(userProvidedExtraCompileCommandsArgs)
     {
@@ -547,6 +556,7 @@ struct CppTool::Private {
 };
 
 CppTool::CppTool(std::filesystem::path sourcePath,
+                 std::filesystem::path buildPath,
                  const std::vector<std::filesystem::path>& compileCommandsJsons,
                  const std::filesystem::path& databasePath,
                  unsigned numThreads,
@@ -558,6 +568,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
                                          std::move(sourcePath),
+                                         std::move(buildPath),
                                          compileCommandsJsons,
                                          databasePath,
                                          numThreads,
@@ -571,6 +582,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
 }
 
 CppTool::CppTool(std::filesystem::path sourcePath,
+                 std::filesystem::path buildPath,
                  const clang::tooling::CompileCommand& compileCommand,
                  const std::filesystem::path& databasePath,
                  const std::vector<std::string>& ignoreList,
@@ -581,6 +593,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
                                          std::move(sourcePath),
+                                         std::move(buildPath),
                                          compileCommand,
                                          databasePath,
                                          ignoreList,
@@ -593,6 +606,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
 }
 
 CppTool::CppTool(std::filesystem::path sourcePath,
+                 std::filesystem::path buildPath,
                  const clang::tooling::CompilationDatabase& db,
                  const std::filesystem::path& databasePath,
                  unsigned numThreads,
@@ -604,6 +618,7 @@ CppTool::CppTool(std::filesystem::path sourcePath,
                  bool printToConsole):
     d(std::make_unique<CppTool::Private>(this,
                                          std::move(sourcePath),
+                                         std::move(buildPath),
                                          db.getAllCompileCommands(),
                                          databasePath,
                                          numThreads,
@@ -677,9 +692,12 @@ bool CppTool::processCompilationDatabase()
                 return false;
             }
         }
-        d->compilationDb.emplace(d->sourcePath, compDb.getAllCompileCommands(), d->messageCallback);
+        d->compilationDb.emplace(d->sourcePath, d->buildPath, compDb.getAllCompileCommands(), d->messageCallback);
     } else if (d->compileCommand.has_value()) {
-        d->compilationDb.emplace(d->sourcePath, std::vector({d->compileCommand.value()}), d->messageCallback);
+        d->compilationDb.emplace(d->sourcePath,
+                                 d->buildPath,
+                                 std::vector({d->compileCommand.value()}),
+                                 d->messageCallback);
     } else {
         std::cerr << "No compilation database nor compilation command on the tool execution";
         return false;
@@ -811,6 +829,7 @@ bool CppTool::findPhysicalEntities(bool doIncremental)
 
     FilesystemScanner scanner(d->memDb(),
                               d->compilationDb->commonParent(),
+                              d->buildPath,
                               *d->compilationDb,
                               d->messageCallback,
                               d->printToConsole,
@@ -894,6 +913,7 @@ bool CppTool::runPhysical(bool skipScan)
     std::unique_ptr<clang::tooling::FrontendActionFactory> dependencyScanner =
         std::make_unique<DepScanActionFactory>(d->memDb(),
                                                d->compilationDb->commonParent(),
+                                               d->buildPath,
                                                d->nonLakosianDirs,
                                                d->thirdPartyDirs,
                                                filenameCallback,
@@ -991,6 +1011,7 @@ bool CppTool::runFull(bool skipPhysical)
     std::unique_ptr<clang::tooling::FrontendActionFactory> actionFactory =
         std::make_unique<LogicalDepActionFactory>(d->memDb(),
                                                   d->compilationDb->commonParent(),
+                                                  d->buildPath,
                                                   d->nonLakosianDirs,
                                                   d->thirdPartyDirs,
                                                   filenameCallback,

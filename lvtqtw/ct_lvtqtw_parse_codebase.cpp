@@ -293,9 +293,9 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
 
     connect(ui->btnSaveOutput, &QPushButton::clicked, this, &ParseCodebaseDialog::saveOutput);
 
-    connect(ui->searchCompileCommands, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForBuildFolder);
-
+    connect(ui->searchCompileCommands, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForCompileCommands);
     connect(ui->nonLakosiansSearch, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForNonLakosianDir);
+    connect(ui->buildFolderSearch, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForBuildFolder);
     connect(ui->sourceFolderSearch, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForSourceFolder);
     connect(ui->thirdPartyPkgMappingBtn, &QPushButton::clicked, this, &ParseCodebaseDialog::selectThirdPartyPkgMapping);
 
@@ -516,7 +516,7 @@ QString ParseCodebaseDialog::codebasePath() const
 void ParseCodebaseDialog::searchForBuildFolder()
 {
     auto openDir = [&]() {
-        auto lastDir = QDir{ui->compileCommandsFolder->text()};
+        auto lastDir = QDir{ui->buildFolder->text()};
         if (!lastDir.isEmpty() && lastDir.exists()) {
             return lastDir.canonicalPath();
         }
@@ -529,11 +529,7 @@ void ParseCodebaseDialog::searchForBuildFolder()
         return;
     }
 
-    ui->compileCommandsFolder->setText(buildDirectory);
-
-    // Tries to determine the source folder automatically
-    auto sourceFolderGuess = std::filesystem::canonical(std::filesystem::path(buildDirectory.toStdString()) / "..");
-    ui->sourceFolder->setText(QString::fromStdString(sourceFolderGuess.string()));
+    ui->buildFolder->setText(buildDirectory);
 }
 
 void ParseCodebaseDialog::searchForSourceFolder()
@@ -552,6 +548,26 @@ void ParseCodebaseDialog::searchForSourceFolder()
         return;
     }
     ui->sourceFolder->setText(dir);
+}
+
+void ParseCodebaseDialog::searchForCompileCommands()
+{
+    auto openDir = [&]() {
+        auto lastDir = QDir{ui->compileCommandsFolder->text()};
+        if (!lastDir.isEmpty() && lastDir.exists()) {
+            return lastDir.canonicalPath();
+        }
+        return QDir::homePath();
+    }();
+
+    const QString buildDirectory =
+        QFileDialog::getOpenFileName(this, tr("Compile Commands"), openDir, "compile_commands.json");
+
+    if (buildDirectory.isEmpty()) {
+        return;
+    }
+
+    ui->compileCommandsFolder->setText(buildDirectory);
 }
 
 void ParseCodebaseDialog::searchForNonLakosianDir()
@@ -603,8 +619,7 @@ void ParseCodebaseDialog::saveOutput()
 
     const QString lPath = directory.toLocalFile();
 
-    const std::filesystem::path compile_commands_orig =
-        (ui->compileCommandsFolder->text() + QDir::separator() + COMPILE_COMMANDS).toStdString();
+    const std::filesystem::path compile_commands_orig = ui->compileCommandsFolder->text().toStdString();
     const std::filesystem::path compile_commands_dest = (lPath + QDir::separator() + COMPILE_COMMANDS).toStdString();
     try {
         std::filesystem::copy_file(compile_commands_orig, compile_commands_dest);
@@ -722,17 +737,16 @@ void ParseCodebaseDialog::initParse()
     }
 
     d->parseTimer.restart();
-    const auto compileCommandsDir = ui->compileCommandsFolder->text();
-    const auto compileCommandsJson = (compileCommandsDir + QDir::separator() + COMPILE_COMMANDS).toStdString();
-    const auto compileCommandsExists = QFileInfo::exists(QString::fromStdString(compileCommandsJson));
+    const auto compileCommandsJson = ui->compileCommandsFolder->text();
+    const auto compileCommandsExists = QFileInfo::exists(compileCommandsJson);
     const auto physicalRun = d->dialogState == State::RunPhysicalOnly || d->dialogState == State::RunAllPhysical;
     const auto mustGenerateCompileCommands = physicalRun && (!compileCommandsExists || ui->runCmake->checkState());
     const auto ignoreList = ignoredItemsAsStdVec();
     const auto nonLakosianDirs = nonLakosianDirsAsStdVec();
     if (mustGenerateCompileCommands) {
-        runCMakeAndStartParse(compileCommandsJson, ignoreList, nonLakosianDirs);
+        runCMakeAndStartParse(compileCommandsJson.toStdString(), ignoreList, nonLakosianDirs);
     } else {
-        prepareParse(compileCommandsJson, ignoreList, nonLakosianDirs);
+        prepareParse(compileCommandsJson.toStdString(), ignoreList, nonLakosianDirs);
     }
 }
 
@@ -785,6 +799,7 @@ void ParseCodebaseDialog::initTools(const std::string& compileCommandsJson,
     if (!d->tool_p) {
         auto disableLakosianRules = (ui->disableLakosianRules->checkState() == Qt::Checked);
         d->tool_p = std::make_unique<lvtclp::CppTool>(sourcePath(),
+                                                      buildPath(),
                                                       std::vector<std::filesystem::path>{compileCommandsJson},
                                                       codebasePath().toStdString(),
                                                       ui->threadCount->value(),
@@ -1140,7 +1155,7 @@ void ParseCodebaseDialog::receivedMessage(const QString& message, long threadId)
     textView->appendText(message);
 }
 
-std::filesystem::path ParseCodebaseDialog::buildPath() const
+std::filesystem::path ParseCodebaseDialog::compileCommandsPath() const
 {
     return ui->compileCommandsFolder->text().toStdString();
 }
@@ -1148,6 +1163,11 @@ std::filesystem::path ParseCodebaseDialog::buildPath() const
 std::filesystem::path ParseCodebaseDialog::sourcePath() const
 {
     return ui->sourceFolder->text().toStdString();
+}
+
+std::filesystem::path ParseCodebaseDialog::buildPath() const
+{
+    return ui->buildFolder->text().toStdString();
 }
 
 void ParseCodebaseDialog::removeParseMessageTabs()

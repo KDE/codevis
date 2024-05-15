@@ -324,7 +324,7 @@ TEST_CASE_METHOD(PhysicalFileUpdateManagerFixture, "File update manager physical
                                    topLevel);
 
     INFO("Using top level tmp path = '" << topLevel.string() << "'");
-    CppTool tool(topLevel, cmds, ":memory:");
+    CppTool tool(topLevel, {}, cmds, ":memory:");
     REQUIRE(tool.runFull());
 
     ObjectStore& session = tool.getObjectStore();

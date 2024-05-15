@@ -123,6 +123,7 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
                                      clang::StringRef file,
                                      lvtmdb::ObjectStore& memDb,
                                      std::filesystem::path prefix,
+                                     std::filesystem::path buildFolder,
                                      std::vector<std::filesystem::path> nonLakosians,
                                      std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
                                      std::shared_ptr<VisitLog> visitLog,
@@ -133,6 +134,7 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
     Context(Context),
     d_memDb(memDb),
     d_prefix(std::filesystem::weakly_canonical(prefix)),
+    d_buildFolder(buildFolder),
     d_nonLakosianDirs(std::move(nonLakosians)),
     d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_visitLog_p(std::move(visitLog)),
@@ -145,8 +147,11 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
         sourceFilePtr =
             ClpUtil::writeSourceFile(file.str(), false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
     } else {
-        sourceFilePtr =
-            nonLakosian::ClpUtil::writeSourceFile(d_memDb, file.str(), d_prefix.string(), d_prefix.string());
+        sourceFilePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                              file.str(),
+                                                              d_prefix.string(),
+                                                              d_buildFolder.string(),
+                                                              d_prefix.string());
     }
 }
 
@@ -190,7 +195,11 @@ bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
         if (d_enableLakosianRules) {
             return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
         } else {
-            return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+            return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                         sourceFile,
+                                                         d_prefix.string(),
+                                                         d_buildFolder.string(),
+                                                         d_prefix.string());
         }
     }();
 
@@ -738,7 +747,11 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
                                                 d_nonLakosianDirs,
                                                 d_thirdPartyDirs);
             } else {
-                return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+                return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                             sourceFile,
+                                                             d_prefix.string(),
+                                                             d_buildFolder.string(),
+                                                             d_prefix.string());
             }
         }();
 
@@ -1789,7 +1802,11 @@ void LogicalDepVisitor::addUDTSourceFile(lvtmdb::TypeObject *udt, const clang::D
         if (d_enableLakosianRules) {
             return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
         } else {
-            return nonLakosian::ClpUtil::writeSourceFile(d_memDb, sourceFile, d_prefix.string(), d_prefix.string());
+            return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                         sourceFile,
+                                                         d_prefix.string(),
+                                                         d_buildFolder.string(),
+                                                         d_prefix.string());
         }
     }();
     if (!filePtr) {

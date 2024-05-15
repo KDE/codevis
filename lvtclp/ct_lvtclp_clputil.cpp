@@ -609,7 +609,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
     } else {
         // Anything else will be moved to a global "external" pseudo-folder
         // TODO: Let the user provide more information regarding what is not "external".
-        mainFolderName = "ExternalLibraries";
+        mainFolderName = "External Libraries";
         currentVirtualWorkPath = "${EXTERNAL_LIBS_DIR}/";
         relativePath = asLinuxPath(QString::fromStdString(filepath));
     }

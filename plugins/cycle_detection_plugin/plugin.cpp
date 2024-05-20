@@ -191,17 +191,25 @@ void traverseDependencies(Entity& e, Cycle const& maybeCycle, std::vector<Cycle>
 }
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler);
+
+#include <QElapsedTimer>
+#include <iostream>
 void highlightCycles(PluginContextMenuActionHandler *handler)
 {
     auto *pluginData = getPluginData(handler);
     auto& allCycles = pluginData->allCycles;
     allCycles.clear();
 
+    QElapsedTimer timer;
+    timer.start();
+    std::cout << "Starting to look for cycles" << std::endl;
     for (auto&& e : handler->getAllEntitiesInCurrentView()) {
         auto maybeCycle = Cycle{};
         traverse(e, maybeCycle, allCycles);
     }
+    std::cout << "Looking for cycles took" << timer.elapsed() << std::endl;
 
+    /*
     auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
     tree.clear();
     for (auto&& cycle : allCycles) {
@@ -227,6 +235,7 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
 
     auto dock = handler->getDock(DOCK_WIDGET_ID);
     dock.setVisible(true);
+*/
 }
 
 Cycle& extractCycleFrom(void *userData)
@@ -236,6 +245,7 @@ Cycle& extractCycleFrom(void *userData)
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
 {
+    /*
     auto gv = handler->getGraphicsView();
     auto paintCycle = [&gv](auto&& cycle, auto&& state) {
         auto prevQualifiedName = std::optional<std::string>();
@@ -264,4 +274,5 @@ void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
     paintCycle(pluginData->prevSelectedCycle, SelectedState::NotSelected);
     paintCycle(selectedCycle, SelectedState::Selected);
     pluginData->prevSelectedCycle = selectedCycle;
+    */
 }

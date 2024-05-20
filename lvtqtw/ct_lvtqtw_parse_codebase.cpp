@@ -1012,7 +1012,6 @@ void ParseCodebaseDialog::endParseStage()
 {
     assert(d->dialogState != State::Idle);
     resetUiForNextParse();
-    cleanupTools();
     auto parsingDidNotFinishSuccessfully = [this]() {
         return d->dialogState == State::Killed || !d->threadSuccess;
     }();
@@ -1052,6 +1051,7 @@ void ParseCodebaseDialog::endParseStage()
         };
         pm.callHooksOnParseCompleted(runQueryOnDatabase);
     }
+    cleanupTools();
 
     close();
 }

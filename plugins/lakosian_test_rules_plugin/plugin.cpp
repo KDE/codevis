@@ -20,12 +20,11 @@
 
 #include <algorithm>
 #include <map>
-#include <unordered_set>
 #include <utils.h>
 
 enum class ToggleTestEntitiesState { VISIBLE, HIDDEN };
 enum class MergeTestDependenciesOnCUT { YES, NO };
-static auto const BAD_TEST_DEPENDENCY_COLOR = Color{225, 225, 0};
+static auto const BAD_TEST_DEPENDENCY_COLOR = Codethink::lvtplg::Color{225, 225, 0};
 static auto const PLUGIN_ID = std::string{"LKS_TEST_RULES_PLG"};
 
 using SceneId = std::string;
@@ -83,17 +82,17 @@ void handleVisibleCase(PluginContextMenuActionHandler *handler, MergeTestDepende
 
     toggledTestEntities.clear();
     for (auto&& e : handler->getAllEntitiesInCurrentView()) {
-        if (!utils::string{e.getQualifiedName()}.endswith(".t")) {
+        if (!utils::string{e->getQualifiedName()}.endswith(".t")) {
             continue;
         }
         auto& testDriver = e;
 
         // Create test-only dependencies coming from the component
-        auto component = handler->getEntityByQualifiedName(utils::string{testDriver.getQualifiedName()}.split('.')[0]);
+        auto component = handler->getEntityByQualifiedName(utils::string{testDriver->getQualifiedName()}.split('.')[0]);
         if (component) {
-            for (auto&& dependency : testDriver.getDependencies()) {
+            for (auto&& dependency : testDriver->getDependencies()) {
                 auto from = component->getQualifiedName();
-                auto to = dependency.getQualifiedName();
+                auto to = dependency->getQualifiedName();
 
                 if (!handler->hasEdgeByQualifiedName(from, to)) {
                     testOnlyEdges.emplace_back(from, to);
@@ -102,14 +101,14 @@ void handleVisibleCase(PluginContextMenuActionHandler *handler, MergeTestDepende
                     auto newEdge = handler->addEdgeByQualifiedName(from, to);
                     if (newEdge) {
                         newEdge->setColor(BAD_TEST_DEPENDENCY_COLOR);
-                        newEdge->setStyle(EdgeStyle::DotLine);
+                        newEdge->setStyle(Codethink::lvtplg::EdgeStyle::DotLine);
                     }
                 }
             }
         }
 
-        toggledTestEntities.push_back(e.getQualifiedName());
-        e.unloadFromScene();
+        toggledTestEntities.push_back(e->getQualifiedName());
+        e->unloadFromScene();
     }
     toggleState = ToggleTestEntitiesState::HIDDEN;
 }
@@ -169,12 +168,12 @@ void toggleMergeTestEntities(PluginContextMenuActionHandler *handler)
 void paintBadTestComponents(PluginContextMenuActionHandler *handler)
 {
     for (auto const& e : handler->getAllEntitiesInCurrentView()) {
-        if (!utils::string{e.getQualifiedName()}.endswith(".t")) {
+        if (!utils::string{e->getQualifiedName()}.endswith(".t")) {
             continue;
         }
 
         auto& testDriver = e;
-        auto component = handler->getEntityByQualifiedName(utils::string{testDriver.getQualifiedName()}.split('.')[0]);
+        auto component = handler->getEntityByQualifiedName(utils::string{testDriver->getQualifiedName()}.split('.')[0]);
         if (!component) {
             // If we can't find the test driver's CUT (Component-Under-Test), then skip.
             continue;
@@ -182,9 +181,9 @@ void paintBadTestComponents(PluginContextMenuActionHandler *handler)
 
         // CUT (Component-Under-Test)
         auto& cut = *component;
-        for (auto const& dependency : testDriver.getDependencies()) {
+        for (auto const& dependency : testDriver->getDependencies()) {
             // It is ok for the test driver to depend on the CUT
-            if (dependency.getName() == cut.getName()) {
+            if (dependency->getName() == cut.getName()) {
                 continue;
             }
 
@@ -192,13 +191,13 @@ void paintBadTestComponents(PluginContextMenuActionHandler *handler)
             // also depends on ("redundant dependencies").
             auto deps = cut.getDependencies();
             if (std::any_of(deps.begin(), deps.end(), [&](auto&& cutDependency) {
-                    return cutDependency.getName() == dependency.getName();
+                    return cutDependency->getName() == dependency->getName();
                 })) {
                 continue;
             }
 
             // All other dependencies are marked as "invalid"
-            auto edge = handler->getEdgeByQualifiedName(testDriver.getQualifiedName(), dependency.getQualifiedName());
+            auto edge = handler->getEdgeByQualifiedName(testDriver->getQualifiedName(), dependency->getQualifiedName());
             if (edge) {
                 edge->setColor(BAD_TEST_DEPENDENCY_COLOR);
             }
@@ -208,9 +207,9 @@ void paintBadTestComponents(PluginContextMenuActionHandler *handler)
 
 void ignoreTestOnlyDependenciesPkgLvl(PluginContextMenuActionHandler *handler)
 {
-    auto getPkgId = [handler](Entity const& pkg) -> std::optional<long long> {
+    auto getPkgId = [handler](std::shared_ptr<Codethink::lvtplg::Entity> const& pkg) -> std::optional<long long> {
         auto result = handler->runQueryOnDatabase("SELECT id FROM source_package WHERE qualified_name = \""
-                                                  + pkg.getQualifiedName() + "\"");
+                                                  + pkg->getQualifiedName() + "\"");
         if (!result.empty() && !result[0].empty() && result[0][0].has_value()) {
             return std::any_cast<int>(result[0][0].value());
         }
@@ -218,7 +217,7 @@ void ignoreTestOnlyDependenciesPkgLvl(PluginContextMenuActionHandler *handler)
     };
 
     for (auto const& e : handler->getAllEntitiesInCurrentView()) {
-        if (e.getType() != EntityType::Package) {
+        if (e->getType() != Codethink::lvtplg::EntityType::Package) {
             continue;
         }
 
@@ -228,7 +227,7 @@ void ignoreTestOnlyDependenciesPkgLvl(PluginContextMenuActionHandler *handler)
             continue;
         }
         auto srcPkgId = *maybeSrcPkgId;
-        for (auto const& trgPkg : srcPkg.getDependencies()) {
+        for (auto const& trgPkg : srcPkg->getDependencies()) {
             // There is a package-level dependency between srcPkg and trgPkg. The code below finds out if it is a
             // test-only dependency (meaning, only *.t packages on srcPkg depends on a package on trgPkg).
             // Test-only dependencies will then be removed at package level (for visualization only).
@@ -255,7 +254,7 @@ void ignoreTestOnlyDependenciesPkgLvl(PluginContextMenuActionHandler *handler)
                 auto nNonTestDependencies = std::stoi(std::any_cast<std::string>(result[0][0].value()));
                 if (nNonTestDependencies == 0) {
                     // There are only test dependencies between packages.
-                    handler->removeEdgeByQualifiedName(srcPkg.getQualifiedName(), trgPkg.getQualifiedName());
+                    handler->removeEdgeByQualifiedName(srcPkg->getQualifiedName(), trgPkg->getQualifiedName());
                 }
             }
         }
@@ -268,7 +267,7 @@ void hookGraphicsViewContextMenu(PluginContextMenuHandler *handler)
 {
     auto ctxMenuType = ContextMenuType::PackageScene;
     for (auto const& e : handler->getAllEntitiesInCurrentView()) {
-        if (e.getType() == EntityType::Component) {
+        if (e->getType() == Codethink::lvtplg::EntityType::Component) {
             ctxMenuType = ContextMenuType::ComponentScene;
             break;
         }

@@ -40,6 +40,7 @@ if __name__ == "__main__":
     contents.append('#include <string>')
     contents.append('#include <tuple>')
     contents.append('#include <vector>')
+    contents.append('#include <memory>')
     contents.append('')
 
     for handler_info in HANDLERS:

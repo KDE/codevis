@@ -29,10 +29,10 @@ static auto const DOCK_WIDGET_TITLE = std::string{"Cycle detection"};
 static auto const DOCK_WIDGET_ID = std::string{"cyc_detection_plg"};
 static auto const DOCK_WIDGET_TREE_ID = std::string{"cyc_detection_tree"};
 static auto const ITEM_USER_DATA_CYCLE_ID = std::string{"cycle"};
-static auto const NODE_SELECTED_COLOR = Color{200, 50, 50};
-static auto const NODE_UNSELECTED_COLOR = Color{200, 200, 200};
-static auto const EDGE_SELECTED_COLOR = Color{230, 40, 40};
-static auto const EDGE_UNSELECTED_COLOR = Color{230, 230, 230};
+static auto const NODE_SELECTED_COLOR = Codethink::lvtplg::Color{200, 50, 50};
+static auto const NODE_UNSELECTED_COLOR = Codethink::lvtplg::Color{200, 200, 200};
+static auto const EDGE_SELECTED_COLOR = Codethink::lvtplg::Color{230, 40, 40};
+static auto const EDGE_UNSELECTED_COLOR = Codethink::lvtplg::Color{230, 230, 230};
 enum class SelectedState { Selected, NotSelected };
 
 struct CycleDetectionPluginData {
@@ -149,8 +149,10 @@ void addCycle(const std::size_t first, const Cycle& history, std::vector<Cycle>&
     allCycles.push_back(std::move(maybeNewCycle));
 }
 
-void traverseDependencies(Entity& e, Cycle const& maybeCycle, std::vector<Cycle>& allCycles);
-void traverse(Entity& node, Cycle maybeCycle, std::vector<Cycle>& allCycles)
+void traverseDependencies(std::shared_ptr<Codethink::lvtplg::Entity>& e,
+                          Cycle const& maybeCycle,
+                          std::vector<Cycle>& allCycles);
+void traverse(std::shared_ptr<Codethink::lvtplg::Entity>& node, Cycle maybeCycle, std::vector<Cycle>& allCycles)
 // Recursive depth first search, keeping track of where we have been.
 // If we encounter a node we have already seen in this path, that means
 // there's a cycle (back edge).
@@ -163,14 +165,14 @@ void traverse(Entity& node, Cycle maybeCycle, std::vector<Cycle>& allCycles)
     // appending node to history. Therefore, we can't use std::find
     std::size_t i = 0;
     for (i = 0; i < maybeCycle.size(); ++i) {
-        if (maybeCycle[i] == node.getQualifiedName()) {
+        if (maybeCycle[i] == node->getQualifiedName()) {
             hasCycle = true;
             break;
         }
     }
 
     // add the current node to the history
-    maybeCycle.push_back(node.getQualifiedName());
+    maybeCycle.push_back(node->getQualifiedName());
 
     if (hasCycle) {
         addCycle(i, maybeCycle, allCycles);
@@ -183,9 +185,11 @@ void traverse(Entity& node, Cycle maybeCycle, std::vector<Cycle>& allCycles)
     traverseDependencies(node, maybeCycle, allCycles);
 }
 
-void traverseDependencies(Entity& e, Cycle const& maybeCycle, std::vector<Cycle>& allCycles)
+void traverseDependencies(std::shared_ptr<Codethink::lvtplg::Entity>& e,
+                          Cycle const& maybeCycle,
+                          std::vector<Cycle>& allCycles)
 {
-    for (auto& dependency : e.getDependencies()) {
+    for (auto& dependency : e->getDependencies()) {
         traverse(dependency, maybeCycle, allCycles);
     }
 }

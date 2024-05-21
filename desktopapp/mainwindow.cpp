@@ -1115,7 +1115,7 @@ void MainWindow::updatePluginData()
     };
 
     auto getVisibleEntities = [&graphicsScene]() {
-        auto entities = std::vector<Entity>{};
+        auto entities = std::vector<std::shared_ptr<Entity>>{};
         for (auto&& e : graphicsScene->allEntities()) {
             entities.push_back(createWrappedEntityFromLakosEntity(e));
         }

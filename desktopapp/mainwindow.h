@@ -136,9 +136,10 @@ class MainWindow : public KXmlGuiWindow {
     virtual QString requestProjectName();
 
   private:
-    void createWizardForPluginMenu(std::string const& title,
-                                   std::vector<std::tuple<std::string, std::string, PluginFieldType>> const& fields,
-                                   std::function<void(PluginWizardActionHandler)> const& action);
+    void createWizardForPluginMenu(
+        std::string const& title,
+        std::vector<std::tuple<std::string, std::string, Codethink::lvtplg::PluginFieldType>> const& fields,
+        std::function<void(PluginWizardActionHandler)> const& action);
 
     void saveTabsOnProject();
     void loadTabsFromProject();

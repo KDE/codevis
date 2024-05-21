@@ -21,17 +21,22 @@
 #include <ct_lvtqtc_lakosentitypluginutils.h>
 #include <ct_lvtqtc_lakosrelation.h>
 
+using namespace Codethink::lvtplg;
 namespace Codethink::lvtqtc {
 
-Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
+std::shared_ptr<Entity> createWrappedEntityFromLakosEntity(LakosEntity *e)
 {
-    auto getName = [e]() {
+    if (e->sharedPluginValue()) {
+        return e->sharedPluginValue();
+    }
+
+    auto getName = [e]() -> std::string {
         return e->name();
     };
-    auto getQualifiedName = [e]() {
+    auto getQualifiedName = [e]() -> std::string {
         return e->qualifiedName();
     };
-    auto getType = [e]() {
+    auto getType = [e]() -> EntityType {
         switch (e->instanceType()) {
         case lvtshr::DiagramType::ClassType:
             return EntityType::Unknown;
@@ -51,14 +56,14 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
         }
         return EntityType::Unknown;
     };
-    auto setColor = [e](Color c) {
+    auto setColor = [e](Color c) -> void {
         e->setColor(QColor{c.r, c.g, c.b, c.a});
     };
-    auto addHoverInfo = [e](std::string const& info) {
+    auto addHoverInfo = [e](std::string const& info) -> void {
         e->setTooltipString(e->tooltipString() + "\n" + info);
     };
-    auto getDependencies = [e]() {
-        auto dependencies = std::vector<Entity>{};
+    auto getDependencies = [e]() -> std::vector<std::shared_ptr<Entity>> {
+        auto dependencies = std::vector<std::shared_ptr<Entity>>{};
         for (auto const& c : e->edgesCollection()) {
             for (auto const& r : c->relations()) {
                 dependencies.push_back(createWrappedEntityFromLakosEntity(r->to()));
@@ -69,37 +74,44 @@ Entity createWrappedEntityFromLakosEntity(LakosEntity *e)
     auto unloadFromScene = [e]() {
         Q_EMIT e->unloadThis();
     };
-    auto getDbChildrenQualifiedNames = [e]() {
+    auto getDbChildrenQualifiedNames = [e]() -> std::vector<std::string> {
         auto childrenQNames = std::vector<std::string>{};
         for (auto const& c : e->internalNode()->children()) {
             childrenQNames.emplace_back(c->qualifiedName());
         }
         return childrenQNames;
     };
-    auto getParent = [e]() -> std::optional<Entity> {
+
+    auto getParent = [e]() -> std::shared_ptr<Entity> {
         auto parent = dynamic_cast<LakosEntity *>(e->parentItem());
         if (!parent) {
-            return std::nullopt;
+            return {};
         }
         return createWrappedEntityFromLakosEntity(parent);
     };
+
     auto setSelected = [e](bool v) {
         e->setSelected(v);
     };
     auto isSelected = [e]() -> bool {
         return e->isSelected();
     };
-    return Entity{getName,
-                  getQualifiedName,
-                  getType,
-                  setColor,
-                  addHoverInfo,
-                  getDependencies,
-                  unloadFromScene,
-                  getDbChildrenQualifiedNames,
-                  getParent,
-                  setSelected,
-                  isSelected};
+
+    std::shared_ptr<Entity> entity = std::shared_ptr<Entity>(new Entity{getName,
+                                                                        getQualifiedName,
+                                                                        getType,
+                                                                        setColor,
+                                                                        addHoverInfo,
+                                                                        getDependencies,
+                                                                        unloadFromScene,
+                                                                        getDbChildrenQualifiedNames,
+                                                                        getParent,
+                                                                        setSelected,
+                                                                        isSelected});
+
+    e->setSharedPluginValue(entity);
+
+    return entity;
 }
 
 Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to)

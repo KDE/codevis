@@ -196,6 +196,8 @@ struct LakosEntity::Private {
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
 
     QGraphicsRectItem *selectionPath = nullptr;
+
+    std::shared_ptr<Codethink::lvtplg::Entity> sharedEntity;
 };
 
 LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node, lvtshr::LoaderInfo loaderInfo):
@@ -937,6 +939,18 @@ void LakosEntity::showNotesDialog()
     auto *textEdit = notesDialog->findChild<MRichTextEdit *>();
     textEdit->setText(QString::fromStdString(d->node->notes()));
     notesDialog->exec();
+}
+
+// sets the visible-to-plugin object that represents this entity.
+// this is needed so we don't rebuild the values all the time.'
+void LakosEntity::setSharedPluginValue(std::shared_ptr<Codethink::lvtplg::Entity> sharedEntity)
+{
+    d->sharedEntity = sharedEntity;
+}
+
+std::shared_ptr<Codethink::lvtplg::Entity> LakosEntity::sharedPluginValue() const
+{
+    return d->sharedEntity;
 }
 
 void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosition)

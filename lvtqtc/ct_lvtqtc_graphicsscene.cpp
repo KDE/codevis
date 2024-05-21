@@ -1237,16 +1237,16 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
 
     if (d->pluginManager) {
         auto getAllEntitiesInCurrentView = [this]() {
-            std::vector<Entity> entitiesInView{};
+            std::vector<std::shared_ptr<Entity>> entitiesInView{};
             for (auto *e : allEntities()) {
                 entitiesInView.emplace_back(createWrappedEntityFromLakosEntity(e));
             }
             return entitiesInView;
         };
-        auto getEntityByQualifiedName = [this](std::string const& qualifiedName) -> std::optional<Entity> {
+        auto getEntityByQualifiedName = [this](std::string const& qualifiedName) -> std::shared_ptr<Entity> {
             auto *e = entityByQualifiedName(qualifiedName);
             if (!e) {
-                return std::nullopt;
+                return {};
             }
             return createWrappedEntityFromLakosEntity(e);
         };

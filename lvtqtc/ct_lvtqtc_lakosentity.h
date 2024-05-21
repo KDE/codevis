@@ -49,6 +49,11 @@ class QUndoCommand;
 namespace Codethink::lvtldr {
 class LakosianNode;
 }
+
+namespace Codethink::lvtplg {
+class Entity;
+}
+
 namespace Codethink::lvtqtc {
 struct EdgeCollection;
 class LakosRelation;
@@ -314,6 +319,11 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     void startDrag(QPointF startPosition);
     void doDrag(QPointF movePosition);
     void endDrag(QPointF endPosition);
+
+    // sets the visible-to-plugin object that represents this entity.
+    // this is needed so we don't rebuild the values all the time.'
+    void setSharedPluginValue(std::shared_ptr<Codethink::lvtplg::Entity> sharedEntity);
+    std::shared_ptr<Codethink::lvtplg::Entity> sharedPluginValue() const;
 
   Q_SIGNALS:
     Q_SIGNAL void navigateRequested();

@@ -25,8 +25,8 @@
 
 namespace Codethink::lvtqtc {
 
-LVTQTC_EXPORT Entity createWrappedEntityFromLakosEntity(LakosEntity *e);
-LVTQTC_EXPORT Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to);
+LVTQTC_EXPORT std::shared_ptr<Codethink::lvtplg::Entity> createWrappedEntityFromLakosEntity(LakosEntity *e);
+LVTQTC_EXPORT Codethink::lvtplg::Edge createWrappedEdgeFromLakosEntity(LakosEntity *from, LakosEntity *to);
 }
 
 #endif // DIAGRAM_SERVER_CT_LVTQTC_LAKOSENTITYPLUGINUTILS_H

@@ -36,7 +36,6 @@
 #include <pybind11/embed.h>
 #pragma pop_macro("slots")
 
-#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>

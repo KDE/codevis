@@ -109,22 +109,23 @@ PluginTreeItemClickedActionHandler PluginManagerQtUtils::createPluginTreeItemCli
 
 PluginGraphicsViewHandler PluginManagerQtUtils::createPluginGraphicsViewHandler(GraphicsScene *gs)
 {
-    auto getEntityByQualifiedName = [gs](std::string const& qualifiedName) -> std::optional<Entity> {
+    auto getEntityByQualifiedName =
+        [gs](std::string const& qualifiedName) -> std::shared_ptr<Codethink::lvtplg::Entity> {
         auto *e = gs->entityByQualifiedName(qualifiedName);
         if (!e) {
-            return std::nullopt;
+            return {};
         }
         return createWrappedEntityFromLakosEntity(e);
     };
     auto getVisibleEntities = [gs]() {
-        auto entities = std::vector<Entity>{};
+        auto entities = std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>{};
         for (auto&& e : gs->allEntities()) {
             entities.push_back(createWrappedEntityFromLakosEntity(e));
         }
         return entities;
     };
     auto getEdgeByQualifiedName = [gs](std::string const& fromQualifiedName,
-                                       std::string const& toQualifiedName) -> std::optional<Edge> {
+                                       std::string const& toQualifiedName) -> std::optional<Codethink::lvtplg::Edge> {
         auto *fromEntity = gs->entityByQualifiedName(fromQualifiedName);
         if (!fromEntity) {
             return std::nullopt;

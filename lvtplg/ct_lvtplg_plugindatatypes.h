@@ -22,9 +22,11 @@
 
 #include <any>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 
+namespace Codethink::lvtplg {
 struct Color {
     int r = 0;
     int g = 0;
@@ -48,7 +50,7 @@ struct Entity {
     std::function<EntityType()> const getType;
     std::function<void(Color rgbColor)> const setColor;
     std::function<void(std::string info)> const addHoverInfo;
-    std::function<std::vector<Entity>()> const getDependencies;
+    std::function<std::vector<std::shared_ptr<Entity>>()> const getDependencies;
 
     /**
      * Unloads the entity from the current scene.
@@ -61,7 +63,7 @@ struct Entity {
      */
     std::function<std::vector<std::string>()> const getDbChildrenQualifiedNames;
 
-    std::function<std::optional<Entity>()> const getParent;
+    std::function<std::shared_ptr<Entity>()> const getParent;
 
     std::function<void(bool v)> const setSelected;
     std::function<bool()> const isSelected;
@@ -75,5 +77,7 @@ struct Edge {
 struct ProjectData {
     std::function<std::string()> const getSourceCodePath;
 };
+
+} // namespace Codethink::lvtplg
 
 #endif

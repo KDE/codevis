@@ -26,13 +26,7 @@
 #include <QJsonObject>
 
 #include <fstream>
-#include <iomanip>
-#include <map>
-#include <optional>
-#include <sstream>
 #include <string>
-
-#include <iostream>
 
 static auto const CTX_MENU_TITLE = std::string{"Load code coverage information"};
 static auto const PLUGIN_DATA_ID = std::string{"CodeCovPluginData"};
@@ -94,18 +88,18 @@ void graphicsViewContextMenuAction(PluginContextMenuActionHandler *handler)
     for (auto jsonFileRef : jsonData["files"].toArray()) {
         auto jsonFile = jsonFileRef.toObject();
 
-        auto selectedEntity = [&]() -> std::optional<Entity> {
+        auto selectedEntity = [&]() -> std::shared_ptr<Codethink::lvtplg::Entity> {
             for (auto entity : handler->getAllEntitiesInCurrentView()) {
-                if (entity.getType() != EntityType::Component) {
+                if (entity->getType() != Codethink::lvtplg::EntityType::Component) {
                     continue;
                 }
 
-                auto entityName = QString::fromStdString(entity.getName());
+                auto entityName = QString::fromStdString(entity->getName());
                 if (jsonFile["file"].toString().contains(entityName)) {
                     return entity;
                 }
             }
-            return std::nullopt;
+            return {};
         }();
         if (!selectedEntity) {
             continue;
@@ -126,7 +120,7 @@ void graphicsViewContextMenuAction(PluginContextMenuActionHandler *handler)
         }
 
         // TODO: User definable color mapping
-        auto color = [metrics]() -> Color {
+        auto color = [metrics]() -> Codethink::lvtplg::Color {
             auto pct = metrics.percentage();
             if (pct >= 99.99) {
                 return {0, 220, 0};
@@ -169,14 +163,14 @@ void hookSetupDockWidget(PluginSetupDockWidgetHandler *handler)
 void entityReportAction(PluginEntityReportActionHandler *handler);
 void hookSetupEntityReport(PluginEntityReportHandler *handler)
 {
-    auto entityName = handler->getEntity().getName();
+    auto entityName = handler->getEntity()->getName();
     handler->addReport("Code coverage report", "Code Coverage: " + entityName, &entityReportAction);
 }
 
 void entityReportAction(PluginEntityReportActionHandler *handler)
 {
     auto *data = static_cast<CodeCoveragePluginData *>(handler->getPluginData(PLUGIN_DATA_ID));
-    auto entityName = handler->getEntity().getName();
+    auto entityName = handler->getEntity()->getName();
     auto covHtmlPath = QString::fromStdString(data->htmlFilePath);
 
     auto contents = QString{};

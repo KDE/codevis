@@ -197,7 +197,9 @@ struct LakosEntity::Private {
 
     QGraphicsRectItem *selectionPath = nullptr;
 
+    // Plugin related data.
     std::shared_ptr<Codethink::lvtplg::Entity> sharedEntity;
+    std::vector<std::shared_ptr<Codethink::lvtplg::Entity>> sharedDependenciesPlugin;
 };
 
 LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node, lvtshr::LoaderInfo loaderInfo):
@@ -2082,6 +2084,16 @@ void LakosEntity::paint(QPainter *painter, const QStyleOptionGraphicsItem *optio
     myoption.state &= ~QStyle::State_Selected;
 
     GraphicsRectItem::paint(painter, &myoption, widget);
+}
+
+std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& LakosEntity::getSharedDependenciesPlugin() const
+{
+    return d->sharedDependenciesPlugin;
+}
+
+void LakosEntity::setSharedDependenciesPlugin(std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>&& deps)
+{
+    d->sharedDependenciesPlugin = std::move(deps);
 }
 
 } // end namespace Codethink::lvtqtc

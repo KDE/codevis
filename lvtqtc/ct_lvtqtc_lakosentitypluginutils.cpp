@@ -62,15 +62,20 @@ std::shared_ptr<Entity> createWrappedEntityFromLakosEntity(LakosEntity *e)
     auto addHoverInfo = [e](std::string const& info) -> void {
         e->setTooltipString(e->tooltipString() + "\n" + info);
     };
-    auto getDependencies = [e]() -> std::vector<std::shared_ptr<Entity>> {
-        auto dependencies = std::vector<std::shared_ptr<Entity>>{};
-        for (auto const& c : e->edgesCollection()) {
-            for (auto const& r : c->relations()) {
-                dependencies.push_back(createWrappedEntityFromLakosEntity(r->to()));
+
+    auto getDependencies = [e]() -> std::vector<std::shared_ptr<Entity>>& {
+        if (e->getSharedDependenciesPlugin().empty()) {
+            auto dependencies = std::vector<std::shared_ptr<Entity>>{};
+            for (auto const& c : e->edgesCollection()) {
+                for (auto const& r : c->relations()) {
+                    dependencies.push_back(createWrappedEntityFromLakosEntity(r->to()));
+                }
             }
+            e->setSharedDependenciesPlugin(std::move(dependencies));
         }
-        return dependencies;
+        return e->getSharedDependenciesPlugin();
     };
+
     auto unloadFromScene = [e]() {
         Q_EMIT e->unloadThis();
     };

@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 
-using EntityUniqueId = std::string;
-using Cycle = std::vector<EntityUniqueId>;
+using Cycle = std::vector<Codethink::lvtplg::Entity *>;
 
 static auto const PLUGIN_DATA_ID = std::string{"cycle_detection_plugin"};
 static auto const DOCK_WIDGET_TITLE = std::string{"Cycle detection"};
@@ -152,6 +151,7 @@ void addCycle(const std::size_t first, const Cycle& history, std::vector<Cycle>&
 void traverseDependencies(std::shared_ptr<Codethink::lvtplg::Entity>& e,
                           Cycle const& maybeCycle,
                           std::vector<Cycle>& allCycles);
+
 void traverse(std::shared_ptr<Codethink::lvtplg::Entity>& node, Cycle maybeCycle, std::vector<Cycle>& allCycles)
 // Recursive depth first search, keeping track of where we have been.
 // If we encounter a node we have already seen in this path, that means
@@ -165,14 +165,14 @@ void traverse(std::shared_ptr<Codethink::lvtplg::Entity>& node, Cycle maybeCycle
     // appending node to history. Therefore, we can't use std::find
     std::size_t i = 0;
     for (i = 0; i < maybeCycle.size(); ++i) {
-        if (maybeCycle[i] == node->getQualifiedName()) {
+        if (maybeCycle[i] == node.get()) {
             hasCycle = true;
             break;
         }
     }
 
     // add the current node to the history
-    maybeCycle.push_back(node->getQualifiedName());
+    maybeCycle.push_back(node.get());
 
     if (hasCycle) {
         addCycle(i, maybeCycle, allCycles);

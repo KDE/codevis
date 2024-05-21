@@ -18,6 +18,8 @@
 #include <ct_lvtplg_basicpluginhandlers.h>
 #include <ct_lvtplg_basicpluginhooks.h>
 
+#include <QElapsedTimer>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -196,8 +198,6 @@ void traverseDependencies(std::shared_ptr<Codethink::lvtplg::Entity>& e,
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler);
 
-#include <QElapsedTimer>
-#include <iostream>
 void highlightCycles(PluginContextMenuActionHandler *handler)
 {
     auto *pluginData = getPluginData(handler);
@@ -213,24 +213,22 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
     }
     std::cout << "Looking for cycles took" << timer.elapsed() << std::endl;
 
-    /*
     auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
     tree.clear();
     for (auto&& cycle : allCycles) {
-        auto firstName = cycle[0];
-        auto lastName = cycle[cycle.size() - 1];
+        auto firstName = cycle[0]->getQualifiedName();
+        auto lastName = cycle[cycle.size() - 1]->getQualifiedName();
         auto rootItem = tree.addRootItem("From " + firstName + " to " + lastName);
         rootItem.addUserData(ITEM_USER_DATA_CYCLE_ID, &cycle);
         rootItem.addOnClickAction(&onRootItemSelected);
-        for (auto&& qualifiedName : cycle) {
-            auto e = handler->getEntityByQualifiedName(qualifiedName);
-            rootItem.addChild(qualifiedName);
+        for (auto&& entity : cycle) {
+            rootItem.addChild(entity->getQualifiedName());
         }
     }
     for (auto const& e0 : handler->getAllEntitiesInCurrentView()) {
-        e0.setColor(NODE_UNSELECTED_COLOR);
-        for (auto const& e1 : e0.getDependencies()) {
-            auto edge = handler->getEdgeByQualifiedName(e0.getQualifiedName(), e1.getQualifiedName());
+        e0->setColor(NODE_UNSELECTED_COLOR);
+        for (auto const& e1 : e0->getDependencies()) {
+            auto edge = handler->getEdgeByQualifiedName(e0->getQualifiedName(), e1->getQualifiedName());
             if (edge.has_value()) {
                 edge->setColor(EDGE_UNSELECTED_COLOR);
             }
@@ -239,7 +237,6 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
 
     auto dock = handler->getDock(DOCK_WIDGET_ID);
     dock.setVisible(true);
-*/
 }
 
 Cycle& extractCycleFrom(void *userData)
@@ -249,12 +246,10 @@ Cycle& extractCycleFrom(void *userData)
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
 {
-    /*
     auto gv = handler->getGraphicsView();
     auto paintCycle = [&gv](auto&& cycle, auto&& state) {
         auto prevQualifiedName = std::optional<std::string>();
-        for (auto&& qualifiedName : cycle) {
-            auto entity = gv.getEntityByQualifiedName(qualifiedName);
+        for (auto&& entity : cycle) {
             if (!entity) {
                 continue;
             }
@@ -262,13 +257,13 @@ void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
 
             if (prevQualifiedName) {
                 auto fromQualifiedName = *prevQualifiedName;
-                auto toQualifiedName = qualifiedName;
+                auto toQualifiedName = entity->getQualifiedName();
                 auto edge = gv.getEdgeByQualifiedName(fromQualifiedName, toQualifiedName);
                 if (edge) {
                     edge->setColor(state == SelectedState::Selected ? EDGE_SELECTED_COLOR : EDGE_UNSELECTED_COLOR);
                 }
             }
-            prevQualifiedName = qualifiedName;
+            prevQualifiedName = entity->getQualifiedName();
         }
     };
 
@@ -278,5 +273,4 @@ void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
     paintCycle(pluginData->prevSelectedCycle, SelectedState::NotSelected);
     paintCycle(selectedCycle, SelectedState::Selected);
     pluginData->prevSelectedCycle = selectedCycle;
-    */
 }

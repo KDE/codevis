@@ -320,7 +320,6 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
     if (d->enableLakosianRules) {
         processFileUsingLakosianRules(path);
     } else {
-        std::cout << "Writting source path: " << path << std::endl;
         nonLakosian::ClpUtil::writeSourceFile(d->memDb,
                                               path.string(),
                                               d->prefix.string(),

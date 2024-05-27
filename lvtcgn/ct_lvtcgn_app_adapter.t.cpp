@@ -112,7 +112,6 @@ TEST_CASE("Code generation adapter")
 TEST_CASE("CMake code generation script")
 {
     auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_PYSCRIPTS_PATH) + "/cmake/codegenerator.py";
-    std::cout << "Script Path" << cmakeGeneratorPath << std::endl;
 
     SECTION("Basic package project without package groups")
     {

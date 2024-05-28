@@ -44,6 +44,7 @@ class LVTQTW_EXPORT SqlEditor : public QWidget
     Q_OBJECT
   public:
     SqlEditor(lvtldr::NodeStorage& sharedStorage, QWidget *parent = 0);
+    Q_SIGNAL void loadRequested(QSet<QString> qualifiedNames);
 
   private:
     lvtmdl::SqlModel *model;

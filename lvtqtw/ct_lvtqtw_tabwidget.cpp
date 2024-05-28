@@ -207,6 +207,7 @@ void TabWidget::replaceGraphAt(int idx, const QString& qualifiedName)
 
 void TabWidget::openNewGraphTab(std::optional<QSet<QString>> qualifiedNames)
 {
+    std::cout << "Running open new graph tab";
     auto *tabElement = createTabElement();
     int tabIdx = addTab(tabElement, tr("Unnamed %1").arg(count()));
     setCurrentIndex(tabIdx);

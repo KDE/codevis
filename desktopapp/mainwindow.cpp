@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtqtw_sqleditor.h"
 #include <filesystem>
 #include <mainwindow.h>
 
@@ -152,6 +153,7 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
     ui.topMessageWidget->setPosition(KMessageWidget::Header);
 #endif
+    sqlEditor = new Codethink::lvtqtw::SqlEditor(sharedNodeStorage);
 
     connect(ui.mainSplitter, &SplitterView::currentTabChanged, this, &MainWindow::currentGraphSplitChanged);
     connect(ui.namespaceFilter, &QLineEdit::textChanged, ui.namespaceTree, &TreeView::setFilterText);
@@ -512,9 +514,6 @@ void MainWindow::setupActions()
     action->setText(tr("Open Sql Editor"));
     actionCollection()->addAction("open_sql_editor", action);
     connect(action, &QAction::triggered, this, [this] {
-        if (!sqlEditor) {
-            sqlEditor = new Codethink::lvtqtw::SqlEditor(sharedNodeStorage);
-        }
         sqlEditor->show();
     });
 
@@ -1060,6 +1059,7 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
         }
         disconnect(currentGraphWidget, nullptr, this, nullptr);
         disconnect(this, nullptr, currentGraphWidget, nullptr);
+        disconnect(sqlEditor, nullptr, currentGraphTab, nullptr);
 
         auto *graphicsScene = qobject_cast<GraphicsScene *>(currentGraphWidget->scene());
         if (!graphicsScene) {
@@ -1077,6 +1077,8 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     auto projectLocation = d_projectFile.location();
     auto projectName = projectLocation.empty() ? tr("Untitled") : QString::fromStdString(projectLocation.string());
     setWindowTitle(qApp->applicationName() + " " + projectName + " " + currentGraphTab->tabText(graphTabIdx));
+
+    connect(sqlEditor, &SqlEditor::loadRequested, currentGraphTab, &Codethink::lvtqtw::TabWidget::openNewGraphTab);
 
     // connect everything related to the new graph widget and the window
     auto addGWdgConnection = [this](auto signal, auto slot) {
@@ -1405,17 +1407,6 @@ void MainWindow::updateSessionPtr()
 {
     sharedNodeStorage.setDatabaseSourcePath(d_projectFile.cadDatabasePath().string());
     packageModel->reload();
-
-    // TODO: Properly populate GUI models from node storage
-    //    for (auto *model : std::vector<Codethink::lvtmdl::BaseTreeModel *>{namespaceModel, packageModel}) {
-    //        model->setDboSession(dboSessionPtr);
-    //    }
-    //
-    //    for (Codethink::lvtmdl::BaseTableModel *model : qAsConst(tableModels)) {
-    //        model->setDboSession(dboSessionPtr);
-    //    }
-    //
-    //    d_errorModel_p->setDboSession(dboSessionPtr);
 }
 
 void MainWindow::showWelcomeScreen()

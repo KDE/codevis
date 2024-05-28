@@ -508,6 +508,16 @@ void MainWindow::setupActions()
     KStandardAction::open(this, &MainWindow::openProjectAction, actionCollection());
     KStandardAction::quit(qApp, &QCoreApplication::quit, actionCollection());
 
+    action = new QAction(this);
+    action->setText(tr("Open Sql Editor"));
+    actionCollection()->addAction("open_sql_editor", action);
+    connect(action, &QAction::triggered, this, [this] {
+        if (!sqlEditor) {
+            sqlEditor = new Codethink::lvtqtw::SqlEditor(sharedNodeStorage);
+        }
+        sqlEditor->show();
+    });
+
     setupGUI(Default, QStringLiteral(":/ui_files/codevisui.rc"));
 
     // Populate the "View" menu. (See codevisui.rc)

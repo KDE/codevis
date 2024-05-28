@@ -28,9 +28,19 @@
 #include <ct_lvtshr_graphenums.h>
 #include <ct_lvtshr_uniqueid.h>
 
+#include <result/result.hpp>
 #include <vector>
 
 namespace Codethink::lvtldr {
+
+struct ErrorSqlQuery {
+    std::string what;
+};
+
+struct RawDbQueryResult {
+    std::vector<std::string> columns;
+    std::vector<std::vector<std::string>> data;
+};
 
 class DatabaseHandler {
     using RecordNumberType = lvtshr::UniqueId::RecordNumberType;
@@ -39,6 +49,7 @@ class DatabaseHandler {
     virtual ~DatabaseHandler() = 0;
 
     virtual void close() = 0;
+    virtual cpp::result<RawDbQueryResult, ErrorSqlQuery> rawDbQuery(const std::string& query) = 0;
 
     virtual std::vector<lvtshr::UniqueId> getTopLevelEntityIds() = 0;
 

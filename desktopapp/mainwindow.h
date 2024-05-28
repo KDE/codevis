@@ -20,8 +20,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "ct_lvtmdl_usesintheimpltablemodel.h"
-#include "ct_lvtmdl_usesintheinterfacetablemodel.h"
+#include <ct_lvtmdl_usesintheimpltablemodel.h>
+#include <ct_lvtmdl_usesintheinterfacetablemodel.h>
+#include <ct_lvtqtw_sqleditor.h>
 #include <ct_lvtshr_graphenums.h>
 
 #include <ct_lvtmdl_debugmodel.h>
@@ -288,6 +289,7 @@ class MainWindow : public KXmlGuiWindow {
 
     QDockWidget *d_dockReports = nullptr;
     QTabWidget *d_reportsTabWidget = nullptr;
+    Codethink::lvtqtw::SqlEditor *sqlEditor = nullptr;
 };
 
 #endif

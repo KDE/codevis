@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gui name="texteditor"
-     version="3"
+     version="4"
      xmlns="http://www.kde.org/standards/kxmlgui/1.0"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://www.kde.org/standards/kxmlgui/1.0
@@ -24,6 +24,7 @@
       <Action name="toggle_split_view" />
       <Action name="new_tab" />
       <Action name="close_current_tab" />
+      <Action name="open_sql_editor" />
     </Menu >
     <Menu name="bookmarks">
         <text>Bookmarks</text>

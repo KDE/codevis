@@ -69,6 +69,11 @@ void NodeStorage::closeDatabase()
     }
 }
 
+cpp::result<RawDbQueryResult, ErrorSqlQuery> NodeStorage::rawDbQuery(const std::string& query)
+{
+    return d->dbHandler->rawDbQuery(query);
+}
+
 void NodeStorage::preloadHighLevelComponents()
 {
     std::function<void(LakosianNode *)> loadChildrenRecursively = [&](LakosianNode *node) -> void {

@@ -18,6 +18,7 @@ AddTargetLibrary(
     ct_lvtmdl_packagetreemodel.cpp
     ct_lvtmdl_physicaltablemodels.cpp
     ct_lvtmdl_simpletextmodel.cpp
+    ct_lvtmdl_sqlmodel.cpp
     ct_lvtmdl_treefiltermodel.cpp
     ct_lvtmdl_usesintheimpltablemodel.cpp
     ct_lvtmdl_usesintheinterfacetablemodel.cpp
@@ -33,6 +34,7 @@ AddTargetLibrary(
     ct_lvtmdl_namespacetreemodel.h
     ct_lvtmdl_usesintheimpltablemodel.h
     ct_lvtmdl_fieldstreemodel.h
+    ct_lvtmdl_sqlmodel.h
     ct_lvtmdl_packagetreemodel.h
     ct_lvtmdl_usesintheinterfacetablemodel.h
     ct_lvtmdl_historylistmodel.h

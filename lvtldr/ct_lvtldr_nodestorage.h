@@ -189,6 +189,8 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
     Q_SIGNAL void logicalRelationRemoved(LakosianNode *, LakosianNode *, lvtshr::LakosRelationType type);
     Q_SIGNAL void entityReparent(LakosianNode *, LakosianNode *, LakosianNode *);
 
+    cpp::result<RawDbQueryResult, ErrorSqlQuery> rawDbQuery(const std::string& query);
+
   private:
     template<typename LDR_TYPE>
     LakosianNode *fetchFromDBByQualifiedName(const std::string& qualifiedName);

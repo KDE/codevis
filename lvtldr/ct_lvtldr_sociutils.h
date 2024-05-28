@@ -20,17 +20,17 @@
 #ifndef DIAGRAM_SERVER_CT_LVTLDR_SOCIUTILS_H
 #define DIAGRAM_SERVER_CT_LVTLDR_SOCIUTILS_H
 
+#include "soci/soci-backend.h"
 #include <ct_lvtldr_componentnodefields.h>
 #include <ct_lvtldr_databasehandler.h>
 #include <ct_lvtshr_uniqueid.h>
 
+#include <result/result.hpp>
 #include <soci/soci.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
+#include <QObject>
 #include <QString>
-
-#include <iostream>
-#include <variant>
 
 namespace {
 template<typename T>
@@ -57,6 +57,58 @@ class SociDatabaseHandler : public DatabaseHandler {
     void close() override
     {
         d_db.close();
+    }
+
+    cpp::result<RawDbQueryResult, ErrorSqlQuery> rawDbQuery(const std::string& query) override
+    {
+        RawDbQueryResult res;
+        try {
+            soci::rowset<soci::row> rs = (d_db.prepare << query);
+
+            int loadColumnNames = true;
+            for (const auto& row : rs) {
+                std::vector<std::string> thisRow;
+                for (int i = 0, size = row.size(); i < size; i += 1) {
+                    const soci::column_properties& props = row.get_properties(i);
+
+                    if (loadColumnNames) {
+                        res.columns.push_back(props.get_name());
+                    }
+                    switch (props.get_data_type()) {
+                    case soci::dt_string:
+                        thisRow.push_back(row.get<std::string>(i));
+                        break;
+                    case soci::dt_double:
+                        thisRow.push_back(std::to_string(row.get<double>(i)));
+                        break;
+                    case soci::dt_integer:
+                        thisRow.push_back(std::to_string(row.get<int>(i)));
+                        break;
+                    case soci::dt_long_long:
+                        thisRow.push_back(std::to_string(row.get<long long>(i)));
+                        break;
+                    case soci::dt_unsigned_long_long:
+                        thisRow.push_back(std::to_string(row.get<unsigned long long>(i)));
+                        break;
+                    case soci::dt_xml:
+                        thisRow.push_back(row.get<std::string>(i));
+                        break;
+                    case soci::dt_blob:
+                        thisRow.push_back(QObject::tr("binary-data").toStdString());
+                        break;
+                    case soci::dt_date:
+                        std::tm when = row.get<std::tm>(i);
+                        thisRow.push_back(asctime(&when));
+                        break;
+                    }
+                }
+                loadColumnNames = false;
+                res.data.push_back(thisRow);
+            }
+        } catch (std::exception const& e) {
+            return cpp::fail(e.what());
+        }
+        return res;
     }
 
     std::vector<lvtshr::UniqueId> getTopLevelEntityIds() override

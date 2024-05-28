@@ -37,6 +37,7 @@ AddTargetLibrary(
         ct_lvtqtw_plugineditor.cpp
         ct_lvtqtw_toolbox.cpp
         ct_lvtqtw_searchwidget.cpp
+        ct_lvtqtw_sqleditor.cpp
         ct_lvtqtw_welcomescreen.cpp
     QT_HEADERS
         ct_lvtqtw_backgroundeventfilter.h
@@ -55,6 +56,7 @@ AddTargetLibrary(
         ct_lvtqtw_plugineditor.h
         ct_lvtqtw_toolbox.h
         ct_lvtqtw_searchwidget.h
+        ct_lvtqtw_sqleditor.h
         ct_lvtqtw_welcomescreen.h
 
     DESIGNER_FORMS

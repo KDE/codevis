@@ -327,6 +327,8 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // this is needed so we don't rebuild the values all the time.'
     void setSharedPluginValue(std::shared_ptr<Codethink::lvtplg::Entity> sharedEntity);
     std::shared_ptr<Codethink::lvtplg::Entity> sharedPluginValue() const;
+    void invalidatePluginCache();
+    bool hasPluginCache() const;
 
   Q_SIGNALS:
     Q_SIGNAL void navigateRequested();

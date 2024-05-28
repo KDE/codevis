@@ -64,15 +64,18 @@ std::shared_ptr<Entity> createWrappedEntityFromLakosEntity(LakosEntity *e)
     };
 
     auto getDependencies = [e]() -> std::vector<std::shared_ptr<Entity>>& {
-        if (e->getSharedDependenciesPlugin().empty()) {
-            auto dependencies = std::vector<std::shared_ptr<Entity>>{};
-            for (auto const& c : e->edgesCollection()) {
-                for (auto const& r : c->relations()) {
-                    dependencies.push_back(createWrappedEntityFromLakosEntity(r->to()));
-                }
-            }
-            e->setSharedDependenciesPlugin(std::move(dependencies));
+        if (e->hasPluginCache()) {
+            return e->getSharedDependenciesPlugin();
         }
+
+        auto dependencies = std::vector<std::shared_ptr<Entity>>{};
+        for (auto const& c : e->edgesCollection()) {
+            for (auto const& r : c->relations()) {
+                dependencies.push_back(createWrappedEntityFromLakosEntity(r->to()));
+            }
+        }
+        e->setSharedDependenciesPlugin(std::move(dependencies));
+
         return e->getSharedDependenciesPlugin();
     };
 

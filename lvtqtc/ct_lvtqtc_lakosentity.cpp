@@ -102,6 +102,9 @@ struct EntityFlags {
 
     // Show or hide the level number on the entities.
     bool forceHideLevelNr : 1 = false;
+
+    // plugin cache used?
+    bool hasPluginCache : 1 = false;
 };
 
 struct LakosEntity::Private {
@@ -2086,6 +2089,16 @@ void LakosEntity::paint(QPainter *painter, const QStyleOptionGraphicsItem *optio
     GraphicsRectItem::paint(painter, &myoption, widget);
 }
 
+void LakosEntity::invalidatePluginCache()
+{
+    d->flags.hasPluginCache = false;
+}
+
+bool LakosEntity::hasPluginCache() const
+{
+    return d->flags.hasPluginCache;
+}
+
 std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& LakosEntity::getSharedDependenciesPlugin() const
 {
     return d->sharedDependenciesPlugin;
@@ -2093,6 +2106,7 @@ std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& LakosEntity::getSharedD
 
 void LakosEntity::setSharedDependenciesPlugin(std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>&& deps)
 {
+    d->flags.hasPluginCache = true;
     d->sharedDependenciesPlugin = std::move(deps);
 }
 

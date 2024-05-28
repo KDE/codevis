@@ -125,7 +125,8 @@ LakosRelation::LakosRelation(LakosEntity *source, LakosEntity *target): d(std::m
 {
     d->pointsFrom = source;
     d->pointsTo = target;
-
+    d->pointsFrom->invalidatePluginCache();
+    d->pointsTo->invalidatePluginCache();
     d->color = Preferences::edgeColor();
     d->highlightColor = Preferences::highlightEdgeColor();
     connect(Preferences::self(), &Preferences::edgeColorChanged, this, [this] {

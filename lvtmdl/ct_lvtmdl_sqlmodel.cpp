@@ -45,7 +45,7 @@ QVariant SqlModel::headerData(int section, Qt::Orientation orientation, int role
     }
 
     if (orientation == Qt::Vertical) {
-        return {};
+        return section;
     }
 
     if (role != Qt::DisplayRole) {

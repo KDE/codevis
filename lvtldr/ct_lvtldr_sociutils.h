@@ -74,6 +74,12 @@ class SociDatabaseHandler : public DatabaseHandler {
                     if (loadColumnNames) {
                         res.columns.push_back(props.get_name());
                     }
+                    auto ind = row.get_indicator(i);
+                    if (ind == soci::indicator::i_null) {
+                        thisRow.push_back("NULL");
+                        continue;
+                    }
+
                     switch (props.get_data_type()) {
                     case soci::dt_string:
                         thisRow.push_back(row.get<std::string>(i));

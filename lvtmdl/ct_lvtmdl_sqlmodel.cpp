@@ -57,6 +57,15 @@ QVariant SqlModel::headerData(int section, Qt::Orientation orientation, int role
 
 void SqlModel::setQuery(const QString& query)
 {
+    QString toAnalize = query.toLower();
+    const bool isInvalidQuery =
+        toAnalize.contains("insert into") || toAnalize.contains("drop table") || toAnalize.contains("create table");
+
+    if (isInvalidQuery) {
+        Q_EMIT invalidQueryTriggered(tr("Only select queries are supported"), query);
+        return;
+    }
+
     auto res = nodeStorage.rawDbQuery(query.toStdString());
     if (res.has_error()) {
         Q_EMIT invalidQueryTriggered(QString::fromStdString(res.error().what), query);

@@ -37,6 +37,7 @@
         <file alias="reparent_entity">imgs/reparent_entity.png</file>
         <file alias="notes">imgs/notes.png</file>
         <file alias="file">imgs/file.svg</file>
+        <file alias="db_schema_svg">imgs/database_schema.png</file>
         <file alias="folder">imgs/folder.svg</file>
         <file alias="toggle-vis-edit-state-edit">imgs/toggle-vis-edit-state-edit.png</file>
         <file alias="toggle-vis-edit-state-vis">imgs/toggle-vis-edit-state-vis.png</file>

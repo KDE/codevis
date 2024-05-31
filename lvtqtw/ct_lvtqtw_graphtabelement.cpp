@@ -31,6 +31,7 @@
 #include <ct_lvtprj_projectfile.h>
 
 #include <ct_lvtmdl_historylistmodel.h>
+#include <ct_lvtqtw_bulkedit.h>
 
 #include <ct_lvtqtc_iconhelpers.h>
 #include <ct_lvtqtc_itool.h>
@@ -243,6 +244,20 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
         qDebug() << scene->toJson();
     });
 
+    auto *bulkEditAction = new QAction();
+    bulkEditAction->setToolTip(tr("Show Bulk Edit Dialog"));
+    bulkEditAction->setText(tr("Bulk Edit"));
+    bulkEditAction->setCheckable(false);
+    bulkEditAction->setIcon(IconHelpers::iconFrom(":/icon/fatal"));
+    connect(bulkEditAction, &QAction::triggered, this, [this, scene] {
+        BulkEdit be(this);
+        QJsonDocument doc;
+        connect(&be, &BulkEdit::sendBulkJson, this, [scene](const QJsonDocument& jsonDoc) {
+            scene->loadJsonWithDocumentChanges(jsonDoc);
+        });
+        be.exec();
+    });
+
     auto *minimapAction = new QAction();
     minimapAction->setToolTip(tr("Show Minimap"));
     minimapAction->setText(tr("Show Minimap"));
@@ -296,6 +311,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     ui->toolBox->createToolButton(visualizationId, resetZoomAction);
     ui->toolBox->createToolButton(visualizationId, minimapAction);
     ui->toolBox->createToolButton(visualizationId, legendAction);
+    ui->toolBox->createToolButton(visualizationId, bulkEditAction);
 
     // Debug
     const QString debugId = tr("Debug");

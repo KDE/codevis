@@ -220,6 +220,8 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     void layoutAllRelations();
     // Call layoutRelations() on all edges
 
+    void setJsonSettings(const QJsonObject& settings);
+
     [[nodiscard]] const lvtshr::LoaderInfo& loaderInfo() const;
 
     std::unique_ptr<QDialog> createNotesDialog();

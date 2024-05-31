@@ -53,6 +53,7 @@
 #include <QGraphicsSceneContextMenuEvent>
 #include <QInputDialog>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QMenu>
 #include <QPen>
 #include <QPointF>
@@ -2065,6 +2066,11 @@ void LakosEntity::fromJson(const QJsonObject& obj)
     } else {
         collapse(QtcUtil::CreateUndoAction::e_No);
     }
+}
+
+void LakosEntity::setJsonSettings(const QJsonObject& settings)
+{
+    // TODO: Finish this.
 }
 
 void LakosEntity::setColor(const QColor& color)

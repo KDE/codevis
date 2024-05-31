@@ -19,6 +19,7 @@
 
 #include "ct_lvtshr_graphstorage.h"
 #include <any>
+#include <clang-c/Index.h>
 #include <ct_lvtqtc_graphicsscene.h>
 
 #include <ct_lvtqtc_alg_level_layout.h>
@@ -1900,6 +1901,27 @@ void GraphicsScene::removeEdge(LakosEntity& fromEntity, LakosEntity& toEntity)
 
     fromEntity.getTopLevelParent()->calculateEdgeVisibility();
     fromEntity.recursiveEdgeRelayout();
+}
+
+void GraphicsScene::loadJsonWithDocumentChanges(const QJsonDocument& doc)
+{
+    if (!doc.isObject()) {
+        return;
+    }
+
+    QJsonArray elements = doc["elements"].toArray();
+    for (const auto elem : elements) {
+        QJsonObject currObj = elem.toObject();
+        std::string currName = currObj["name"].toString().toStdString();
+
+        const auto propertiesObj = currObj["properties"].toObject();
+
+        for (auto *v : d->verticesVec) {
+            if (v->name() == currName) {
+                v->setJsonSettings(currObj);
+            }
+        }
+    }
 }
 
 } // end namespace Codethink::lvtqtc

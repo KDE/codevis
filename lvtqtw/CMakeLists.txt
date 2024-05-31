@@ -22,6 +22,7 @@ AddTargetLibrary(
         lvtqtw
     SOURCES
         ct_lvtqtw_backgroundeventfilter.cpp
+        ct_lvtqtw_bulkedit.cpp
         ct_lvtqtw_configurationdialog.cpp
         ct_lvtqtw_exportmanager.cpp
         ct_lvtqtw_errorview.cpp
@@ -41,6 +42,7 @@ AddTargetLibrary(
         ct_lvtqtw_welcomescreen.cpp
     QT_HEADERS
         ct_lvtqtw_backgroundeventfilter.h
+        ct_lvtqtw_bulkedit.h
         ct_lvtqtw_configurationdialog.h
         ct_lvtqtw_errorview.h
         ct_lvtqtw_exportmanager.h

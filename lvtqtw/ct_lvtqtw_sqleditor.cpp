@@ -46,7 +46,6 @@ SqlEditor::SqlEditor(lvtldr::NodeStorage& sharedStorage, QWidget *parent): QWidg
         auto *menu = new QMenu();
         auto *action = menu->addAction(tr("Load selected"));
         connect(action, &QAction::triggered, this, [this] {
-            std::cout << "Running context menu thing";
             auto selectionModel = tableView->selectionModel();
             auto selection = selectionModel->selection();
 
@@ -55,7 +54,6 @@ SqlEditor::SqlEditor(lvtldr::NodeStorage& sharedStorage, QWidget *parent): QWidg
                 qualifiedNames.insert(item.data().toString());
                 std::cout << item.data().toString().toStdString() << std::endl;
             }
-            qDebug() << "Load requested" << qualifiedNames;
             Q_EMIT loadRequested(qualifiedNames);
         });
         menu->exec(mapToGlobal(pos));

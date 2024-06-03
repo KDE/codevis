@@ -2049,6 +2049,10 @@ QJsonObject LakosEntity::toJson() const
                               {"children", childrenJson},
                               {"expanded", isExpanded()}};
 
+    if (d->color != Preferences::entityBackgroundColor()) {
+        thisEntity["color"] = d->color.name();
+    }
+
     return thisEntity;
 }
 
@@ -2065,6 +2069,10 @@ void LakosEntity::fromJson(const QJsonObject& obj)
         expand(QtcUtil::CreateUndoAction::e_No);
     } else {
         collapse(QtcUtil::CreateUndoAction::e_No);
+    }
+
+    if (obj.keys().contains("color")) {
+        setColor(obj["color"].toString());
     }
 }
 

@@ -84,23 +84,8 @@ BulkEdit::BulkEdit(QWidget *parent): QDialog(parent)
         doc->saveAs(QUrl::fromLocalFile(jsonFile));
     });
 
-    connect(btnApply, &QPushButton::clicked, this, [this, doc, messageWidget] {
-        QString data = doc->text();
-        if (data.isEmpty()) {
-            return;
-        }
-
-        QJsonParseError error;
-        messageWidget->setText(QString());
-        messageWidget->hide();
-
-        auto jsonDoc = QJsonDocument::fromJson(data.toLocal8Bit(), &error);
-        if (error.error != QJsonParseError::ParseError::NoError) {
-            messageWidget->setText(error.errorString());
-            messageWidget->show();
-        }
-
-        Q_EMIT sendBulkJson(jsonDoc);
+    connect(btnApply, &QPushButton::clicked, this, [this, doc] {
+        Q_EMIT sendBulkJson(doc->text());
     });
 }
 

@@ -43,6 +43,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include <result/result.hpp>
+
 class QAction;
 class QUndoCommand;
 
@@ -51,7 +53,7 @@ class LakosianNode;
 }
 
 namespace Codethink::lvtplg {
-class Entity;
+struct Entity;
 }
 
 namespace Codethink::lvtqtc {
@@ -220,7 +222,11 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     void layoutAllRelations();
     // Call layoutRelations() on all edges
 
-    void setJsonSettings(const QJsonObject& settings);
+    struct JsonSettingsError {
+        QString what;
+    };
+
+    cpp::result<void, JsonSettingsError> setJsonSettings(const QJsonObject& settings);
 
     [[nodiscard]] const lvtshr::LoaderInfo& loaderInfo() const;
 

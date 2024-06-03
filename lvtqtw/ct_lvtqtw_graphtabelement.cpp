@@ -252,7 +252,7 @@ void GraphTabElement::setupToolBar(NodeStorage& nodeStorage)
     connect(bulkEditAction, &QAction::triggered, this, [this, scene] {
         BulkEdit be(this);
         QJsonDocument doc;
-        connect(&be, &BulkEdit::sendBulkJson, this, [scene](const QJsonDocument& jsonDoc) {
+        connect(&be, &BulkEdit::sendBulkJson, this, [scene](const QString& jsonDoc) {
             scene->loadJsonWithDocumentChanges(jsonDoc);
         });
         be.exec();

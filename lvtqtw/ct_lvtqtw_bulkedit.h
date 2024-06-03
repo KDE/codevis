@@ -28,7 +28,7 @@ class BulkEdit : public QDialog {
     Q_OBJECT
   public:
     BulkEdit(QWidget *parent);
-    Q_SIGNAL void sendBulkJson(const QJsonDocument& j);
+    Q_SIGNAL void sendBulkJson(const QString& j);
 
   private:
     void loadFile(const QString& json);

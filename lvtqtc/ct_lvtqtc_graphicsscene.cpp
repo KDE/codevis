@@ -1903,17 +1903,50 @@ void GraphicsScene::removeEdge(LakosEntity& fromEntity, LakosEntity& toEntity)
     fromEntity.recursiveEdgeRelayout();
 }
 
-void GraphicsScene::loadJsonWithDocumentChanges(const QJsonDocument& doc)
+void GraphicsScene::loadJsonWithDocumentChanges(const QString& doc)
 {
-    if (!doc.isObject()) {
+    QJsonParseError error;
+    auto jsonDoc = QJsonDocument::fromJson(doc.toLocal8Bit(), &error);
+    if (error.error != QJsonParseError::ParseError::NoError) {
+        Q_EMIT errorMessage(error.errorString());
         return;
     }
 
-    QString missingElements;
+    if (!jsonDoc.isObject()) {
+        return;
+    }
 
-    QJsonArray elements = doc["elements"].toArray();
-    for (const auto elem : elements) {
+    // Empty message force-closes the previous message.
+    Q_EMIT errorMessage(QString());
+
+    QString missingElements;
+    const auto mainObject = jsonDoc.object();
+    const auto keys = mainObject.keys();
+    if (!keys.contains("elements")) {
+        Q_EMIT errorMessage(tr("Mising key `elements` with the array of items to change.").arg(missingElements));
+        return;
+    }
+
+    if (!jsonDoc["elements"].isArray()) {
+        Q_EMIT errorMessage(tr("'elements' object must be a JSON Array.").arg(missingElements));
+        return;
+    }
+
+    QJsonArray elements = jsonDoc["elements"].toArray();
+    for (const auto& elem : elements) {
         QJsonObject currObj = elem.toObject();
+
+        if (!currObj.keys().contains("name")) {
+            Q_EMIT errorMessage(
+                tr("Missing required key: `name` on array object. \n %1").arg(QJsonDocument(currObj).toJson()));
+            return;
+        }
+
+        if (!currObj["name"].isString()) {
+            Q_EMIT errorMessage(tr("Name must be a string, \n %1").arg(QJsonDocument(currObj).toJson()));
+            return;
+        }
+
         std::string currName = currObj["name"].toString().toStdString();
         auto it = std::find_if(std::begin(d->verticesVec), std::end(d->verticesVec), [&currName](LakosEntity *v) {
             return v->name() == currName;
@@ -1921,13 +1954,18 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QJsonDocument& doc)
 
         if (it == std::end(d->verticesVec)) {
             missingElements += QString::fromStdString(currName) + " ";
-        } else {
-            (*it)->setJsonSettings(currObj);
+            continue;
+        }
+
+        auto res = (*it)->setJsonSettings(currObj);
+        if (res.has_error()) {
+            Q_EMIT errorMessage(res.error().what);
+            return;
         }
     }
 
     if (!missingElements.isEmpty()) {
-        Q_EMIT errorMessage(tr("JSON Elements not found on the Scene\n: %1").arg(missingElements));
+        Q_EMIT errorMessage(tr(" Elements not found on the Scene\n: %1").arg(missingElements));
     }
 }
 

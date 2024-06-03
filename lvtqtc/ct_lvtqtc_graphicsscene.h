@@ -246,7 +246,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
   public Q_SLOTS:
     void handleViewportChanged();
-    void loadJsonWithDocumentChanges(const QJsonDocument& doc);
+    void loadJsonWithDocumentChanges(const QString& doc);
 
   private:
     void unloadEntity(LakosEntity *entity);

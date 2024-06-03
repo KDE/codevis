@@ -2076,14 +2076,22 @@ void LakosEntity::fromJson(const QJsonObject& obj)
     }
 }
 
-void LakosEntity::setJsonSettings(const QJsonObject& settings)
+cpp::result<void, LakosEntity::JsonSettingsError> LakosEntity::setJsonSettings(const QJsonObject& settings)
 {
     if (settings.keys().contains("color")) {
-        QColor c = settings["color"].toString();
-        if (c.isValid()) {
-            setColor(c);
+        if (!settings["color"].isString()) {
+            return cpp::fail(
+                LakosEntity::JsonSettingsError{tr("`color` must be string. %1").arg(QJsonDocument(settings).toJson())});
         }
+        QColor c = settings["color"].toString();
+        if (!c.isValid()) {
+            return cpp::fail(
+                LakosEntity::JsonSettingsError{tr("`color` must be a hexadecimal string in the form of #RRGGBB")
+                                                   .arg(QJsonDocument(settings).toJson())});
+        }
+        setColor(c);
     }
+    return {};
 }
 
 void LakosEntity::setColor(const QColor& color)

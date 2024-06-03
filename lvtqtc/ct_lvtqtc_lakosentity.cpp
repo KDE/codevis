@@ -2070,7 +2070,12 @@ void LakosEntity::fromJson(const QJsonObject& obj)
 
 void LakosEntity::setJsonSettings(const QJsonObject& settings)
 {
-    // TODO: Finish this.
+    if (settings.keys().contains("color")) {
+        QColor c = settings["color"].toString();
+        if (c.isValid()) {
+            setColor(c);
+        }
+    }
 }
 
 void LakosEntity::setColor(const QColor& color)

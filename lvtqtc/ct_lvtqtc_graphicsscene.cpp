@@ -1913,9 +1913,6 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QJsonDocument& doc)
     for (const auto elem : elements) {
         QJsonObject currObj = elem.toObject();
         std::string currName = currObj["name"].toString().toStdString();
-
-        const auto propertiesObj = currObj["properties"].toObject();
-
         for (auto *v : d->verticesVec) {
             if (v->name() == currName) {
                 v->setJsonSettings(currObj);

@@ -1344,7 +1344,7 @@ void LakosEntity::hoverLeaveEvent(QGraphicsSceneHoverEvent *ev)
     setFlag(QGraphicsItem::ItemIgnoresTransformations, false);
 
     if (d->flags.showBackground) {
-        QBrush thisBrush = Preferences::entityBackgroundColor();
+        QBrush thisBrush = d->color;
         setBrush(thisBrush);
     }
 

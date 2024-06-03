@@ -1909,15 +1909,25 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QJsonDocument& doc)
         return;
     }
 
+    QString missingElements;
+
     QJsonArray elements = doc["elements"].toArray();
     for (const auto elem : elements) {
         QJsonObject currObj = elem.toObject();
         std::string currName = currObj["name"].toString().toStdString();
-        for (auto *v : d->verticesVec) {
-            if (v->name() == currName) {
-                v->setJsonSettings(currObj);
-            }
+        auto it = std::find_if(std::begin(d->verticesVec), std::end(d->verticesVec), [&currName](LakosEntity *v) {
+            return v->name() == currName;
+        });
+
+        if (it == std::end(d->verticesVec)) {
+            missingElements += QString::fromStdString(currName) + " ";
+        } else {
+            (*it)->setJsonSettings(currObj);
         }
+    }
+
+    if (!missingElements.isEmpty()) {
+        Q_EMIT errorMessage(tr("JSON Elements not found on the Scene\n: %1").arg(missingElements));
     }
 }
 

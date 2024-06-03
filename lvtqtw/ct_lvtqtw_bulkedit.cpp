@@ -53,6 +53,8 @@ BulkEdit::BulkEdit(QWidget *parent): QDialog(parent)
 
     auto *splitter = new QSplitter(this);
     auto *mainLayout = new QBoxLayout(QBoxLayout::Direction::TopToBottom);
+    auto *messageWidget = new KMessageWidget();
+    messageWidget->setVisible(false);
 
     QFile markdown(":/md/json_scene_elements");
     markdown.open(QIODevice::ReadOnly);
@@ -63,6 +65,7 @@ BulkEdit::BulkEdit(QWidget *parent): QDialog(parent)
     splitter->addWidget(documentation);
 
     mainLayout->addWidget(splitter);
+    mainLayout->addWidget(messageWidget);
     mainLayout->addWidget(buttonBox);
 
     setLayout(mainLayout);
@@ -81,13 +84,20 @@ BulkEdit::BulkEdit(QWidget *parent): QDialog(parent)
         doc->saveAs(QUrl::fromLocalFile(jsonFile));
     });
 
-    connect(btnApply, &QPushButton::clicked, this, [this, doc] {
+    connect(btnApply, &QPushButton::clicked, this, [this, doc, messageWidget] {
         QString data = doc->text();
+        if (data.isEmpty()) {
+            return;
+        }
+
         QJsonParseError error;
+        messageWidget->setText(QString());
+        messageWidget->hide();
 
         auto jsonDoc = QJsonDocument::fromJson(data.toLocal8Bit(), &error);
         if (error.error != QJsonParseError::ParseError::NoError) {
-            // TODO: Error Handling
+            messageWidget->setText(error.errorString());
+            messageWidget->show();
         }
 
         Q_EMIT sendBulkJson(jsonDoc);

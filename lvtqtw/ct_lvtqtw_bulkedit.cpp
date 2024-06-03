@@ -43,7 +43,7 @@ BulkEdit::BulkEdit(QWidget *parent): QDialog(parent)
     auto *view = doc->createView(nullptr);
 
     auto *documentation = new QTextBrowser(this);
-    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::StandardButton::Close);
+    auto buttonBox = new QDialogButtonBox();
 
     doc->setHighlightingMode("json");
 

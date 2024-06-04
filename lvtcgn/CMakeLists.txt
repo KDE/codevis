@@ -8,11 +8,12 @@ AddTargetLibrary(
         lvtcgn_mdl
     SOURCES
         ct_lvtcgn_generatecode.cpp
-    HEADERS
+    QT_HEADERS
         ct_lvtcgn_generatecode.h
     LIBRARIES
         ${SYSTEM_EXTRA_LIBRARIES}
         Python::Python
+        Qt${QT_MAJOR_VERSION}::Qml
 )
 
 # TODO [#438]: Move thirdparty dependencies to Conan (Using 'cpp:result' and 'pybind11' here)
@@ -22,7 +23,7 @@ PUBLIC
 )
 
 if (COMPILE_TESTS)
-    add_executable(test_lvtcgn_codegen ct_lvtcgn_generatecode.t.cpp ct_lvtcgn_testutils.h)
+    add_executable(test_lvtcgn_codegen ct_lvtcgn_testutils.cpp ct_lvtcgn_generatecode.t.cpp)
     target_link_libraries(test_lvtcgn_codegen
         Codethink::lvtcgn_mdl
         Codethink::lvttst
@@ -58,7 +59,9 @@ if (BUILD_DESKTOP_APP)
     )
 
     if (COMPILE_TESTS)
-        add_executable(test_lvtcgn_codegendialog ct_lvtcgn_codegendialog.t.cpp ct_lvtcgn_testutils.h)
+        add_executable(test_lvtcgn_codegendialog
+            ct_lvtcgn_testutils.cpp
+            ct_lvtcgn_codegendialog.t.cpp )
         target_link_libraries(test_lvtcgn_codegendialog
             Codethink::lvtcgn_gui
             Codethink::lvtcgn_mdl
@@ -79,7 +82,7 @@ if (BUILD_DESKTOP_APP)
             lvtcgn_adapter
         SOURCES
             ct_lvtcgn_app_adapter.cpp
-        HEADERS
+        QT_HEADERS
             ct_lvtcgn_app_adapter.h
         LIBRARIES
             ${SYSTEM_EXTRA_LIBRARIES}
@@ -87,11 +90,14 @@ if (BUILD_DESKTOP_APP)
             Codethink::lvtcgn_gui
             Codethink::lvtldr
             Codethink::lvtshr
+            Qt${QT_MAJOR_VERSION}::Core
+            Qt${QT_MAJOR_VERSION}::Gui
+            Qt${QT_MAJOR_VERSION}::Widgets
             lakospreferences
     )
 
     if (COMPILE_TESTS)
-        add_executable(test_lvtcgn_app_adapter ct_lvtcgn_app_adapter.t.cpp)
+        add_executable(test_lvtcgn_app_adapter ct_lvtcgn_testutils.cpp ct_lvtcgn_app_adapter.t.cpp)
         target_link_libraries(test_lvtcgn_app_adapter
                 Codethink::lvtcgn_adapter
                 Codethink::lvttst

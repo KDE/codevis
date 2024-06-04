@@ -44,7 +44,7 @@ class LVTCGN_GUI_EXPORT CodeGenerationEntitiesTreeModel : public QStandardItemMo
     void recursiveExec(std::function<RecursiveExec(QStandardItem *)> f);
 
   private:
-    void populateItemAndChildren(mdl::IPhysicalEntityInfo& info, QStandardItem *parent);
+    void populateItemAndChildren(mdl::IPhysicalEntityInfo *info, QStandardItem *parent);
     void updateAllChildrenState(QStandardItem *item);
     void updateParentState(QStandardItem *item);
 

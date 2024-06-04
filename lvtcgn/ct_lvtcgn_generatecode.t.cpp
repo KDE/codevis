@@ -30,7 +30,6 @@
 #pragma pop_macro("slots")
 
 #include <fstream>
-#include <memory>
 #include <string>
 
 using namespace std::string_literals;
@@ -70,7 +69,9 @@ def afterProcessEntities(output_dir, user_ctx):
     auto outputDir = tmp_dir.createDir("out");
 
     auto contentProvider = FakeContentProvider{};
-    auto result = CodeGeneration::generateCodeFromScript(scriptPath.string(), outputDir.string(), contentProvider);
+    auto result = CodeGeneration::generateCodeFromjS(QString::fromStdString(scriptPath.string()),
+                                                     QString::fromStdString(outputDir.string()),
+                                                     contentProvider);
     if (result.has_error()) {
         INFO("Error message: " + result.error().message);
     }
@@ -91,7 +92,7 @@ TEST_CASE("Code generation errors")
     // Provide a bad file
     {
         PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
-        auto result = CodeGeneration::generateCodeFromScript("badfile.py", ".", contentProvider);
+        auto result = CodeGeneration::generateCodeFromjS("badfile.py", ".", contentProvider);
         REQUIRE(result.has_error());
         REQUIRE(result.error().message == "ModuleNotFoundError: No module named 'badfile'");
     }
@@ -105,7 +106,8 @@ def f(x):
 )";
         auto scriptPath = tmpDir.createTextFile("some_script.py", SCRIPT_CONTENTS);
 
-        auto result = CodeGeneration::generateCodeFromScript(scriptPath.string(), ".", contentProvider);
+        auto result =
+            CodeGeneration::generateCodeFromjS(QString::fromStdString(scriptPath.string()), ".", contentProvider);
         REQUIRE(result.has_error());
         REQUIRE(result.error().message == "Expected function named buildPhysicalEntity");
     }
@@ -119,7 +121,8 @@ def f(x):
 )";
         auto scriptPath = tmpDir.createTextFile("some_script.py", SCRIPT_CONTENTS);
 
-        auto result = CodeGeneration::generateCodeFromScript(scriptPath.string(), ".", contentProvider);
+        auto result =
+            CodeGeneration::generateCodeFromjS(QString::fromStdString(scriptPath.string()), ".", contentProvider);
         REQUIRE(result.has_error());
         REQUIRE(result.error().message == "SyntaxError: invalid syntax (some_script.py, line 3)");
     }
@@ -160,7 +163,9 @@ def buildPhysicalEntity(cgn, entity, output_dir, user_ctx):
     auto outputDir = tmpDir.createDir("out");
 
     auto contentProvider = FakeContentProvider{};
-    auto result = CodeGeneration::generateCodeFromScript(scriptPath.string(), outputDir.string(), contentProvider);
+    auto result = CodeGeneration::generateCodeFromjS(QString::fromStdString(scriptPath.string()),
+                                                     QString::fromStdString(outputDir.string()),
+                                                     contentProvider);
     if (result.has_error()) {
         INFO("Error message: " + result.error().message);
     }

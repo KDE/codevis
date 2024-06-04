@@ -68,14 +68,14 @@ WrappedLakosianNode::WrappedLakosianNode(NodeStorageDataProvider& dataProvider,
 
 WrappedLakosianNode::~WrappedLakosianNode() = default;
 
-std::string WrappedLakosianNode::name() const
+QString WrappedLakosianNode::name() const
 {
-    return node->name();
+    return QString::fromStdString(node->name());
 }
 
-std::string WrappedLakosianNode::type() const
+QString WrappedLakosianNode::type() const
 {
-    std::string type = "Unknown";
+    QString type = "Unknown";
     if (node->type() == DiagramType::ComponentType) {
         type = "Component";
     }
@@ -99,17 +99,17 @@ std::string WrappedLakosianNode::type() const
     return type;
 }
 
-std::optional<std::reference_wrapper<IPhysicalEntityInfo>> WrappedLakosianNode::parent() const
+IPhysicalEntityInfo *WrappedLakosianNode::parent() const
 {
     if (!node->parent()) {
-        return std::nullopt;
+        return nullptr;
     }
     return dataProvider.getWrappedNode(node->parent());
 }
 
-std::vector<std::reference_wrapper<IPhysicalEntityInfo>> WrappedLakosianNode::children() const
+QVector<IPhysicalEntityInfo *> WrappedLakosianNode::children() const
 {
-    auto wrappedVec = std::vector<std::reference_wrapper<IPhysicalEntityInfo>>{};
+    auto wrappedVec = QVector<IPhysicalEntityInfo *>{};
     for (auto *e : node->children()) {
         if (e->type() == DiagramType::ComponentType || e->type() == DiagramType::PackageType) {
             wrappedVec.push_back(dataProvider.getWrappedNode(e));
@@ -118,9 +118,9 @@ std::vector<std::reference_wrapper<IPhysicalEntityInfo>> WrappedLakosianNode::ch
     return wrappedVec;
 }
 
-std::vector<std::reference_wrapper<IPhysicalEntityInfo>> WrappedLakosianNode::fwdDependencies() const
+QVector<IPhysicalEntityInfo *> WrappedLakosianNode::fwdDependencies() const
 {
-    auto wrappedVec = std::vector<std::reference_wrapper<IPhysicalEntityInfo>>{};
+    auto wrappedVec = QVector<IPhysicalEntityInfo *>{};
     for (auto const& edge : node->providers()) {
         auto *e = edge.other();
         if (e->type() == DiagramType::ComponentType || e->type() == DiagramType::PackageType) {
@@ -147,20 +147,20 @@ NodeStorageDataProvider::NodeStorageDataProvider(Codethink::lvtldr::NodeStorage&
 
 NodeStorageDataProvider::~NodeStorageDataProvider() = default;
 
-std::reference_wrapper<IPhysicalEntityInfo> NodeStorageDataProvider::getWrappedNode(LakosianNode *node)
+IPhysicalEntityInfo *NodeStorageDataProvider::getWrappedNode(LakosianNode *node)
 {
     if (nodeToInfo.find(node) == nodeToInfo.end()) {
         nodeToInfo.insert(
             {node, std::make_unique<WrappedLakosianNode>(*this, node, shouldDefaultSelectForCodegen(*node))});
     }
-    return *nodeToInfo.at(node);
+    return nodeToInfo.at(node).get();
 }
 
-std::vector<std::reference_wrapper<IPhysicalEntityInfo>> NodeStorageDataProvider::topLevelEntities()
+QVector<IPhysicalEntityInfo *> NodeStorageDataProvider::topLevelEntities()
 {
-    std::vector<std::reference_wrapper<IPhysicalEntityInfo>> refVec;
+    QVector<IPhysicalEntityInfo *> refVec;
     for (auto *topLevelNode : ns.getTopLevelPackages()) {
-        refVec.emplace_back(getWrappedNode(topLevelNode).get());
+        refVec.emplace_back(getWrappedNode(topLevelNode));
     }
     return refVec;
 }

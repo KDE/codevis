@@ -61,52 +61,49 @@ TEST_CASE("Code generation adapter")
     auto pkgs = dataProvider.topLevelEntities();
     REQUIRE(pkgs.size() == 3);
 
-    auto getTopLvlEntity = [&pkgs](auto const& name) -> IPhysicalEntityInfo& {
-        return std::find_if(pkgs.begin(),
-                            pkgs.end(),
-                            [&name](auto&& p) {
-                                return p.get().name() == name;
-                            })
-            ->get();
+    auto getTopLvlEntity = [&pkgs](auto const& name) -> IPhysicalEntityInfo * {
+        return *std::find_if(pkgs.begin(), pkgs.end(), [&name](auto *p) {
+            return p->name() == name;
+        });
     };
 
-    auto& pkg0 = getTopLvlEntity("non-lakosian group");
-    REQUIRE(pkg0.name() == "non-lakosian group");
+    auto *pkg0 = getTopLvlEntity("non-lakosian group");
+    REQUIRE(pkg0->name() == "non-lakosian group");
     // In this particular case, the non-lakosian group is simply a package because it is empty, and falls into
     // this specific rule.
-    REQUIRE(pkg0.type() == "Package");
-    REQUIRE_FALSE(pkg0.parent().has_value());
-    REQUIRE(pkg0.children().empty());
+    REQUIRE(pkg0->type() == "Package");
+    REQUIRE_FALSE(pkg0->parent());
+    REQUIRE(pkg0->children().empty());
     // non-lakosian groups are expected to be unselected for code generation
-    REQUIRE(pkg0.selectedForCodeGeneration() == false);
+    REQUIRE(pkg0->selectedForCodeGeneration() == false);
 
-    auto& pkg1 = getTopLvlEntity("pkgA");
-    REQUIRE(pkg1.name() == "pkgA");
-    REQUIRE(pkg1.type() == "Package");
-    REQUIRE_FALSE(pkg1.parent().has_value());
-    REQUIRE(pkg1.selectedForCodeGeneration() == true);
-    REQUIRE(pkg1.children().size() == 1);
+    auto *pkg1 = getTopLvlEntity("pkgA");
+    REQUIRE(pkg1->name() == "pkgA");
+    REQUIRE(pkg1->type() == "Package");
+    REQUIRE_FALSE(pkg1->parent());
+    REQUIRE(pkg1->selectedForCodeGeneration() == true);
+    REQUIRE(pkg1->children().size() == 1);
 
-    auto& componentA = pkg1.children()[0].get();
-    REQUIRE(componentA.name() == "componentA");
-    REQUIRE(componentA.type() == "Component");
-    REQUIRE(componentA.parent().value().get().name() == "pkgA");
-    REQUIRE(componentA.children().empty());
-    REQUIRE(componentA.fwdDependencies().empty());
+    auto *componentA = pkg1->children()[0];
+    REQUIRE(componentA->name() == "componentA");
+    REQUIRE(componentA->type() == "Component");
+    REQUIRE(componentA->parent()->name() == "pkgA");
+    REQUIRE(componentA->children().empty());
+    REQUIRE(componentA->fwdDependencies().empty());
 
-    auto& pkg2 = getTopLvlEntity("pkgB");
-    REQUIRE(pkg2.name() == "pkgB");
-    REQUIRE(pkg2.type() == "PackageGroup");
-    REQUIRE_FALSE(pkg2.parent().has_value());
-    REQUIRE(pkg2.children().size() == 1);
-    REQUIRE(pkg2.selectedForCodeGeneration() == true);
+    auto *pkg2 = getTopLvlEntity("pkgB");
+    REQUIRE(pkg2->name() == "pkgB");
+    REQUIRE(pkg2->type() == "PackageGroup");
+    REQUIRE_FALSE(pkg2->parent());
+    REQUIRE(pkg2->children().size() == 1);
+    REQUIRE(pkg2->selectedForCodeGeneration() == true);
 
-    auto& pkgBa = pkg2.children()[0].get();
-    REQUIRE(pkgBa.name() == "pkgBa");
-    REQUIRE(pkgBa.type() == "Package");
-    REQUIRE(pkgBa.parent().value().get().name() == "pkgB");
-    REQUIRE(pkgBa.children().empty());
-    REQUIRE(pkgBa.selectedForCodeGeneration() == true);
+    auto *pkgBa = pkg2->children()[0];
+    REQUIRE(pkgBa->name() == "pkgBa");
+    REQUIRE(pkgBa->type() == "Package");
+    REQUIRE(pkgBa->parent()->name() == "pkgB");
+    REQUIRE(pkgBa->children().empty());
+    REQUIRE(pkgBa->selectedForCodeGeneration() == true);
 }
 
 TEST_CASE("CMake code generation script")
@@ -131,8 +128,9 @@ TEST_CASE("CMake code generation script")
 
         auto outputDir = TmpDir{"cmake_out_dir"};
         auto dataProvider = NodeStorageDataProvider{ns};
-        auto result =
-            CodeGeneration::generateCodeFromScript(cmakeGeneratorPath, outputDir.path().string(), dataProvider);
+        auto result = CodeGeneration::generateCodeFromjS(QString::fromStdString(cmakeGeneratorPath),
+                                                         QString::fromStdString(outputDir.path().string()),
+                                                         dataProvider);
         if (result.has_error()) {
             FAIL("ERROR MESSAGE: " + result.error().message);
         }
@@ -168,8 +166,9 @@ TEST_CASE("CMake code generation script")
 
         auto outputDir = TmpDir{"cmake_out_dir"};
         auto dataProvider = NodeStorageDataProvider{ns};
-        auto result =
-            CodeGeneration::generateCodeFromScript(cmakeGeneratorPath, outputDir.path().string(), dataProvider);
+        auto result = CodeGeneration::generateCodeFromjS(QString::fromStdString(cmakeGeneratorPath),
+                                                         QString::fromStdString(outputDir.path().string()),
+                                                         dataProvider);
         if (result.has_error()) {
             FAIL("ERROR MESSAGE: " + result.error().message);
         }

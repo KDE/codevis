@@ -24,14 +24,15 @@
 
 #include <result/result.hpp>
 
-#include <memory>
 #include <optional>
 #include <string>
-#include <vector>
+
+#include <QObject>
 
 namespace Codethink::lvtcgn::mdl {
 
-class LVTCGN_MDL_EXPORT IPhysicalEntityInfo {
+class LVTCGN_MDL_EXPORT IPhysicalEntityInfo : public QObject {
+    Q_OBJECT
     /**
      * Implementations of this class are meant to be a thin, cheaply copiable layer that mostly
      * dispatches the calls to an actual underlying model, although having primitive data should be
@@ -46,19 +47,19 @@ class LVTCGN_MDL_EXPORT IPhysicalEntityInfo {
      */
   public:
     virtual ~IPhysicalEntityInfo();
-    virtual std::string name() const = 0;
-    virtual std::string type() const = 0;
-    virtual std::optional<std::reference_wrapper<IPhysicalEntityInfo>> parent() const = 0;
-    virtual std::vector<std::reference_wrapper<IPhysicalEntityInfo>> children() const = 0;
-    virtual std::vector<std::reference_wrapper<IPhysicalEntityInfo>> fwdDependencies() const = 0;
-    virtual bool selectedForCodeGeneration() const = 0;
-    virtual void setSelectedForCodeGeneration(bool value) = 0;
+    Q_INVOKABLE virtual QString name() const = 0;
+    Q_INVOKABLE virtual QString type() const = 0;
+    Q_INVOKABLE virtual IPhysicalEntityInfo *parent() const = 0;
+    Q_INVOKABLE virtual QVector<IPhysicalEntityInfo *> children() const = 0;
+    Q_INVOKABLE virtual QVector<IPhysicalEntityInfo *> fwdDependencies() const = 0;
+    Q_INVOKABLE virtual bool selectedForCodeGeneration() const = 0;
+    Q_INVOKABLE virtual void setSelectedForCodeGeneration(bool value) = 0;
 };
 
 class LVTCGN_MDL_EXPORT ICodeGenerationDataProvider {
   public:
     virtual ~ICodeGenerationDataProvider();
-    virtual std::vector<std::reference_wrapper<IPhysicalEntityInfo>> topLevelEntities() = 0;
+    virtual QVector<IPhysicalEntityInfo *> topLevelEntities() = 0;
     virtual int numberOfPhysicalEntities() const = 0;
 };
 
@@ -78,27 +79,27 @@ class LVTCGN_MDL_EXPORT CodeGeneration {
 
     class ProcessEntityStep : public CodeGenerationStep {
       public:
-        explicit ProcessEntityStep(const std::string& entityName): m_entityName(entityName)
+        explicit ProcessEntityStep(const QString& entityName): m_entityName(entityName)
         {
         }
 
-        std::string entityName() const
+        QString entityName() const
         {
             return m_entityName;
         }
 
       private:
-        std::string m_entityName;
+        QString m_entityName;
     };
 
     class BeforeProcessEntitiesStep : public CodeGenerationStep { };
     class AfterProcessEntitiesStep : public CodeGenerationStep { };
 
     static cpp::result<void, CodeGenerationError>
-    generateCodeFromScript(const std::string& scriptPath,
-                           const std::string& outputDir,
-                           ICodeGenerationDataProvider& dataProvider,
-                           std::optional<std::function<void(CodeGenerationStep const&)>> callback = std::nullopt);
+    generateCodeFromjS(const QString& scriptPath,
+                       const QString& outputDir,
+                       ICodeGenerationDataProvider& dataProvider,
+                       std::optional<std::function<void(CodeGenerationStep const&)>> callback = std::nullopt);
 };
 
 } // namespace Codethink::lvtcgn::mdl

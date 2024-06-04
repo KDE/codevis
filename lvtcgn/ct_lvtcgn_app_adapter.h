@@ -20,15 +20,18 @@
 #ifndef _CT_LVTCGN_APPADAPTER_H
 #define _CT_LVTCGN_APPADAPTER_H
 
-#include <QWidget>
+#include <QVector>
 #include <ct_lvtcgn_generatecode.h>
-#include <ct_lvtldr_lakosiannode.h>
-#include <functional>
 #include <lvtcgn_adapter_export.h>
 #include <map>
 #include <memory>
-#include <optional>
-#include <vector>
+
+class QWidget;
+
+namespace Codethink::lvtldr {
+class LakosianNode;
+class NodeStorage;
+} // namespace Codethink::lvtldr
 
 namespace Codethink::lvtcgn::app {
 
@@ -38,11 +41,11 @@ class LVTCGN_ADAPTER_EXPORT WrappedLakosianNode : public Codethink::lvtcgn::mdl:
   public:
     WrappedLakosianNode(NodeStorageDataProvider& dataProvider, lvtldr::LakosianNode *node, bool isSelectedForCodegen);
     ~WrappedLakosianNode() override;
-    std::string name() const override;
-    std::string type() const override;
-    std::optional<std::reference_wrapper<IPhysicalEntityInfo>> parent() const override;
-    std::vector<std::reference_wrapper<IPhysicalEntityInfo>> children() const override;
-    std::vector<std::reference_wrapper<IPhysicalEntityInfo>> fwdDependencies() const override;
+    QString name() const override;
+    QString type() const override;
+    IPhysicalEntityInfo *parent() const override;
+    QVector<IPhysicalEntityInfo *> children() const override;
+    QVector<IPhysicalEntityInfo *> fwdDependencies() const override;
     bool selectedForCodeGeneration() const override;
     void setSelectedForCodeGeneration(bool value) override;
 
@@ -58,13 +61,13 @@ class LVTCGN_ADAPTER_EXPORT NodeStorageDataProvider : public Codethink::lvtcgn::
     NodeStorageDataProvider(NodeStorageDataProvider const& other) = delete;
     NodeStorageDataProvider(NodeStorageDataProvider&& other) = delete;
     ~NodeStorageDataProvider() override;
-    [[nodiscard]] std::vector<std::reference_wrapper<mdl::IPhysicalEntityInfo>> topLevelEntities() override;
+    [[nodiscard]] QVector<mdl::IPhysicalEntityInfo *> topLevelEntities() override;
     [[nodiscard]] int numberOfPhysicalEntities() const override;
 
     friend class WrappedLakosianNode;
 
   private:
-    [[nodiscard]] std::reference_wrapper<mdl::IPhysicalEntityInfo> getWrappedNode(lvtldr::LakosianNode *node);
+    [[nodiscard]] mdl::IPhysicalEntityInfo *getWrappedNode(lvtldr::LakosianNode *node);
 
     lvtldr::NodeStorage& ns;
     std::map<lvtldr::LakosianNode *, std::unique_ptr<mdl::IPhysicalEntityInfo>> nodeToInfo;

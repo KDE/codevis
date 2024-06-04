@@ -79,13 +79,13 @@ void CodeGenerationEntitiesTreeModel::updateParentState(QStandardItem *item)
     updateParentState(parentItem);
 }
 
-void CodeGenerationEntitiesTreeModel::populateItemAndChildren(IPhysicalEntityInfo& info, QStandardItem *parent)
+void CodeGenerationEntitiesTreeModel::populateItemAndChildren(IPhysicalEntityInfo *info, QStandardItem *parent)
 {
-    auto *item = new QStandardItem(QString::fromStdString(info.name()));
-    item->setData(QString::fromStdString(info.name()), CodeGenerationDataRole::EntityNameRole);
+    auto *item = new QStandardItem(info->name());
+    item->setData(info->name(), CodeGenerationDataRole::EntityNameRole);
     item->setData(QVariant::fromValue(&info), CodeGenerationDataRole::InfoReferenceRole);
     item->setCheckable(true);
-    item->setCheckState(info.selectedForCodeGeneration() ? Qt::Checked : Qt::Unchecked);
+    item->setCheckState(info->selectedForCodeGeneration() ? Qt::Checked : Qt::Unchecked);
     item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
     if (parent == nullptr) {
         appendRow(item);
@@ -93,30 +93,30 @@ void CodeGenerationEntitiesTreeModel::populateItemAndChildren(IPhysicalEntityInf
         parent->appendRow(item);
     }
 
-    auto children = info.children();
-    std::sort(children.begin(), children.end(), [](IPhysicalEntityInfo const& l, IPhysicalEntityInfo const& r) {
-        return l.name() < r.name();
+    auto children = info->children();
+    std::sort(children.begin(), children.end(), [](IPhysicalEntityInfo *l, IPhysicalEntityInfo *r) {
+        return l->name() < r->name();
     });
     for (const auto& childInfo : children) {
-        populateItemAndChildren(childInfo.get(), item);
+        populateItemAndChildren(childInfo, item);
     }
 }
 
 void CodeGenerationEntitiesTreeModel::refreshContents()
 {
     auto children = dataProvider.topLevelEntities();
-    std::sort(children.begin(), children.end(), [](IPhysicalEntityInfo const& l, IPhysicalEntityInfo const& r) {
-        if (l.name() == "non-lakosian group") {
+    std::sort(children.begin(), children.end(), [](IPhysicalEntityInfo *l, IPhysicalEntityInfo *r) {
+        if (l->name() == "non-lakosian group") {
             return false;
         }
-        if (r.name() == "non-lakosian group") {
+        if (r->name() == "non-lakosian group") {
             return true;
         }
-        return l.name() < r.name();
+        return l->name() < r->name();
     });
 
     for (const auto& rootInfo : children) {
-        populateItemAndChildren(rootInfo.get(), nullptr);
+        populateItemAndChildren(rootInfo, nullptr);
     }
 }
 

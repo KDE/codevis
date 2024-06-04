@@ -188,8 +188,7 @@ void CodeGenerationDialog::Detail::codeGenerationIterationCallback(Ui::CodeGener
         const auto *s = dynamic_cast<const mdl::CodeGeneration::ProcessEntityStep *>(&step);
         if (s != nullptr) {
             ui.progressBar->setValue(ui.progressBar->value() + 1);
-            ui.codeGenLogsTextArea->appendPlainText(tr("Processing ") + QString::fromStdString(s->entityName())
-                                                    + "...");
+            ui.codeGenLogsTextArea->appendPlainText(tr("Processing ") + s->entityName() + "...");
         }
     }
 }
@@ -322,10 +321,19 @@ void CodeGenerationDialog::runCodeGeneration()
 
     // TODO [#441]: Make a CANCEL button for the code generation
     d->ui.runCodeGenerationBtn->setEnabled(false);
+
+#if 0
     auto result = CodeGeneration::generateCodeFromScript(selectedScriptPath().toStdString(),
                                                          d->ui.outputDirInput->text().toStdString(),
                                                          d->dataProvider,
                                                          iterationCallback);
+#else
+    auto result = CodeGeneration::generateCodeFromjS(selectedScriptPath(),
+                                                     d->ui.outputDirInput->text(),
+                                                     d->dataProvider,
+                                                     iterationCallback);
+#endif
+
     d->ui.runCodeGenerationBtn->setEnabled(true);
 
     if (result.has_error()) {

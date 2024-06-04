@@ -140,7 +140,7 @@ message("-- Qt Version: ${QT_MAJOR_VERSION}")
 message("-- LLVM Version: ${LLVM_VERSION}")
 
 if (BUILD_DESKTOP_APP)
-    find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Svg)
+    find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Qml Svg)
     find_package(KF${KF_MAJOR_VERSION} ${KF5_MIN_VERSION} REQUIRED COMPONENTS
         Archive
         Config

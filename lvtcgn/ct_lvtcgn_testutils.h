@@ -20,9 +20,16 @@
 #ifndef CT_LVTCGN_TESTUTILS_H_INCLUDED
 #define CT_LVTCGN_TESTUTILS_H_INCLUDED
 
+#include <QVector>
 #include <memory>
 #include <unordered_map>
-#include <utility>
+
+#include <ct_lvtcgn_generatecode.h>
+
+namespace Codethink::lvtcgn::mdl {
+class IPhysicalEntityInfo;
+class ICodeGenerationDataProvider;
+} // namespace Codethink::lvtcgn::mdl
 
 using namespace Codethink::lvtcgn::mdl;
 
@@ -30,22 +37,22 @@ struct FakeEntity {
     std::string name;
     std::string type;
     bool selected;
-    std::vector<std::reference_wrapper<FakeEntity>> children;
-    std::vector<std::reference_wrapper<FakeEntity>> fwdDeps;
-    std::optional<std::reference_wrapper<FakeEntity>> parent;
+    QVector<FakeEntity *> children;
+    QVector<FakeEntity *> fwdDeps;
+    FakeEntity *parent;
 
     FakeEntity(std::string name, std::string type, bool selected):
-        name(std::move(name)), type(std::move(type)), selected(selected), parent(std::nullopt)
+        name(name), type(type), selected(selected), parent(nullptr)
     {
     }
 
-    void addChild(FakeEntity& child)
+    void addChild(FakeEntity *child)
     {
-        child.parent = *this;
+        child->parent = this;
         children.emplace_back(child);
     }
 
-    void addFwdDep(FakeEntity& other)
+    void addFwdDep(FakeEntity *other)
     {
         fwdDeps.emplace_back(other);
     }
@@ -56,7 +63,7 @@ class FakeContentProvider : public ICodeGenerationDataProvider {
     FakeContentProvider();
     virtual ~FakeContentProvider() = default;
 
-    [[nodiscard]] std::vector<std::reference_wrapper<IPhysicalEntityInfo>> topLevelEntities() override
+    [[nodiscard]] QVector<IPhysicalEntityInfo *> topLevelEntities() override
     {
         return rootEntities;
     }
@@ -66,100 +73,75 @@ class FakeContentProvider : public ICodeGenerationDataProvider {
         return data.size();
     }
 
-    [[nodiscard]] IPhysicalEntityInfo& getInfoFor(FakeEntity *entity)
+    [[nodiscard]] IPhysicalEntityInfo *getInfoFor(FakeEntity *entity)
     {
-        return *infos[entity];
+        return infos[entity].get();
     }
 
   private:
-    std::vector<std::reference_wrapper<IPhysicalEntityInfo>> rootEntities;
-    std::vector<std::unique_ptr<FakeEntity>> data;
+    QVector<IPhysicalEntityInfo *> rootEntities;
+    QVector<std::shared_ptr<FakeEntity>> data;
     std::unordered_map<FakeEntity *, std::unique_ptr<IPhysicalEntityInfo>> infos;
 };
 
 class FakeEntityInfo : public IPhysicalEntityInfo {
   public:
-    explicit FakeEntityInfo(FakeEntity& entity, FakeContentProvider& provider): d_entity(entity), d_provider(provider)
+    explicit FakeEntityInfo(FakeEntity *entity, FakeContentProvider& provider): d_entity(entity), d_provider(provider)
     {
     }
 
     ~FakeEntityInfo() override = default;
 
-    [[nodiscard]] std::string name() const override
+    [[nodiscard]] QString name() const override
     {
-        return d_entity.name;
+        return QString::fromStdString(d_entity->name);
     }
 
-    [[nodiscard]] std::string type() const override
+    [[nodiscard]] QString type() const override
     {
-        return d_entity.type;
+        return QString::fromStdString(d_entity->type);
     }
 
-    [[nodiscard]] std::optional<std::reference_wrapper<IPhysicalEntityInfo>> parent() const override
+    [[nodiscard]] IPhysicalEntityInfo *parent() const override
     {
-        if (!d_entity.parent.has_value()) {
-            return std::nullopt;
+        if (!d_entity->parent) {
+            return nullptr;
         }
-        return d_provider.getInfoFor(&d_entity.parent.value().get());
+
+        return d_provider.getInfoFor(d_entity->parent);
     }
 
-    [[nodiscard]] std::vector<std::reference_wrapper<IPhysicalEntityInfo>> children() const override
+    [[nodiscard]] QVector<IPhysicalEntityInfo *> children() const override
     {
-        std::vector<std::reference_wrapper<IPhysicalEntityInfo>> children;
-        for (auto const& e : d_entity.children) {
-            children.emplace_back(d_provider.getInfoFor(&(e.get())));
+        QVector<IPhysicalEntityInfo *> children;
+        for (auto const& e : d_entity->children) {
+            children.emplace_back(d_provider.getInfoFor(e));
         }
         return children;
     }
 
-    [[nodiscard]] std::vector<std::reference_wrapper<IPhysicalEntityInfo>> fwdDependencies() const override
+    [[nodiscard]] QVector<IPhysicalEntityInfo *> fwdDependencies() const override
     {
-        std::vector<std::reference_wrapper<IPhysicalEntityInfo>> fwdDeps;
-        for (auto const& e : d_entity.fwdDeps) {
-            fwdDeps.emplace_back(d_provider.getInfoFor(&(e.get())));
+        QVector<IPhysicalEntityInfo *> fwdDeps;
+        for (auto const& e : d_entity->fwdDeps) {
+            fwdDeps.emplace_back(d_provider.getInfoFor(e));
         }
         return fwdDeps;
     }
 
     [[nodiscard]] bool selectedForCodeGeneration() const override
     {
-        return d_entity.selected;
+        return d_entity->selected;
     }
 
     void setSelectedForCodeGeneration(bool value) override
     {
-        d_entity.selected = value;
+        d_entity->selected = value;
     }
 
   private:
-    FakeEntity& d_entity;
+    FakeEntity *d_entity;
     FakeContentProvider& d_provider;
 };
-
-FakeContentProvider::FakeContentProvider()
-{
-    auto somepkg_a = std::make_unique<FakeEntity>("somepkg_a", "Package", true);
-    auto somepkg_b = std::make_unique<FakeEntity>("somepkg_b", "Package", false);
-    auto somepkg_c = std::make_unique<FakeEntity>("somepkg_c", "Package", true);
-    auto component_a = std::make_unique<FakeEntity>("component_a", "Component", false);
-    auto component_b = std::make_unique<FakeEntity>("component_b", "Component", true);
-    component_b->addFwdDep(*component_a);
-    somepkg_c->addChild(*component_a);
-    somepkg_c->addChild(*component_b);
-
-    infos[somepkg_a.get()] = std::make_unique<FakeEntityInfo>(*somepkg_a, *this);
-    infos[somepkg_b.get()] = std::make_unique<FakeEntityInfo>(*somepkg_b, *this);
-    infos[somepkg_c.get()] = std::make_unique<FakeEntityInfo>(*somepkg_c, *this);
-    infos[component_a.get()] = std::make_unique<FakeEntityInfo>(*component_a, *this);
-    infos[component_b.get()] = std::make_unique<FakeEntityInfo>(*component_b, *this);
-    rootEntities.emplace_back(*infos[somepkg_a.get()]);
-    rootEntities.emplace_back(*infos[somepkg_b.get()]);
-    rootEntities.emplace_back(*infos[somepkg_c.get()]);
-    data.emplace_back(std::move(somepkg_a));
-    data.emplace_back(std::move(somepkg_b));
-    data.emplace_back(std::move(somepkg_c));
-    data.emplace_back(std::move(component_a));
-    data.emplace_back(std::move(component_b));
-}
 
 #endif

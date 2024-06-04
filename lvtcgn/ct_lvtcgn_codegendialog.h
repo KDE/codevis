@@ -38,7 +38,7 @@ class LVTCGN_GUI_EXPORT CodeGenerationDialog : public QDialog {
     struct LVTCGN_GUI_EXPORT Detail {
         virtual ~Detail() = default;
 
-        virtual QString getExistingDirectory(QDialog& dialog, QString const& defaultPath = "");
+        virtual QString getExistingDirectory(QDialog& dialog, QString const& defaultPath = QString());
         virtual void handleOutputDirEmpty(Ui::CodeGenerationDialogUi& ui);
         virtual void codeGenerationIterationCallback(Ui::CodeGenerationDialogUi& ui,
                                                      const mdl::CodeGeneration::CodeGenerationStep& step);

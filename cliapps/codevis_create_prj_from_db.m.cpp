@@ -97,11 +97,7 @@ int main(int argc, char **argv)
     auto projectFile = ProjectFile{};
     projectFile.createEmpty().expect("Unexpected error preparing new project file");
 
-    // TODO: Properly create project from Code Database file instead of manually copying them
-    std::filesystem::remove(projectFile.codeDatabasePath());
     std::filesystem::remove(projectFile.cadDatabasePath());
-    std::filesystem::copy(args.dbPath, projectFile.codeDatabasePath());
-    // TODO: Create missing tables for CAD database
     std::filesystem::copy(args.dbPath, projectFile.cadDatabasePath());
 
     projectFile.saveAs(args.output, ProjectFile::BackupFileBehavior::Keep)

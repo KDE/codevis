@@ -79,11 +79,6 @@ RUN apt-get update && apt-get -qq install \
 
 WORKDIR /root/diagram-server/build
 
-# Move the database schema files to XDG_DATA_DIRS
-RUN mkdir -p /root/.local/share/codevis/database-spec/ \
-    && cp /root/diagram-server/database-spec/codebase_db.sql /root/.local/share/codevis/database-spec/ \
-    && cp /root/diagram-server/database-spec/cad_db.sql /root/.local/share/codevis/database-spec/
-
 ENV LAKOSDIAGRAM_PYSCRIPTS_PATH="/root/diagram-server/python/codegeneration/"
 ENV TEST_PRJ_PATH="/root/diagram-server/lvtclp/systemtests/"
 ENV QT_QPA_PLATFORM="offscreen"
@@ -179,11 +174,6 @@ ENV OUTDIR=/tmp/results
 ENV BUILD_PATH=/root/diagram-server/build/
 ENV SEMRULES_PATH="/root/diagram-server/semrules/"
 
-# Move the database schema files to XDG_DATA_DIRS
-RUN mkdir -p /root/.local/share/codevis/database-spec/ \
-    && cp /root/diagram-server/database-spec/codebase_db.sql /root/.local/share/codevis/database-spec/ \
-    && cp /root/diagram-server/database-spec/cad_db.sql /root/.local/share/codevis/database-spec/
-
 RUN mkdir -p "${OUTDIR}"
 CMD "${BUILD_PATH}/lvtclp/create_codebase_db" \
     --source-path "/root/diagram-server/" \
@@ -212,10 +202,6 @@ RUN apt-get update && apt-get -qq install python3-jinja2 gcovr
 RUN git submodule init
 RUN git submodule update --recursive
 
-# Move the database schema files to XDG_DATA_DIRS
-RUN mkdir -p /root/.local/share/codevis/database-spec/ \
-    && cp /root/diagram-server/database-spec/codebase_db.sql /root/.local/share/codevis/database-spec/ \
-    && cp /root/diagram-server/database-spec/cad_db.sql /root/.local/share/codevis/database-spec/
 
 WORKDIR /root/diagram-server/build
 RUN cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..

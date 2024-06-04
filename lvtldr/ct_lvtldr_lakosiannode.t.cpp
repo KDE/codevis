@@ -397,7 +397,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "Lakosian nodes test")
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
-    writer.createOrOpen(dbPath.string(), "cad_db.sql");
+    writer.createOrOpen(dbPath.string());
     tool.getObjectStore().writeToDatabase(writer);
 
     NodeStorage store;
@@ -423,7 +423,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "find entities")
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
-    writer.createOrOpen(dbPath.string(), "cad_db.sql");
+    writer.createOrOpen(dbPath.string());
     tool.getObjectStore().writeToDatabase(writer);
 
     NodeStorage store;
@@ -465,7 +465,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "retrieve child structures")
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
-    writer.createOrOpen(dbPath.string(), "cad_db.sql");
+    writer.createOrOpen(dbPath.string());
     tool.getObjectStore().writeToDatabase(writer);
 
     NodeStorage store;
@@ -501,7 +501,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "parent hierarchy")
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
-    writer.createOrOpen(dbPath.string(), "cad_db.sql");
+    writer.createOrOpen(dbPath.string());
     tool.getObjectStore().writeToDatabase(writer);
 
     NodeStorage ns;
@@ -550,7 +550,7 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "changing node storage")
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
-    writer.createOrOpen(dbPath.string(), "cad_db.sql");
+    writer.createOrOpen(dbPath.string());
     tool.getObjectStore().writeToDatabase(writer);
 
     NodeStorage ns;

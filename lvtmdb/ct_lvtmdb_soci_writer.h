@@ -25,6 +25,8 @@
 #include <result/result.hpp>
 #include <soci/soci.h>
 
+#include <QString>
+
 namespace Codethink::lvtmdb {
 class ObjectStore;
 
@@ -40,8 +42,9 @@ class LVTMDB_EXPORT SociWriter {
 
     SociWriter();
 
-    bool updateDbSchema(const std::string& db, const std::string& schemaPath);
-    bool createOrOpen(const std::string& path, const std::string& schemaPath = "codebase_db.sql");
+    bool updateDbSchema(const std::string& db, const QString& rcSchema);
+    bool createOrOpen(const std::string& path);
+
     /* this needs to be std::string because the
      * path can also be ":memory:" - we transform
      * it to an actual std::filesystem::path when

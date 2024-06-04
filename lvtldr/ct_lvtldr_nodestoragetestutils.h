@@ -25,17 +25,15 @@
 #include <ct_lvtmdb_soci_writer.h>
 
 #include <filesystem>
-#include <string>
 
 namespace Codethink::lvtldr {
 
 struct NodeStorageTestUtils {
-    static lvtldr::NodeStorage createEmptyNodeStorage(std::filesystem::path const& dbPath,
-                                                      std::string const& schemaPath = "cad_db.sql")
+    static lvtldr::NodeStorage createEmptyNodeStorage(std::filesystem::path const& dbPath)
     {
         {
             lvtmdb::SociWriter writer;
-            writer.createOrOpen(dbPath.string(), schemaPath);
+            writer.createOrOpen(dbPath.string());
         }
 
         NodeStorage nodeStorage;

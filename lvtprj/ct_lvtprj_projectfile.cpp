@@ -42,7 +42,6 @@ using namespace Codethink::lvtprj;
 namespace fs = std::filesystem;
 
 namespace {
-constexpr std::string_view CODE_DB = "code_database.db";
 constexpr std::string_view CAD_DB = "cad_database.db";
 constexpr std::string_view METADATA = "metadata.json";
 constexpr std::string_view LEFT_PANEL_HISTORY = "left_panel";
@@ -150,9 +149,6 @@ struct ProjectFile::Private {
 
     bool isDirty = false;
     // are there changes in the project that are not saved?
-
-    bool hasCodeDatabase = false;
-    // do we have the datbase for the code db yet?
 
     bool hasGraphDatabase = false;
     // do we have the graph database? (the db that stores the positions and metadata)
@@ -281,19 +277,10 @@ auto ProjectFile::createEmpty() -> cpp::result<void, ProjectFileError>
     d->openLocation = tmpFolder.value();
     d->isOpen = true;
 
-    {
-        lvtmdb::SociWriter writer;
-        if (!writer.createOrOpen(codeDatabasePath().string(), "codebase_db.sql")) {
-            return cpp::fail(ProjectFileError{
-                "Couldnt create database. Tip: Make sure the database spec folder is installed properly."});
-        }
-    }
-    {
-        lvtmdb::SociWriter writer;
-        if (!writer.createOrOpen(cadDatabasePath().string(), "cad_db.sql")) {
-            return cpp::fail(ProjectFileError{
-                "Couldnt create database. Tip: Make sure the database spec folder is installed properly."});
-        }
+    lvtmdb::SociWriter writer;
+    if (!writer.createOrOpen(cadDatabasePath().string())) {
+        return cpp::fail(ProjectFileError{
+            "Couldnt create database. Tip: Make sure the database spec folder is installed properly."});
     }
 
     return {};
@@ -410,16 +397,9 @@ fs::path ProjectFile::openLocation() const
     return d->openLocation;
 }
 
-fs::path ProjectFile::codeDatabasePath() const
+std::string_view ProjectFile::cadDatabaseFilename()
 {
-    assert(d->isOpen);
-    return d->openLocation / CODE_DB;
-}
-
-bool ProjectFile::hasCodeDatabase() const
-{
-    const fs::path codeDb = codeDatabasePath();
-    return fs::exists(fs::status(codeDb));
+    return CAD_DB;
 }
 
 fs::path ProjectFile::cadDatabasePath() const
@@ -491,11 +471,6 @@ fs::path ProjectFile::location() const
     return d->location;
 }
 
-std::string_view ProjectFile::codebaseDbFilename()
-{
-    return CODE_DB;
-}
-
 void ProjectFile::setSourceCodePath(std::filesystem::path sourceCodePath)
 {
     d->sourceCodePath = std::move(sourceCodePath);
@@ -547,37 +522,6 @@ std::vector<QJsonDocument> ProjectFile::rightPanelTab()
 {
     const auto folder = QString::fromStdString((d->openLocation / RIGHT_PANEL_HISTORY).string());
     return jsonDocInFolder(folder);
-}
-
-cpp::result<void, ProjectFileError> ProjectFile::resetCadDatabaseFromCodeDatabase()
-{
-    auto cadDbPath = cadDatabasePath();
-    try {
-        std::filesystem::remove(cadDbPath);
-    } catch (std::filesystem::filesystem_error& err) {
-        const auto errorMsg = std::string{"Error removing cad database: "} + err.what();
-        return cpp::fail(ProjectFileError{errorMsg});
-    }
-
-    if (!isOpen()) {
-        const auto errorMsg = std::string{"Database is not open. Please make sure a project is open."};
-        return cpp::fail(ProjectFileError{errorMsg});
-    }
-
-    try {
-        std::filesystem::copy(codeDatabasePath(), cadDbPath);
-    } catch (std::filesystem::filesystem_error& err) {
-        const auto errorMsg = std::string{"Error copying code database: "} + err.what();
-        return cpp::fail(ProjectFileError{errorMsg});
-    }
-
-    lvtmdb::SociWriter writer;
-    if (!writer.updateDbSchema(cadDbPath.string(), "cad_db.sql")) {
-        const auto errorMsg = std::string{"Error updating cad database schema."};
-        return cpp::fail(ProjectFileError{errorMsg});
-    }
-
-    return {};
 }
 
 void ProjectFile::prepareSave()

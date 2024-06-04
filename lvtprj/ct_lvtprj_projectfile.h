@@ -22,7 +22,6 @@
 
 #include <filesystem>
 #include <memory>
-#include <optional>
 #include <string>
 
 #include <lvtprj_export.h>
@@ -67,11 +66,6 @@ class LVTPRJ_EXPORT ProjectFile : public QObject {
     [[nodiscard]] auto save() -> cpp::result<void, ProjectFileError>;
     // Compresses the contents of $TEMP into the project file.
 
-    // As soon as we have a new code database that doesn't matches our current
-    // CAD database, we need to copy the contents over, and add the missing
-    // CAD tables.
-    cpp::result<void, ProjectFileError> resetCadDatabaseFromCodeDatabase();
-
     enum class BackupFileBehavior { Keep, Discard };
 
     [[nodiscard]] auto saveAs(const std::filesystem::path& path, BackupFileBehavior behavior)
@@ -98,25 +92,18 @@ class LVTPRJ_EXPORT ProjectFile : public QObject {
     [[nodiscard]] std::filesystem::path openLocation() const;
     // return the full path of the workspace in $TEMP
 
-    [[nodiscard]] std::filesystem::path codeDatabasePath() const;
-    // return the path of the code database on the open workspace.
-
     [[nodiscard]] std::filesystem::path cadDatabasePath() const;
     // return the path of the cad database on the open workspace.
 
+    [[nodiscard]] static std::string_view cadDatabaseFilename();
+
     [[nodiscard]] bool hasCadDatabase() const;
     // does this project has a cad database yet?
-
-    [[nodiscard]] bool hasCodeDatabase() const;
-    // does this project have a code database yet?
 
     [[nodiscard]] bool isDirty() const;
     // does the project have changes that are not saved in disk yet?
 
     void setDirty();
-
-    [[nodiscard]] static std::string_view codebaseDbFilename();
-    // return the string for the codebase db file.
 
     [[nodiscard]] cpp::result<void, ProjectFileError> saveBackup();
     [[nodiscard]] std::filesystem::path backupPath() const;

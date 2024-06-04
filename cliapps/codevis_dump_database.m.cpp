@@ -319,7 +319,7 @@ int main(int argc, const char **argv)
 
     lvtmdb::SociReader reader;
     ObjectStore store;
-    auto res = store.readFromDatabase(reader, projectFile.codeDatabasePath().string());
+    auto res = store.readFromDatabase(reader, projectFile.cadDatabasePath().string());
     if (res.has_error()) {
         qDebug() << "Error opening database: " << res.error().what << "\n";
         return EXIT_FAILURE;

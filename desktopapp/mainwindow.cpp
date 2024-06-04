@@ -1393,12 +1393,6 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
     // just dump the data from one db to another.
     // So, for the time being, let's just nuke the CadDb and recreate it.
     sharedNodeStorage.closeDatabase();
-    const auto res = d_projectFile.resetCadDatabaseFromCodeDatabase();
-    if (res.has_error()) {
-        showErrorMessage(QString::fromStdString(res.error().errorMessage));
-        return;
-    }
-
     updateSessionPtr();
     d_projectFile.setSourceCodePath(d_parseCodebaseDialog_p->sourcePath());
 }

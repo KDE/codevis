@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/db">
         <file>cad_db.sql</file>
-        <file>codebase_db.sql</file>
     </qresource>
 </RCC>

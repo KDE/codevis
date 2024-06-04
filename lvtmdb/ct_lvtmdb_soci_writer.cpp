@@ -37,8 +37,6 @@
 #include <ct_lvtmdb_variableobject.h>
 
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <optional>
 
 #include <QCoreApplication> // for applicationDirPath
@@ -47,7 +45,6 @@
 
 #include <QDebug>
 #include <QFile>
-#include <unordered_set>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QtSystemDetection>
@@ -71,85 +68,23 @@ void initialize_resources()
 
 namespace {
 
-bool make_sure_file_exist(const std::filesystem::path& db_schema_path, const std::string& db_schema_id)
+bool run_migration(soci::session& db, const QString& schemaPath)
 {
-    std::filesystem::path resulting_file = db_schema_path / db_schema_id;
-    if (std::filesystem::exists(resulting_file)) {
-        return true;
-    }
-
-    QFile thisFile = QString::fromStdString(":/db/" + db_schema_id);
-    if (!thisFile.exists()) {
-        qCDebug(parsing)
-            << "FATAL Error, can't access resource file from Qt - use Gammaray to verify if names are correct";
-        return false;
-    }
-
-    if (!std::filesystem::exists(db_schema_path)) {
-        bool res = std::filesystem::create_directories(db_schema_path);
-        if (!res) {
-            qCDebug(parsing) << "error, could not create data folder"
-                             << QString::fromStdString(db_schema_path.string());
-            return false;
-        }
-    }
-
-    if (std::filesystem::exists(resulting_file)) {
-        try {
-            std::filesystem::remove(resulting_file);
-        } catch (std::exception& e) {
-            // This only happens in windows. something keeps those files open and windows
-            // can't delete them. but it's safe to assume that at least, we have a database to use.
-            // so even if it's an exception, we can safely return true.
-            qCDebug(parsing) << "Exception: " << e.what();
-            return true;
-        }
-    }
-
-    bool res = thisFile.copy(QString::fromStdString(resulting_file.string())); // to the filesystem.
-    if (!res) {
-        qCDebug(parsing) << "error, could not copy file to our internal filesystem" << thisFile.errorString();
-        return false;
-    }
-    return true;
-}
-
-bool run_migration(soci::session& db, const std::string& db_schema_id)
-{
+    qDebug() << "Migration running";
     initialize_resources();
-    QStringList dataLocations;
-    if (const char *env_p = std::getenv("DBSPEC_PATH")) {
-        dataLocations << QString::fromStdString(env_p);
-    }
-    dataLocations << QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
-    auto db_schema_path = [&dataLocations, &db_schema_id]() -> std::filesystem::path {
-        for (const auto& currPath : qAsConst(dataLocations)) {
-            auto db_schema_path = std::filesystem::path(currPath.toStdString());
-            if (!make_sure_file_exist(db_schema_path, db_schema_id)) {
-                continue;
-            }
-            return db_schema_path / db_schema_id;
-        }
+    QFile file(schemaPath);
+    file.open(QIODevice::ReadOnly);
+    Q_ASSERT(file.isOpen());
 
-        qCWarning(parsing) << "Could not find db schema in all the searched paths.\n";
-        return {};
-    }();
-    if (db_schema_path.empty()) {
-        return false;
-    }
-
-    std::ifstream codebase_schema(db_schema_path);
-    std::stringstream buffer;
-    buffer << codebase_schema.rdbuf();
-    QStringList result_schema = QString::fromStdString(buffer.str())
-                                    .split(";",
+    QTextStream stream(&file);
+    QStringList result_schema = stream.readAll().split(";",
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-                                           Qt::SkipEmptyParts
+                                                       Qt::SkipEmptyParts
 #else
-                                           QString::SkipEmptyParts
+                                                       QString::SkipEmptyParts
 #endif
-                                    );
+    );
 
     for (const QString& res : result_schema) {
         if (res.simplified().isEmpty()) {
@@ -904,12 +839,8 @@ namespace Codethink::lvtmdb {
 
 SociWriter::SociWriter() = default;
 
-bool SociWriter::updateDbSchema(const std::string& path, const std::string& schemaPath)
+bool SociWriter::updateDbSchema(const std::string& path, const QString& schemaPath)
 {
-    if (!std::filesystem::exists(path)) {
-        return createOrOpen(path, schemaPath);
-    }
-
     // not a problem if called multiple times.
     initialize_resources();
     d_db.open(*soci::factory_sqlite3(), path);
@@ -917,7 +848,7 @@ bool SociWriter::updateDbSchema(const std::string& path, const std::string& sche
     return res;
 }
 
-bool SociWriter::createOrOpen(const std::string& path, const std::string& schemaPath)
+bool SociWriter::createOrOpen(const std::string& path)
 {
     const bool create_db = path == ":memory:" || !std::filesystem::exists(path);
 
@@ -930,7 +861,7 @@ bool SociWriter::createOrOpen(const std::string& path, const std::string& schema
     }
 
     if (create_db) {
-        const bool res = run_migration(d_db, schemaPath);
+        const bool res = run_migration(d_db, ":/db/cad_db.sql");
         if (!res) {
             return false;
         }

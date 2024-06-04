@@ -745,13 +745,10 @@ TEST_CASE("Test Project Database Loads Successfully")
         REQUIRE(pkg);
     });
 
-    const auto code_file = project.codeDatabasePath();
+    const auto code_file = project.cadDatabasePath();
     Codethink::lvtmdb::SociWriter writer;
-    writer.createOrOpen(code_file.string(), "codebase_db.sql");
+    writer.createOrOpen(code_file.string());
     store.writeToDatabase(writer);
-
-    auto res = project.resetCadDatabaseFromCodeDatabase();
-    REQUIRE_FALSE(res.has_error());
 
     auto dbPath = project.cadDatabasePath();
 

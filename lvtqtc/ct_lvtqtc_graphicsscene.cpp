@@ -1937,13 +1937,14 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QString& doc)
         QJsonObject currObj = elem.toObject();
 
         if (!currObj.keys().contains("name")) {
-            Q_EMIT errorMessage(
-                tr("Missing required key: `name` on array object. \n %1").arg(QJsonDocument(currObj).toJson()));
+            const QString jsonVal = QJsonDocument(currObj).toJson();
+            Q_EMIT errorMessage(tr("Missing required key: `name` on array object. \n %1").arg(jsonVal));
             return;
         }
 
         if (!currObj["name"].isString()) {
-            Q_EMIT errorMessage(tr("Name must be a string, \n %1").arg(QJsonDocument(currObj).toJson()));
+            const QString jsonVal = QJsonDocument(currObj).toJson();
+            Q_EMIT errorMessage(tr("Name must be a string, \n %1").arg(jsonVal));
             return;
         }
 

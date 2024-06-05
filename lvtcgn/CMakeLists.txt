@@ -3,16 +3,25 @@
 # =========================
 find_package(Python COMPONENTS Development REQUIRED)
 
+
+cmake_language(CALL
+    qt${QT_MAJOR_VERSION}_add_resources
+    CODEGEN_RESOURCES_SRCS
+    codegen.qrc
+)
+
 AddTargetLibrary(
     LIBRARY_NAME
         lvtcgn_mdl
     SOURCES
         ct_lvtcgn_generatecode.cpp
+        ${CODEGEN_RESOURCES_SRCS}
     QT_HEADERS
         ct_lvtcgn_generatecode.h
     LIBRARIES
         ${SYSTEM_EXTRA_LIBRARIES}
         Python::Python
+        Qt${QT_MAJOR_VERSION}::Core
         Qt${QT_MAJOR_VERSION}::Qml
 )
 
@@ -69,6 +78,7 @@ if (BUILD_DESKTOP_APP)
             Codethink::lvttst_fixture_qt
             Codethink::lvttst_tmpdir
             Codethink::lakospreferences
+            Qt${QT_MAJOR_VERSION}::Core
             ${SYSTEM_EXTRA_LIBRARIES}
         )
         add_test(NAME test_lvtcgn_codegendialog COMMAND test_lvtcgn_codegendialog)
@@ -102,6 +112,7 @@ if (BUILD_DESKTOP_APP)
                 Codethink::lvtcgn_adapter
                 Codethink::lvttst
                 Codethink::lvttst_tmpdir
+                Qt${QT_MAJOR_VERSION}::Core
                 ${SYSTEM_EXTRA_LIBRARIES}
                 )
         add_test(NAME test_lvtcgn_app_adapter COMMAND test_lvtcgn_app_adapter)

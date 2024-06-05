@@ -50,21 +50,26 @@ TEST_CASE("Basic code generation")
     auto tmp_dir = TmpDir{TMPDIR_NAME};
 
     const std::string SCRIPT_CONTENTS = R"(
-def beforeProcessEntities(output_dir, user_ctx):
-    with open(output_dir + '/output.txt', 'a+') as f:
-        f.write(f'BEFORE process entities called.\n')
-    user_ctx['callcount'] = 0
+    let entities_processed = 0;
 
-def buildPhysicalEntity(cgn, entity, output_dir, user_ctx):
-    with open(output_dir + '/output.txt', 'a+') as f:
-        f.write(f'({entity.name()}, {entity.type()});')
-    user_ctx['callcount'] += 1
+    function beforeProcessEntities(output_dir) {
+        with open(output_dir + '/output.txt', 'a+') as f:
+            f.write(f'BEFORE process entities called.\n')
+        user_ctx['callcount'] = 0
+    }
 
-def afterProcessEntities(output_dir, user_ctx):
-    user_ctx['callcount'] += 1
-    with open(output_dir + '/output.txt', 'a+') as f:
-        f.write(f'\nAFTER process entities called. {user_ctx["callcount"]}')
-)";
+    function buildPhysicalEntity(entity, output_dir) {
+        with open(output_dir + '/output.txt', 'a+') as f:
+            f.write(f'({entity.name()}, {entity.type()});')
+        user_ctx['callcount'] += 1
+    }
+
+    def afterProcessEntities(output_dir):
+        user_ctx['callcount'] += 1
+        with open(output_dir + '/output.txt', 'a+') as f:
+            f.write(f'\nAFTER process entities called. {user_ctx["callcount"]}')
+    )";
+
     auto scriptPath = tmp_dir.createTextFile("some_script.py", SCRIPT_CONTENTS);
     auto outputDir = tmp_dir.createDir("out");
 

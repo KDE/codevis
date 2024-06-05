@@ -1,8 +1,6 @@
 # =========================
 # LVT Codegen model library
 # =========================
-find_package(Python COMPONENTS Development REQUIRED)
-
 
 cmake_language(CALL
     qt${QT_MAJOR_VERSION}_add_resources
@@ -14,13 +12,14 @@ AddTargetLibrary(
     LIBRARY_NAME
         lvtcgn_mdl
     SOURCES
+        ct_lvtcgn_js_file_wrapper.cpp
         ct_lvtcgn_generatecode.cpp
         ${CODEGEN_RESOURCES_SRCS}
     QT_HEADERS
         ct_lvtcgn_generatecode.h
+        ct_lvtcgn_js_file_wrapper.h
     LIBRARIES
         ${SYSTEM_EXTRA_LIBRARIES}
-        Python::Python
         Qt${QT_MAJOR_VERSION}::Core
         Qt${QT_MAJOR_VERSION}::Qml
 )

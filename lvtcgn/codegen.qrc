@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/codegen">
         <file>ejs.min.js</file>
+        <file>ejs.js</file>
         <file>codegenerator.js</file>
     </qresource>
 </RCC>

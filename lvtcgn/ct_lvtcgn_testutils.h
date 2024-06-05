@@ -20,6 +20,7 @@
 #ifndef CT_LVTCGN_TESTUTILS_H_INCLUDED
 #define CT_LVTCGN_TESTUTILS_H_INCLUDED
 
+#include <QDebug>
 #include <QVector>
 #include <memory>
 #include <unordered_map>
@@ -65,23 +66,23 @@ class FakeContentProvider : public ICodeGenerationDataProvider {
 
     [[nodiscard]] QVector<IPhysicalEntityInfo *> topLevelEntities() override
     {
-        return rootEntities;
+        return _rootEntities;
     }
 
     [[nodiscard]] int numberOfPhysicalEntities() const override
     {
-        return data.size();
+        return _data.size();
     }
 
     [[nodiscard]] IPhysicalEntityInfo *getInfoFor(FakeEntity *entity)
     {
-        return infos[entity].get();
+        return _infos[entity].get();
     }
 
   private:
-    QVector<IPhysicalEntityInfo *> rootEntities;
-    QVector<std::shared_ptr<FakeEntity>> data;
-    std::unordered_map<FakeEntity *, std::unique_ptr<IPhysicalEntityInfo>> infos;
+    QVector<IPhysicalEntityInfo *> _rootEntities;
+    QVector<std::shared_ptr<FakeEntity>> _data;
+    std::unordered_map<FakeEntity *, std::unique_ptr<IPhysicalEntityInfo>> _infos;
 };
 
 class FakeEntityInfo : public IPhysicalEntityInfo {
@@ -90,7 +91,10 @@ class FakeEntityInfo : public IPhysicalEntityInfo {
     {
     }
 
-    ~FakeEntityInfo() override = default;
+    ~FakeEntityInfo() override
+    {
+        qDebug() << "Destroying" << this;
+    };
 
     [[nodiscard]] QString name() const override
     {

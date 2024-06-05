@@ -20,11 +20,13 @@
 #include <ct_lvtcgn_generatecode.h>
 
 #include <ct_lvtcgn_app_adapter.h>
+#include <ct_lvtcgn_js_file_wrapper.h>
 
 #include <QFile>
 #include <QJSEngine>
 #include <QTextStream>
 #include <QtGlobal>
+#include <qjsengine.h>
 
 // the Q_*_RESOURCE calls can't be called inside of a namespace.'
 void initResource()
@@ -55,41 +57,53 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
                                    std::optional<std::function<void(CodeGenerationStep const&)>> callback)
 {
     initResource();
+
+    QFile f(scriptPath);
     QJSEngine myEngine;
 
+    myEngine.installExtensions(QJSEngine::ConsoleExtension);
+    // import our custom classes to handle IO.
+    QJSValue jsMetaObject = myEngine.newQMetaObject(&FileIO::staticMetaObject);
+    myEngine.globalObject().setProperty("FileIO", jsMetaObject);
+
     // Load Needed Modules:
-    QJSValue _ejsModule = myEngine.importModule(":/codegen/ejs.min.js");
     QJSValue _userModule = myEngine.importModule(scriptPath);
-
-    QJSValue beforeProcessing = _userModule.property("beforeProcessEntities");
-    QJSValue buildPhysicalEntity = _userModule.property("buildPhysicalEntity");
-    QJSValue afterProcessing = _userModule.property("afterProcessEntities");
-
-    if (_ejsModule.isError()) {
-        printError(_ejsModule);
-        return cpp::fail(
-            CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError, "Error Loading Template Engine"});
-    }
     if (_userModule.isError()) {
         printError(_userModule);
         return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
                                              "Error Loading Code Generation Script"});
     }
 
-    if (buildPhysicalEntity.isUndefined()) {
-        return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
-                                             "Expected function named buildPhysicalEntity"});
+    QFile ejs(":/codegen/ejs.min.js");
+    ejs.open(QIODevice::ReadOnly);
+    const QString data = ejs.readAll();
+    auto _ejsModule = myEngine.evaluate(data, "ejs.min.js");
+    if (_ejsModule.isError()) {
+        printError(_ejsModule);
+        return cpp::fail(
+            CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError, "Error Loading Template Engine"});
     }
+
+    QJSValue beforeProcessing = _userModule.property("beforeProcessEntities");
+    QJSValue buildPhysicalEntity = _userModule.property("buildPhysicalEntity");
+    QJSValue afterProcessing = _userModule.property("afterProcessEntities");
 
     if (!buildPhysicalEntity.isCallable()) {
         return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
                                              "Expected function named buildPhysicalEntity"});
     }
 
-    if (beforeProcessing.isCallable()) {
-        beforeProcessing.call({QJSValue(outputDir)});
+    if (!beforeProcessing.isCallable()) {
+        return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
+                                             "Error: beforeProcessEntities is not a function."});
     }
 
+    if (!afterProcessing.isCallable()) {
+        return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
+                                             "Error: afterProcessing is not a function."});
+    }
+
+    auto res = beforeProcessing.call({QJSValue(outputDir)});
     using InfoVec = QVector<IPhysicalEntityInfo *>;
     std::function<void(InfoVec const&)> recursiveBuild = [&](InfoVec const& entities) -> void {
         for (auto *entity : entities) {
@@ -102,20 +116,23 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
 
             QJSValue _output(outputDir);
             QJSValue _entity = myEngine.newQObject(entity);
-
-            buildPhysicalEntity.call({outputDir, _entity});
+            myEngine.setObjectOwnership(entity, QJSEngine::ObjectOwnership::CppOwnership);
+            auto res = buildPhysicalEntity.call({_entity, outputDir});
             auto children = entity->children();
             recursiveBuild(children);
+            qDebug() << "Recursive Loop";
         }
     };
 
     recursiveBuild(dataProvider.topLevelEntities());
+    qDebug() << "After Loop";
 
-    if (afterProcessing.isCallable()) {
-        afterProcessing.call({QJSValue(outputDir)});
-    }
+    res = afterProcessing.call({QJSValue(outputDir)});
+    qDebug() << "After Processing";
 
     cleanupResource();
+    qDebug() << "After Cleaup Resources";
+
     return {};
 }
 

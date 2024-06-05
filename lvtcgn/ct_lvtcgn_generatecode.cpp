@@ -24,11 +24,29 @@
 #include <QFile>
 #include <QJSEngine>
 #include <QTextStream>
+#include <QtGlobal>
+
+// the Q_*_RESOURCE calls can't be called inside of a namespace.'
+void initResource()
+{
+    Q_INIT_RESOURCE(codegen);
+}
+void cleanupResource()
+{
+    Q_INIT_RESOURCE(codegen);
+}
 
 namespace Codethink::lvtcgn::mdl {
 
 IPhysicalEntityInfo::~IPhysicalEntityInfo() = default;
 ICodeGenerationDataProvider::~ICodeGenerationDataProvider() = default;
+
+namespace {
+void printError(QJSValue& v)
+{
+    qDebug() << "result: " << v.property("lineNumber").toInt() << ":" << v.toString();
+}
+} // namespace
 
 cpp::result<void, CodeGenerationError>
 CodeGeneration::generateCodeFromjS(const QString& scriptPath,
@@ -36,13 +54,27 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
                                    ICodeGenerationDataProvider& dataProvider,
                                    std::optional<std::function<void(CodeGenerationStep const&)>> callback)
 {
+    initResource();
     QJSEngine myEngine;
 
     // Load Needed Modules:
-    QJSValue _module = myEngine.importModule("./math.mjs");
-    QJSValue beforeProcessing = _module.property("beforeProcessEntities");
-    QJSValue buildPhysicalEntity = _module.property("buildPhysicalEntity");
-    QJSValue afterProcessing = _module.property("afterProcessEntities");
+    QJSValue _ejsModule = myEngine.importModule(":/codegen/ejs.min.js");
+    QJSValue _userModule = myEngine.importModule(scriptPath);
+
+    QJSValue beforeProcessing = _userModule.property("beforeProcessEntities");
+    QJSValue buildPhysicalEntity = _userModule.property("buildPhysicalEntity");
+    QJSValue afterProcessing = _userModule.property("afterProcessEntities");
+
+    if (_ejsModule.isError()) {
+        printError(_ejsModule);
+        return cpp::fail(
+            CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError, "Error Loading Template Engine"});
+    }
+    if (_userModule.isError()) {
+        printError(_userModule);
+        return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
+                                             "Error Loading Code Generation Script"});
+    }
 
     if (buildPhysicalEntity.isUndefined()) {
         return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
@@ -69,7 +101,7 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
             }
 
             QJSValue _output(outputDir);
-            QJSValue _entity = myEngine.newQObject(new QObject());
+            QJSValue _entity = myEngine.newQObject(entity);
 
             buildPhysicalEntity.call({outputDir, _entity});
             auto children = entity->children();
@@ -83,6 +115,7 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
         afterProcessing.call({QJSValue(outputDir)});
     }
 
+    cleanupResource();
     return {};
 }
 

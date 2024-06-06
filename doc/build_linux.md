@@ -25,7 +25,7 @@ If you have never used `kdesrc-build` before, it's quite simple, and this is the
 
 ### Manual build
 
-In order to build Codevis manually, you need to download and install all the dependencies. The easiest way to get the dependencies is to take in consideration the [available docker images](../packing/). Choose the closest image to your system and follow the steps in the Dockerfile. **You don't need docker**, the idea is to copy the commands inside the Dockerfile and run them manually.
+In order to build Codevis manually, you need to download and install all the dependencies. The easiest way to get the dependencies is to take in consideration the [available docker images](/packaging). Choose the closest image to your system and follow the steps in the Dockerfile. **You don't need docker**, the idea is to copy the commands inside the Dockerfile and run them manually.
 
 Once you have the dependencies installed, clone the Codevis repository, and run the following commands inside the just-clonned directory (This will install Codevis in an isolated folder):
 

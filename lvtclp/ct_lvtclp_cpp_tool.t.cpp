@@ -721,7 +721,7 @@ TEST_CASE("Test run tool with non-lakosian rules")
     auto const prjPath = PREFIX + "/cpp_nonlakosian_test/";
 
     auto tmpdir = TmpDir{"cpp_nonlakosian_test_builddir"};
-    tmpdir.createTextFile("compile_commands.json",
+    std::ignore = tmpdir.createTextFile("compile_commands.json",
     "[\n"
     "{\n"
     "  \"directory\": \"" + prjPath + "\",\n"

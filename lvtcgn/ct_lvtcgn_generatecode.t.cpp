@@ -29,6 +29,8 @@
 #include <fstream>
 #include <string>
 
+#include <iostream>
+
 using namespace std::string_literals;
 static const std::string TMPDIR_NAME = "tmp_ct_lvtcgn_generatecode";
 
@@ -81,97 +83,103 @@ export function afterProcessEntities(output_dir) {
     auto result = CodeGeneration::generateCodeFromjS(scriptPath, QString::fromStdString(outputDir), contentProvider);
     if (result.has_error()) {
         qDebug() << ("Error message: " + result.error().message);
-    } else {
-        qDebug() << "Code generation worked.";
     }
+    REQUIRE(!result.has_error());
 
     auto resultStream = std::ifstream(outputDir / "output.txt");
     auto output = std::string((std::istreambuf_iterator<char>(resultStream)), (std::istreambuf_iterator<char>()));
     REQUIRE(output == R"(BEFORE process entities called.
 (somepkg_a, Package);(somepkg_c, Package);(component_b, Component);
 AFTER process entities called. 4)");
-
-    qDebug() << "Finished test, all passed";
 }
 
-#if 0
 TEST_CASE("Code generation errors")
 {
-    import
+    int argc = 0;
+    char **argv = nullptr;
+    QCoreApplication app(argc, argv);
+
     auto tmpDir = TmpDir{TMPDIR_NAME};
     auto contentProvider = FakeContentProvider{};
 
     // Provide a bad file
     {
-        PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
-        auto result = CodeGeneration::generateCodeFromjS("badfile.py", ".", contentProvider);
+        auto result = CodeGeneration::generateCodeFromjS("badfile.js", ".", contentProvider);
         REQUIRE(result.has_error());
-        REQUIRE(result.error().message == "ModuleNotFoundError: No module named 'badfile'");
+        std::cout << result.error().message << "\n";
+        REQUIRE(result.error().message == "0:Error: Could not open module  for reading");
     }
 
     // Provide a good file, but no required function
     {
-        PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
         const std::string SCRIPT_CONTENTS = R"(
-def f(x):
-    pass
+export function some(x) {}
 )";
-        auto scriptPath = tmpDir.createTextFile("some_script.py", SCRIPT_CONTENTS);
+        auto scriptPath = tmpDir.createTextFile("some_script.js", SCRIPT_CONTENTS);
 
         auto result =
             CodeGeneration::generateCodeFromjS(QString::fromStdString(scriptPath.string()), ".", contentProvider);
         REQUIRE(result.has_error());
+        std::cout << result.error().message << "\n";
+
         REQUIRE(result.error().message == "Expected function named buildPhysicalEntity");
     }
 
     // Python code invalid syntax
     {
-        PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
         const std::string SCRIPT_CONTENTS = R"(
 def f(x):
     nonsense code
 )";
-        auto scriptPath = tmpDir.createTextFile("some_script.py", SCRIPT_CONTENTS);
+        auto scriptPath = tmpDir.createTextFile("some_script.js", SCRIPT_CONTENTS);
 
         auto result =
             CodeGeneration::generateCodeFromjS(QString::fromStdString(scriptPath.string()), ".", contentProvider);
         REQUIRE(result.has_error());
-        REQUIRE(result.error().message == "SyntaxError: invalid syntax (some_script.py, line 3)");
+        std::cout << result.error().message << "\n";
+
+        REQUIRE(result.error().message == "2:SyntaxError: Expected token `,'");
     }
 }
 
-TEST_CASE("Code generation python API")
+TEST_CASE("Code Generation JS API")
 {
-    PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
+    int argc = 0;
+    char **argv = nullptr;
+    QCoreApplication app(argc, argv);
 
     auto tmpDir = TmpDir{TMPDIR_NAME};
-
     const std::string SCRIPT_CONTENTS = R"(
-def buildPhysicalEntity(cgn, entity, output_dir, user_ctx):
-    with open(output_dir + '/output.txt', 'a+') as f:
-        f.write(f'(')
 
-        # TEST name()
-        f.write(f'{entity.name()}, ')
+var output = "";
 
-        # TEST type()
-        f.write(f'{entity.type()}, ')
+export function beforeProcessEntities(output_dir) {
+    output = ""
+}
 
-        # TEST parent()
-        if entity.parent():
-            f.write(f'{entity.parent().name()}, ')
-        else:
-            f.write(f'<no parent>, ')
+export function buildPhysicalEntity(entity, output_dir) {
+    output += '(' + entity.name() + ", " + entity.type() + ", ";
+    if (entity.parent()) {
+        output += entity.parent().name() + ",";
+    } else {
+        output += "<no parent>,";
+    }
 
-        # TEST forwardDependencies()
-        f.write(f'deps = [')
-        for dep in entity.forwardDependencies():
-            f.write(f'{dep.name()}, ')
-        f.write(f']')
+    output += " deps = [";
+    for (const dep of entity.fwdDependencies()) {
+        output += dep.name() + ", ";
+    }
 
-        f.write(f')\n')
+    output += "])\n";
+}
+
+export function afterProcessEntities(output_dir) {
+    var file = new FileIO();
+    file.saveFile(output_dir + "/output.txt", output);
+}
+
 )";
-    auto scriptPath = tmpDir.createTextFile("some_script.py", SCRIPT_CONTENTS);
+    auto scriptPath = tmpDir.createTextFile("some_script.js", SCRIPT_CONTENTS);
     auto outputDir = tmpDir.createDir("out");
 
     auto contentProvider = FakeContentProvider{};
@@ -181,14 +189,14 @@ def buildPhysicalEntity(cgn, entity, output_dir, user_ctx):
     if (result.has_error()) {
         INFO("Error message: " + result.error().message);
     }
+    qDebug() << ("Error message: " + result.error().message);
+
     REQUIRE(!result.has_error());
 
     auto resultStream = std::ifstream(outputDir / "output.txt");
     auto output = std::string((std::istreambuf_iterator<char>(resultStream)), (std::istreambuf_iterator<char>()));
-    REQUIRE(output == R"((somepkg_a, DiagramType.Package, <no parent>, deps = [])
-(somepkg_c, DiagramType.Package, <no parent>, deps = [])
-(component_b, DiagramType.Component, somepkg_c, deps = [component_a, ])
+    REQUIRE(output == R"((somepkg_a, Package, <no parent>, deps = [])
+(somepkg_c, Package, <no parent>, deps = [])
+(component_b, Component, somepkg_c, deps = [component_a, ])
 )");
-
 }
-#endif

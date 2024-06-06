@@ -44,10 +44,11 @@ IPhysicalEntityInfo::~IPhysicalEntityInfo() = default;
 ICodeGenerationDataProvider::~ICodeGenerationDataProvider() = default;
 
 namespace {
-void printError(QJSValue& v)
+std::string toErrorString(QJSValue& v)
 {
-    qDebug() << "result: " << v.property("lineNumber").toInt() << ":" << v.toString();
+    return std::to_string(v.property("lineNumber").toInt()) + ":" + v.toString().toStdString();
 }
+
 } // namespace
 
 cpp::result<void, CodeGenerationError>
@@ -69,20 +70,18 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
     // Load Needed Modules:
     QJSValue _userModule = myEngine.importModule(scriptPath);
     if (_userModule.isError()) {
-        printError(_userModule);
-        return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
-                                             "Error Loading Code Generation Script"});
+        return cpp::fail(
+            CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError, toErrorString(_userModule)});
     }
 
     QFile ejs(":/codegen/ejs.min.js");
     ejs.open(QIODevice::ReadOnly);
-    const QString data = ejs.readAll();
-    auto _ejsModule = myEngine.evaluate(data, "ejs.min.js");
+    auto _ejsModule = myEngine.evaluate(ejs.readAll(), "ejs.min.js");
     if (_ejsModule.isError()) {
-        printError(_ejsModule);
-        return cpp::fail(
-            CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError, "Error Loading Template Engine"});
+        return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
+                                             "Error Loading Template Engine: " + toErrorString(_ejsModule)});
     }
+    ejs.close();
 
     QJSValue beforeProcessing = _userModule.property("beforeProcessEntities");
     QJSValue buildPhysicalEntity = _userModule.property("buildPhysicalEntity");
@@ -118,6 +117,9 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
             QJSValue _entity = myEngine.newQObject(entity);
             myEngine.setObjectOwnership(entity, QJSEngine::ObjectOwnership::CppOwnership);
             auto res = buildPhysicalEntity.call({_entity, outputDir});
+            if (res.isError()) {
+                qDebug() << toErrorString(res);
+            }
             auto children = entity->children();
             recursiveBuild(children);
             qDebug() << "Recursive Loop";

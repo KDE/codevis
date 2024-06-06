@@ -20,6 +20,8 @@ option(ENABLE_PLUGINS "Compile with plugins support" ON)
 option(BUILD_PLUGINS "Compile all application plugins in the plugins/ directory" ON)
 option(ENABLE_PYTHON_PLUGINS "If set, will consider plugins implemented in Python" ON)
 
+set(PREFERRED_LLVM_VERSION "" CACHE STRING "If the system has many LLVM versions, provide a preferred one")
+
 if (NOT ENABLE_PLUGINS)
     set(BUILD_PLUGINS OFF)
     set(ENABLE_PYTHON_PLUGINS OFF)
@@ -85,7 +87,7 @@ find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
 find_package(Threads REQUIRED)
 
-foreach(LLVM_VER 18.1.4 18.1.3 18.1.2 18.1.1 17 16 15 14)
+foreach(LLVM_VER ${PREFERRED_LLVM_VERSION} 18.1.4 18.1.3 18.1.2 18.1.1 17 16 15 14)
     find_package(LLVM ${LLVM_VER})
     if (LLVM_FOUND)
         break()

@@ -97,8 +97,8 @@ int main(int argc, char **argv)
     auto projectFile = ProjectFile{};
     projectFile.createEmpty().expect("Unexpected error preparing new project file");
 
-    std::filesystem::remove(projectFile.cadDatabasePath());
-    std::filesystem::copy(args.dbPath, projectFile.cadDatabasePath());
+    std::filesystem::remove(projectFile.databasePath());
+    std::filesystem::copy(args.dbPath, projectFile.databasePath());
 
     projectFile.saveAs(args.output, ProjectFile::BackupFileBehavior::Keep)
         .expect("Unexpected error saving the file to disk");

@@ -507,7 +507,7 @@ void ParseCodebaseDialog::setCodebasePath(const QString& path)
 QString ParseCodebaseDialog::codebasePath() const
 {
     // conversion dance. Qt has no conversion from std::string_view. :|
-    const auto dbFilename = std::string(lvtprj::ProjectFile::cadDatabaseFilename());
+    const auto dbFilename = std::string(lvtprj::ProjectFile::databaseFilename());
     const auto qDbFilename = QString::fromStdString(dbFilename);
     return d->codebasePath + QDir::separator() + qDbFilename;
 }

@@ -92,12 +92,12 @@ class LVTPRJ_EXPORT ProjectFile : public QObject {
     [[nodiscard]] std::filesystem::path openLocation() const;
     // return the full path of the workspace in $TEMP
 
-    [[nodiscard]] std::filesystem::path cadDatabasePath() const;
-    // return the path of the cad database on the open workspace.
+    [[nodiscard]] std::filesystem::path databasePath() const;
+    // return the path of the database on the open workspace.
 
-    [[nodiscard]] static std::string_view cadDatabaseFilename();
+    [[nodiscard]] static std::string_view databaseFilename();
 
-    [[nodiscard]] bool hasCadDatabase() const;
+    [[nodiscard]] bool hasDatabase() const;
     // does this project has a cad database yet?
 
     [[nodiscard]] bool isDirty() const;

@@ -42,7 +42,8 @@ using namespace Codethink::lvtprj;
 namespace fs = std::filesystem;
 
 namespace {
-constexpr std::string_view CAD_DB = "cad_database.db";
+constexpr std::string_view OLD_CAD_DB = "cad_database.db";
+constexpr std::string_view DATABASE = "database.db";
 constexpr std::string_view METADATA = "metadata.json";
 constexpr std::string_view LEFT_PANEL_HISTORY = "left_panel";
 constexpr std::string_view RIGHT_PANEL_HISTORY = "right_panel";
@@ -72,7 +73,32 @@ bool compressDir(QFileInfo const& saveTo, QDir const& dirToCompress)
     return true;
 }
 
-bool extractDir(QFileInfo const& projectFile, QDir const& openLocation)
+bool portProjectFileV_0_to_1(QDir& openLocation)
+{
+    // Port old projects to new.
+    // `cad_db.db` renamed to `database.db`.
+    // no schema change.
+    QFileInfo fInfo(openLocation.path() + QDir::separator() + (QString::fromStdString(std::string{OLD_CAD_DB})));
+
+    if (!fInfo.exists()) {
+        return true;
+    }
+    bool renamed =
+        openLocation.rename(fInfo.absoluteFilePath(),
+                            openLocation.path() + QDir::separator() + (QString::fromStdString(std::string{DATABASE})));
+    if (!renamed) {
+        return false;
+    }
+
+    bool removed = openLocation.remove(fInfo.absoluteFilePath());
+    if (!removed) {
+        return false;
+    }
+
+    return true;
+}
+
+bool extractDir(QFileInfo const& projectFile, QDir& openLocation)
 {
     auto zipFile = KZip(projectFile.absoluteFilePath());
     if (!zipFile.open(QIODevice::ReadOnly)) {
@@ -81,7 +107,17 @@ bool extractDir(QFileInfo const& projectFile, QDir const& openLocation)
         return false;
     }
     const KArchiveDirectory *dir = zipFile.directory();
-    return dir->copyTo(openLocation.path());
+    bool copied = dir->copyTo(openLocation.path());
+    if (!copied) {
+        return false;
+    }
+
+    bool upgrade_file_version = portProjectFileV_0_to_1(openLocation);
+    if (!upgrade_file_version) {
+        return false;
+    }
+
+    return true;
 }
 
 // return a random string, for the unique project folder in $temp.
@@ -278,7 +314,7 @@ auto ProjectFile::createEmpty() -> cpp::result<void, ProjectFileError>
     d->isOpen = true;
 
     lvtmdb::SociWriter writer;
-    if (!writer.createOrOpen(cadDatabasePath().string())) {
+    if (!writer.createOrOpen(databasePath().string())) {
         return cpp::fail(ProjectFileError{
             "Couldnt create database. Tip: Make sure the database spec folder is installed properly."});
     }
@@ -304,7 +340,8 @@ auto ProjectFile::open(const std::filesystem::path& path) -> cpp::result<void, P
 
     d->openLocation = tmpFolder.value();
     const auto projectFile = QFileInfo{QString::fromStdString(filePath)};
-    const auto openLocation = QDir{QString::fromStdString(d->openLocation.string())};
+    auto openLocation = QDir{QString::fromStdString(d->openLocation.string())};
+
     if (!extractDir(projectFile, openLocation)) {
         return cpp::fail(ProjectFileError{"Failed to extract project contents"});
     }
@@ -397,19 +434,19 @@ fs::path ProjectFile::openLocation() const
     return d->openLocation;
 }
 
-std::string_view ProjectFile::cadDatabaseFilename()
+std::string_view ProjectFile::databaseFilename()
 {
-    return CAD_DB;
+    return DATABASE;
 }
 
-fs::path ProjectFile::cadDatabasePath() const
+fs::path ProjectFile::databasePath() const
 {
-    return d->openLocation / CAD_DB;
+    return d->openLocation / DATABASE;
 }
 
-bool ProjectFile::hasCadDatabase() const
+bool ProjectFile::hasDatabase() const
 {
-    const fs::path cadDb = cadDatabasePath();
+    const fs::path cadDb = databasePath();
     return fs::exists(fs::status(cadDb));
 }
 

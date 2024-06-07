@@ -745,18 +745,18 @@ TEST_CASE("Test Project Database Loads Successfully")
         REQUIRE(pkg);
     });
 
-    const auto code_file = project.cadDatabasePath();
+    const auto db_file = project.databasePath();
     Codethink::lvtmdb::SociWriter writer;
-    writer.createOrOpen(code_file.string());
+    writer.createOrOpen(db_file.string());
     store.writeToDatabase(writer);
 
-    auto dbPath = project.cadDatabasePath();
+    auto dbPath = project.databasePath();
 
     NodeStorage storage;
-    storage.setDatabaseSourcePath(project.cadDatabasePath().string());
+    storage.setDatabaseSourcePath(project.databasePath().string());
     REQUIRE_FALSE(storage.getTopLevelPackages().empty());
 
-    // Test - setNotes used to crash when a database for cad
+    // Test - setNotes used to crash when a database
     // is created based on a code database.
     auto node = storage.getTopLevelPackages()[0];
     node->setNotes("ABC");

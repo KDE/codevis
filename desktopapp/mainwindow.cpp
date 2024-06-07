@@ -1388,7 +1388,7 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
     }
 
     // As soon as you parsed the whole codebase, that means that we need to copy all the
-    // data to the Cad database, to show on the package tree. We might already have
+    // data to the database, to show on the package tree. We might already have
     // things in the cad database, this might clash with the unique keys, so I can't
     // just dump the data from one db to another.
     // So, for the time being, let's just nuke the CadDb and recreate it.
@@ -1399,7 +1399,7 @@ void MainWindow::generateCodeDatabaseFinished(Codethink::lvtqtw::ParseCodebaseDi
 
 void MainWindow::updateSessionPtr()
 {
-    sharedNodeStorage.setDatabaseSourcePath(d_projectFile.cadDatabasePath().string());
+    sharedNodeStorage.setDatabaseSourcePath(d_projectFile.databasePath().string());
     packageModel->reload();
 }
 

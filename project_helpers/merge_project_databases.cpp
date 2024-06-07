@@ -48,7 +48,7 @@ MergeProjects::mergeDatabases(std::vector<std::filesystem::path> databases,
         }
     }
     try {
-        std::filesystem::remove(projectFile.cadDatabasePath());
+        std::filesystem::remove(projectFile.databasePath());
     } catch (...) {
         return cpp::fail(MergeProjectError{
             MergeProjectErrorEnum::Error,
@@ -75,7 +75,7 @@ MergeProjects::mergeDatabases(std::vector<std::filesystem::path> databases,
             if (res.has_error()) {
                 return cpp::fail(MergeProjectError{MergeProjectErrorEnum::OpenProjectError, res.error().errorMessage});
             }
-            inner_databases.push_back(prjFromPath->cadDatabasePath());
+            inner_databases.push_back(prjFromPath->databasePath());
 
             // keeps the project open untill this closes.
             projectsFromPath.push_back(std::move(prjFromPath));
@@ -113,9 +113,9 @@ MergeProjects::mergeDatabases(std::vector<std::filesystem::path> databases,
         inMemoryDb.writeToDatabase(dbWriter);
     }
 
-    // TODO: Create missing tables for CAD database
+    // TODO: Create missing tables for database
     try {
-        std::filesystem::copy(temporary_db, projectFile.cadDatabasePath());
+        std::filesystem::copy(temporary_db, projectFile.databasePath());
     } catch (...) {
         return cpp::fail(MergeProjectError{
             MergeProjectErrorEnum::Error,

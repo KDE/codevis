@@ -19,7 +19,6 @@
 
 #include "ct_lvtshr_graphstorage.h"
 #include <any>
-#include <clang-c/Index.h>
 #include <ct_lvtqtc_graphicsscene.h>
 
 #include <ct_lvtqtc_alg_level_layout.h>
@@ -78,7 +77,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include <fstream>
 #include <random>
 
 using namespace Codethink::lvtldr;

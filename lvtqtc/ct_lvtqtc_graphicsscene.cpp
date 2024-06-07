@@ -1937,13 +1937,13 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QString& doc)
         if (!currObj.keys().contains("name")) {
             const QString jsonVal = QJsonDocument(currObj).toJson();
             Q_EMIT errorMessage(tr("Missing required key: `name` on array object. \n %1").arg(jsonVal));
-            return;
+            continue;
         }
 
         if (!currObj["name"].isString()) {
             const QString jsonVal = QJsonDocument(currObj).toJson();
             Q_EMIT errorMessage(tr("Name must be a string, \n %1").arg(jsonVal));
-            return;
+            continue;
         }
 
         std::string currName = currObj["name"].toString().toStdString();
@@ -1959,7 +1959,7 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QString& doc)
         auto res = (*it)->setJsonSettings(currObj);
         if (res.has_error()) {
             Q_EMIT errorMessage(res.error().what);
-            return;
+            continue;
         }
     }
 

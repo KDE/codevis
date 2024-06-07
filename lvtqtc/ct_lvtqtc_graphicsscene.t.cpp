@@ -189,6 +189,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Json Bulk Edit")
     }
     )";
 
+    REQUIRE(pkg1->color() != QColor("#003300"));
     gs->loadJsonWithDocumentChanges(correctJson);
     REQUIRE(pkg1->color() == QColor("#003300"));
 }

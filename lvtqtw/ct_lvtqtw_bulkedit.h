@@ -1,4 +1,4 @@
-// ct_lvtqtw_buildedit.h                               -*-C++-*-
+// ct_lvtqtw_bulkedit.h                               -*-C++-*-
 
 /*
  * // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
@@ -17,8 +17,8 @@
  * // limitations under the License.
  */
 
-#ifndef CT_LVTQTW_BUILKEDIT_H
-#define CT_LVTQTW_BUILKEDIT_H
+#ifndef CT_LVTQTW_BULKEDIT_H
+#define CT_LVTQTW_BULKEDIT_H
 
 #include <QDialog>
 

@@ -1,4 +1,4 @@
-// ct_lvtqtw_buildedit.cpp                               -*-C++-*-
+// ct_lvtqtw_bulkedit.cpp                               -*-C++-*-
 
 /*
  * // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>

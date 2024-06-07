@@ -79,7 +79,6 @@ bool portProjectFileV_0_to_1(QDir& openLocation)
     // `cad_db.db` renamed to `database.db`.
     // no schema change.
     QFileInfo fInfo(openLocation.path() + QDir::separator() + (QString::fromStdString(std::string{OLD_CAD_DB})));
-
     if (!fInfo.exists()) {
         return true;
     }
@@ -87,11 +86,7 @@ bool portProjectFileV_0_to_1(QDir& openLocation)
         openLocation.rename(fInfo.absoluteFilePath(),
                             openLocation.path() + QDir::separator() + (QString::fromStdString(std::string{DATABASE})));
     if (!renamed) {
-        return false;
-    }
-
-    bool removed = openLocation.remove(fInfo.absoluteFilePath());
-    if (!removed) {
+        qDebug() << "Could not rename old database file.";
         return false;
     }
 
@@ -109,11 +104,13 @@ bool extractDir(QFileInfo const& projectFile, QDir& openLocation)
     const KArchiveDirectory *dir = zipFile.directory();
     bool copied = dir->copyTo(openLocation.path());
     if (!copied) {
+        qDebug() << "Could not project file to directory";
         return false;
     }
 
     bool upgrade_file_version = portProjectFileV_0_to_1(openLocation);
     if (!upgrade_file_version) {
+        qDebug() << "Could not upgrade file version";
         return false;
     }
 

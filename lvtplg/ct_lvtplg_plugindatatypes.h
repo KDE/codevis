@@ -26,6 +26,8 @@
 #include <optional>
 #include <string>
 
+#include <lvtplg_export.h>
+
 namespace Codethink::lvtplg {
 struct Color {
     int r = 0;
@@ -44,7 +46,22 @@ using RawDBData = std::optional<std::any>;
 using RawDBCols = std::vector<RawDBData>;
 using RawDBRows = std::vector<RawDBCols>;
 
-struct Entity {
+// The declaration of the constructors on those structs is
+// merely because the compiler for OSX can't create shared pointers
+// using std::make_shared for structs without constructors.'
+struct LVTPLG_EXPORT Entity {
+    Entity(std::function<std::string()> const getName,
+           std::function<std::string()> const getQualifiedName,
+           std::function<EntityType()> const getType,
+           std::function<void(Color rgbColor)> const setColor,
+           std::function<void(std::string info)> const addHoverInfo,
+           std::function<std::vector<std::shared_ptr<Entity>>()> const getDependencies,
+           std::function<void()> const unloadFromScene,
+           std::function<std::vector<std::string>()> const getDbChildrenQualifiedNames,
+           std::function<std::shared_ptr<Entity>()> const getParent,
+           std::function<void(bool v)> const setSelected,
+           std::function<bool()> const isSelected);
+
     std::function<std::string()> const getName;
     std::function<std::string()> const getQualifiedName;
     std::function<EntityType()> const getType;
@@ -69,12 +86,14 @@ struct Entity {
     std::function<bool()> const isSelected;
 };
 
-struct Edge {
+struct LVTPLG_EXPORT Edge {
+    Edge(std::function<void(Color rgbColor)> const setColor, std::function<void(EdgeStyle style)> const setStyle);
     std::function<void(Color rgbColor)> const setColor;
     std::function<void(EdgeStyle style)> const setStyle;
 };
 
-struct ProjectData {
+struct LVTPLG_EXPORT ProjectData {
+    ProjectData(std::function<std::string()> const getSourceCodePath);
     std::function<std::string()> const getSourceCodePath;
 };
 

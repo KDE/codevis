@@ -8,6 +8,7 @@ AddTargetLibrary(
     ct_lvtplg_sharedlibrarydispatcher.cpp
     ct_lvtplg_pythonmodule.cpp
     ct_lvtplg_pythonlibrarydispatcher.cpp
+    ct_lvtplg_plugindatatypes.cpp
   QT_HEADERS
     ct_lvtplg_abstractlibrarydispatcher.h
     ct_lvtplg_pluginmanager.h
@@ -105,6 +106,7 @@ add_library(CodevisPluginHeaders INTERFACE)
 target_include_directories(CodevisPluginHeaders
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>/plugin-headers/
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>/lvtplg
 )
 
 add_dependencies(lvtplg generate_lvtclp_py_bindings generate_lvtclp_plugin_headers)

@@ -112,7 +112,9 @@ class SociDatabaseHandler : public DatabaseHandler {
                 res.data.push_back(thisRow);
             }
         } catch (std::exception const& e) {
-            return cpp::fail(e.what());
+            ErrorSqlQuery err;
+            err.what = e.what();
+            return cpp::fail(err);
         }
         return res;
     }

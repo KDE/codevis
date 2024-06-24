@@ -105,17 +105,18 @@ std::shared_ptr<Entity> createWrappedEntityFromLakosEntity(LakosEntity *e)
         return e->isSelected();
     };
 
-    const auto entity = std::make_shared<Entity>(getName,
-                                                 getQualifiedName,
-                                                 getType,
-                                                 setColor,
-                                                 addHoverInfo,
-                                                 getDependencies,
-                                                 unloadFromScene,
-                                                 getDbChildrenQualifiedNames,
-                                                 getParent,
-                                                 setSelected,
-                                                 isSelected);
+    const auto entity = std::make_shared<Entity>();
+    entity->getName = getName;
+    entity->getQualifiedName = getQualifiedName;
+    entity->getType = getType;
+    entity->setColor = setColor;
+    entity->addHoverInfo = addHoverInfo;
+    entity->getDependencies = getDependencies;
+    entity->unloadFromScene = unloadFromScene;
+    entity->getDbChildrenQualifiedNames = getDbChildrenQualifiedNames;
+    entity->getParent = getParent;
+    entity->setSelected = setSelected;
+    entity->isSelected = isSelected;
 
     e->setSharedPluginValue(entity);
 

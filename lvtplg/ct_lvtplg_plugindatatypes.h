@@ -45,37 +45,37 @@ using RawDBCols = std::vector<RawDBData>;
 using RawDBRows = std::vector<RawDBCols>;
 
 struct Entity {
-    std::function<std::string()> const getName;
-    std::function<std::string()> const getQualifiedName;
-    std::function<EntityType()> const getType;
-    std::function<void(Color rgbColor)> const setColor;
-    std::function<void(std::string info)> const addHoverInfo;
-    std::function<std::vector<std::shared_ptr<Entity>>()> const getDependencies;
+    std::function<std::string()> getName;
+    std::function<std::string()> getQualifiedName;
+    std::function<EntityType()> getType;
+    std::function<void(Color rgbColor)> setColor;
+    std::function<void(std::string info)> addHoverInfo;
+    std::function<std::vector<std::shared_ptr<Entity>>()> getDependencies;
 
     /**
      * Unloads the entity from the current scene.
      * Warning: The Entity instance becomes invalid after method this is called, and must *not* be used.
      */
-    std::function<void()> const unloadFromScene;
+    std::function<void()> unloadFromScene;
 
     /**
      * Will return all the qualified names from all children from the database. Not only those loaded in the scene.
      */
-    std::function<std::vector<std::string>()> const getDbChildrenQualifiedNames;
+    std::function<std::vector<std::string>()> getDbChildrenQualifiedNames;
 
-    std::function<std::shared_ptr<Entity>()> const getParent;
+    std::function<std::shared_ptr<Entity>()> getParent;
 
-    std::function<void(bool v)> const setSelected;
-    std::function<bool()> const isSelected;
+    std::function<void(bool v)> setSelected;
+    std::function<bool()> isSelected;
 };
 
 struct Edge {
-    std::function<void(Color rgbColor)> const setColor;
-    std::function<void(EdgeStyle style)> const setStyle;
+    std::function<void(Color rgbColor)> setColor;
+    std::function<void(EdgeStyle style)> setStyle;
 };
 
 struct ProjectData {
-    std::function<std::string()> const getSourceCodePath;
+    std::function<std::string()> getSourceCodePath;
 };
 
 } // namespace Codethink::lvtplg

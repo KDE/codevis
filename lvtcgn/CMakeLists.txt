@@ -25,7 +25,6 @@ AddTargetLibrary(
         KF${KF_MAJOR_VERSION}::TextTemplate
 )
 
-# TODO [#438]: Move thirdparty dependencies to Conan (Using 'cpp:result' and 'pybind11' here)
 target_include_directories(lvtcgn_mdl
 PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/../thirdparty/

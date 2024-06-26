@@ -20,7 +20,6 @@ function _writeTemplateFile(template, build_data, output_file) {
         console.log(FileHandler.errorString())
         return;
     }
-    console.log("Write Template:", output_file);
 }
 
 function buildPkgGroup(pkg_group, output_dir, user_ctx) {

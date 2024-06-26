@@ -55,7 +55,7 @@ export function beforeProcessEntities(output_dir) {
 }
 
 export function buildPhysicalEntity(entity, output_dir) {
-    result_string += '(' + entity.name() + ", " + entity.type() + ");";
+    result_string += '(' + entity.name + ", " + entity.type + ");";
     entities_processed += 1;
     console.log("Run Build Physical Entity\n")
 }
@@ -158,16 +158,16 @@ export function beforeProcessEntities(output_dir) {
 }
 
 export function buildPhysicalEntity(entity, output_dir) {
-    output += '(' + entity.name() + ", " + entity.type() + ", ";
-    if (entity.parent()) {
-        output += entity.parent().name() + ",";
+    output += '(' + entity.name + ", " + entity.type + ", ";
+    if (entity.parent) {
+        output += entity.parent.name + ",";
     } else {
         output += "<no parent>,";
     }
 
     output += " deps = [";
-    for (const dep of entity.fwdDependencies()) {
-        output += dep.name() + ", ";
+    for (const dep of entity.fwdDependencies) {
+        output += dep.name + ", ";
     }
 
     output += "])\n";

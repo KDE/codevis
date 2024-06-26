@@ -22,6 +22,7 @@ AddTargetLibrary(
         ${SYSTEM_EXTRA_LIBRARIES}
         Qt${QT_MAJOR_VERSION}::Core
         Qt${QT_MAJOR_VERSION}::Qml
+        KF${KF_MAJOR_VERSION}::TextTemplate
 )
 
 # TODO [#438]: Move thirdparty dependencies to Conan (Using 'cpp:result' and 'pybind11' here)

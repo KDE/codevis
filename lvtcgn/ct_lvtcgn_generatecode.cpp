@@ -23,6 +23,7 @@
 #include <ct_lvtcgn_js_file_wrapper.h>
 
 #include <QFile>
+#include <QFileInfo>
 #include <QJSEngine>
 #include <QTextStream>
 #include <QtGlobal>
@@ -61,11 +62,14 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
 
     QFile f(scriptPath);
     QJSEngine myEngine;
+    QFileInfo fInfo(f);
+    const QString& scriptFolder = fInfo.absolutePath();
 
     myEngine.installExtensions(QJSEngine::ConsoleExtension);
     // import our custom classes to handle IO.
     QJSValue jsMetaObject = myEngine.newQMetaObject(&FileIO::staticMetaObject);
     myEngine.globalObject().setProperty("FileIO", jsMetaObject);
+    myEngine.globalObject().setProperty("ScriptFolder", scriptFolder);
 
     // Load Needed Modules:
     QJSValue _userModule = myEngine.importModule(scriptPath);
@@ -73,15 +77,6 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
         return cpp::fail(
             CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError, toErrorString(_userModule)});
     }
-
-    QFile ejs(":/codegen/ejs.min.js");
-    ejs.open(QIODevice::ReadOnly);
-    auto _ejsModule = myEngine.evaluate(ejs.readAll(), "ejs.min.js");
-    if (_ejsModule.isError()) {
-        return cpp::fail(CodeGenerationError{CodeGenerationError::Kind::ScriptDefinitionError,
-                                             "Error Loading Template Engine: " + toErrorString(_ejsModule)});
-    }
-    ejs.close();
 
     QJSValue beforeProcessing = _userModule.property("beforeProcessEntities");
     QJSValue buildPhysicalEntity = _userModule.property("buildPhysicalEntity");
@@ -122,18 +117,12 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
             }
             auto children = entity->children();
             recursiveBuild(children);
-            qDebug() << "Recursive Loop";
         }
     };
 
     recursiveBuild(dataProvider.topLevelEntities());
-    qDebug() << "After Loop";
-
     res = afterProcessing.call({QJSValue(outputDir)});
-    qDebug() << "After Processing";
-
     cleanupResource();
-    qDebug() << "After Cleaup Resources";
 
     return {};
 }

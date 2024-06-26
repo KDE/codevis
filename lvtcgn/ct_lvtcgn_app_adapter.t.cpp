@@ -23,27 +23,18 @@
 #include <ct_lvtldr_nodestoragetestutils.h>
 #include <ct_lvttst_tmpdir.h>
 
-#pragma push_macro("slots")
-#undef slots
-#include <pybind11/embed.h>
-#include <pybind11/pybind11.h>
-#pragma pop_macro("slots")
-
+#include <qcoreapplication.h>
 #include <test-project-paths.h>
 
 using namespace Codethink::lvtcgn::app;
 using namespace Codethink::lvtcgn::mdl;
 using namespace Codethink::lvtldr;
 
-namespace py = pybind11;
-struct PyDefaultGilReleasedContext {
-    py::scoped_interpreter pyInterp;
-    py::gil_scoped_release pyGilDefaultReleased;
-};
-
 TEST_CASE("Code generation adapter")
 {
-    PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
+    int argc = 0;
+    char **argv = nullptr;
+    QCoreApplication app(argc, argv);
 
     auto tmpDir = TmpDir{"codegen_adapter"};
     auto dbPath = tmpDir.path() / "codedb.db";
@@ -108,12 +99,13 @@ TEST_CASE("Code generation adapter")
 
 TEST_CASE("CMake code generation script")
 {
-    auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_PYSCRIPTS_PATH) + "/cmake/codegenerator.py";
+    int argc = 0;
+    char **argv = nullptr;
+    QCoreApplication app(argc, argv);
 
+    auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_PYSCRIPTS_PATH) + "/cmake/codegenerator.js";
     SECTION("Basic package project without package groups")
     {
-        PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
-
         auto tmpDir = TmpDir{"basic_pkg_no_grp"};
         auto dbPath = tmpDir.path() / "codedb.db";
         auto ns = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
@@ -133,6 +125,8 @@ TEST_CASE("CMake code generation script")
                                                          dataProvider);
         if (result.has_error()) {
             FAIL("ERROR MESSAGE: " + result.error().message);
+        } else {
+            qDebug() << "GenerateCodeFromJS Run Correctly";
         }
 
         REQUIRE(std::filesystem::exists(outputDir.path() / "CMakeLists.txt"));
@@ -146,8 +140,6 @@ TEST_CASE("CMake code generation script")
 
     SECTION("Generate code with package groups")
     {
-        PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
-
         auto tmpDir = TmpDir{"codegen_with_grps"};
         auto dbPath = tmpDir.path() / "codedb.db";
         auto ns = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);

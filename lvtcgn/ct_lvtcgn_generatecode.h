@@ -45,6 +45,13 @@ class LVTCGN_MDL_EXPORT IPhysicalEntityInfo : public QObject {
      * _Maybe_ we can remove the thin-layer implementations when task #437 is done.
      *
      */
+    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString type READ type CONSTANT)
+    Q_PROPERTY(IPhysicalEntityInfo *parent READ parent CONSTANT)
+    Q_PROPERTY(QVector<IPhysicalEntityInfo *> children READ children CONSTANT)
+    Q_PROPERTY(QVector<IPhysicalEntityInfo *> fwdDependencies READ fwdDependencies CONSTANT)
+    Q_PROPERTY(bool selectedForCodeGeneration READ selectedForCodeGeneration WRITE setSelectedForCodeGeneration)
+
   public:
     virtual ~IPhysicalEntityInfo();
     Q_INVOKABLE virtual QString name() const = 0;

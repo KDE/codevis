@@ -34,9 +34,9 @@ CodeGenerationEntitiesTreeModel::CodeGenerationEntitiesTreeModel(ICodeGeneration
     refreshContents();
 
     connect(this, &CodeGenerationEntitiesTreeModel::itemChanged, [this](QStandardItem *item) {
-        auto& info = *item->data(CodeGenerationDataRole::InfoReferenceRole).value<IPhysicalEntityInfo *>();
-        info.setSelectedForCodeGeneration(item->checkState() == Qt::Checked
-                                          || item->checkState() == Qt::PartiallyChecked);
+        auto *info = item->data(CodeGenerationDataRole::InfoReferenceRole).value<IPhysicalEntityInfo *>();
+        info->setSelectedForCodeGeneration(item->checkState() == Qt::Checked
+                                           || item->checkState() == Qt::PartiallyChecked);
 
         if (itemChangedCascadeUpdate) {
             itemChangedCascadeUpdate = false;
@@ -83,7 +83,7 @@ void CodeGenerationEntitiesTreeModel::populateItemAndChildren(IPhysicalEntityInf
 {
     auto *item = new QStandardItem(info->name());
     item->setData(info->name(), CodeGenerationDataRole::EntityNameRole);
-    item->setData(QVariant::fromValue(&info), CodeGenerationDataRole::InfoReferenceRole);
+    item->setData(QVariant::fromValue(info), CodeGenerationDataRole::InfoReferenceRole);
     item->setCheckable(true);
     item->setCheckState(info->selectedForCodeGeneration() ? Qt::Checked : Qt::Unchecked);
     item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);

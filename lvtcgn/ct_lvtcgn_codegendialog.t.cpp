@@ -31,18 +31,6 @@
 #include <QTreeView>
 #include <catch2-local-includes.h>
 
-#pragma push_macro("slots")
-#undef slots
-#include <pybind11/embed.h>
-#include <pybind11/pybind11.h>
-#pragma pop_macro("slots")
-
-namespace py = pybind11;
-struct PyDefaultGilReleasedContext {
-    py::scoped_interpreter pyInterp;
-    py::gil_scoped_release pyGilDefaultReleased;
-};
-
 static const std::string TMPDIR_NAME = "tmp_ct_lvtcgn_codegendialog";
 
 using namespace Codethink::lvtcgn::gui;
@@ -90,8 +78,6 @@ class MockedCodeGenerationDialogDetails : public CodeGenerationDialog::Detail {
 
 TEST_CASE_METHOD(QTApplicationFixture, "codegen dialog test")
 {
-    PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
-
     auto tmpDir = TmpDir{TMPDIR_NAME};
     auto outputDir = tmpDir.createDir("output");
     (void) tmpDir.createDir("python/codegeneration/testingscript/");
@@ -161,10 +147,11 @@ TEST_CASE_METHOD(QTApplicationFixture, "codegen dialog test")
                             dialogDetail.mockedOutputDir,
                             QString::fromStdString(outputDir.string()));
     {
-        const std::string SCRIPT_CONTENTS =
-            "\ndef buildPhysicalEntity(*args, **kwargs):"
-            "\n    bad code!"
-            "\n";
+        const std::string SCRIPT_CONTENTS = R"(
+extern function buildPhysicalEntity(var1, var2){
+}
+        )";
+
         (void) tmpDir.createTextFile("python/codegeneration/testingscript/codegenerator.py", SCRIPT_CONTENTS);
         runCodeGenerationBtn->click();
     }
@@ -173,10 +160,17 @@ TEST_CASE_METHOD(QTApplicationFixture, "codegen dialog test")
     REQUIRE(dialogDetail.codeGenerationIterationCallCount == 0);
 
     {
-        const std::string SCRIPT_CONTENTS =
-            "\ndef buildPhysicalEntity(*args, **kwargs):"
-            "\n    pass"
-            "\n";
+        const std::string SCRIPT_CONTENTS = R"(
+export function beforeProcessEntities(output_dir) {
+}
+
+export function buildPhysicalEntity(entity, output_dir) {
+}
+
+export function afterProcessEntities(output_dir) {
+}
+)";
+
         (void) tmpDir.createTextFile("python/codegeneration/testingscript/codegenerator.py", SCRIPT_CONTENTS);
         runCodeGenerationBtn->click();
     }
@@ -187,8 +181,6 @@ TEST_CASE_METHOD(QTApplicationFixture, "codegen dialog test")
 
 TEST_CASE_METHOD(QTApplicationFixture, "codegen find entities")
 {
-    PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
-
     auto tmp_dir = TmpDir{TMPDIR_NAME};
     auto outputDir = tmp_dir.createDir("output");
 
@@ -231,8 +223,6 @@ TEST_CASE_METHOD(QTApplicationFixture, "codegen find entities")
 
 TEST_CASE_METHOD(QTApplicationFixture, "codegen selections")
 {
-    PyDefaultGilReleasedContext _pyDefaultGilReleasedContext;
-
     auto tmp_dir = TmpDir{TMPDIR_NAME};
     auto outputDir = tmp_dir.createDir("output");
 

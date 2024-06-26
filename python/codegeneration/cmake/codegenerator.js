@@ -111,7 +111,7 @@ export function beforeProcessEntities(output_dir, user_ctx) {
     rootEntities = new Array();
 }
 
-export function buildPhysicalEntity(entity, output_dir, user_ctx) {
+export function buildPhysicalEntity(entity, output_dir) {
     switch(entity.type){
         case "PackageGroup":
             buildPkgGroup(entity, output_dir);

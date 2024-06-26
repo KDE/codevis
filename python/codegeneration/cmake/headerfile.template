@@ -1,7 +1,8 @@
-#ifndef INCLUDED_{{ component_name | upper }}
-#define INCLUDED_{{ component_name | upper }}
+#ifndef INCLUDED_{{ component_name|upper }}
+#define INCLUDED_{{ component_name|upper }}
 
-{% for dependency_name in component_fwd_dependencies %}#include <{{ dependency_name }}.h>
+{% for dependency_name in component_fwd_dependencies %}
+    #include <{{ dependency_name }}.h>
 {% endfor %}
 
 {% if should_generate_namespace %}

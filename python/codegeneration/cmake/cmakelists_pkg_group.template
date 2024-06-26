@@ -1,2 +1,2 @@
-{% for pkg in pkgs %}add_subdirectory({{ pkg.name() }}/)
+{% for pkg in pkgs %}add_subdirectory({{ pkg.name }}/)
 {% endfor %}

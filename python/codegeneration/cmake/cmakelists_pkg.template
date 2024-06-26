@@ -1,19 +1,19 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_library({{ pkg.name() }}
-{% for component in pkg.children() %}    {{component.name()}}.cpp
-    {{component.name()}}.h
+add_library({{ pkg.name }}
+{% for component in pkg.children %}    {{component.name}}.cpp
+    {{component.name}}.h
 {% endfor %}
 )
 
-target_include_directories({{ pkg.name() }}
+target_include_directories({{ pkg.name }}
 PUBLIC
-{% for dep in deps %}{% if dep.parent() %}    ${CMAKE_CURRENT_SOURCE_DIR}/../../{{dep.parent().name()}}/{{dep.name()}}
-{%- else %}    ${CMAKE_CURRENT_SOURCE_DIR}/../{{dep.name()}}{% endif %}
+{% for dep in deps %}{% if dep.parent %}    ${CMAKE_CURRENT_SOURCE_DIR}/../../{{dep.parent.name}}/{{dep.name}}
+{% else %}    ${CMAKE_CURRENT_SOURCE_DIR}/../{{dep.name}}{% endif %}
 {% endfor %}
 )
 
-target_link_libraries({{ pkg.name() }}
-{% for dep in deps %}    {{dep.name()}}
+target_link_libraries({{ pkg.name }}
+{% for dep in deps %}    {{dep.name}}
 {% endfor %}
 )

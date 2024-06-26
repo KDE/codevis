@@ -148,6 +148,7 @@ if (BUILD_DESKTOP_APP)
         CoreAddons
         WidgetsAddons
         TextEditor
+        TextTemplate
         XmlGui
         NewStuffCore
         NewStuff

@@ -1,3 +1,5 @@
+if (KF_MAJOR_VERSION STREQUAL "6")
+
 # =========================
 # LVT Codegen model library
 # =========================
@@ -116,4 +118,6 @@ if (BUILD_DESKTOP_APP)
                 )
         add_test(NAME test_lvtcgn_app_adapter COMMAND test_lvtcgn_app_adapter)
     endif()
+endif()
+
 endif()

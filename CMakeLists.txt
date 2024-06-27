@@ -141,6 +141,11 @@ message("-- LLVM Version: ${LLVM_VERSION}")
 
 if (BUILD_DESKTOP_APP)
     find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Gui Widgets Qml Svg)
+
+    if(KF_MAJOR_VERSION STREQUAL "6")
+        set(TextTemplateVar TextTemplate)
+    endif()
+
     find_package(KF${KF_MAJOR_VERSION} ${KF5_MIN_VERSION} REQUIRED COMPONENTS
         Archive
         Config
@@ -148,16 +153,18 @@ if (BUILD_DESKTOP_APP)
         CoreAddons
         WidgetsAddons
         TextEditor
-        TextTemplate
         XmlGui
         NewStuffCore
         NewStuff
         Notifications
         KCMUtils
         I18n
+        ${TextTemplateVar}
         OPTIONAL_COMPONENTS
         DocTools
     )
+
+
     # KF5 doesn't have split version, so we build it here
     string(REPLACE "." ";" VERSION_LIST "${KF${KF_MAJOR_VERSION}_VERSION}")
     list(GET VERSION_LIST 0 KF_VERSION_MAJOR)
@@ -328,7 +335,6 @@ if (KDE_FRAMEWORKS_IS_OLD)
     set(KDE_INSTALL_KNOTIFYRCDIR $CMAKE_INSTALL_PREFIX/share/knotifications5)
 endif()
 
-add_subdirectory(lvtcgn)
 add_subdirectory(lvtclp)
 add_subdirectory(lvtldr)
 add_subdirectory(lvtmdb)
@@ -369,6 +375,7 @@ if (BUILD_DESKTOP_APP)
         add_subdirectory(plugins)
     endif()
 
+    add_subdirectory(lvtcgn)
     add_subdirectory(lvtmdl)
     add_subdirectory(lvtclr)
     add_subdirectory(lvtqtc)

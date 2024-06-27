@@ -7,6 +7,7 @@ Dependencies:
     'frameworks/extra-cmake-modules': '@latest-kf6'
     'frameworks/kcmutils': '@latest-kf6'
     'frameworks/kdoctools': '@latest-kf6'
+    'frameworks/ktexttemplate': '@latest-kf6'
     'frameworks/ki18n': '@latest-kf6'
     'frameworks/kcrash': '@latest-kf6'
     'frameworks/kiconthemes': '@latest-kf6'

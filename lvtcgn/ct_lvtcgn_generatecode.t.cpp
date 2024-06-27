@@ -80,7 +80,8 @@ export function afterProcessEntities(output_dir) {
     QString scriptPath = scriptFile.fileName();
 
     auto contentProvider = FakeContentProvider{};
-    auto result = CodeGeneration::generateCodeFromjS(scriptPath, QString::fromStdString(outputDir), contentProvider);
+    auto result =
+        CodeGeneration::generateCodeFromjS(scriptPath, QString::fromStdString(outputDir.string()), contentProvider);
     if (result.has_error()) {
         qDebug() << ("Error message: " + result.error().message);
     }

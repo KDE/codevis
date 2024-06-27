@@ -78,7 +78,9 @@
 
 #include <ct_lvtprj_projectfile.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <ct_lvtcgn_app_adapter.h>
+#endif
 
 #include <memory>
 #include <merge_project_databases.h>
@@ -765,8 +767,10 @@ void MainWindow::saveProjectAs()
 
 void MainWindow::openCodeGenerationWindow()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     using Codethink::lvtcgn::app::CodegenAppAdapter;
     CodegenAppAdapter::run(this, sharedNodeStorage);
+#endif
 }
 
 void MainWindow::openProjectAction()

@@ -1,0 +1,14 @@
+ {
+  "KPlugin": {
+     "Name": "Find Subgraphs",
+     "Description": "Finds Subgraphs on a loaded graph",
+     "Icon": "none",
+     "Authors": [ { "Name": "Tomaz Canabrava", "Email": "tcanabrava@kde.org" } ],
+     "Category": "Codevis Plugins",
+     "EnabledByDefault": true,
+     "License": "Apache-2.0",
+     "Id": "find_subgraph_plugin",
+     "Version": "1.0",
+     "Website": "https://invent.kde.org/sdk/codevis"
+  }
+}

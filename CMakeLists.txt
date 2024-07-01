@@ -344,8 +344,9 @@ add_subdirectory(project_helpers)
 add_subdirectory(cliapps)
 
 if (BUILD_DESKTOP_APP)
-    kconfig_add_kcfg_files(CONFIGURATION_SRCS GENERATE_MOC preferences.kcfgc)
-    add_library(lakospreferences SHARED ${CONFIGURATION_SRCS})
+    kconfig_add_kcfg_files(CONFIGURATION_SRCS GENERATE_MOC preferences.kcfgc GENERATE_MOC)
+
+    add_library(lakospreferences SHARED ${CONFIGURATION_SRCS} ${CONFIGURATION_SRCS_MOC})
     add_library(Codethink::lakospreferences ALIAS lakospreferences)
     generate_export_header(lakospreferences)
 

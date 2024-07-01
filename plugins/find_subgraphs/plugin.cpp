@@ -15,10 +15,13 @@
 // limitations under the License.
 */
 
+#include <boost/graph/graph_selectors.hpp>
 #include <ct_lvtplg_basicpluginhandlers.h>
 #include <ct_lvtplg_basicpluginhooks.h>
 
 #include <QElapsedTimer>
+#include <QMap>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -38,17 +41,27 @@ static auto const DOCK_WIDGET_TITLE = std::string{"Find Subgraph"};
 static auto const DOCK_WIDGET_ID = std::string{"find_subgraph_plugin_dock"};
 static auto const DOCK_WIDGET_TREE_ID = std::string{"find_subgraph_plugin_tree"};
 
-#if 0
 static auto const ITEM_USER_DATA_CYCLE_ID = std::string{"find_subgraph"};
 static auto const NODE_SELECTED_COLOR = Codethink::lvtplg::Color{200, 50, 50};
 static auto const NODE_UNSELECTED_COLOR = Codethink::lvtplg::Color{200, 200, 200};
 static auto const EDGE_SELECTED_COLOR = Codethink::lvtplg::Color{230, 40, 40};
 static auto const EDGE_UNSELECTED_COLOR = Codethink::lvtplg::Color{230, 230, 230};
-#endif
 
 enum class SelectedState { Selected, NotSelected };
 
-struct FindSubgraphPluginData { };
+struct VertexProps {
+    Codethink::lvtplg::Entity *ptr;
+};
+
+using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProps>;
+
+using Vertex = Graph::vertex_descriptor;
+using Filtered = boost::filtered_graph<Graph, boost::keep_all, std::function<bool(Vertex)>>;
+
+struct FindSubgraphPluginData {
+    Graph prevSelected;
+    std::vector<Graph> ourGraphs;
+};
 
 template<typename Handler_t>
 FindSubgraphPluginData *getPluginData(Handler_t *handler)
@@ -82,15 +95,6 @@ void hookSetupDockWidget(PluginSetupDockWidgetHandler *handler)
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler);
 
-using Graph = boost::adjacency_list<boost::vecS,
-                                    boost::vecS,
-                                    boost::bidirectionalS,
-                                    boost::property<boost::vertex_name_t, Codethink::lvtplg::Entity *>>;
-using Vertex = Graph::vertex_descriptor;
-using Filtered = boost::filtered_graph<Graph, boost::keep_all, std::function<bool(Vertex)>>;
-using ComponentId = int;
-using Mappings = std::vector<ComponentId>;
-
 /* This does not receives all nodes from the loaded graph, but only the nodes from
  * a closed set (be it a mouse selection, the topmost contents of a package, or the topmost contents of the
  * view.
@@ -98,10 +102,20 @@ using Mappings = std::vector<ComponentId>;
 Graph buildBoostGraph(const std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& currentClusterNodes)
 {
     Graph g;
+    QMap<Codethink::lvtplg::Entity *, long> vertices;
+
     for (const auto& e : currentClusterNodes) {
-        auto ee = add_vertex(e.get(), g);
+        if (!vertices.contains(e.get())) {
+            vertices.insert(e.get(), add_vertex(VertexProps{e.get()}, g));
+        }
+
+        auto ee = vertices.value(e.get());
         for (const auto& j : e->getDependencies()) {
-            auto jj = add_vertex(j.get(), g);
+            if (!vertices.contains(j.get())) {
+                vertices.insert(j.get(), add_vertex(VertexProps{j.get()}, g));
+            }
+            auto jj = vertices.value(j.get());
+
             add_edge(ee, jj, g);
         }
     }
@@ -109,15 +123,15 @@ Graph buildBoostGraph(const std::vector<std::shared_ptr<Codethink::lvtplg::Entit
     return g;
 }
 
-Mappings map_components(Graph const& g)
+std::vector<int> map_components(Graph const& g)
 {
-    Mappings mappings(num_vertices(g));
-    int num = boost::connected_components(g, mappings.data());
-    std::cout << "found" << num << "subgraphs";
+    std::vector<int> mappings(num_vertices(g));
+    size_t res = boost::connected_components(g, &mappings[0]);
+    std::cout << "found " << res << " subgraphs";
     return mappings;
 }
 
-std::vector<Graph> split(Graph const& g, Mappings const& components)
+std::vector<Graph> split(Graph const& g, std::vector<int> const& components)
 {
     if (components.empty()) {
         return {};
@@ -141,7 +155,7 @@ std::vector<Graph> split(Graph const& g, Mappings const& components)
 
 void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
 {
-    //    auto *pluginData = getPluginData(handler);
+    auto *pluginData = getPluginData(handler);
 
     QElapsedTimer timer;
     timer.start();
@@ -161,69 +175,59 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
 
     auto graph = buildBoostGraph(entities);
     auto map = map_components(graph);
-    auto graphs = split(graph, map);
-    subgraphs.insert(subgraphs.end(), graphs.begin(), graphs.end());
+    pluginData->ourGraphs = split(graph, map);
 
-    std::cout << "Looking for subgraphs took" << timer.elapsed() << std::endl;
+    std::cout << "Looking for subgraphs took " << timer.elapsed() << std::endl;
+    std::cout << "Number of subgraphs " << pluginData->ourGraphs.size() << "\n";
 
-#if 0
     auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
     tree.clear();
 
-    for (auto&& cycle : allCycles) {
-        auto firstName = cycle[0]->getQualifiedName();
-        auto lastName = cycle[cycle.size() - 1]->getQualifiedName();
-        auto rootItem = tree.addRootItem("From " + firstName + " to " + lastName);
-        rootItem.addUserData(ITEM_USER_DATA_CYCLE_ID, &cycle);
+    int curr = 0;
+    for (Graph& g : pluginData->ourGraphs) {
+        auto rootItem = tree.addRootItem("Subgraph " + std::to_string(curr));
+        rootItem.addUserData(ITEM_USER_DATA_CYCLE_ID, &g);
         rootItem.addOnClickAction(&onRootItemSelected);
-        for (auto&& entity : cycle) {
-            rootItem.addChild(entity->getQualifiedName());
+#if 0
+        for (const auto vd : boost::make_iterator_range(boost::vertices(g))) {
+            auto entity = g[vd];
+            rootItem.addChild(entity.ptr->getQualifiedName());
         }
-    }
-
-    for (auto const& e0 : handler->getAllEntitiesInCurrentView()) {
-        e0->setColor(NODE_UNSELECTED_COLOR);
-        for (auto const& e1 : e0->getDependencies()) {
-            auto edge = handler->getEdgeByQualifiedName(e0->getQualifiedName(), e1->getQualifiedName());
-            if (edge.has_value()) {
-                edge->setColor(EDGE_UNSELECTED_COLOR);
-            }
-        }
+#endif
+        curr += 1;
     }
 
     auto dock = handler->getDock(DOCK_WIDGET_ID);
     dock.setVisible(true);
-#endif
 }
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
 {
-#if 0
     auto gv = handler->getGraphicsView();
-    auto paintCycle = [&gv](auto&& cycle, auto&& state) {
+    auto paintCycle = [&gv](Graph& graph, auto&& state) {
         auto prevQualifiedName = std::optional<std::string>();
-        for (auto&& entity : cycle) {
-            if (!entity) {
-                continue;
-            }
-            entity->setColor(state == SelectedState::Selected ? NODE_SELECTED_COLOR : NODE_UNSELECTED_COLOR);
+
+        for (const auto vd : boost::make_iterator_range(boost::vertices(graph))) {
+            auto entity = graph[vd];
+            entity.ptr->setColor(state == SelectedState::Selected ? NODE_SELECTED_COLOR : NODE_UNSELECTED_COLOR);
 
             if (prevQualifiedName) {
                 auto fromQualifiedName = *prevQualifiedName;
-                auto toQualifiedName = entity->getQualifiedName();
+                auto toQualifiedName = entity.ptr->getQualifiedName();
                 auto edge = gv.getEdgeByQualifiedName(fromQualifiedName, toQualifiedName);
                 if (edge) {
                     edge->setColor(state == SelectedState::Selected ? EDGE_SELECTED_COLOR : EDGE_UNSELECTED_COLOR);
                 }
             }
-            prevQualifiedName = entity->getQualifiedName();
+            prevQualifiedName = entity.ptr->getQualifiedName();
         }
     };
+
     auto *pluginData = getPluginData(handler);
     auto selectedItem = handler->getItem();
-    auto& selectedCycle = extractCycleFrom(selectedItem.getUserData(ITEM_USER_DATA_CYCLE_ID));
-    paintCycle(pluginData->prevSelectedCycle, SelectedState::NotSelected);
-    paintCycle(selectedCycle, SelectedState::Selected);
-    pluginData->prevSelectedCycle = selectedCycle;
-#endif
+    auto *selectedGraph = static_cast<Graph *>(selectedItem.getUserData(ITEM_USER_DATA_CYCLE_ID));
+
+    paintCycle(pluginData->prevSelected, SelectedState::NotSelected);
+    paintCycle(*selectedGraph, SelectedState::Selected);
+    pluginData->prevSelected = *selectedGraph;
 }

@@ -17,12 +17,6 @@ macro(AddTargetLibrary)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-    # Build the Meta Object Compiler targets
-    cmake_language(CALL
-        qt${QT_MAJOR_VERSION}_wrap_cpp
-        DTARGS_SOURCES ${DTARGS_QT_HEADERS} OPTIONS "--no-warnings" "--no-notes"
-    )
-
     if (BUILD_DESKTOP_APP)
         cmake_language(CALL
             qt${QT_MAJOR_VERSION}_wrap_ui

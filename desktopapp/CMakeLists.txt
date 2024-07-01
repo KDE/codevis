@@ -10,14 +10,6 @@ set(CodeVisDesktop_SRCS
 )
 
 cmake_language(CALL
-    qt${QT_MAJOR_VERSION}_wrap_cpp
-    CodeVisDesktop_SRCS
-    mainwindow.h
-    projectsettingsdialog.h
-    codevis_dbus_interface.h
-)
-
-cmake_language(CALL
     qt${QT_MAJOR_VERSION}_add_resources
     CodeVisDesktop_SRCS
     desktopapp.qrc
@@ -148,12 +140,6 @@ if (COMPILE_TESTS)
 
     set(test_desktopapp_SRCS
         testmainwindow.cpp
-    )
-
-    cmake_language(CALL
-        qt${QT_MAJOR_VERSION}_wrap_cpp
-        test_desktopapp_SRCS
-        testmainwindow.h
     )
 
     macro(ADD_DESKTOP_TEST TEST_NAME FILE_NAME)

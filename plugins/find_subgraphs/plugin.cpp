@@ -161,8 +161,6 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
     timer.start();
     std::cout << "Starting to look for subgraphs" << std::endl;
 
-    std::vector<Graph> subgraphs;
-
     auto entities = [handler]() -> std::vector<std::shared_ptr<Codethink::lvtplg::Entity>> {
         std::vector<std::shared_ptr<Codethink::lvtplg::Entity>> _entities;
         for (auto e : handler->getAllEntitiesInCurrentView()) {
@@ -175,7 +173,9 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
 
     auto graph = buildBoostGraph(entities);
     auto map = map_components(graph);
+
     pluginData->ourGraphs = split(graph, map);
+    pluginData->prevSelected = Graph{};
 
     std::cout << "Looking for subgraphs took " << timer.elapsed() << std::endl;
     std::cout << "Number of subgraphs " << pluginData->ourGraphs.size() << "\n";
@@ -188,12 +188,6 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
         auto rootItem = tree.addRootItem("Subgraph " + std::to_string(curr));
         rootItem.addUserData(ITEM_USER_DATA_CYCLE_ID, &g);
         rootItem.addOnClickAction(&onRootItemSelected);
-#if 0
-        for (const auto vd : boost::make_iterator_range(boost::vertices(g))) {
-            auto entity = g[vd];
-            rootItem.addChild(entity.ptr->getQualifiedName());
-        }
-#endif
         curr += 1;
     }
 

@@ -1049,12 +1049,16 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     if (!tab) {
         return;
     }
-    connect(tab, &GraphTabElement::sendMessage, this, &MainWindow::showMessage, Qt::UniqueConnection);
-
     auto *graphWidget = tab->graphicsView();
     if (!graphWidget) {
         return;
     }
+
+    if (currentGraphWidget == graphWidget) {
+        return;
+    }
+
+    connect(tab, &GraphTabElement::sendMessage, this, &MainWindow::showMessage, Qt::UniqueConnection);
 
     // disconnect everything related to the old graph and the window.
     [&]() {

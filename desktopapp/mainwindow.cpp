@@ -1112,6 +1112,12 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     addGSConnection(&Codethink::lvtqtc::GraphicsScene::requestNewTab,
                     qOverload<const QSet<QString>>(&MainWindow::newTabRequested));
 
+    connect(graphicsScene,
+            &GraphicsScene::aboutToBeDeleted,
+            this,
+            &MainWindow::handleGraphcsSceneDestroyed,
+            Qt::UniqueConnection);
+
     if (d_pluginManager_p) {
         auto getSceneName = [&graphicsScene]() {
             return graphicsScene->objectName().toStdString();
@@ -1120,6 +1126,23 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
     }
 
     addGSConnection(&GraphicsScene::graphLoadFinished, &MainWindow::updatePluginData);
+}
+
+void MainWindow::handleGraphcsSceneDestroyed()
+{
+    std::cout << "Calling scene destroyed\n";
+
+    if (!d_pluginManager_p) {
+        return;
+    }
+
+    GraphicsScene *graphicsScene = qobject_cast<GraphicsScene *>(sender());
+    auto getSceneName = [&graphicsScene]() {
+        return graphicsScene->objectName().toStdString();
+    };
+
+    std::cout << "Calling scene destroyed\n";
+    d_pluginManager_p->callHooksSceneDestroyed(getSceneName);
 }
 
 void MainWindow::updatePluginData()

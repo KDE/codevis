@@ -114,6 +114,9 @@ class LVTPLG_EXPORT PluginManager {
     using getSceneDestroyedTree_f = decltype(PluginActiveSceneChangedHandler::getTree);
     void callHooksSceneDestroyed(getSceneName_destroyed_f const& getSceneName, getSceneDestroyedTree_f const& getTree);
 
+    using getSceneName_destroyed_f = decltype(PluginSceneDestroyedHandler::getSceneName);
+    void callHooksSceneDestroyed(getSceneName_destroyed_f const& getSceneName);
+
     using graphChanged_getSceneName_f = decltype(PluginGraphChangedHandler::getSceneName);
     using graphChanged_getVisibleEntities_f = decltype(PluginGraphChangedHandler::getVisibleEntities);
     using graphChanged_getEdgeByQualifiedName_f = decltype(PluginGraphChangedHandler::getEdgeByQualifiedName);

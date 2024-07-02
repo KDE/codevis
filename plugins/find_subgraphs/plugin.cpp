@@ -225,3 +225,13 @@ void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
     paintCycle(*selectedGraph, SelectedState::Selected);
     pluginData->prevSelected = *selectedGraph;
 }
+
+void hookActiveSceneChanged(PluginActiveSceneChangedHandler *handler)
+{
+    std::cout << "Active Scene Changed!" << handler->getSceneName() << "\n";
+}
+
+void hookSceneDestroyed(PluginSceneDestroyedHandler *handler)
+{
+    std::cout << "Active Scene Destroyed!";
+}

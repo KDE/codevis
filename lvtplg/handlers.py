@@ -193,15 +193,6 @@ HANDLERS = [
                  AS_LAMBDA),
     ]),
 
-    HandlerInfo("PluginSceneDestroyedHandler", [
-        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
-                 'Returns the plugin data previously registered with `registerPluginData`.',
-                 'pyGetPluginData<T>'),
-        Function('std::string', 'getSceneName', [],
-                 '',
-                 AS_LAMBDA),
-    ]),
-
     HandlerInfo("PluginGraphChangedHandler", [
         Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
                  'Returns the plugin data previously registered with `registerPluginData`.',

@@ -60,7 +60,10 @@ using Filtered = boost::filtered_graph<Graph, boost::keep_all, std::function<boo
 
 struct FindSubgraphPluginData {
     Graph prevSelected;
-    std::vector<Graph> ourGraphs;
+
+    std::string currentGraphScene;
+    // Scene Name, Graph.
+    std::map<std::string, std::vector<Graph>> ourGraphs;
 };
 
 template<typename Handler_t>
@@ -153,6 +156,18 @@ std::vector<Graph> split(Graph const& g, std::vector<int> const& components)
     return results;
 }
 
+void updateTreeView(PluginTreeWidgetHandler tree, FindSubgraphPluginData *pluginData)
+{
+    tree.clear();
+    int curr = 0;
+    for (Graph& g : pluginData->ourGraphs[pluginData->currentGraphScene]) {
+        auto rootItem = tree.addRootItem("Subgraph " + std::to_string(curr));
+        rootItem.addUserData(ITEM_USER_DATA_CYCLE_ID, &g);
+        rootItem.addOnClickAction(&onRootItemSelected);
+        curr += 1;
+    }
+}
+
 void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
 {
     auto *pluginData = getPluginData(handler);
@@ -174,22 +189,14 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
     auto graph = buildBoostGraph(entities);
     auto map = map_components(graph);
 
-    pluginData->ourGraphs = split(graph, map);
+    pluginData->ourGraphs[pluginData->currentGraphScene] = split(graph, map);
     pluginData->prevSelected = Graph{};
 
     std::cout << "Looking for subgraphs took " << timer.elapsed() << std::endl;
     std::cout << "Number of subgraphs " << pluginData->ourGraphs.size() << "\n";
 
     auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
-    tree.clear();
-
-    int curr = 0;
-    for (Graph& g : pluginData->ourGraphs) {
-        auto rootItem = tree.addRootItem("Subgraph " + std::to_string(curr));
-        rootItem.addUserData(ITEM_USER_DATA_CYCLE_ID, &g);
-        rootItem.addOnClickAction(&onRootItemSelected);
-        curr += 1;
-    }
+    updateTreeView(tree, pluginData);
 
     auto dock = handler->getDock(DOCK_WIDGET_ID);
     dock.setVisible(true);
@@ -228,10 +235,18 @@ void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
 
 void hookActiveSceneChanged(PluginActiveSceneChangedHandler *handler)
 {
-    std::cout << "Active Scene Changed!" << handler->getSceneName() << "\n";
+    auto *pluginData = getPluginData(handler);
+    auto treeWidget = handler->getTree(DOCK_WIDGET_TREE_ID);
+    pluginData->currentGraphScene = handler->getSceneName();
+    updateTreeView(treeWidget, pluginData);
 }
 
 void hookSceneDestroyed(PluginSceneDestroyedHandler *handler)
 {
-    std::cout << "Active Scene Destroyed!";
+    auto *pluginData = getPluginData(handler);
+    auto treeWidget = handler->getTree(DOCK_WIDGET_TREE_ID);
+    std::string sceneName = handler->getSceneName();
+
+    treeWidget.clear();
+    pluginData->ourGraphs.erase(sceneName);
 }

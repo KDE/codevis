@@ -107,10 +107,12 @@ class LVTPLG_EXPORT PluginManager {
     void callHooksOnParseCompleted(runQueryOnDatabase_f const& runQueryOnDatabase);
 
     using getSceneName_f = decltype(PluginActiveSceneChangedHandler::getSceneName);
-    void callHooksActiveSceneChanged(getSceneName_f const& getSceneName);
+    using getTree_f = decltype(PluginActiveSceneChangedHandler::getTree);
+    void callHooksActiveSceneChanged(getSceneName_f const& getSceneName, getTree_f const& getTree);
 
     using getSceneName_destroyed_f = decltype(PluginSceneDestroyedHandler::getSceneName);
-    void callHooksSceneDestroyed(getSceneName_destroyed_f const& getSceneName);
+    using getSceneDestroyedTree_f = decltype(PluginActiveSceneChangedHandler::getTree);
+    void callHooksSceneDestroyed(getSceneName_destroyed_f const& getSceneName, getSceneDestroyedTree_f const& getTree);
 
     using graphChanged_getSceneName_f = decltype(PluginGraphChangedHandler::getSceneName);
     using graphChanged_getVisibleEntities_f = decltype(PluginGraphChangedHandler::getVisibleEntities);

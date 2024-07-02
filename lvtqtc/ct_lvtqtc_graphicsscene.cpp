@@ -376,12 +376,7 @@ GraphicsScene::GraphicsScene(NodeStorage& nodeStorage, lvtprj::ProjectFile const
     addItem(d->bgMessage);
 }
 
-GraphicsScene::~GraphicsScene() noexcept
-{
-    std::cout << "Scene Destroyed\n";
-    Q_EMIT aboutToBeDeleted();
-    std::cout << "After Emit Destroyed\n";
-}
+GraphicsScene::~GraphicsScene() noexcept = default;
 
 std::vector<LakosRelation *> GraphicsScene::edges() const
 {

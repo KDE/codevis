@@ -176,6 +176,9 @@ HANDLERS = [
         Function('std::string', 'getSceneName', [],
                  '',
                  AS_LAMBDA),
+        Function('PluginTreeWidgetHandler', 'getTree', [Param('std::string const&', 'id')],
+                 '',
+                 AS_LAMBDA),
     ]),
 
     HandlerInfo("PluginSceneDestroyedHandler", [
@@ -183,6 +186,9 @@ HANDLERS = [
                  'Returns the plugin data previously registered with `registerPluginData`.',
                  'pyGetPluginData<T>'),
         Function('std::string', 'getSceneName', [],
+                 '',
+                 AS_LAMBDA),
+        Function('PluginTreeWidgetHandler', 'getTree', [Param('std::string const&', 'id')],
                  '',
                  AS_LAMBDA),
     ]),

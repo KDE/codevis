@@ -327,19 +327,19 @@ void PluginManager::callHooksOnParseCompleted(runQueryOnDatabase_f const& runQue
         libraries);
 }
 
-void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneName)
+void PluginManager::callHooksActiveSceneChanged(getSceneName_f const& getSceneName, getTree_f const& getTree)
 {
     callAllHooks<hookActiveSceneChanged_f>(
         "hookActiveSceneChanged",
-        PluginActiveSceneChangedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName},
+        PluginActiveSceneChangedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName, getTree},
         libraries);
 }
 
-void PluginManager::callHooksSceneDestroyed(getSceneName_f const& getSceneName)
+void PluginManager::callHooksSceneDestroyed(getSceneName_f const& getSceneName, getSceneDestroyedTree_f const& getTree)
 {
     callAllHooks<hookSceneDestroyed_f>(
         "hookSceneDestroyed",
-        PluginSceneDestroyedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName},
+        PluginSceneDestroyedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName, getTree},
         libraries);
 }
 

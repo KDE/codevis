@@ -130,7 +130,7 @@ std::vector<int> map_components(Graph const& g)
 {
     std::vector<int> mappings(num_vertices(g));
     size_t res = boost::connected_components(g, &mappings[0]);
-    std::cout << "found " << res << " subgraphs";
+    std::cout << "found " << res << " subgraphs\n";
     return mappings;
 }
 
@@ -153,6 +153,7 @@ std::vector<Graph> split(Graph const& g, std::vector<int> const& components)
                           results.back());
     }
 
+    std::cout << "after splitting into a vec:" << results.size() << " subgraphs\n";
     return results;
 }
 
@@ -192,14 +193,16 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
     pluginData->ourGraphs[pluginData->currentGraphScene] = split(graph, map);
     pluginData->prevSelected = Graph{};
 
+    std::cout << "Number of subgraphs " << pluginData->ourGraphs[pluginData->currentGraphScene].size() << "\n";
     std::cout << "Looking for subgraphs took " << timer.elapsed() << std::endl;
-    std::cout << "Number of subgraphs " << pluginData->ourGraphs.size() << "\n";
 
+#ifndef PLUGIN_TEST_CODE
     auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
     updateTreeView(tree, pluginData);
 
     auto dock = handler->getDock(DOCK_WIDGET_ID);
     dock.setVisible(true);
+#endif
 }
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
@@ -238,7 +241,10 @@ void hookActiveSceneChanged(PluginActiveSceneChangedHandler *handler)
     auto *pluginData = getPluginData(handler);
     auto treeWidget = handler->getTree(DOCK_WIDGET_TREE_ID);
     pluginData->currentGraphScene = handler->getSceneName();
+
+#ifndef PLUGIN_TEST_CODE
     updateTreeView(treeWidget, pluginData);
+#endif
 }
 
 void hookSceneDestroyed(PluginSceneDestroyedHandler *handler)

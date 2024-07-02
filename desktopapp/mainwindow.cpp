@@ -96,6 +96,8 @@
 
 #include <kwidgetsaddons_version.h>
 
+#include <ct_lvtqtc_lakosentitypluginutils.h>
+
 // in a header
 Q_DECLARE_LOGGING_CATEGORY(LogWindow)
 
@@ -1122,7 +1124,14 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
         auto getSceneName = [&graphicsScene]() {
             return graphicsScene->objectName().toStdString();
         };
-        d_pluginManager_p->callHooksActiveSceneChanged(getSceneName);
+
+        auto getTree = [this, graphicsScene](std::string const& id) {
+            return Codethink::lvtqtc::PluginManagerQtUtils::createPluginTreeWidgetHandler(d_pluginManager_p,
+                                                                                          id,
+                                                                                          graphicsScene);
+        };
+
+        d_pluginManager_p->callHooksActiveSceneChanged(getSceneName, getTree);
     }
 
     addGSConnection(&GraphicsScene::graphLoadFinished, &MainWindow::updatePluginData);
@@ -1141,8 +1150,14 @@ void MainWindow::handleGraphcsSceneDestroyed()
         return graphicsScene->objectName().toStdString();
     };
 
+    auto getTree = [this, graphicsScene](std::string const& id) {
+        return Codethink::lvtqtc::PluginManagerQtUtils::createPluginTreeWidgetHandler(d_pluginManager_p,
+                                                                                      id,
+                                                                                      graphicsScene);
+    };
+
     std::cout << "Calling scene destroyed\n";
-    d_pluginManager_p->callHooksSceneDestroyed(getSceneName);
+    d_pluginManager_p->callHooksSceneDestroyed(getSceneName, getTree);
 }
 
 void MainWindow::updatePluginData()

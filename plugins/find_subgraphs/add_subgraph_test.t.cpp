@@ -1,5 +1,7 @@
 #include <catch2-local-includes.h>
 
+#include "ct_lvtplg_basicpluginhandlers.h"
+#include "ct_lvtplg_basicpluginhooks.h"
 #include "ct_lvtplg_plugindatatypes.h"
 
 #define PLUGIN_TEST_CODE 1
@@ -91,10 +93,38 @@ TEST_CASE("Find Subgraphs")
         return values;
     };
 
+    void *pluginData = nullptr;
+    const auto registerPluginData = [&pluginData](const std::string& id, void *data) {
+        std::ignore = id;
+        pluginData = data;
+    };
+
+    std::string testSceneName{"test-name"};
+    PluginActiveSceneChangedHandler activeSceneHandler{
+        [&pluginData](std::string const& id) -> void * {
+            return pluginData;
+        },
+        [&testSceneName]() -> std::string {
+            return testSceneName;
+        },
+        [](std::string const& id) -> PluginTreeWidgetHandler {
+            return PluginTreeWidgetHandler{};
+        },
+    };
+
+    PluginSetupHandler setupHandler{registerPluginData,
+                                    [pluginData](const std::string& id) {
+                                        return pluginData;
+                                    },
+                                    [](const std::string& id) {},
+                                    []() {
+                                        return PluginPythonInterpHandler{};
+                                    }};
+
     PluginContextMenuActionHandler handler{
-        [](const std::string& id) -> void * {
-            return nullptr;
-        }, // getPluginData,
+        [&pluginData](const std::string& id) -> void * {
+            return pluginData;
+        },
         getAllEntitiesInCurrentView,
         [](const std::string& qualName) -> std::shared_ptr<Codethink::lvtplg::Entity> {
             return {};
@@ -121,7 +151,11 @@ TEST_CASE("Find Subgraphs")
         } // runQueryOnDatabase;
     };
 
-    std::cout << "Starting to look for graphs\n";
+    hookSetupPlugin(&setupHandler);
+    hookActiveSceneChanged(&activeSceneHandler);
     findSubgraphsToplevel(&handler);
-    std::cout << "Finished\n";
+
+    auto pluginData2 = getPluginData(&handler);
+    std::cout << "Our Subgraphs" << pluginData2->ourGraphs[testSceneName].size() << "\n";
+    REQUIRE(pluginData2->ourGraphs[testSceneName].size() == 3);
 }

@@ -130,7 +130,10 @@ GraphicsView::GraphicsView(NodeStorage& nodeStorage, lvtprj::ProjectFile const& 
     setTransformationAnchor(ViewportAnchor::AnchorUnderMouse);
 }
 
-GraphicsView::~GraphicsView() noexcept = default;
+GraphicsView::~GraphicsView() noexcept
+{
+    std::cout << "GraphicsView destroyed\n";
+};
 
 void GraphicsView::undoCommandReceived(QUndoCommand *command)
 {

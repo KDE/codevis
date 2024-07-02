@@ -174,7 +174,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     [[nodiscard]] QString fetchErrorMessage() const;
     Q_SIGNAL void errorMessage(const QString& error);
     Q_SIGNAL void graphLoadFinished();
-
+    Q_SIGNAL void aboutToBeDeleted();
     void populateMenu(QMenu& menu, QMenu *debugMenu);
 
     void fixTransitiveEdgeVisibility();

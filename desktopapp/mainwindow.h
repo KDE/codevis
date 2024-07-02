@@ -145,6 +145,8 @@ class MainWindow : public KXmlGuiWindow {
     void saveTabsOnProject();
     void loadTabsFromProject();
 
+    void handleGraphcsSceneDestroyed();
+
     void openGenerateDatabase();
 
     void openCodeGenerationWindow();

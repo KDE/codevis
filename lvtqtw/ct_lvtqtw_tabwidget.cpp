@@ -157,6 +157,15 @@ void TabWidget::saveBookmarkByTabIndex(int tabIdx)
 void TabWidget::closeTab(int idx)
 {
     QWidget *widgetAt = widget(idx);
+    if (!widgetAt) {
+        return;
+    }
+
+    auto tabElement = qobject_cast<GraphTabElement *>(widgetAt);
+    auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(tabElement->graphicsView()->scene());
+
+    Q_EMIT scene->aboutToBeDeleted();
+
     removeTab(idx);
 
     widgetAt->deleteLater();

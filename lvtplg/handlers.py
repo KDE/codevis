@@ -239,6 +239,28 @@ HANDLERS = [
                  AS_LAMBDA),
     ]),
 
+
+    HandlerInfo("PluginEntityMenuItemHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+        Function('std::shared_ptr<Codethink::lvtplg::Entity>', 'getEntity', [],
+                 'Returns the active entity.',
+                 AS_LAMBDA),
+        Function('void', 'addAction', [Param('std::string const&', 'contextMenuTitle'), Param('std::function<void(PluginEntityMenuItemActionHandler *)>', 'action')],
+                 'Setup and add a new report action in the entity context menu.',
+                 AS_LAMBDA),
+    ]),
+
+    HandlerInfo("PluginEntityMenuItemActionHandler", [
+        Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
+                 'Returns the plugin data previously registered with `registerPluginData`.',
+                 'pyGetPluginData<T>'),
+        Function('std::shared_ptr<Codethink::lvtplg::Entity>', 'getEntity', [],
+                 '',
+                 AS_LAMBDA)
+    ]),
+
     HandlerInfo("PluginEntityReportHandler", [
         Function('void*', 'getPluginData', [Param('std::string const&', 'id')],
                  'Returns the plugin data previously registered with `registerPluginData`.',

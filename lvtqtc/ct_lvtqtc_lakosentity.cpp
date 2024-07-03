@@ -106,6 +106,9 @@ struct EntityFlags {
 
     // plugin cache used?
     bool hasPluginCache : 1 = false;
+
+    // children calculated for plugins?
+    bool hasChildrenPluginCache : 1 = false;
 };
 
 struct LakosEntity::Private {
@@ -204,6 +207,7 @@ struct LakosEntity::Private {
     // Plugin related data.
     std::shared_ptr<Codethink::lvtplg::Entity> sharedEntity;
     std::vector<std::shared_ptr<Codethink::lvtplg::Entity>> sharedDependenciesPlugin;
+    std::vector<std::shared_ptr<Codethink::lvtplg::Entity>> childrenPlugin;
 };
 
 LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node, lvtshr::LoaderInfo loaderInfo):
@@ -995,6 +999,24 @@ void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosit
             });
         };
 
+        auto addMenuItem = [this, &menu](std::string const& actionLabel,
+                                         std::function<void(PluginEntityMenuItemActionHandler *)> const& userAction) {
+            auto *action = menu.addAction(QString::fromStdString(actionLabel));
+            connect(action, &QAction::triggered, this, [this, userAction]() {
+                auto& pm = d->pluginManager->get();
+                auto getPluginData = [&pm](auto&& id) { // clazy:exclude=lambda-in-connect
+                    return pm.getPluginData(id);
+                };
+                auto getEntity = [this]() {
+                    return createWrappedEntityFromLakosEntity(this);
+                };
+
+                auto h = PluginEntityMenuItemActionHandler{getPluginData, getEntity};
+                userAction(&h);
+            });
+        };
+
+        pm.callHooksSetupEntityMenu(getEntity, addMenuItem);
         pm.callHooksSetupEntityReport(getEntity, addReport);
     }
 
@@ -2127,9 +2149,20 @@ bool LakosEntity::hasPluginCache() const
     return d->flags.hasPluginCache;
 }
 
+std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& LakosEntity::getChildrenPlugin() const
+{
+    return d->childrenPlugin;
+}
+
 std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& LakosEntity::getSharedDependenciesPlugin() const
 {
     return d->sharedDependenciesPlugin;
+}
+
+void LakosEntity::setChildrenPlugin(std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>&& deps)
+{
+    d->flags.hasChildrenPluginCache = true;
+    d->childrenPlugin = std::move(deps);
 }
 
 void LakosEntity::setSharedDependenciesPlugin(std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>&& deps)

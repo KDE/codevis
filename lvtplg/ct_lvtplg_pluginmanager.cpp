@@ -275,6 +275,14 @@ void PluginManager::callHooksSetupDockWidget(createPluginDock_f const& createPlu
         libraries);
 }
 
+void PluginManager::callHooksSetupEntityMenu(getEntity_f const& getEntity, addAction_f const& addAction)
+{
+    callAllHooks<hookSetupEntityMenu_f>(
+        "hookSetupEntityMenu",
+        PluginEntityMenuItemHandler{std::bind_front(&PluginManager::getPluginData, this), getEntity, addAction},
+        libraries);
+}
+
 void PluginManager::callHooksSetupEntityReport(getEntity_f const& getEntity, addReport_f const& addReport)
 {
     callAllHooks<hookSetupEntityReport_f>(

@@ -8,6 +8,7 @@ HOOKS = [
     HookInfo("void", "TeardownPlugin", "PluginSetupHandler", "This hook is called just before the application closes, and must be used to cleanup any resource the plugin acquired."),
     HookInfo("void", "GraphicsViewContextMenu", "PluginContextMenuHandler", "Hook to control the graphics view context menu."),
     HookInfo("void", "SetupDockWidget", "PluginSetupDockWidgetHandler", "Can be used to setup new dock widgets (See PluginDockWidgetHandler)"),
+    HookInfo("void", "SetupEntityMenu", "PluginEntityMenuItemHandler", "Creates a new Menu element on the context menu of an entity"),
     HookInfo("void", "SetupEntityReport", "PluginEntityReportHandler", "If implemented, will generate an action in the reports menu to create a HTML report."),
     HookInfo("void", "PhysicalParserOnHeaderFound", "PluginPhysicalParserOnHeaderFoundHandler", "Called every time a header is found in the physical parser."),
     HookInfo("void", "LogicalParserOnCppCommentFound", "PluginLogicalParserOnCppCommentFoundHandler", "Called every time a comment is found in the logical parser."),

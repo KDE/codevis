@@ -83,6 +83,10 @@ class LVTPLG_EXPORT PluginManager {
     using addReport_f = decltype(PluginEntityReportHandler::addReport);
     void callHooksSetupEntityReport(getEntity_f const& getEntity, addReport_f const& addReport);
 
+    using getEntityMenu_f = decltype(PluginEntityMenuItemHandler::getEntity);
+    using addAction_f = decltype(PluginEntityMenuItemHandler::addAction);
+    void callHooksSetupEntityMenu(getEntityMenu_f const& getEntity, addAction_f const& addAction);
+
     using getSourceFile_f = decltype(PluginPhysicalParserOnHeaderFoundHandler::getSourceFile);
     using getIncludedFile_f = decltype(PluginPhysicalParserOnHeaderFoundHandler::getIncludedFile);
     using getLineNo_f = decltype(PluginPhysicalParserOnHeaderFoundHandler::getLineNo);

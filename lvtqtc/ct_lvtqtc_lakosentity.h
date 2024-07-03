@@ -129,6 +129,9 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     void setTooltipString(const std::string& tt);
     // set's the tooltip string to tt. if not set, the qualifiedName is used.
 
+    std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& getChildrenPlugin() const;
+    void setChildrenPlugin(std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>&& deps);
+
     std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>& getSharedDependenciesPlugin() const;
     void setSharedDependenciesPlugin(std::vector<std::shared_ptr<Codethink::lvtplg::Entity>>&& deps);
 

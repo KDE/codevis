@@ -79,9 +79,23 @@ std::shared_ptr<Entity> createWrappedEntityFromLakosEntity(LakosEntity *e)
         return e->getSharedDependenciesPlugin();
     };
 
+    auto getChildren = [e]() -> std::vector<std::shared_ptr<Entity>>& {
+        if (e->hasPluginCache()) {
+            return e->getChildrenPlugin();
+        }
+
+        auto children = std::vector<std::shared_ptr<Entity>>{};
+        for (auto const& c : e->lakosEntities()) {
+            children.push_back(createWrappedEntityFromLakosEntity(c));
+        }
+        e->setChildrenPlugin(std::move(children));
+        return e->getChildrenPlugin();
+    };
+
     auto unloadFromScene = [e]() {
         Q_EMIT e->unloadThis();
     };
+
     auto getDbChildrenQualifiedNames = [e]() -> std::vector<std::string> {
         auto childrenQNames = std::vector<std::string>{};
         for (auto const& c : e->internalNode()->children()) {
@@ -117,6 +131,7 @@ std::shared_ptr<Entity> createWrappedEntityFromLakosEntity(LakosEntity *e)
     entity->getParent = getParent;
     entity->setSelected = setSelected;
     entity->isSelected = isSelected;
+    entity->getChildren = getChildren;
 
     e->setSharedPluginValue(entity);
 

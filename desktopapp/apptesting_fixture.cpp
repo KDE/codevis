@@ -33,7 +33,7 @@ CodeVisApplicationTestFixture::CodeVisApplicationTestFixture()
     // Resources must be initialized before mainwindow, so I can't initialize this on
     // the initialization list.
     mainWindow = std::make_unique<CodevisApplicationTesting::TestMainWindow>(sharedNodeStorage, &undoManager);
-    mainWindow->show();
+    mainWindow->showMaximized();
 }
 
 bool CodeVisApplicationTestFixture::hasDefaultTabWidget() const

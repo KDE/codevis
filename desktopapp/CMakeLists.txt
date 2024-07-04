@@ -137,7 +137,7 @@ install(
 install(FILES org.kde.codevis.desktop DESTINATION ${KDE_INSTALL_APPDIR})
 install(FILES codevis.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
 
-file(COPY ${CMAKE_SOURCE_DIR}/python/ DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/python/)
+file(COPY ${CMAKE_SOURCE_DIR}/lvtcgn/codegeneration DESTINATION ${CMAKE_BINARY_DIR}/desktopapp/)
 
 if (COMPILE_TESTS)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testcrash.lks ${CMAKE_CURRENT_BINARY_DIR}/testcrash.lks COPYONLY)

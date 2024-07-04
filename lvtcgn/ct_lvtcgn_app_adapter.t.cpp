@@ -103,7 +103,7 @@ TEST_CASE("CMake code generation script")
     char **argv = nullptr;
     QCoreApplication app(argc, argv);
 
-    auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_PYSCRIPTS_PATH) + "/cmake/codegenerator.js";
+    auto cmakeGeneratorPath = std::string(LAKOSDIAGRAM_CODEGEN_PATH) + "/cmake/codegenerator.js";
     SECTION("Basic package project without package groups")
     {
         auto tmpDir = TmpDir{"basic_pkg_no_grp"};

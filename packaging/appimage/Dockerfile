@@ -79,7 +79,7 @@ RUN apt-get update && apt-get -qq install \
 
 WORKDIR /root/diagram-server/build
 
-ENV LAKOSDIAGRAM_PYSCRIPTS_PATH="/root/diagram-server/python/codegeneration/"
+ENV LAKOSDIAGRAM_CODEGEN_PATH="/root/diagram-server/lvtcgn/codegeneration/"
 ENV TEST_PRJ_PATH="/root/diagram-server/lvtclp/systemtests/"
 ENV QT_QPA_PLATFORM="offscreen"
 RUN ctest -VV
@@ -206,7 +206,7 @@ RUN git submodule update --recursive
 WORKDIR /root/diagram-server/build
 RUN cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..
 RUN cmake --build . -j$(nproc)
-ENV LAKOSDIAGRAM_PYSCRIPTS_PATH="/root/diagram-server/python/codegeneration/"
+ENV LAKOSDIAGRAM_CODEGEN_PATH="/root/diagram-server/lvtcgn/codegeneration/"
 ENV TEST_PRJ_PATH="/root/diagram-server/lvtclp/systemtests/"
 ENV QT_QPA_PLATFORM="offscreen"
 

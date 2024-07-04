@@ -61,8 +61,13 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
 
     // Keep track of history for cycle detection
     auto entitiesVisitHistory = std::unordered_map<LakosEntity *, std::unordered_set<LakosEntity *>>{};
+    std::vector<LakosEntity *> entitiesWithoutConnections;
     for (auto *entity : entities) {
         entitiesVisitHistory[entity].insert(entity);
+
+        if (entity->edgesCollection().empty() && entity->targetCollection().empty()) {
+            entitiesWithoutConnections.push_back(entity);
+        }
     }
 
     auto copyAllDependentNodes =
@@ -140,6 +145,12 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
         currentLevel += 1;
         entitiesOnCurrentLevel = entitiesOnNextLevel;
     }
+
+    // move elements that have no edge to a higher level.
+    for (auto *entity : entitiesWithoutConnections) {
+        entityToLevel[entity] = currentLevel;
+    }
+
     return entityToLevel;
 }
 

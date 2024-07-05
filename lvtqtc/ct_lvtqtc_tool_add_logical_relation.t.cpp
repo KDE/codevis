@@ -66,8 +66,8 @@ void runTestOnTool(QTApplicationFixture *self)
 
     // Using the tool an arbitrary place won't do anything (including no crashing)
     tool.activate();
-    REQUIRE_FALSE(mousePressAt(tool, {500, 100}));
-    mouseReleaseAt(tool, {500, 100});
+    REQUIRE_FALSE(mousePressAt(tool, {-500, 100}));
+    mouseReleaseAt(tool, {-500, 100});
     tool.deactivate();
 
     gv.moveEntityTo(Polygon->uid(), {0, 0});

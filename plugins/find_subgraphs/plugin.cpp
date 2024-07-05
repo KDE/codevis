@@ -129,8 +129,7 @@ Graph buildBoostGraph(const std::vector<std::shared_ptr<Codethink::lvtplg::Entit
 std::vector<int> map_components(Graph const& g)
 {
     std::vector<int> mappings(num_vertices(g));
-    size_t res = boost::connected_components(g, &mappings[0]);
-    std::cout << "found " << res << " subgraphs\n";
+    boost::connected_components(g, &mappings[0]);
     return mappings;
 }
 
@@ -153,7 +152,6 @@ std::vector<Graph> split(Graph const& g, std::vector<int> const& components)
                           results.back());
     }
 
-    std::cout << "after splitting into a vec:" << results.size() << " subgraphs\n";
     return results;
 }
 
@@ -175,8 +173,6 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
 
     QElapsedTimer timer;
     timer.start();
-    std::cout << "Starting to look for subgraphs" << std::endl;
-
     auto entities = [handler]() -> std::vector<std::shared_ptr<Codethink::lvtplg::Entity>> {
         std::vector<std::shared_ptr<Codethink::lvtplg::Entity>> _entities;
         for (auto e : handler->getAllEntitiesInCurrentView()) {
@@ -192,10 +188,6 @@ void findSubgraphsToplevel(PluginContextMenuActionHandler *handler)
 
     pluginData->ourGraphs[pluginData->currentGraphScene] = split(graph, map);
     pluginData->prevSelected = Graph{};
-
-    std::cout << "Number of subgraphs " << pluginData->ourGraphs[pluginData->currentGraphScene].size() << "\n";
-    std::cout << "Looking for subgraphs took " << timer.elapsed() << std::endl;
-
 #ifndef PLUGIN_TEST_CODE
     auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
     updateTreeView(tree, pluginData);

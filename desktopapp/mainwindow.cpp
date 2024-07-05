@@ -1134,8 +1134,6 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
 
 void MainWindow::handleGraphcsSceneDestroyed()
 {
-    std::cout << "Calling scene destroyed\n";
-
     if (!d_pluginManager_p) {
         return;
     }
@@ -1151,7 +1149,6 @@ void MainWindow::handleGraphcsSceneDestroyed()
                                                                                       graphicsScene);
     };
 
-    std::cout << "Calling scene destroyed\n";
     d_pluginManager_p->callHooksSceneDestroyed(getSceneName, getTree);
 }
 

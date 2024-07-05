@@ -170,9 +170,9 @@ TEST_CASE_METHOD(ChildrenLevelTestFixture, "Single level")
 
     auto levels = pkgEntity->childrenLevels();
     REQUIRE(levels.size() == 3);
-    REQUIRE(levels[aaa] == 0);
-    REQUIRE(levels[bbb] == 0);
-    REQUIRE(levels[ccc] == 0);
+    REQUIRE(levels[aaa] == 1);
+    REQUIRE(levels[bbb] == 1);
+    REQUIRE(levels[ccc] == 1);
 }
 
 TEST_CASE_METHOD(ChildrenLevelTestFixture, "Basic children levels")

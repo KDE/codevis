@@ -35,29 +35,24 @@ using RawDBRows = std::vector<RawDBCols>;
 
 namespace detail {
 
-template<typename T>
-static RawDBData _getDBData(soci::row& row, size_t pos)
-{
-    if (row.get_indicator(pos) != soci::i_null) {
-        return row.get<T>(pos);
-    }
-    return std::nullopt;
-}
-
 static RawDBData getDBData(soci::row& row, size_t pos)
 {
+    if (row.get_indicator(pos) == soci::i_null) {
+        return std::nullopt;
+    }
+
     auto const& props = row.get_properties(pos);
     switch (props.get_data_type()) {
     case soci::dt_string:
-        return _getDBData<std::string>(row, pos);
+        return row.get<std::string>(pos);
     case soci::dt_double:
-        return _getDBData<double>(row, pos);
+        return row.get<double>(pos);
     case soci::dt_integer:
-        return _getDBData<int>(row, pos);
+        return row.get<int>(pos);
     case soci::dt_long_long:
-        return _getDBData<long long>(row, pos);
+        return row.get<long long>(pos);
     case soci::dt_unsigned_long_long:
-        return _getDBData<unsigned long long>(row, pos);
+        return row.get<unsigned long long>(pos);
     case soci::dt_date:
         /* Ignored */
         break;

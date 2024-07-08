@@ -31,7 +31,7 @@
 class COMMANDLINEPROGRESSBAR_EXPORT CommandLineProgressBar : public QObject {
   public:
     CommandLineProgressBar();
-    ~CommandLineProgressBar() override;
+    ~CommandLineProgressBar() noexcept override;
 
     void advance(const QString& advanceMessage);
     void setupProgressBar(const QString& progressBarText, int totalSteps);

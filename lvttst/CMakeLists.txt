@@ -1,5 +1,5 @@
 if (COMPILE_TESTS)
-    add_library(lvttst
+    add_library(lvttst STATIC
         ct_lvttst_main.t.cpp
         ct_lvttst_testcfgoptions.cpp
         ct_lvttst_testcfgoptions.h
@@ -16,7 +16,7 @@ if (COMPILE_TESTS)
     )
 
     if (BUILD_DESKTOP_APP)
-        add_library(lvttst_fixture_qt
+        add_library(lvttst_fixture_qt STATIC
             ct_lvttst_fixture_qt.cpp
             ct_lvttst_fixture_qt.h
             ct_lvttst_osstream.cpp
@@ -34,7 +34,7 @@ if (COMPILE_TESTS)
             Qt${QT_MAJOR_VERSION}::Widgets
         )
     endif()
-    add_library(lvttst_tmpdir
+    add_library(lvttst_tmpdir STATIC
         ct_lvttst_tmpdir.cpp
         ct_lvttst_tmpdir.h
     )

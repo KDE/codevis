@@ -82,7 +82,7 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic status bar workflow")
     statusBar.show();
 
 #ifdef __APPLE__
-    REQUIRE(statusBar.currentPanText() == "Pan Graph: OPTION + Click");
+    REQUIRE(statusBar.currentPanText() == "Pan Graph: ALT + Click");
     REQUIRE(statusBar.currentZoomText() == "Zoom: COMMAND + Wheel");
     REQUIRE(statusBar.currentMultiSelectText() == "Multiple Select: SHIFT + Click and Drag");
 #else

@@ -20,6 +20,7 @@
 #ifndef DIAGRAM_SERVER_CT_LVTTST_TMPDIR_H
 #define DIAGRAM_SERVER_CT_LVTTST_TMPDIR_H
 
+#include <QTemporaryDir>
 #include <filesystem>
 #include <fstream>
 
@@ -33,6 +34,7 @@ class TmpDir {
     [[nodiscard]] std::filesystem::path createTextFile(const std::string& name, const std::string& contents) const;
 
   private:
+    QTemporaryDir d_tmpDirQt;
     std::filesystem::path tmp_dir;
 };
 

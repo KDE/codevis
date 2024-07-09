@@ -20,7 +20,7 @@
 #include <cassert>
 #include <ct_lvttst_tmpdir.h>
 
-TmpDir::TmpDir(const std::string& dirname): tmp_dir(std::filesystem::temp_directory_path() / dirname)
+TmpDir::TmpDir(const std::string& dirname): tmp_dir(d_tmpDirQt.path().toStdString() + "/" + dirname)
 {
     std::filesystem::remove_all(tmp_dir);
     std::filesystem::create_directories(tmp_dir);

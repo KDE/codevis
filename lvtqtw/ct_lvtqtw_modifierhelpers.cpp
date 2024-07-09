@@ -55,10 +55,18 @@ Qt::KeyboardModifier ModifierHelpers::stringToModifier(const QString& txt)
 QString ModifierHelpers::modifierToText(Qt::KeyboardModifier modifier)
 {
     if (modifier == Qt::KeyboardModifier::AltModifier) {
+#ifdef __APPLE__
+        return tr("OPTION");
+#else
         return tr("ALT");
+#endif
     }
     if (modifier == Qt::KeyboardModifier::ControlModifier) {
+#ifdef __APPLE__
+        return tr("COMMAND");
+#else
         return tr("CONTROL");
+#endif
     }
     if (modifier == Qt::KeyboardModifier::ShiftModifier) {
         return tr("SHIFT");

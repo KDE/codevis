@@ -24,6 +24,7 @@
 
 #include <ct_lvtmdb_objectstore.h>
 
+#include <QTemporaryDir>
 #include <QtGlobal>
 #include <catch2-local-includes.h>
 #include <filesystem>
@@ -638,6 +639,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Non Lakosian")
 class FSNonLakosianFixture {
   public:
     // public data for Catch2 magic
+    QTemporaryDir d_tempDir;
     const std::filesystem::path d_topLevel;
     const std::filesystem::path d_submodules;
     const std::filesystem::path d_configurationParser;
@@ -648,7 +650,7 @@ class FSNonLakosianFixture {
     const std::filesystem::path d_filesystemScanner;
 
     FSNonLakosianFixture():
-        d_topLevel(std::filesystem::temp_directory_path() / "lvtclp_testfilesystemscanner"),
+        d_topLevel(d_tempDir.path().toStdString() + "/lvtclp_testfilesystemscanner"),
         d_submodules(d_topLevel / "submodules"),
         d_configurationParser(d_submodules / "configuration-parser"),
         d_main(d_configurationParser / "main.cpp"),

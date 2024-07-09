@@ -111,7 +111,7 @@ if (COMPILE_TESTS)
         add_test(NAME ${clp_NAME} COMMAND ${clp_NAME})
     endfunction()
 
-    add_library(lvtclp_test
+    add_library(lvtclp_test STATIC
         ct_lvtclp_testutil.cpp
         ct_lvtclp_testutil.h
     )

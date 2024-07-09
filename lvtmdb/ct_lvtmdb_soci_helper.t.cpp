@@ -48,8 +48,8 @@ struct DBTestResult {
 
     bool operator==(const DBTestResult& other) const
     {
-        return this->id == other.id && this->version == other.version && this->parentId == other.parentId
-            && this->name == other.name && this->qualifiedName == other.qualifiedName;
+        return this->version == other.version && this->parentId == other.parentId && this->name == other.name
+            && this->qualifiedName == other.qualifiedName;
     }
 };
 

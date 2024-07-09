@@ -395,6 +395,8 @@ TEST_CASE_METHOD(PhysicalAndTemplatesFixture, "Physical and Templates")
 class NonLakosianFixture {
   public:
     // public data for Catch2 magic
+    QTemporaryDir d_tempDir;
+
     std::filesystem::path d_topLevel;
     std::filesystem::path d_pcre2;
     std::filesystem::path d_pcre2Source;
@@ -407,10 +409,6 @@ class NonLakosianFixture {
 
     void createTestEnv() const
     {
-        if (std::filesystem::exists(d_topLevel)) {
-            REQUIRE(std::filesystem::remove_all(d_topLevel));
-        }
-
         REQUIRE(std::filesystem::create_directories(d_sljit));
         REQUIRE(Test_Util::createFile(d_sljitSource));
         REQUIRE(Test_Util::createFile(d_sljitHeader));
@@ -422,7 +420,7 @@ class NonLakosianFixture {
     }
 
     NonLakosianFixture():
-        d_topLevel(std::filesystem::temp_directory_path() / "ct_lvtclp_testphysicalandtemplates_nonlakosian"),
+        d_topLevel(d_tempDir.path().toStdString() + "/ct_lvtclp_testphysicalandtemplates_nonlakosian"),
         d_pcre2(d_topLevel / "thirdparty" / "pcre2"),
         d_pcre2Source(d_pcre2 / "pcre2.c"),
         d_pcre2Header(d_pcre2 / "pcre2.h"),
@@ -433,11 +431,6 @@ class NonLakosianFixture {
         d_bdlpcreRegex(d_bdlpcre / "bdlpcre_regex.cpp")
     {
         createTestEnv();
-    }
-
-    ~NonLakosianFixture()
-    {
-        REQUIRE(std::filesystem::remove_all(d_topLevel));
     }
 };
 

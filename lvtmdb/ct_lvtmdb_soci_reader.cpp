@@ -793,6 +793,7 @@ void loadFieldRelations(ObjectStore& store, soci::session& db, const Maps& maps)
     soci::statement st =
         (db.prepare << "select type_class_id, field_id from field_type", soci::into(udt_id), soci::into(field_id));
 
+    st.execute();
     while (st.fetch()) {
         FieldObject *source = maps.fieldMap.at(field_id);
         TypeObject *target = maps.userDefinedTypeMap.at(udt_id);

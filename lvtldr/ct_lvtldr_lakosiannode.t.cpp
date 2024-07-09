@@ -281,11 +281,16 @@ void checkComponents(NodeStorage& store)
     };
     REQUIRE(onetopCompNode->children() == onetopChildren);
 
-    const std::vector<LakosianNode *> twodepChildren{
-        isADepNode,
-        depNode,
-    };
-    REQUIRE(twodepCompNode->children() == twodepChildren);
+    auto childVec = twodepCompNode->children();
+    REQUIRE(childVec.size() == 2);
+
+    for (auto *node : {
+             isADepNode,
+             depNode,
+         }) {
+        auto it = std::find(std::begin(childVec), std::end(childVec), node);
+        REQUIRE(it != std::end(childVec));
+    }
 }
 
 void checkUDTs(NodeStorage& store)

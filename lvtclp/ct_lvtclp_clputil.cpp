@@ -216,10 +216,14 @@ lvtmdb::PackageObject *getPackageForPath(const std::filesystem::path& path,
 
 namespace Codethink::lvtclp {
 
-std::filesystem::path ClpUtil::normalisePath(std::filesystem::path path, const std::filesystem::path& prefix)
+std::filesystem::path ClpUtil::normalisePath(std::filesystem::path path, std::filesystem::path prefix)
 {
     if (!path.empty()) {
         path = std::filesystem::weakly_canonical(path);
+    }
+
+    if (!prefix.empty()) {
+        prefix = std::filesystem::weakly_canonical(prefix);
     }
 
 #ifdef NDEBUG

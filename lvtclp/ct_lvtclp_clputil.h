@@ -86,7 +86,7 @@ struct LVTCLP_EXPORT ClpUtil {
 
   public:
     // CLASS METHODS
-    static std::filesystem::path normalisePath(std::filesystem::path path, const std::filesystem::path& prefix);
+    static std::filesystem::path normalisePath(std::filesystem::path path, std::filesystem::path prefix);
     // Normalise a path for inclusion in the database
 
     static lvtmdb::FileObject *writeSourceFile(const std::string& filename,

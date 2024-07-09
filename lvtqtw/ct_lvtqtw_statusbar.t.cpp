@@ -96,8 +96,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic status bar workflow")
     Preferences::setMultiSelectModifier(Qt::CTRL);
 
 #ifdef __APPLE__
-    REQUIRE(statusBar.currentPanText() == "Pan Graph: Click + SHIFT");
-    REQUIRE(statusBar.currentZoomText() == "Zoom: Wheel + OPTION");
+    REQUIRE(statusBar.currentPanText() == "Pan Graph: SHIFT + Click");
+    REQUIRE(statusBar.currentZoomText() == "Zoom: OPTION + Wheel");
     REQUIRE(statusBar.currentMultiSelectText() == "Multiple Select: COMMAND + Click and Drag");
 #else
     REQUIRE(statusBar.currentPanText() == "Pan Graph: SHIFT + Click");

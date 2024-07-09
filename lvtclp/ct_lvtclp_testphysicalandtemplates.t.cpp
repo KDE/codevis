@@ -26,6 +26,7 @@
 #include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtclp_testutil.h>
 
+#include <QTemporaryDir>
 #include <filesystem>
 
 #include <catch2-local-includes.h>
@@ -38,10 +39,6 @@ const PyDefaultGilReleasedContext defaultGilContextForTesting;
 
 void createTestEnv(const std::filesystem::path& topLevel)
 {
-    if (std::filesystem::exists(topLevel)) {
-        REQUIRE(std::filesystem::remove_all(topLevel));
-    }
-
     REQUIRE(std::filesystem::create_directories(topLevel / "groups/bsl/bslma"));
 
     REQUIRE(Test_Util::createFile(topLevel / "groups/bsl/bslma/bslma_allocatortraits.h", R"(
@@ -271,18 +268,16 @@ void checkUdtInPkg(const std::string& udtName, PackageObject *pkg, ObjectStore& 
 }
 
 struct PhysicalAndTemplatesFixture {
-    PhysicalAndTemplatesFixture():
-        topLevel(std::filesystem::temp_directory_path() / "ct_lvtclp_testphysicalandtemplates_test")
+    PhysicalAndTemplatesFixture()
     {
+        topLevel = tempDir.path().toStdString() + "/ct_lvtclp_testphysicalandtemplates_test";
+        std::filesystem::create_directories(topLevel);
+        std::cout << "Qt Temporary Dir" << topLevel << std::endl;
         createTestEnv(topLevel);
     }
 
-    ~PhysicalAndTemplatesFixture()
-    {
-        REQUIRE(std::filesystem::remove_all(topLevel));
-    }
-
     std::filesystem::path topLevel;
+    QTemporaryDir tempDir;
 };
 
 TEST_CASE_METHOD(PhysicalAndTemplatesFixture, "Physical and Templates")

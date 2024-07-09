@@ -34,9 +34,9 @@ TEST_CASE("normalisePath tests")
 
     // Invalid prefix cases
     REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/abc/", "/different/path/")
-            == "/home/abc/xxx/project/abc/");
+            == std::filesystem::weakly_canonical("/home/abc/xxx/project/abc/"));
     REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/../project/abc/", "/different/path/")
-            == "/home/abc/xxx/project/abc/");
+            == std::filesystem::weakly_canonical("/home/abc/xxx/project/abc/"));
 
     // Edge cases
     // Trailling '/' on the prefix path was being evaluated as invalid prefix. This test has been added to avoid

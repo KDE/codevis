@@ -36,7 +36,7 @@ struct DBTestResult {
     struct HashFunc {
         size_t operator()(const DBTestResult& data) const
         {
-            return data.id;
+            return std::hash<std::string>{}(data.qualifiedName);
         }
     };
 

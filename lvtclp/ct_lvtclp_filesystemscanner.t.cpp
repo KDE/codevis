@@ -36,6 +36,8 @@
 #include <ct_lvtmdb_soci_reader.h>
 #include <ct_lvtmdb_soci_writer.h>
 
+#include <QTemporaryDir>
+
 #include <ct_lvtshr_debug_categories.h>
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
@@ -103,7 +105,7 @@ static bool compareResultList(std::vector<std::string> expected, std::vector<std
 }
 
 struct FilesystemScannerFixture {
-    FilesystemScannerFixture(): topLevel(std::filesystem::temp_directory_path() / "lvtclp_filesystemscanner_test")
+    FilesystemScannerFixture(): topLevel(d_tmpDir.path().toStdString() + "/lvtclp_filesystemscanner_test")
     {
         if (std::filesystem::exists(topLevel)) {
             REQUIRE(std::filesystem::remove_all(topLevel));
@@ -116,7 +118,7 @@ struct FilesystemScannerFixture {
             REQUIRE(std::filesystem::remove_all(topLevel));
         }
     }
-
+    QTemporaryDir d_tmpDir;
     std::filesystem::path topLevel;
 };
 

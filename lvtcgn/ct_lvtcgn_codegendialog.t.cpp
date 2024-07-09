@@ -31,7 +31,7 @@
 #include <QTreeView>
 #include <catch2-local-includes.h>
 
-static const std::string TMPDIR_NAME = "tmp_ct_lvtcgn_codegendialog";
+static const std::string TMPDIR_NAME = "";
 
 using namespace Codethink::lvtcgn::gui;
 using namespace Codethink::lvtcgn::mdl;

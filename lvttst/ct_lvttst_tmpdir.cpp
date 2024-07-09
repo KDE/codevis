@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include <QDir>
 #include <cassert>
 #include <ct_lvttst_tmpdir.h>
 
@@ -39,9 +40,9 @@ std::filesystem::path TmpDir::path() const
 std::filesystem::path TmpDir::createDir(const std::string& dirname) const
 {
     auto p = path() / dirname;
-    auto r = std::filesystem::create_directories(p);
-    (void) r;
-    assert(r);
+    QDir dir;
+    bool res = dir.mkpath(QString::fromStdString(p.string()));
+    assert(res);
     return p;
 }
 

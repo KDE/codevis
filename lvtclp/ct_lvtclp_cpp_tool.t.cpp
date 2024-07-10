@@ -537,7 +537,8 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
 TEST_CASE("Run Tool on example project")
 {
     StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/hello_world/");
-    CppTool tool(PREFIX + "/hello_world/", {}, cmds, PREFIX + "/hello_world/database");
+    CppTool tool(PREFIX + "/hello_world/", {}, cmds, PREFIX + "/hello_world/database", 1, {}, {}, {}, {}, true, true);
+
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runFull());
@@ -721,7 +722,7 @@ TEST_CASE("Test run tool with non-lakosian rules")
     auto const prjPath = PREFIX + "/cpp_nonlakosian_test/";
 
     auto tmpdir = TmpDir{"cpp_nonlakosian_test_builddir"};
-    std::ignore = tmpdir.createTextFile("compile_commands.json",
+    auto res = tmpdir.createTextFile("compile_commands.json",
     "[\n"
     "{\n"
     "  \"directory\": \"" + prjPath + "\",\n"
@@ -743,6 +744,8 @@ TEST_CASE("Test run tool with non-lakosian rules")
     "}\n"
     "]"
     );
+
+    REQUIRE(std::filesystem::exists(res));
 
     auto tool = CppTool(
         /*sourcePath=*/prjPath,
@@ -814,4 +817,24 @@ TEST_CASE("Test run tool with non-lakosian rules")
             });
         }
     }
+}
+
+// cstddef and stddef.h files are a pain to get it right
+// because they depend on specific, compile-defined, paths
+// the code currently tries to find that to be able to feed
+// clang the correct information
+TEST_CASE("cstddef test")
+{
+    StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/cstddef_test/");
+    CppTool tool(PREFIX + "/cstddef_test/", {}, cmds, PREFIX + "/cstddef_test/database", 1, {}, {}, {}, {}, true, true);
+
+    ObjectStore& session = tool.getObjectStore();
+
+    REQUIRE(tool.runFull());
+
+    FileObject *file = nullptr;
+    session.withROLock([&] {
+        file = session.getFile("hello.m.cpp");
+    });
+    REQUIRE(file);
 }

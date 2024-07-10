@@ -57,9 +57,7 @@ class LVTCLP_EXPORT CompilerUtil {
     // Attempts to locate appropriate include directories to find standard
     // headers etc
 
-#ifdef __linux__
     static std::optional<std::string> runCompiler(const std::string& compiler);
-#endif
 };
 
 } // namespace Codethink::lvtclp

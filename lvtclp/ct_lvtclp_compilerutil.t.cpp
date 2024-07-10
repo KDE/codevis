@@ -20,6 +20,7 @@
 #include <ct_lvtclp_compilerutil.h>
 
 #include <catch2-local-includes.h>
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -27,7 +28,7 @@ using namespace Codethink;
 
 TEST_CASE("search for stddef")
 {
-#ifdef __linux__
+#ifndef Q_OS_WINDOWS
     // TODO: forcing to gcc, but we should test if gcc is installed,
     // if clang is installed, and run this for both.
     std::optional<std::string> res = Codethink::lvtclp::CompilerUtil::runCompiler("gcc");

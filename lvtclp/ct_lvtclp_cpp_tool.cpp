@@ -1038,11 +1038,14 @@ bool CppTool::runFull(bool skipPhysical)
     if (err) {
         d->memDb().setState(lvtmdb::ObjectStore::State::LogicalError);
 
-        err = llvm::handleErrors(std::move(err), [&](llvm::StringError const& err) -> llvm::Error {
+        llvm::handleErrors(std::move(err), [&](llvm::StringError const& err) -> llvm::Error {
             Q_EMIT messageFromThread(QString::fromStdString(err.getMessage()), 0);
             return llvm::Error::success();
         });
-        return !err;
+        if (d->printToConsole) {
+            qDebug() << "We got a logical error, aborting";
+        }
+        return false;
     }
 
     if (!cancelled) {

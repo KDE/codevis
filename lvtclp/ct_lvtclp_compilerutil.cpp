@@ -22,8 +22,6 @@
 
 #include <filesystem>
 #include <initializer_list>
-#include <iostream>
-#include <istream>
 #include <optional>
 
 #include <QDebug>
@@ -33,7 +31,6 @@
 
 namespace {
 
-#ifdef __linux__
 std::string trimLeadingSpaces(const std::string& str)
 // remove leading spaces from str
 {
@@ -107,39 +104,6 @@ std::vector<std::string> findLinuxIncludes()
 
     return {};
 }
-#endif // __linux__
-
-#ifdef __APPLE__
-static std::vector<std::string> findMacIncludes()
-{
-    // Apple's clang has some include paths built in, which we don't get
-    // from our open source libclang. We need to add this include path.
-    // The path should look something like this, but we need to get the
-    // right version number
-    // /Library/Developer/CommandLineTools/usr/lib/clang/12.0.5/include
-    // Asking apple's clang (e.g. using findLinuxIncludes) yields unbuildable
-    // headers
-
-    std::filesystem::path base("/Library/Developer/CommandLineTools/usr/lib/clang");
-    if (!std::filesystem::is_directory(base)) {
-        std::cerr << "Cannot find XCode CommandLineTools include directory: " << base << std::endl;
-        return {};
-    }
-
-    // find version number by trying each subdirectory of base
-    for (const auto& subdir : std::filesystem::directory_iterator(base)) {
-        const std::filesystem::path& versionDir = subdir;
-        std::filesystem::path includeDir = versionDir / "include";
-
-        if (std::filesystem::is_directory(includeDir)) {
-            return {includeDir.string()};
-        }
-    }
-
-    std::cerr << "Cannot find XCode CommandLineTools include directory" << std::endl;
-    return {};
-}
-#endif // __APPLE__
 
 } // unnamed namespace
 
@@ -147,16 +111,11 @@ namespace Codethink::lvtclp {
 
 std::vector<std::string> CompilerUtil::findSystemIncludes()
 {
-#ifdef __APPLE__
-    return findMacIncludes();
-#endif
-#ifdef __linux__
+#ifndef Q_OS_WINDOWS
     return findLinuxIncludes();
 #endif
-    return {};
 }
 
-#ifdef __linux__
 std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler)
 // attempt to run something like
 //      compiler -E -v - </dev/null 1>/dev/null 2>out
@@ -192,7 +151,6 @@ std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler
 
     return result;
 }
-#endif
 
 std::optional<std::string> CompilerUtil::findBundledHeaders(bool silent)
 {

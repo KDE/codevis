@@ -113,6 +113,8 @@ std::vector<std::string> CompilerUtil::findSystemIncludes()
 {
 #ifndef Q_OS_WINDOWS
     return findLinuxIncludes();
+#else
+    return {};
 #endif
 }
 
@@ -123,6 +125,9 @@ std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler
 // if compiler doesn't return EXIT_SUCCESS, return {}
 // otherwise return the contents of stderr
 {
+#ifdef Q_OS_WINDOWS
+    return {};
+#else
     // The popen() function shall execute the command specified by the string command. It shall create a pipe between
     // the calling program and the executed command, and shall return a pointer to a stream that can be used to either
     // read from or write to the pipe.
@@ -150,6 +155,7 @@ std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler
     }
 
     return result;
+#endif
 }
 
 std::optional<std::string> CompilerUtil::findBundledHeaders(bool silent)

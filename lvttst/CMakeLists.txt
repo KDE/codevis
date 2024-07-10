@@ -47,4 +47,8 @@ if (COMPILE_TESTS)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     )
+
+    add_executable(test_lvttst_tmpdir test_lvttst_tmpdir.t.cpp)
+    target_link_libraries(test_lvttst_tmpdir Codethink::lvttst Codethink::lvttst_tmpdir)
+    add_test(NAME test_lvttst_tmpdir COMMAND test_lvttst_tmpdir)
 endif()

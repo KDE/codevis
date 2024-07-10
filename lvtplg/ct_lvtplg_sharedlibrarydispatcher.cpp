@@ -54,9 +54,10 @@ void SharedLibraryDispatcher::unload()
 bool SharedLibraryDispatcher::isValidPlugin(QDir const& pluginDir)
 {
     const auto pluginName = pluginDir.dirName();
-    // TODO: MacOS support
 #if defined(Q_OS_WINDOWS)
     const auto so_ext = QStringLiteral(".dll");
+#elif defined(Q_OS_MACOS)
+    const auto so_ext = QStringLiteral(".dylib");
 #else
     const auto so_ext = QStringLiteral(".so");
 #endif

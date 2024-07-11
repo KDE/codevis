@@ -1073,6 +1073,8 @@ void ParseCodebaseDialog::endParseStage()
 
 void ParseCodebaseDialog::notifyUserForFinishedStage()
 {
+// TODO: KNotification hangs on OSX. block this temporarely.
+#ifndef __APPLE__
     auto getNotificationStringForState = [](State current) {
         if (current == State::RunPhysicalOnly) {
             return "Physical Parse finished with: %1";
@@ -1095,6 +1097,7 @@ void ParseCodebaseDialog::notifyUserForFinishedStage()
     const auto notificationText = tr(getNotificationStringForState(d->dialogState)).arg(time.toString("mm:ss.zzz"));
     notification->setText(notificationText);
     notification->sendEvent();
+#endif
     Q_EMIT parseFinished(d->dialogState);
 }
 

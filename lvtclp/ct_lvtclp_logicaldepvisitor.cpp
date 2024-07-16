@@ -765,6 +765,7 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
 
 void LogicalDepVisitor::processMethodDecl(clang::CXXMethodDecl *methodDecl)
 {
+    std::cout << "Processing method " << methodDecl->getDeclName().getAsString() << std::endl;
     if (methodIsTemplateSpecialization(methodDecl)) {
         return;
     }
@@ -869,6 +870,7 @@ void LogicalDepVisitor::processFreeFunctionDecl(clang::FunctionDecl *functionDec
 
 bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
 {
+    std::cout << "Visiting function " << functionDecl->getDeclName().getAsString() << std::endl;
     if (!d_visitLog_p->alreadyVisited(functionDecl, clang::Decl::Kind::Function, functionDecl->getTemplatedKind())) {
         auto *methodDecl = llvm::dyn_cast<clang::CXXMethodDecl>(functionDecl);
         if (methodDecl) {
@@ -948,7 +950,6 @@ void LogicalDepVisitor::addField(lvtmdb::TypeObject *parent, const clang::ValueD
 
 bool LogicalDepVisitor::VisitFieldDecl(clang::FieldDecl *fieldDecl)
 {
-    std::cout << "Aaaaa\n" << std::endl;
     std::cout << "Visiting field " << fieldDecl->getCanonicalDecl()->getDeclName().getAsString() << std::endl;
 
     if (d_visitLog_p->alreadyVisited(fieldDecl, clang::Decl::Kind::Field)) {

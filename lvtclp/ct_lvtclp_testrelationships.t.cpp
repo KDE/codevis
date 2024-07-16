@@ -250,7 +250,9 @@ TEST_CASE("Template method")
 )";
 
     ObjectStore session;
+    std::cout << "Start to partse the code" << std::endl;
     REQUIRE(Test_Util::runOnCode(session, source, "testTemplateMethod.cpp"));
+    std::cout << "---------------------------" << std::endl;
     std::cout << "Starting to list the types" << std::endl;
     session.withROLock([&session] {
         const auto& types = session.types();

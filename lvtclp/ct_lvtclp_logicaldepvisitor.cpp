@@ -1029,7 +1029,7 @@ void LogicalDepVisitor::visitLocalVarDeclOrParam(clang::VarDecl *varDecl)
         return;
     }
 
-    std::cout << "Visiting a local variable." << std::endl;
+    std::cout << "Visiting a local variable " << varDecl->getDeclName().getAsString() << std::endl;
     const clang::CXXMethodDecl *methodDecl = nullptr;
     const clang::FunctionDecl *funcDecl = nullptr;
 

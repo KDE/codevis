@@ -234,7 +234,7 @@ TEST_CASE("Template method")
    class D {
      public:
        template <typename T>
-       static void method(T t)
+       static void some_method(T t)
        {
            C c;
        }
@@ -242,9 +242,9 @@ TEST_CASE("Template method")
 
    class E {
      public:
-       void method()
+       void some_method()
        {
-           D::method(1);
+           D::some_method(1);
        }
    };
 )";
@@ -323,7 +323,7 @@ TEST_CASE("Template member variable")
    template <typename T>
    class D {
      public:
-       void method()
+       void some_method()
        {
            T var;
        }
@@ -332,9 +332,9 @@ TEST_CASE("Template member variable")
    class E {
        D<C> d;
 
-       void method()
+       void some_method()
        {
-           d.method();
+           d.some_method();
        }
    };
 )";

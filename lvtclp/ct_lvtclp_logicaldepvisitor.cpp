@@ -767,15 +767,19 @@ void LogicalDepVisitor::processMethodDecl(clang::CXXMethodDecl *methodDecl)
 {
     std::cout << "Processing method " << methodDecl->getDeclName().getAsString() << std::endl;
     if (methodIsTemplateSpecialization(methodDecl)) {
+        std::cout << "Method is template, leaving." << std::endl;
         return;
     }
+
     if (!methodDecl->hasExternalFormalLinkage()) {
         // internal linkage
+        std::cout << "Internal linkage, leaving.." << std::endl;
         return;
     }
 
     lvtmdb::TypeObject *parentClassPtr = lookupUDT(methodDecl->getParent(), "method parent class");
     if (!parentClassPtr) {
+        std::cout << "No parent class, leaving." << std::endl;
         return;
     }
 
@@ -814,6 +818,8 @@ void LogicalDepVisitor::processMethodDecl(clang::CXXMethodDecl *methodDecl)
     parentClassPtr->withRWLock([&] {
         parentClassPtr->addMethod(methodPtr);
     });
+
+    std::cout << "Finished processing method" << std::endl;
 }
 
 void LogicalDepVisitor::processFreeFunctionDecl(clang::FunctionDecl *functionDecl)
@@ -880,6 +886,7 @@ bool LogicalDepVisitor::VisitFunctionDecl(clang::FunctionDecl *functionDecl)
         }
     }
 
+    std::cout << "Finished processing function" << std::endl;
     return true;
 }
 
@@ -980,6 +987,7 @@ bool LogicalDepVisitor::VisitFieldDecl(clang::FieldDecl *fieldDecl)
     addField(parent, fieldDecl, false);
     processChildStatements(fieldDecl, fieldDecl->getInClassInitializer(), parent);
 
+    std::cout << "End visiting field" << std::endl;
     return true; // RETURN
 }
 
@@ -1190,6 +1198,7 @@ void LogicalDepVisitor::processMethodArg(const clang::VarDecl *varDecl,
                                          lvtmdb::TypeObject *containerDecl,
                                          clang::AccessSpecifier access)
 {
+    std::cout << "Processing Method Argument for " << varDecl->getDeclName().getAsString() << std::endl;
     const clang::DeclContext *varContext = varDecl->getDeclContext();
     assert(varContext);
 
@@ -1283,6 +1292,7 @@ void LogicalDepVisitor::processMethodArg(const clang::VarDecl *varDecl,
 
         processChildStatements(varDecl, paramVar->getDefaultArg(), containerDecl);
     }
+    std::cout << "Finished Processing method argument" << std::endl;
 }
 
 void LogicalDepVisitor::writeMethodArgRelation(const clang::Decl *decl,
@@ -1426,6 +1436,7 @@ void LogicalDepVisitor::parseReturnTemplate(const clang::Decl *decl,
 
 bool LogicalDepVisitor::VisitCXXMethodDecl(clang::CXXMethodDecl *methodDecl)
 {
+    std::cout << "Visit cxx methods" << std::endl;
     assert(methodDecl);
     if (d_visitLog_p->alreadyVisited(methodDecl, clang::Decl::Kind::CXXMethod, methodDecl->getTemplatedKind())) {
         return true;
@@ -1448,6 +1459,7 @@ bool LogicalDepVisitor::VisitCXXMethodDecl(clang::CXXMethodDecl *methodDecl)
     processChildStatements(methodDecl, methodDecl->getBody(), parent);
     addReturnRelation(methodDecl, parent, methodDecl->getAccess());
 
+    std::cout << "End visit cxx methods" << std::endl;
     return true;
 }
 

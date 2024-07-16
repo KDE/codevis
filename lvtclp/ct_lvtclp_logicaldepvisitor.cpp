@@ -1023,21 +1023,25 @@ bool LogicalDepVisitor::methodIsTemplateSpecialization(const clang::CXXMethodDec
 void LogicalDepVisitor::visitLocalVarDeclOrParam(clang::VarDecl *varDecl)
 {
     assert(varDecl);
-
     // what are we declared inside of?
     const clang::DeclContext *declContext = varDecl->getParentFunctionOrMethod();
     if (!declContext) {
         return;
     }
 
+    std::cout << "Visiting a local variable." << std::endl;
     const clang::CXXMethodDecl *methodDecl = nullptr;
     const clang::FunctionDecl *funcDecl = nullptr;
 
     if ((methodDecl = clang::dyn_cast<clang::CXXMethodDecl>(declContext))) {
         if (methodIsTemplateSpecialization(methodDecl)) {
+            std::cout << "Method is template specializtion. returning." << std::endl;
             return;
+        } else {
+            std::cout << "Method is not specializtion.  keep going." << std::endl;
         }
     } else {
+        std ::cout << "Not a method, it's a function" << std::endl;
         funcDecl = clang::dyn_cast<clang::FunctionDecl>(declContext);
     }
 
@@ -1054,6 +1058,7 @@ void LogicalDepVisitor::visitLocalVarDeclOrParam(clang::VarDecl *varDecl)
     lvtmdb::TypeObject *type = lookupType(varDecl, qualType, "varDecl type", false);
 
     if (methodDecl) {
+        std::cout << "It's a method" << std::endl;
         // look up parent class then add relation for that
         const clang::CXXRecordDecl *containingRecord = methodDecl->getParent();
         assert(containingRecord);
@@ -1075,7 +1080,10 @@ void LogicalDepVisitor::visitLocalVarDeclOrParam(clang::VarDecl *varDecl)
         // Add "container usesInTheImplementation type" if it isn't already recorded
         if (type) {
             // AS_PRIVATE = always usesInImpl
+            std::cout << "And we are adding a relation here for " << varDecl->getDeclName().getAsString() << std::endl;
             addRelation(containerDecl, qualType, varDecl, clang::AccessSpecifier::AS_private, "varDecl");
+        } else {
+            std::cout << "Couldn't find a type that matches our query" << std::endl;
         }
     } else if (funcDecl) {
         // add pseudo function relationship
@@ -1092,7 +1100,7 @@ bool LogicalDepVisitor::VisitVarDecl(clang::VarDecl *varDecl)
         visitLocalVarDeclOrParam(varDecl);
         return true; // RETURN
     }
-
+    std::cout << "Is not local decl or param" << std::endl;
     if (d_visitLog_p->alreadyVisited(varDecl, clang::Decl::Kind::Var, varDecl->getType()->isTemplateTypeParmType())) {
         return true;
     }

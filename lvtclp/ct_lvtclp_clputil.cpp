@@ -336,7 +336,14 @@ void ClpUtil::addUsesInImpl(lvtmdb::TypeObject *source, lvtmdb::TypeObject *targ
     if (!source || !target || source == target) {
         return;
     }
-    std::cout << "Adding uses in the implementation" << std::endl;
+
+    {
+        auto ro1 = source->readOnlyLock();
+        auto ro2 = target->readOnlyLock();
+        std::cout << "Adding uses in the implementation between " << source->name() << " and " << target->name()
+                  << std::endl;
+    }
+
     lvtmdb::TypeObject::addUsesInTheImplementation(source, target);
 }
 

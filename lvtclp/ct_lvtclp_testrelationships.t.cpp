@@ -234,7 +234,7 @@ TEST_CASE("Template method")
    class D {
      public:
        template <typename T>
-       static void some_method(T t)
+       static void some_method(T t, int a = 0)
        {
            C c;
        }

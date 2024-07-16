@@ -948,6 +948,9 @@ void LogicalDepVisitor::addField(lvtmdb::TypeObject *parent, const clang::ValueD
 
 bool LogicalDepVisitor::VisitFieldDecl(clang::FieldDecl *fieldDecl)
 {
+    std::cout << "Aaaaa\n" << std::endl;
+    std::cout << "Visiting field " << fieldDecl->getCanonicalDecl()->getDeclName().getAsString() << std::endl;
+
     if (d_visitLog_p->alreadyVisited(fieldDecl, clang::Decl::Kind::Field)) {
         return true;
     }
@@ -1084,6 +1087,7 @@ void LogicalDepVisitor::visitLocalVarDeclOrParam(clang::VarDecl *varDecl)
 
 bool LogicalDepVisitor::VisitVarDecl(clang::VarDecl *varDecl)
 {
+    std::cout << "Visiting variable " << varDecl->getDeclName().getAsString() << std::endl;
     if (varDecl->isLocalVarDeclOrParm()) {
         visitLocalVarDeclOrParam(varDecl);
         return true; // RETURN

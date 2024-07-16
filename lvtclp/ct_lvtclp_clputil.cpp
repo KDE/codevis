@@ -336,6 +336,7 @@ void ClpUtil::addUsesInImpl(lvtmdb::TypeObject *source, lvtmdb::TypeObject *targ
     if (!source || !target || source == target) {
         return;
     }
+    std::cout << "Adding uses in the implementation" << std::endl;
     lvtmdb::TypeObject::addUsesInTheImplementation(source, target);
 }
 

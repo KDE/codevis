@@ -19,9 +19,10 @@
 
 // This file is home to general tests of codebasedbvisitor
 
-#include <ct_lvtmdb_objectstore.h>
-
 #include <ct_lvtclp_testutil.h>
+#include <ct_lvtmdb_methodobject.h>
+#include <ct_lvtmdb_objectstore.h>
+#include <ct_lvtmdb_typeobject.h>
 
 #include <catch2-local-includes.h>
 
@@ -250,6 +251,24 @@ TEST_CASE("Template method")
 
     ObjectStore session;
     REQUIRE(Test_Util::runOnCode(session, source, "testTemplateMethod.cpp"));
+    std::cout << "Starting to list the types" << std::endl;
+    session.withROLock([&session] {
+        const auto& types = session.types();
+        std::cout << "We have " << types.size() << " Registered types" << std::endl;
+        for (const auto& [_, type] : types) {
+            type->withROLock([&type] {
+                std::cout << type->qualifiedName() << "Methods" << std::endl;
+                const auto& methods = type->methods();
+                for (const auto& method : methods) {
+                    method->withROLock([&method] {
+                        std::cout << method->templateParameters() << " " << method->qualifiedName() << std::endl;
+                    });
+                }
+                std::cout << "------" << std::endl;
+            });
+        }
+    });
+
     REQUIRE(Test_Util::usesInTheImplementationExists("D", "C", session));
     REQUIRE(Test_Util::usesInTheImplementationExists("E", "D", session));
 }

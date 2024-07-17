@@ -47,25 +47,10 @@ class LogicalDepConsumer : public clang::ASTConsumer {
 
   public:
     // CREATORS
-    LogicalDepConsumer(clang::ASTContext *context,
-                       clang::StringRef file,
-                       const std::filesystem::path& prefix,
-                       const std::filesystem::path& buildFolder,
-                       std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
-                       std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                       bool catchCodeAnalysisOutput,
-                       std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
+    LogicalDepConsumer()
 
-        // Instantiates a new LogicalDepConsumer for the given file as a
-        // translation unit
-        d_visitor(context,
-                  file,
-                  prefix,
-                  buildFolder,
-                  std::move(d_thirdPartyDirs),
-                  std::move(messageCallback),
-                  catchCodeAnalysisOutput),
-        d_filename(file.str())
+    // Instantiates a new LogicalDepConsumer for the given file as a
+    // translation unit
     {
     }
 
@@ -91,36 +76,10 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
     // Per-thread clang tooling stuff
 
     // DATA
-    std::filesystem::path d_prefix;
-    std::filesystem::path d_buildFolder;
-    std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
-
-    std::function<void(const std::string&)> d_filenameCallback;
-    // callback when we process a new file
-
-    std::optional<std::function<void(const std::string&, long)>> d_messageCallback;
-    // sends a message to the UI.
-
-    bool d_catchCodeAnalysisOutput;
-
-    std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
 
   public:
     // CREATORS
-    LogicalDepFrontendAction(std::filesystem::path prefix,
-                             std::filesystem::path buildFolder,
-                             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                             std::function<void(const std::string&)> filenameCallback,
-                             std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                             bool catchCodeAnalysisOutput,
-                             std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
-        d_prefix(std::move(prefix)),
-        d_buildFolder(buildFolder),
-        d_thirdPartyDirs(std::move(thirdPartyDirs)),
-        d_filenameCallback(std::move(filenameCallback)),
-        d_messageCallback(std::move(messageCallback)),
-        d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-        d_handleCppCommentsCallback(std::move(handleCppCommentsCallback))
+    LogicalDepFrontendAction()
     {
     }
 
@@ -138,20 +97,11 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
         clang::DiagnosticOptions& dOpts = compiler.getDiagnosticOpts();
         dOpts.Warnings = {"-Wno-everything"};
 
-        return std::make_unique<LogicalDepConsumer>(&compiler.getASTContext(),
-                                                    file,
-                                                    d_prefix,
-                                                    d_buildFolder,
-                                                    d_thirdPartyDirs,
-                                                    d_messageCallback,
-                                                    d_catchCodeAnalysisOutput,
-                                                    d_handleCppCommentsCallback);
+        return std::make_unique<LogicalDepConsumer>();
     }
 
     bool BeginSourceFileAction(clang::CompilerInstance& ci) override
     {
-        d_filenameCallback(getCurrentFile().str());
-
         return SyntaxOnlyAction::BeginSourceFileAction(ci);
     }
 
@@ -161,31 +111,11 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
     }
 };
 
-LogicalDepActionFactory::LogicalDepActionFactory(
-    std::filesystem::path prefix,
-    std::filesystem::path buildFolder,
-    std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-    std::function<void(const std::string&)> filenameCallback,
-    std::optional<std::function<void(const std::string&, long)>> messageCallback,
-    bool catchCodeAnalysisOutput,
-    std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback):
-    d_prefix(std::move(prefix)),
-    d_buildFolder(buildFolder),
-    d_thirdPartyDirs(std::move(thirdPartyDirs)),
-    d_filenameCallback(std::move(filenameCallback)),
-    d_messageCallback(std::move(messageCallback)),
-    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-    d_handleCppCommentsCallback(std::move(handleCppCommentsCallback))
+LogicalDepActionFactory::LogicalDepActionFactory()
 {
 }
 
 std::unique_ptr<clang::FrontendAction> LogicalDepActionFactory::create()
 {
-    return std::make_unique<LogicalDepFrontendAction>(d_prefix,
-                                                      d_buildFolder,
-                                                      d_thirdPartyDirs,
-                                                      d_filenameCallback,
-                                                      d_messageCallback,
-                                                      d_catchCodeAnalysisOutput,
-                                                      d_handleCppCommentsCallback);
+    return std::make_unique<LogicalDepFrontendAction>();
 }

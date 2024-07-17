@@ -29,12 +29,9 @@
 
 #include <clang/Tooling/Tooling.h>
 
-#include <filesystem>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <string>
-#include <vector>
 
 // =============================
 // class LogicalDepActionFactory
@@ -44,33 +41,9 @@ using HandleCppCommentsCallback_f = std::function<void(
     const std::string& filename, const std::string& briefText, unsigned startLine, unsigned endLine)>;
 
 class LogicalDepActionFactory : public clang::tooling::FrontendActionFactory {
-    // A factory for CodebaseDbFrontendAction
-
-    // DATA
-    std::filesystem::path d_prefix;
-    std::filesystem::path d_buildFolder;
-
-    std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
-
-    std::function<void(const std::string&)> d_filenameCallback;
-    // Callback whenever we start to process a new file
-
-    std::optional<std::function<void(const std::string&, long)>> d_messageCallback;
-    // Callback to send errors to the UI.
-
-    bool d_catchCodeAnalysisOutput;
-
-    std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
-
   public:
     // CREATORS
-    LogicalDepActionFactory(std::filesystem::path prefix,
-                            std::filesystem::path buildFolder,
-                            std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
-                            std::function<void(const std::string&)> filenameCallback,
-                            std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                            bool catchCodeAnalysisOutput,
-                            std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt);
+    LogicalDepActionFactory();
 
     // MANIPULATORS
     std::unique_ptr<clang::FrontendAction> create() override;

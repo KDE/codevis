@@ -40,12 +40,6 @@
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Frontend/ASTConsumers.h>
 
-#include <filesystem>
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
-
 // =======================
 // class LogicalDepVisitor
 // =======================
@@ -57,29 +51,9 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
     // VistNamespaceDecl is invoked for each namespace declaration. These methods
     // then add the relevant data to the database.
 
-    // DATA
-    clang::ASTContext *Context;
-    // Holds long-lived AST nodes (such as types and decls) that can be
-    // referred to throughout the semantic analysis of a file
-
-    std::filesystem::path d_prefix;
-    std::filesystem::path d_buildFolder;
-
-    std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
-
-    std::optional<std::function<void(const std::string&, long)>> d_messageCallback;
-
-    bool d_catchCodeAnalysisOutput;
-
   public:
     // CREATORS
-    LogicalDepVisitor(clang::ASTContext *context,
-                      clang::StringRef file,
-                      std::filesystem::path prefix,
-                      std::filesystem::path buildFolder,
-                      std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
-                      std::optional<std::function<void(const std::string&, long)>> d_messageCallback,
-                      bool catchCodeAnalysisOutput);
+    LogicalDepVisitor();
     // Instantiate a new LogicalDepVisitor for the given file as a
     // translation unit
 

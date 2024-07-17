@@ -29,22 +29,7 @@
 
 #include <iostream>
 
-#include <functional>
-#include <string>
-
-LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
-                                     clang::StringRef file,
-                                     std::filesystem::path prefix,
-                                     std::filesystem::path buildFolder,
-                                     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                                     std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                                     bool catchCodeAnalysisOutput):
-    Context(Context),
-    d_prefix(std::filesystem::weakly_canonical(prefix)),
-    d_buildFolder(buildFolder),
-    d_thirdPartyDirs(std::move(thirdPartyDirs)),
-    d_messageCallback(std::move(messageCallback)),
-    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput)
+LogicalDepVisitor::LogicalDepVisitor()
 {
 }
 

@@ -21,15 +21,9 @@
 
 #include "logicaldepscanner.h"
 
-#include <catch2-local-includes.h>
-
 bool runOnCode(const std::string& source, const std::string& fileName = "file.cpp")
 {
-    auto callback = [](const std::string&) {};
-    auto messageCallback = [](const std::string&, long) {};
-
-    auto prefix = std::filesystem::current_path();
-    LogicalDepActionFactory actionFactory(prefix, {}, {}, callback, messageCallback, false);
+    LogicalDepActionFactory actionFactory;
 
     auto frontendAction = actionFactory.create();
 

@@ -191,6 +191,11 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
         fOpts.FixAndRecompile = true;
         fOpts.FixToTemporaries = true;
 
+        // MSVC has DelayedTemplateParsing = true
+        // and we need it false.
+        clang::LangOptions& lopts = compiler.getLangOpts();
+        lopts.DelayedTemplateParsing = false;
+
         // Attempt to obliterate any -Werror options
         clang::DiagnosticOptions& dOpts = compiler.getDiagnosticOpts();
         dOpts.Warnings = {"-Wno-everything"};

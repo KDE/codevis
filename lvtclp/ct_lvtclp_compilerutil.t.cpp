@@ -24,6 +24,8 @@
 #include <sstream>
 #include <string>
 
+#include <QtGlobal>
+
 using namespace Codethink;
 
 TEST_CASE("search for stddef")

@@ -19,6 +19,7 @@
 
 #include <ct_lvtclp_fileutil.h>
 
+#include <QtGlobal>
 #include <algorithm>
 
 namespace Codethink::lvtclp {
@@ -46,6 +47,11 @@ std::filesystem::path FileUtil::nonPrefixPart(const std::filesystem::path& prefi
     std::for_each(it2, path.end(), [&ret](const auto& elem) {
         ret /= elem;
     });
+
+#ifdef Q_OS_WINDOWS
+    ret = ret.generic_string();
+#endif
+
     return ret;
 }
 

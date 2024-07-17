@@ -32,6 +32,7 @@
 #include <ct_lvtshr_stringhelpers.h>
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
+#include <filesystem>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/GlobPattern.h>
 #include <pybind11/embed.h>
@@ -40,6 +41,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QtGlobal>
 
 #include <algorithm>
 #include <memory>
@@ -218,6 +220,7 @@ namespace Codethink::lvtclp {
 
 std::filesystem::path ClpUtil::normalisePath(std::filesystem::path path, std::filesystem::path prefix)
 {
+#ifndef Q_OS_WINDOWS
     if (!path.empty()) {
         path = std::filesystem::weakly_canonical(path);
     }
@@ -225,6 +228,15 @@ std::filesystem::path ClpUtil::normalisePath(std::filesystem::path path, std::fi
     if (!prefix.empty()) {
         prefix = std::filesystem::weakly_canonical(prefix);
     }
+#else
+    if (!path.empty()) {
+        path = std::filesystem::weakly_canonical(path).generic_string();
+    }
+
+    if (!prefix.empty()) {
+        prefix = std::filesystem::weakly_canonical(prefix).generic_string();
+    }
+#endif
 
 #ifdef NDEBUG
     // the call to std::filesystem::weakly_canonical is expensive for the

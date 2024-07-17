@@ -21,6 +21,7 @@
 #include "logicaldepvisitor.h"
 
 #include <clang/AST/ASTConsumer.h>
+#include <clang/Basic/LangOptions.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendActions.h>
 
@@ -92,6 +93,9 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
         fOpts.FixWhatYouCan = true;
         fOpts.FixAndRecompile = true;
         fOpts.FixToTemporaries = true;
+
+        clang::LangOptions& lOpts = compiler.getLangOpts();
+        lOpts.DelayedTemplateParsing = false;
 
         // Attempt to obliterate any -Werror options
         clang::DiagnosticOptions& dOpts = compiler.getDiagnosticOpts();

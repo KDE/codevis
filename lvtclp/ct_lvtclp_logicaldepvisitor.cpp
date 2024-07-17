@@ -593,13 +593,17 @@ void LogicalDepVisitor::processBaseClassTemplateArgs(const clang::Decl *decl,
 
 bool LogicalDepVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *recordDecl)
 {
+    std::cout << "Visiting record " << recordDecl->getDeclName().getAsString() << std::endl;
+
     if (d_visitLog_p->alreadyVisited(recordDecl,
                                      clang::Decl::Kind::CXXRecord,
                                      recordDecl->getTemplateSpecializationKind())) {
+        std::cout << "Finishing record 1" << std::endl;
         return true;
     }
 
     if (skipRecord(recordDecl)) {
+        std::cout << "Finishing record 2" << std::endl;
         return true;
     }
     if (classIsTemplateSpecialization(recordDecl)) {
@@ -615,10 +619,14 @@ bool LogicalDepVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *recordDecl)
 
         lvtmdb::TypeObject *udt = lookupUDT(templateDecl, "expected to find template declaration for specialization");
         if (!udt) {
+            std::cout << "Finishing record 3" << std::endl;
+
             return true;
         }
 
         addUDTSourceFile(udt, recordDecl);
+        std::cout << "Finishing record 4" << std::endl;
+
         return true;
     }
 
@@ -645,12 +653,14 @@ bool LogicalDepVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *recordDecl)
                                   "clang::CXXRecordDecl which is not a class, struct or union",
                                   recordDecl->getLocation().printToString(Context->getSourceManager()));
         });
+        std::cout << "Finishing record 5" << std::endl;
 
         return true;
     }
 
     lvtmdb::TypeObject *userDefinedTypePtr = addUDT(recordDecl, recordKind);
     if (!userDefinedTypePtr) {
+        std::cout << "Finishing record 6" << std::endl;
         return true;
     }
 
@@ -671,6 +681,7 @@ bool LogicalDepVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *recordDecl)
         }
     }
 
+    std::cout << "Finishing record 7" << std::endl;
     return true;
 }
 

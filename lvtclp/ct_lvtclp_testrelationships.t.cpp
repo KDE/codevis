@@ -250,27 +250,7 @@ TEST_CASE("Template method")
 )";
 
     ObjectStore session;
-    std::cout << "Start to partse the code" << std::endl;
     REQUIRE(Test_Util::runOnCode(session, source, "testTemplateMethod.cpp"));
-    std::cout << "---------------------------" << std::endl;
-    std::cout << "Starting to list the types" << std::endl;
-    session.withROLock([&session] {
-        const auto& types = session.types();
-        std::cout << "We have " << types.size() << " Registered types" << std::endl;
-        for (const auto& [_, type] : types) {
-            type->withROLock([&type] {
-                std::cout << type->qualifiedName() << "Methods" << std::endl;
-                const auto& methods = type->methods();
-                for (const auto& method : methods) {
-                    method->withROLock([&method] {
-                        std::cout << method->templateParameters() << " " << method->qualifiedName() << std::endl;
-                    });
-                }
-                std::cout << "------" << std::endl;
-            });
-        }
-    });
-
     REQUIRE(Test_Util::usesInTheImplementationExists("D", "C", session));
     REQUIRE(Test_Util::usesInTheImplementationExists("E", "D", session));
 }

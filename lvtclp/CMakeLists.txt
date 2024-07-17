@@ -4,7 +4,7 @@ include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/thirdparty)
 find_package(Python COMPONENTS Development REQUIRED)
 
 include (AddCodevisExecutable)
-
+add_subdirectory(simplevisitor)
 ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
 LINK_DIRECTORIES(

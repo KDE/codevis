@@ -381,6 +381,7 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
             if (filePath.startsWith(projectSource)) {
                 filePath.replace(projectSource, "${SOURCE_DIR}/");
             }
+            std::cout << "filePath 1" << filePath.toStdString() << std::endl;
             d->foundPkgGrps[qualifiedName] = PackageHelper{"", qualifiedName, filePath.toStdString()};
         }
     } else {
@@ -394,6 +395,8 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
         if (filePath.startsWith(projectSource)) {
             filePath.replace(projectSource, "${SOURCE_DIR}/");
         }
+        std::cout << "filePath 2" << filePath.toStdString() << std::endl;
+
         d->foundPkgs.emplace_back(FoundPackage{parent, qualifiedName, filePath.toStdString(), ""});
         d->foundPkgNames.insert(std::move(qualifiedName));
     }

@@ -100,6 +100,15 @@ static bool compareResultList(std::vector<std::string> expected, std::vector<std
     if (expected.size() != result.size()) {
         std::cout << "Lists differ in size. Expected: " << expected.size() << " and result" << result.size()
                   << std::endl;
+
+        for (size_t i = 0; i < expected.size(); i++) {
+            std::cout << "Expected: " << expected[i] << std::endl;
+        }
+
+        for (size_t i = 0; i < result.size(); i++) {
+            std::cout << "result " << result[i] << std::endl;
+        }
+
         return false;
     }
 
@@ -108,7 +117,7 @@ static bool compareResultList(std::vector<std::string> expected, std::vector<std
 
     const auto res = expected == result;
     if (!res) {
-        for (int i = 0; i < expected.size(); i++) {
+        for (size_t i = 0; i < expected.size(); i++) {
             std::cout << "Expected: " << expected[i] << " result " << result[i] << std::endl;
         }
     }

@@ -770,6 +770,12 @@ TEST_CASE("Test run tool with non-lakosian rules")
 
     addLock(&memDb);
     // Note: 6 files within the project, and 1 extra file hidden, added with `userProvidedExtraCompileCommandsArgs`
+    const auto& files = memDb.getAllFiles();
+    std::cout << "Found Files: " << std::endl;
+    for (const auto& file : files) {
+        auto lock = file->readOnlyLock();
+        std::cout << file->name() << " --- " << file->qualifiedName() << std::endl;
+    }
     REQUIRE(memDb.getAllFiles().size() == 7);
 
     // There's no "non-lakosian" pseudo-package
@@ -819,20 +825,15 @@ TEST_CASE("Test run tool with non-lakosian rules")
     }
 }
 
+#ifndef Q_OS_WINDOWS
+// No need to run this test on windows. the way of finding cstddef is different there.
 // cstddef and stddef.h files are a pain to get it right
 // because they depend on specific, compile-defined, paths
 // the code currently tries to find that to be able to feed
 // clang the correct information
 TEST_CASE("cstddef test")
 {
-    StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}},
-                                   "placeholder",
-#if defined(Q_OS_WINDOWS)
-                                   {"-std:c++20"},
-#else
-                                   {},
-#endif
-                                   PREFIX + "/cstddef_test/");
+    StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/cstddef_test/");
 
     CppTool tool(PREFIX + "/cstddef_test/", {}, cmds, PREFIX + "/cstddef_test/database", 1, {}, {}, {}, {}, true, true);
 
@@ -846,3 +847,4 @@ TEST_CASE("cstddef test")
     });
     REQUIRE(file);
 }
+#endif

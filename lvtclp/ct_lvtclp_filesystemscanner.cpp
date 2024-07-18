@@ -35,6 +35,7 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QtGlobal>
 
 #include <llvm/Support/FileSystem.h>
 
@@ -157,6 +158,10 @@ FilesystemScanner::IncrementalResult FilesystemScanner::scanCompilationDb()
 {
     for (const std::string& string : d->cdb.getAllFiles()) {
         const std::filesystem::path path(string);
+
+#ifdef Q_OS_WINDOWS
+        path = path.generic_string();
+#endif
         scanPath(path);
         scanHeader(path);
     }

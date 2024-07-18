@@ -323,7 +323,7 @@ TEST_CASE_METHOD(PhysicalFileUpdateManagerFixture, "File update manager physical
                                    {"-Igroups/one/onetop", "-Igroups/one/onedep"},
                                    topLevel);
 
-    INFO("Using top level tmp path = '" << topLevel.string() << "'");
+    INFO("Using top level tmp path = '" << topLevel.generic_string() << "'");
     CppTool tool(topLevel, {}, cmds, ":memory:");
     REQUIRE(tool.runFull());
 

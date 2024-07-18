@@ -436,11 +436,12 @@ class NonLakosianFixture {
 
 TEST_CASE_METHOD(NonLakosianFixture, "Non-lakosian extra levels of hierarchy")
 {
-    StaticCompilationDatabase cmds(
-        {{d_sljitSource.string(), ""}, {d_pcre2Source.string(), ""}, {d_bdlpcreRegex.string(), ""}},
-        "placeholder-g++",
-        {"-Ithirdparty"},
-        d_topLevel);
+    StaticCompilationDatabase cmds({{d_sljitSource.generic_string(), ""},
+                                    {d_pcre2Source.generic_string(), ""},
+                                    {d_bdlpcreRegex.generic_string(), ""}},
+                                   "placeholder-g++",
+                                   {"-Ithirdparty"},
+                                   d_topLevel);
 
     CppTool tool(d_topLevel, {}, cmds, ":memory:");
     REQUIRE(tool.runFull());

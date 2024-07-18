@@ -47,7 +47,7 @@ namespace {
 
 void run(FrontendAction& act, CompileCommand const& cmd)
 {
-    auto ext = std::filesystem::path{cmd.Filename}.extension().string();
+    auto ext = std::filesystem::path{cmd.Filename}.extension().generic_string();
     if (ext != ".f" && ext != ".for" && ext != ".f90" && ext != ".inc") {
         return;
     }
@@ -111,7 +111,7 @@ Tool::Tool(std::unique_ptr<CompilationDatabase> compilationDatabase):
 std::unique_ptr<Tool> Tool::fromCompileCommands(std::filesystem::path const& compileCommandsJson)
 {
     auto errorMessage = std::string{};
-    auto jsonDb = JSONCompilationDatabase::loadFromFile(compileCommandsJson.string(),
+    auto jsonDb = JSONCompilationDatabase::loadFromFile(compileCommandsJson.generic_string(),
                                                         errorMessage,
                                                         clang::tooling::JSONCommandLineSyntax::AutoDetect);
     // TODO: Proper error management

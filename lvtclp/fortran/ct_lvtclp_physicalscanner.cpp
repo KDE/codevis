@@ -52,12 +52,12 @@ lvtmdb::ComponentObject *addComponentForFile(lvtmdb::ObjectStore& memDb, std::fi
             /*parent=*/grp,
             /*repository=*/nullptr);
         auto component = memDb.getOrAddComponent(
-            /*qualifiedName=*/qName.string() + "/" + filePath.stem().string(),
+            /*qualifiedName=*/qName.generic_string() + "/" + filePath.stem().generic_string(),
             /*name=*/filePath.stem(),
             /*package=*/package);
         auto *file = memDb.getOrAddFile(
-            /*qualifiedName=*/filePath.string(),
-            /*name=*/filePath.string(),
+            /*qualifiedName=*/filePath.generic_string(),
+            /*name=*/filePath.generic_string(),
             /*isHeader=*/false,
             /*hash=*/"", // TODO: Properly generate hash, if ever necessary
             /*package=*/package,

@@ -119,13 +119,13 @@ lvtmdb::PackageObject *getPackageForPath(const std::filesystem::path& path,
     // synthesise package from the directory containing the source file
     const std::filesystem::path pkgPath = path.parent_path();
 
-    lvtmdb::PackageObject *pkg = memDb.getPackage(pkgPath.string());
+    lvtmdb::PackageObject *pkg = memDb.getPackage(pkgPath.generic_string());
     if (pkg) {
         return pkg;
     }
 
     auto addPkg = addPkgForSemPackRuleHelper{memDb};
-    auto fullFilePathQString = QString::fromStdString((prefix / path).string());
+    auto fullFilePathQString = QString::fromStdString((prefix / path).generic_string());
     auto fullFilePath = QDir::fromNativeSeparators(fullFilePathQString).toStdString();
     for (auto&& semanticPackingRule : ClpUtil::getAllSemanticPackingRules()) {
         if (semanticPackingRule->accept(fullFilePath)) {
@@ -145,11 +145,11 @@ lvtmdb::PackageObject *getPackageForPath(const std::filesystem::path& path,
 
     std::string topLevelPkgQualifiedName;
     std::string topLevelPkgName;
-    auto filePath = QString::fromStdString(fullPkgPath.string());
+    auto filePath = QString::fromStdString(fullPkgPath.generic_string());
 
     bool isMapped = false;
     for (auto const& [mappedPathRegex, mappedGroupName] : thirdPartyDirs) {
-        if (std::regex_search(path.string(), std::regex{mappedPathRegex})) {
+        if (std::regex_search(path.generic_string(), std::regex{mappedPathRegex})) {
             topLevelPkgQualifiedName = mappedGroupName;
             topLevelPkgName = mappedGroupName;
             isMapped = true;
@@ -163,18 +163,18 @@ lvtmdb::PackageObject *getPackageForPath(const std::filesystem::path& path,
             topLevelPkgQualifiedName = ClpUtil::NON_LAKOSIAN_GROUP_NAME;
             topLevelPkgName = ClpUtil::NON_LAKOSIAN_GROUP_NAME;
         } else {
-            auto projectSource = QString::fromStdString(prefix.string());
+            auto projectSource = QString::fromStdString(prefix.generic_string());
             isStandalonePkg = ClpUtil::isComponentOnStandalonePackage(path);
             if (isStandalonePkg) {
-                topLevelPkgQualifiedName = ("standalones" / pkgPath.filename()).string();
-                topLevelPkgName = pkgPath.filename().string();
+                topLevelPkgQualifiedName = ("standalones" / pkgPath.filename()).generic_string();
+                topLevelPkgName = pkgPath.filename().generic_string();
 
                 if (filePath.startsWith(projectSource)) {
                     filePath.replace(projectSource, "${SOURCE_DIR}/");
                 }
             } else if (ClpUtil::isComponentOnPackageGroup(path)) {
-                topLevelPkgQualifiedName = ("groups" / pkgPath.parent_path().filename()).string();
-                topLevelPkgName = pkgPath.parent_path().filename().string();
+                topLevelPkgQualifiedName = ("groups" / pkgPath.parent_path().filename()).generic_string();
+                topLevelPkgName = pkgPath.parent_path().filename().generic_string();
 
                 if (filePath.startsWith(projectSource)) {
                     filePath.replace(projectSource, "${SOURCE_DIR}/");
@@ -202,12 +202,12 @@ lvtmdb::PackageObject *getPackageForPath(const std::filesystem::path& path,
                                  memDb,
                                  nullptr,
                                  nullptr);
-    if (pkgPath.filename().string().empty()) {
+    if (pkgPath.filename().generic_string().empty()) {
         return grp;
     }
 
-    return getSourcePackage(topLevelPkgQualifiedName + "/" + pkgPath.filename().string(),
-                            pkgPath.filename().string(),
+    return getSourcePackage(topLevelPkgQualifiedName + "/" + pkgPath.filename().generic_string(),
+                            pkgPath.filename().generic_string(),
                             filePath.toStdString(),
                             memDb,
                             grp,
@@ -266,7 +266,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(const std::string& inFilename,
     }
 
     const std::filesystem::path path = normalisePath(inFilename, prefix);
-    const std::string filename = path.string();
+    const std::string filename = path.generic_string();
 
     lvtmdb::FileObject *ret = nullptr;
     memDb.withROLock([&] {
@@ -278,7 +278,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(const std::string& inFilename,
 
     const std::filesystem::path fullPath = prefix / path;
     auto hash = [&fullPath]() -> std::string {
-        auto result = llvm::sys::fs::md5_contents(fullPath.string());
+        auto result = llvm::sys::fs::md5_contents(fullPath.generic_string());
         if (result) {
             return result.get().digest().str().str();
         }
@@ -290,7 +290,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(const std::string& inFilename,
     auto file = memDb.withRWLock([&]() {
         auto *package = getPackageForPath(path, memDb, prefix, nonLakosianDirs, thirdPartyDirs);
         auto *component = ComponentUtil::addComponent(path, package, memDb);
-        auto *file = memDb.getOrAddFile(filename, path.filename().string(), isHeader, hash, package, component);
+        auto *file = memDb.getOrAddFile(filename, path.filename().generic_string(), isHeader, hash, package, component);
 
         component->withRWLock([&] {
             component->addFile(file);
@@ -362,7 +362,7 @@ void ClpUtil::addFnDependency(lvtmdb::FunctionObject *source, lvtmdb::FunctionOb
 FileType ClpUtil::categorisePath(const std::string& file)
 {
     const std::filesystem::path path(file);
-    const std::string ext = path.extension().string();
+    const std::string ext = path.extension().generic_string();
 
     if (headerExtensions.count(ext)) {
         return FileType::e_Header;
@@ -394,7 +394,7 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
 {
     std::string errorMessage;
     std::unique_ptr<clang::tooling::JSONCompilationDatabase> jsonDb =
-        clang::tooling::JSONCompilationDatabase::loadFromFile(path.string(),
+        clang::tooling::JSONCompilationDatabase::loadFromFile(path.generic_string(),
                                                               errorMessage,
                                                               clang::tooling::JSONCommandLineSyntax::AutoDetect);
     if (!jsonDb) {
@@ -423,9 +423,9 @@ void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::C
         if (filename.is_relative()) {
             filename = buildDir / filename;
         }
-        cmd.Filename = filename.string();
+        cmd.Filename = filename.generic_string();
 
-        auto ext = filename.extension().string();
+        auto ext = filename.extension().generic_string();
         if (!allCppExtensions.contains(ext)) {
             continue;
         }
@@ -465,9 +465,9 @@ bool ClpUtil::isComponentOnPackageGroup(const std::filesystem::path& componentPa
 {
     // Check if the component name starts with the package name, and if the package name starts with the package
     // group name. Those are the basic rules for a component be within a package that's inside a package group.
-    auto componentName = QString::fromStdString(componentPath.filename().string());
-    auto pkgName = QString::fromStdString(componentPath.parent_path().filename().string());
-    auto pkgGroupName = QString::fromStdString(componentPath.parent_path().parent_path().filename().string());
+    auto componentName = QString::fromStdString(componentPath.filename().generic_string());
+    auto pkgName = QString::fromStdString(componentPath.parent_path().filename().generic_string());
+    auto pkgGroupName = QString::fromStdString(componentPath.parent_path().parent_path().filename().generic_string());
     if (pkgGroupName.size() != 3) {
         return false;
     }
@@ -548,11 +548,11 @@ auto getPyFunFrom(std::filesystem::path const& pythonFile, std::string const& fu
 {
     namespace py = pybind11;
 
-    auto modulePath = pythonFile.parent_path().string();
+    auto modulePath = pythonFile.parent_path().generic_string();
     auto pySys = py::module_::import("sys");
     pySys.attr("path").attr("append")(modulePath);
 
-    auto pyUserModule = py::module_::import(pythonFile.stem().string().c_str());
+    auto pyUserModule = py::module_::import(pythonFile.stem().generic_string().c_str());
     return py::function(pyUserModule.attr(functionName.c_str()));
 }
 } // namespace detail
@@ -592,7 +592,7 @@ std::vector<std::unique_ptr<ClpUtil::SemanticPackingRule>> ClpUtil::getAllSemant
         }
 
         for (auto&& entry : std::filesystem::directory_iterator(path)) {
-            if (entry.path().extension().string() == ".py") {
+            if (entry.path().extension().generic_string() == ".py") {
                 sortedPaths.push_back(entry.path());
             }
         }
@@ -672,7 +672,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
         parentPkg = newPkg;
     }
 
-    auto componentName = std::filesystem::path{filename.toStdString()}.stem().string();
+    auto componentName = std::filesystem::path{filename.toStdString()}.stem().generic_string();
     auto *component = memDb.getOrAddComponent(componentName, componentName, parentPkg);
     parentPkg->withRWLock([&]() {
         parentPkg->addComponent(component);

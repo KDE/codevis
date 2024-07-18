@@ -98,7 +98,7 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
         return;
     }
 
-    if (ClpUtil::isFileIgnored(std::filesystem::path{realPathStr}.filename().string(), d_ignoreGlobs)) {
+    if (ClpUtil::isFileIgnored(std::filesystem::path{realPathStr}.filename().generic_string(), d_ignoreGlobs)) {
         return;
     }
 
@@ -108,8 +108,8 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
     } else {
         filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                         realPathStr,
-                                                        d_prefix.string(),
-                                                        d_buildPath.string(),
+                                                        d_prefix.generic_string(),
+                                                        d_buildPath.generic_string(),
                                                         RelativePath.str());
     }
 
@@ -190,7 +190,7 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
 {
     const std::string realPath = ClpUtil::getRealPath(sourceLocation, sourceManager);
 
-    if (ClpUtil::isFileIgnored(std::filesystem::path{realPath}.filename().string(), d_ignoreGlobs)) {
+    if (ClpUtil::isFileIgnored(std::filesystem::path{realPath}.filename().generic_string(), d_ignoreGlobs)) {
         d_sourceFile_p = nullptr;
         return;
     }
@@ -208,9 +208,9 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
     } else {
         d_sourceFile_p = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                                realPath,
-                                                               d_prefix.string(),
-                                                               d_buildPath.string(),
-                                                               d_prefix.string());
+                                                               d_prefix.generic_string(),
+                                                               d_buildPath.generic_string(),
+                                                               d_prefix.generic_string());
     }
 }
 

@@ -151,11 +151,11 @@ struct ParseTreeVisitor {
             auto guessedDefinitionFilePath = [&]() {
                 auto srcCode = ss.source.ToString();
 
-                if (srcFileContainsSrcCode(currentFilePath.string(), srcCode)) {
-                    return currentFilePath.string();
+                if (srcFileContainsSrcCode(currentFilePath.generic_string(), srcCode)) {
+                    return currentFilePath.generic_string();
                 }
 
-                auto *file = memDb.getFile(currentFilePath.string());
+                auto *file = memDb.getFile(currentFilePath.generic_string());
                 auto fileLock = file->readOnlyLock();
                 auto *component = file->component();
                 auto componentLock = component->readOnlyLock();
@@ -174,8 +174,8 @@ struct ParseTreeVisitor {
                 // missing source.
                 // TODO: Proper warning message propagation.
                 qCDebug(parsing) << "WARNING: Could not find proper source code for function " << functionName
-                                 << " - Will fallback to " << currentFilePath.string();
-                return currentFilePath.string();
+                                 << " - Will fallback to " << currentFilePath.generic_string();
+                return currentFilePath.generic_string();
             }();
 
             auto *file = memDb.getFile(guessedDefinitionFilePath);

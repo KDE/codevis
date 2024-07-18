@@ -107,18 +107,18 @@ class LvtCompilationDatabaseImpl : public LvtCompilationDatabase {
         // we store multiple copies of the path in different formats so we only
         // have to pay for the conversions once
         d_paths.push_back(path);
-        d_files.push_back(path.string());
+        d_files.push_back(path.generic_string());
 
         std::filesystem::path component(path);
         component.replace_extension();
-        d_components.insert(component.string());
+        d_components.insert(component.generic_string());
 
         // these two work because the directory structure is fixed:
         // .../groups/grp/grppkg/grppkg_component.cpp etc
         // package
-        d_pkgs.insert(path.parent_path().string());
+        d_pkgs.insert(path.parent_path().generic_string());
         // package group
-        d_pkgs.insert(path.parent_path().parent_path().string());
+        d_pkgs.insert(path.parent_path().parent_path().generic_string());
     }
 
     void setPrefix(std::filesystem::path prefix)
@@ -143,14 +143,14 @@ class LvtCompilationDatabaseImpl : public LvtCompilationDatabase {
         // Lakosian rules say we can't have headers without source (and vice-versa)
         filePath.replace_extension();
 
-        return d_components.find(filePath.string()) != d_components.end();
+        return d_components.find(filePath.generic_string()) != d_components.end();
     }
 
     bool containsPackage(const std::string& pkg) const override
     {
         assert(d_prefix);
         std::filesystem::path pkgPath = std::filesystem::weakly_canonical(*d_prefix / pkg);
-        return d_pkgs.find(pkgPath.string()) != d_pkgs.end();
+        return d_pkgs.find(pkgPath.generic_string()) != d_pkgs.end();
     }
 };
 
@@ -232,7 +232,7 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
         for (auto& cmd : d_compileCommands) {
             std::filesystem::path path = std::filesystem::weakly_canonical(cmd.Filename);
             addPath(path);
-            cmd.Filename = path.string();
+            cmd.Filename = path.generic_string();
 
             // Disable all warnings to defeat any -Werror arguments
             // the source is configured to use and to make the output
@@ -673,19 +673,20 @@ bool CppTool::processCompilationDatabase()
                 switch (result.error().kind) {
                 case CompilationDatabaseError::Kind::ErrorLoadingFromFile: {
                     Q_EMIT messageFromThread(
-                        tr(("Error loading file " + path.string() + " with " + result.error().message).c_str()),
+                        tr(("Error loading file " + path.generic_string() + " with " + result.error().message).c_str()),
                         0);
                     break;
                 }
                 case CompilationDatabaseError::Kind::CompileCommandsContainsNoCommands: {
                     Q_EMIT messageFromThread(
-                        tr(("Error processing " + path.string() + " contains no commands").c_str()),
+                        tr(("Error processing " + path.generic_string() + " contains no commands").c_str()),
                         0);
                     break;
                 }
                 case CompilationDatabaseError::Kind::CompileCommandsContainsNoFiles: {
-                    Q_EMIT messageFromThread(tr(("Error processing " + path.string() + " contains no files").c_str()),
-                                             0);
+                    Q_EMIT messageFromThread(
+                        tr(("Error processing " + path.generic_string() + " contains no files").c_str()),
+                        0);
                     break;
                 }
                 }

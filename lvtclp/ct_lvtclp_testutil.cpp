@@ -342,7 +342,7 @@ StaticCompilationDatabase::StaticCompilationDatabase(std::initializer_list<std::
         auto normalisePath = [&](const auto& path) {
             std::filesystem::path p(path);
             std::filesystem::path full = d_directory / p;
-            return std::filesystem::weakly_canonical(full).string();
+            return std::filesystem::weakly_canonical(full).generic_string();
         };
 
         std::string normInFile = normalisePath(inFile);
@@ -357,7 +357,7 @@ StaticCompilationDatabase::StaticCompilationDatabase(std::initializer_list<std::
         cmdLine.emplace_back("-o");
         cmdLine.emplace_back(normOutFile);
 
-        d_compileCommands.emplace_back(d_directory.string(), normInFile, std::move(cmdLine), normOutFile);
+        d_compileCommands.emplace_back(d_directory.generic_string(), normInFile, std::move(cmdLine), normOutFile);
     }
 }
 

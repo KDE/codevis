@@ -38,7 +38,7 @@ lvtmdb::ComponentObject *ComponentUtil::addComponent(const std::filesystem::path
         return nullptr;
     }
 
-    const std::string name = filePath.stem().string();
+    const std::string name = filePath.stem().generic_string();
     const std::string qualifiedName = [&]() {
         // Temporary solution to recognize lakosian packages
         {
@@ -52,7 +52,7 @@ lvtmdb::ComponentObject *ComponentUtil::addComponent(const std::filesystem::path
             };
 
             if (contains(parentQualName, "standalone/") || contains(parentQualName, "groups/")) {
-                return parentQualName + "/" + filePath.stem().string();
+                return parentQualName + "/" + filePath.stem().generic_string();
             }
         }
 

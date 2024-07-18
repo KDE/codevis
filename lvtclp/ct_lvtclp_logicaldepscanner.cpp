@@ -105,7 +105,7 @@ class LogicalDepConsumer : public clang::ASTConsumer {
             auto *commentsInFile = ctx.Comments.getCommentsInFile(sm.getMainFileID());
             if (commentsInFile) {
                 for (auto&& [_, rawComment] : *commentsInFile) {
-                    auto filename = std::filesystem::path{d_filename}.filename().string();
+                    auto filename = std::filesystem::path{d_filename}.filename().generic_string();
                     auto briefText = rawComment->getBriefText(ctx);
                     auto startLine = sm.getExpansionLineNumber(rawComment->getBeginLoc());
                     auto endLine = sm.getExpansionLineNumber(rawComment->getEndLoc());

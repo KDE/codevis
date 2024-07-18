@@ -27,8 +27,8 @@ namespace Codethink::lvtclp {
 bool FileUtil::pathStartsWith(const std::filesystem::path& prefix, const std::filesystem::path& path)
 {
     // Avoid using the path object for mismatch since trailling '/' may not be considered
-    auto prefixStr = prefix.string();
-    auto pathStr = path.string();
+    auto prefixStr = prefix.generic_string();
+    auto pathStr = path.generic_string();
     const auto [it1, _] = std::mismatch(prefixStr.begin(), prefixStr.end(), pathStr.begin(), pathStr.end());
     // the whole of prefix matches path (which may be longer)
     return it1 == prefixStr.end();
@@ -102,7 +102,7 @@ std::filesystem::path FileUtil::commonParent(const std::vector<std::filesystem::
             // and check that this folder is three letters long. this is the
             // sign of a project with a single package group.
 
-            if (oldPrefix.filename().string().length() == 3) {
+            if (oldPrefix.filename().generic_string().length() == 3) {
                 return oldPrefix.parent_path();
             }
             return oldPrefix;

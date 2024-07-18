@@ -51,7 +51,7 @@ class CompilationDatabaseForTesting : public CompilationDatabase {
     {
         auto rawFilesAsStr = std::vector<std::string>{};
         for (auto const& f : this->files) {
-            rawFilesAsStr.push_back(f.string());
+            rawFilesAsStr.push_back(f.generic_string());
         }
         return rawFilesAsStr;
     }
@@ -61,14 +61,14 @@ class CompilationDatabaseForTesting : public CompilationDatabase {
         auto cmds = std::vector<CompileCommand>{};
         auto defaultCommandLine = std::vector<std::string>{};
         for (auto const& includePath : this->includePaths) {
-            defaultCommandLine.push_back("-I" + includePath.string());
+            defaultCommandLine.push_back("-I" + includePath.generic_string());
         }
         for (auto const& f : this->files) {
             auto cmd = CompileCommand{};
             cmd.Directory = ""; // Intentionally left blank
             cmd.Filename = f;
             cmd.CommandLine = defaultCommandLine;
-            cmd.Output = f.string() + ".o";
+            cmd.Output = f.generic_string() + ".o";
             cmd.Heuristic = "Test cmd generated with CompilationDatabaseForTesting";
             cmds.push_back(cmd);
         }

@@ -477,7 +477,7 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
         std::filesystem::path fileToChange = topLevel / "groups/one/onetop/onetop_top.h";
         {
             // open for appending
-            std::ofstream of(fileToChange.string(), std::ios_base::out | std::ios_base::app);
+            std::ofstream of(fileToChange.generic_string(), std::ios_base::out | std::ios_base::app);
             REQUIRE(!of.fail());
             of << "namespace onetop { class NewClass {}; }" << std::endl;
         }
@@ -505,7 +505,7 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
              {"groups/one/onedep/onedep_newfile.cpp", "build/onedep_newfile.o"}},
             "placeholder",
             {"-Igroups/one/onetop", "-Igroups/one/onedep"},
-            topLevel.string());
+            topLevel.generic_string());
 
         CppTool toolPlus(topLevel, {}, cmdsPlus, topLevel / "database");
 
@@ -751,7 +751,7 @@ TEST_CASE("Test run tool with non-lakosian rules")
         /*sourcePath=*/prjPath,
         /* buildPath=*/{},
         /*compileCommandsJsons=*/
-        std::vector<std::filesystem::path>{tmpdir.path().string() + "/compile_commands.json"},
+        std::vector<std::filesystem::path>{tmpdir.path().generic_string() + "/compile_commands.json"},
         /*databasePath=*/prjPath + "/database",
         /*numThreads=*/1,
         /*ignoreList=*/{},

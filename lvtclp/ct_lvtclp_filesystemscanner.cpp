@@ -196,7 +196,8 @@ void FilesystemScanner::scanHeader(const std::filesystem::path& path)
     const std::filesystem::path parent = std::filesystem::weakly_canonical(path.parent_path());
     const std::filesystem::path stem = path.stem();
 
-    const std::vector<clang::tooling::CompileCommand> compileCommands = d->cdb.getCompileCommands(path.string());
+    const std::vector<clang::tooling::CompileCommand> compileCommands =
+        d->cdb.getCompileCommands(path.generic_string());
 
     std::vector<std::filesystem::path> includeDirectories;
     includeDirectories.emplace_back(parent); // for lakosian code
@@ -270,7 +271,7 @@ bool FilesystemScanner::tryProcessFileUsingSemanticRules(const std::filesystem::
         d->foundPkgNames.insert(qualifiedName);
     };
 
-    auto filePathQString = QString::fromStdString(path.string());
+    auto filePathQString = QString::fromStdString(path.generic_string());
     auto fullFilePath = QDir::fromNativeSeparators(filePathQString).toStdString();
     for (auto const& semanticPackingRule : ClpUtil::getAllSemanticPackingRules()) {
         if (semanticPackingRule->accept(fullFilePath)) {
@@ -287,13 +288,13 @@ void FilesystemScanner::processFileUsingLakosianRules(const std::filesystem::pat
     if (ClpUtil::isComponentOnStandalonePackage(path)) {
         const auto pkgPath = path.parent_path();
         const auto pkg = addLakosianSourcePackage(pkgPath, "", true);
-        addSourceFile((pkgPath / path.filename()).string(), pkg);
+        addSourceFile((pkgPath / path.filename()).generic_string(), pkg);
     } else if (ClpUtil::isComponentOnPackageGroup(path)) {
         const auto pkgPath = path.parent_path();
         const auto pkgGrpPath = pkgPath.parent_path();
         const auto pkgGrp = addLakosianSourcePackage(pkgGrpPath, "", false);
         const auto pkg = addLakosianSourcePackage(pkgPath, pkgGrp, false);
-        addSourceFile((pkgPath / path.filename()).string(), pkg);
+        addSourceFile((pkgPath / path.filename()).generic_string(), pkg);
     } else {
         const static std::string nonLakosianGroup(ClpUtil::NON_LAKOSIAN_GROUP_NAME);
         std::cout << "Component is in a non-lakosian group\n\t" << path;
@@ -338,7 +339,7 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
 
 void FilesystemScanner::addSourceFile(const std::filesystem::path& path, const std::string& package)
 {
-    d->foundFiles.push_back({package, path.string(), std::string{}});
+    d->foundFiles.push_back({package, path.generic_string(), std::string{}});
 }
 
 std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::path& path,
@@ -401,7 +402,7 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
         d->foundPkgNames.insert(std::move(qualifiedName));
     }
 
-    return normalisedPath.string();
+    return normalisedPath.generic_string();
 }
 
 lvtmdb::PackageObject *FilesystemScanner::addPackage(IncrementalResult& out,
@@ -418,7 +419,7 @@ lvtmdb::PackageObject *FilesystemScanner::addPackage(IncrementalResult& out,
     }
 
     const std::filesystem::path path(qualifiedName);
-    std::string name = path.filename().string();
+    std::string name = path.filename().generic_string();
 
     lvtmdb::PackageObject *parent = nullptr;
     if (!parentName.empty()) {
@@ -484,11 +485,11 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
         lvtmdb::PackageObject *parent = d->memDb.getPackage(file.parent);
         assert(parent || file.parent.empty());
 
-        const std::filesystem::path path = ClpUtil::normalisePath(file.qualifiedName, d->prefix).string();
+        const std::filesystem::path path = ClpUtil::normalisePath(file.qualifiedName, d->prefix).generic_string();
 
         std::filesystem::path fullPath = d->prefix / path;
         auto hash = [&fullPath]() -> std::string {
-            auto result = llvm::sys::fs::md5_contents(fullPath.string());
+            auto result = llvm::sys::fs::md5_contents(fullPath.generic_string());
             if (result) {
                 return result.get().digest().str().str();
             }
@@ -497,9 +498,9 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
             return "";
         }();
 
-        lvtmdb::FileObject *filePtr = d->memDb.getFile(path.string());
+        lvtmdb::FileObject *filePtr = d->memDb.getFile(path.generic_string());
         if (!filePtr) {
-            const FileType type = ClpUtil::categorisePath(path.string());
+            const FileType type = ClpUtil::categorisePath(path.generic_string());
             bool isHeader;
             if (type == FileType::e_Header) {
                 isHeader = true;
@@ -511,16 +512,20 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
                 d->memDb.getOrAddError(lvtmdb::MdbUtil::ErrorKind::ParserError,
                                        "",
                                        "Unknown file extension",
-                                       path.string());
+                                       path.generic_string());
                 continue;
             }
 
             // create or fetch the component for this file
             lvtmdb::ComponentObject *comp = ComponentUtil::addComponent(path, parent, d->memDb);
 
-            filePtr =
-                d->memDb.getOrAddFile(path.string(), path.filename().string(), isHeader, std::move(hash), parent, comp);
-            out.newFiles.push_back(path.string());
+            filePtr = d->memDb.getOrAddFile(path.generic_string(),
+                                            path.filename().generic_string(),
+                                            isHeader,
+                                            std::move(hash),
+                                            parent,
+                                            comp);
+            out.newFiles.push_back(path.generic_string());
             comp->withRWLock([&] {
                 comp->addFile(filePtr);
             });
@@ -537,7 +542,7 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
             filePtr->withRWLock([&] {
                 if (hash != filePtr->hash()) {
                     if (d->catchCodeAnalysisOutput) {
-                        qDebug() << "Found modified file " << path.string();
+                        qDebug() << "Found modified file " << path.generic_string();
                     }
                     out.modifiedFiles.push_back(filePtr->qualifiedName());
                     filePtr->setHash(std::move(hash));

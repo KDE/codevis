@@ -149,9 +149,9 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
     } else {
         sourceFilePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                               file.str(),
-                                                              d_prefix.string(),
-                                                              d_buildFolder.string(),
-                                                              d_prefix.string());
+                                                              d_prefix.generic_string(),
+                                                              d_buildFolder.generic_string(),
+                                                              d_prefix.generic_string());
     }
 }
 
@@ -197,9 +197,9 @@ bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
         } else {
             return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                          sourceFile,
-                                                         d_prefix.string(),
-                                                         d_buildFolder.string(),
-                                                         d_prefix.string());
+                                                         d_prefix.generic_string(),
+                                                         d_buildFolder.generic_string(),
+                                                         d_prefix.generic_string());
         }
     }();
 
@@ -706,7 +706,7 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
     // Heuristically defines that the qualified name for a free function takes in consideration
     // it's stem file name (component name). This is not an ideal solution, as we don't take in consideration files with
     // same name in different paths with the same functions inside.
-    auto stemFilename = std::filesystem::path{sourceFile}.stem().string();
+    auto stemFilename = std::filesystem::path{sourceFile}.stem().generic_string();
     std::string qualifiedName = functionDecl->getQualifiedNameAsString();
     std::string extendedQualifiedName = qualifiedName + "@" + stemFilename;
 
@@ -749,9 +749,9 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
             } else {
                 return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                              sourceFile,
-                                                             d_prefix.string(),
-                                                             d_buildFolder.string(),
-                                                             d_prefix.string());
+                                                             d_prefix.generic_string(),
+                                                             d_buildFolder.generic_string(),
+                                                             d_prefix.generic_string());
             }
         }();
 
@@ -1804,9 +1804,9 @@ void LogicalDepVisitor::addUDTSourceFile(lvtmdb::TypeObject *udt, const clang::D
         } else {
             return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                          sourceFile,
-                                                         d_prefix.string(),
-                                                         d_buildFolder.string(),
-                                                         d_prefix.string());
+                                                         d_prefix.generic_string(),
+                                                         d_buildFolder.generic_string(),
+                                                         d_prefix.generic_string());
         }
     }();
     if (!filePtr) {

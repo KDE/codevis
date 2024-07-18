@@ -41,7 +41,7 @@ using namespace Codethink;
 
 std::string fileNameFromQName(std::string qualifiedName)
 {
-    return std::filesystem::path(std::move(qualifiedName)).filename().string();
+    return std::filesystem::path(std::move(qualifiedName)).filename().generic_string();
 }
 
 void checkFileSelection(const std::initializer_list<std::string>& classFiles,

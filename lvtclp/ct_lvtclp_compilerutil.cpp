@@ -177,21 +177,21 @@ std::optional<std::string> CompilerUtil::findBundledHeaders(bool silent)
         std::filesystem::path headersDir = binDir / CT_CLANG_HEADERS_RELATIVE_DIR;
         if (std::filesystem::is_regular_file(headersDir / "stddef.h")) {
             if (!silent) {
-                qDebug() << "Found clang header dir: " << headersDir.string();
+                qDebug() << "Found clang header dir: " << headersDir.generic_string();
             }
-            return std::filesystem::canonical(headersDir).string();
+            return std::filesystem::canonical(headersDir).generic_string();
         }
 
         // try appimage path
         headersDir = binDir / "lib" / "clang" / "include";
         if (std::filesystem::is_regular_file(headersDir / "stddef.h")) {
             if (!silent) {
-                qDebug() << "Found clang header dir: " << headersDir.string();
+                qDebug() << "Found clang header dir: " << headersDir.generic_string();
             }
-            return std::filesystem::canonical(headersDir).string();
+            return std::filesystem::canonical(headersDir).generic_string();
         }
         if (!silent) {
-            qDebug() << "WARNING: broken installation: cannot find clang headers at " << headersDir.string();
+            qDebug() << "WARNING: broken installation: cannot find clang headers at " << headersDir.generic_string();
         }
     }
     if (!silent) {

@@ -59,7 +59,7 @@ const auto messageCallback = [](const std::string&, long) {};
 static void createComponent(const std::filesystem::path& dir, const std::string& name, const std::string& prefix = "")
 {
     for (const char *ext : {".h", ".cpp", ".t.cpp"}) {
-        std::string pkgname = dir.filename().string();
+        std::string pkgname = dir.filename().generic_string();
         std::string fileName;
         fileName.append(pkgname).append("_").append(name).append(ext);
         if (!prefix.empty()) {
@@ -149,11 +149,11 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Filesystem scanner")
 
     Codethink::lvtclp::StaticCompilationDatabase cdb(
         {
-            {(topLevel / "groups/one/onepkg/onepkg_foo.cpp").string(), ""},
-            {(topLevel / "groups/one/onepkg/onepkg_bar.cpp").string(), ""},
-            {(topLevel / "groups/two/twofoo/twofoo_component.cpp").string(), ""},
-            {(topLevel / "groups/two/twobar/twobar_component.cpp").string(), ""},
-            {(topLevel / "standalones/s_pkgtst/s_pkgtst_somecmp.cpp").string(), ""},
+            {(topLevel / "groups/one/onepkg/onepkg_foo.cpp").generic_string(), ""},
+            {(topLevel / "groups/one/onepkg/onepkg_bar.cpp").generic_string(), ""},
+            {(topLevel / "groups/two/twofoo/twofoo_component.cpp").generic_string(), ""},
+            {(topLevel / "groups/two/twobar/twobar_component.cpp").generic_string(), ""},
+            {(topLevel / "standalones/s_pkgtst/s_pkgtst_somecmp.cpp").generic_string(), ""},
         },
         "",
         {},
@@ -570,12 +570,12 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Non Lakosian")
 
     Codethink::lvtclp::StaticCompilationDatabase cdb(
         {
-            {(topLevel / "groups/one/onepkg/onepkg_foo.cpp").string(), ""},
-            {(topLevel / "groups/one/onepkg/onepkg_bar.cpp").string(), ""},
+            {(topLevel / "groups/one/onepkg/onepkg_foo.cpp").generic_string(), ""},
+            {(topLevel / "groups/one/onepkg/onepkg_bar.cpp").generic_string(), ""},
 #ifdef Q_OS_WINDOWS
-            {(topLevel / "include/nonlakosian.hpp").string(), ""},
+            {(topLevel / "include/nonlakosian.hpp").generic_string(), ""},
 #endif
-            {(topLevel / "thirdparty/nonlakosian.cpp").string(), ""},
+            {(topLevel / "thirdparty/nonlakosian.cpp").generic_string(), ""},
         },
         "compiler",
         {"--unrelated", "-I/not/a/path", "-I../include"},
@@ -704,11 +704,12 @@ class FSNonLakosianFixture {
 
 TEST_CASE_METHOD(FSNonLakosianFixture, "Non-lakosian extra levels of hierarchy")
 {
-    StaticCompilationDatabase cmds(
-        {{d_main.string(), ""}, {d_dumpQsettings.string(), ""}, {d_filesystemScanner.string(), ""}},
-        "placeholder-g++",
-        {},
-        d_topLevel);
+    StaticCompilationDatabase cmds({{d_main.generic_string(), ""},
+                                    {d_dumpQsettings.generic_string(), ""},
+                                    {d_filesystemScanner.generic_string(), ""}},
+                                   "placeholder-g++",
+                                   {},
+                                   d_topLevel);
 
     CppTool tool(d_topLevel, {}, cmds, ":memory:");
     // regression test: filsystem scanner should not crash
@@ -726,7 +727,7 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Semantic packing")
         std::filesystem::remove(filePath);
     }
 
-    auto scriptStream = std::ofstream(filePath.string());
+    auto scriptStream = std::ofstream(filePath.generic_string());
     const std::string SCRIPT_CONTENTS =
         "\ndef accept(path):"
         "\n    return True"
@@ -742,16 +743,16 @@ TEST_CASE_METHOD(FilesystemScannerFixture, "Semantic packing")
     scriptStream << SCRIPT_CONTENTS;
     scriptStream.close();
 
-    REQUIRE(std::ifstream{filePath.string()}.good());
-    REQUIRE(qputenv("SEMRULES_PATH", semRulesPath.string().c_str()));
+    REQUIRE(std::ifstream{filePath.generic_string()}.good());
+    REQUIRE(qputenv("SEMRULES_PATH", semRulesPath.generic_string().c_str()));
 
     Codethink::lvtclp::StaticCompilationDatabase cdb(
         {
-            {(topLevel / "groups/one/onepkg/onepkg_foo.cpp").string(), ""},
-            {(topLevel / "groups/one/onepkg/onepkg_bar.cpp").string(), ""},
-            {(topLevel / "groups/two/twofoo/twofoo_component.cpp").string(), ""},
-            {(topLevel / "groups/two/twobar/twobar_component.cpp").string(), ""},
-            {(topLevel / "standalones/s_pkgtst/s_pkgtst_somecmp.cpp").string(), ""},
+            {(topLevel / "groups/one/onepkg/onepkg_foo.cpp").generic_string(), ""},
+            {(topLevel / "groups/one/onepkg/onepkg_bar.cpp").generic_string(), ""},
+            {(topLevel / "groups/two/twofoo/twofoo_component.cpp").generic_string(), ""},
+            {(topLevel / "groups/two/twobar/twobar_component.cpp").generic_string(), ""},
+            {(topLevel / "standalones/s_pkgtst/s_pkgtst_somecmp.cpp").generic_string(), ""},
         },
         "",
         {},

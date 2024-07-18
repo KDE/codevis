@@ -296,6 +296,8 @@ void FilesystemScanner::processFileUsingLakosianRules(const std::filesystem::pat
         addSourceFile((pkgPath / path.filename()).string(), pkg);
     } else {
         const static std::string nonLakosianGroup(ClpUtil::NON_LAKOSIAN_GROUP_NAME);
+        std::cout << "Component is in a non-lakosian group\n\t" << path;
+
         if (!d->foundPkgGrps.count(nonLakosianGroup)) {
             d->foundPkgGrps[nonLakosianGroup] = PackageHelper{"", nonLakosianGroup, std::string{}};
         }

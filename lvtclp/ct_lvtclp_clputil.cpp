@@ -496,8 +496,8 @@ bool ClpUtil::isComponentOnStandalonePackage(const std::filesystem::path& compon
         std::regex_search(componentPath.string(), std::regex{"/([a-zA-Z]{1,2})_([a-zA-Z0-9_]+)\\."});
     if (hasStandaloneNameWithPkgPrefix) {
         // In order to be a valid standalone package, the component must be inside a package containing it's prefix
-        auto componentName = QString::fromStdString(componentPath.filename().string());
-        auto parentPkgName = QString::fromStdString(componentPath.parent_path().filename().string());
+        auto componentName = QString::fromStdString(componentPath.filename().generic_string());
+        auto parentPkgName = QString::fromStdString(componentPath.parent_path().filename().generic_string());
         if (componentName.startsWith(parentPkgName)) {
             return true;
         }

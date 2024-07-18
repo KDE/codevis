@@ -759,7 +759,7 @@ TEST_CASE("Test run tool with non-lakosian rules")
         /*thirdPartyDirs=*/{},
         /*userProvidedExtraCompileCommandsArgs=*/{"-iquote" + prjPath + "hidden_folder/"},
         /*enableLakosianRules=*/false,
-        /*printToConsole=*/false);
+        /*printToConsole=*/true);
     ObjectStore& memDb = tool.getObjectStore();
     tool.runPhysical();
 

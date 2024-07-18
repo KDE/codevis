@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <iostream>
+
 int g()
 {
     std::byte ble{9};

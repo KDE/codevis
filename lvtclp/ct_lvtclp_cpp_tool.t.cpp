@@ -825,7 +825,15 @@ TEST_CASE("Test run tool with non-lakosian rules")
 // clang the correct information
 TEST_CASE("cstddef test")
 {
-    StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/cstddef_test/");
+    StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}},
+                                   "placeholder",
+#if defined(Q_OS_WINDOWS)
+                                   {"-std:c++20"},
+#else
+                                   {},
+#endif
+                                   PREFIX + "/cstddef_test/");
+
     CppTool tool(PREFIX + "/cstddef_test/", {}, cmds, PREFIX + "/cstddef_test/database", 1, {}, {}, {}, {}, true, true);
 
     ObjectStore& session = tool.getObjectStore();

@@ -608,11 +608,6 @@ std::vector<std::unique_ptr<ClpUtil::SemanticPackingRule>> ClpUtil::getAllSemant
 
 namespace nonLakosian {
 
-inline QString asLinuxPath(QString path)
-{
-    return path.replace("\\", "/");
-}
-
 lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
                                              const std::string& filepath,
                                              const std::filesystem::path& sourceDirectory,
@@ -626,24 +621,27 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
     auto mainFolderName = QString{};
     auto currentVirtualWorkPath = QString{};
     auto relativePath = QString{};
-    const bool inSource = QString::fromStdString(filepath).contains(QString::fromStdString(sourceDirectory.string()));
-    const bool inBuild = QString::fromStdString(filepath).contains(QString::fromStdString(buildDirectory.string()));
+    const bool inSource =
+        QString::fromStdString(filepath).contains(QString::fromStdString(sourceDirectory.generic_string()));
+    const bool inBuild =
+        QString::fromStdString(filepath).contains(QString::fromStdString(buildDirectory.generic_string()));
 
     if (inSource || inBuild) {
         // If it is a file in the source directory, it takes precedence for qualified name deduction
-        auto prefixAsString = asLinuxPath(QString::fromStdString(sourceDirectory.string()));
+        auto prefixAsString = QString::fromStdString(sourceDirectory.generic_string());
         mainFolderName = prefixAsString.split(LINUX_SEP).last();
         if (mainFolderName.isEmpty()) {
             mainFolderName = "Unnamed Project";
         }
         currentVirtualWorkPath = "${SOURCE_DIR}/";
-        relativePath = QString::fromStdString(filepath).replace(QString::fromStdString(sourceDirectory.string()), "");
+        relativePath =
+            QString::fromStdString(filepath).replace(QString::fromStdString(sourceDirectory.generic_string()), "");
     } else {
         // Anything else will be moved to a global "external" pseudo-folder
         // TODO: Let the user provide more information regarding what is not "external".
         mainFolderName = "External Libraries";
         currentVirtualWorkPath = "${EXTERNAL_LIBS_DIR}/";
-        relativePath = asLinuxPath(QString::fromStdString(filepath));
+        relativePath = QString::fromStdString(filepath);
     }
 
     auto *parentPkg = memDb.getOrAddPackage(

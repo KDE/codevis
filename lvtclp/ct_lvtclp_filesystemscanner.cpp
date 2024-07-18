@@ -162,7 +162,7 @@ FilesystemScanner::IncrementalResult FilesystemScanner::scanCompilationDb()
 #ifdef Q_OS_WINDOWS
         path = path.generic_string();
 #endif
-        std::cout << "Scanning " << path;
+        std::cout << "Scanning " << path << std::endl;
         scanPath(path);
         scanHeader(path);
     }
@@ -317,7 +317,7 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
         return;
     }
 
-    if (ClpUtil::isFileIgnored(path.filename().string(), d->ignoreGlobs)) {
+    if (ClpUtil::isFileIgnored(path.filename().generic_string(), d->ignoreGlobs)) {
         return;
     }
 
@@ -329,10 +329,10 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
         processFileUsingLakosianRules(path);
     } else {
         nonLakosian::ClpUtil::writeSourceFile(d->memDb,
-                                              path.string(),
-                                              d->prefix.string(),
-                                              d->buildPath.string(),
-                                              d->prefix.string());
+                                              path.generic_string(),
+                                              d->prefix.generic_string(),
+                                              d->buildPath.generic_string(),
+                                              d->prefix.generic_string());
     }
 }
 

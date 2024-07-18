@@ -162,7 +162,7 @@ FilesystemScanner::IncrementalResult FilesystemScanner::scanCompilationDb()
 #ifdef Q_OS_WINDOWS
         path = path.generic_string();
 #endif
-
+        std::cout << "Scanning " << path;
         scanPath(path);
         scanHeader(path);
     }
@@ -373,11 +373,11 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
         }
     }
 
-    std::string qualifiedName = normalisedPath.string();
+    std::string qualifiedName = normalisedPath.generic_string();
     if (!isStandalone && parent.empty()) {
         if (!d->foundPkgNames.count(qualifiedName)) {
-            auto filePath = QString::fromStdString(path.string());
-            auto projectSource = QString::fromStdString(d->prefix.string());
+            auto filePath = QString::fromStdString(path.generic_string());
+            auto projectSource = QString::fromStdString(d->prefix.generic_string());
             if (filePath.startsWith(projectSource)) {
                 filePath.replace(projectSource, "${SOURCE_DIR}/");
             }
@@ -389,8 +389,8 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
             // we now have a parent
             d->foundPkgGrps.erase(qualifiedName);
         }
-        auto filePath = QString::fromStdString(path.string());
-        auto projectSource = QString::fromStdString(d->prefix.string());
+        auto filePath = QString::fromStdString(path.generic_string());
+        auto projectSource = QString::fromStdString(d->prefix.generic_string());
         if (filePath.startsWith(projectSource)) {
             filePath.replace(projectSource, "${SOURCE_DIR}/");
         }

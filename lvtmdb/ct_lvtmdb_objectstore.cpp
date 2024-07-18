@@ -245,6 +245,7 @@ FileObject *ObjectStore::getOrAddFile(const std::string& qualifiedName,
         return ret;
     }
 
+    std::cout << "Adding file to database " << qualifiedName << std::endl;
     return add(
         d->files.store,
         qualifiedName,

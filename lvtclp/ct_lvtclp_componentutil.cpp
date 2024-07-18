@@ -56,7 +56,7 @@ lvtmdb::ComponentObject *ComponentUtil::addComponent(const std::filesystem::path
             }
         }
 
-        return (filePath.parent_path() / name).string();
+        return (filePath.parent_path() / name).generic_string();
     }();
 
     return memDb.getOrAddComponent(qualifiedName, name, parent);

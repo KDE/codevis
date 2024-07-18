@@ -98,12 +98,22 @@ static void createTestEnv(const std::filesystem::path& topLevel)
 static bool compareResultList(std::vector<std::string> expected, std::vector<std::string> result)
 {
     if (expected.size() != result.size()) {
+        std::cout << "Lists differ in size. Expected: " << expected.size() << " and result" << result.size()
+                  << std::endl;
         return false;
     }
 
     std::sort(expected.begin(), expected.end());
     std::sort(result.begin(), result.end());
-    return expected == result;
+
+    const auto res = expected == result;
+    if (!res) {
+        for (int i = 0; i < expected.size(); i++) {
+            std::cout << "Expected: " << expected[i] << " result " << result[i] << std::endl;
+        }
+    }
+
+    return res;
 }
 
 struct FilesystemScannerFixture {

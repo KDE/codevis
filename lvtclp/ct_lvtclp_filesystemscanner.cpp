@@ -162,7 +162,6 @@ FilesystemScanner::IncrementalResult FilesystemScanner::scanCompilationDb()
 #ifdef Q_OS_WINDOWS
         path = path.generic_string();
 #endif
-
         scanPath(path);
         scanHeader(path);
     }
@@ -296,8 +295,6 @@ void FilesystemScanner::processFileUsingLakosianRules(const std::filesystem::pat
         addSourceFile((pkgPath / path.filename()).string(), pkg);
     } else {
         const static std::string nonLakosianGroup(ClpUtil::NON_LAKOSIAN_GROUP_NAME);
-        std::cout << "Component is in a non-lakosian group\n\t" << path;
-
         if (!d->foundPkgGrps.count(nonLakosianGroup)) {
             d->foundPkgGrps[nonLakosianGroup] = PackageHelper{"", nonLakosianGroup, std::string{}};
         }
@@ -328,11 +325,7 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
     if (d->enableLakosianRules) {
         processFileUsingLakosianRules(path);
     } else {
-        nonLakosian::ClpUtil::writeSourceFile(d->memDb,
-                                              path.string(),
-                                              d->prefix.string(),
-                                              d->buildPath.string(),
-                                              d->prefix.string());
+        nonLakosian::ClpUtil::writeSourceFile(d->memDb, path.generic_string(), d->prefix, d->buildPath, d->prefix);
     }
 }
 

@@ -86,13 +86,14 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
     }
 #endif
 
-    auto realPathStr =
+    auto realPathStr = std::filesystem::path(
 #if CLANG_VERSION_MAJOR >= 15
-        File.value().getFileEntry().tryGetRealPathName().str()
+                           File.value().getFileEntry().tryGetRealPathName().str()
 #else
-        File->tryGetRealPathName().str()
+                           File->tryGetRealPathName().str()
 #endif
-        ;
+                               )
+                           .generic_string();
 
     if (d_sourceFile_p == nullptr) {
         return;
@@ -104,13 +105,15 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
 
     lvtmdb::FileObject *filePtr = nullptr;
     if (d_enableLakosianRules) {
-        filePtr = ClpUtil::writeSourceFile(realPathStr, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        filePtr = ClpUtil::writeSourceFile(realPathStr,
+                                           true,
+                                           d_memDb,
+                                           d_prefix.generic_string(),
+                                           d_nonLakosianDirs,
+                                           d_thirdPartyDirs);
     } else {
-        filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
-                                                        realPathStr,
-                                                        d_prefix.string(),
-                                                        d_buildPath.string(),
-                                                        RelativePath.str());
+        filePtr =
+            nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPathStr, d_prefix, d_buildPath, RelativePath.str());
     }
 
     if (!filePtr || !d_sourceFile_p || filePtr == d_sourceFile_p) {
@@ -206,11 +209,7 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
         d_sourceFile_p =
             ClpUtil::writeSourceFile(realPath, isHeader, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
     } else {
-        d_sourceFile_p = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
-                                                               realPath,
-                                                               d_prefix.string(),
-                                                               d_buildPath.string(),
-                                                               d_prefix.string());
+        d_sourceFile_p = nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPath, d_prefix, d_buildPath, d_prefix);
     }
 }
 

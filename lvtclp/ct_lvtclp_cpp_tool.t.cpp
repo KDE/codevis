@@ -28,8 +28,11 @@
 #include <ct_lvtmdb_packageobject.h>
 #include <ct_lvtmdb_typeobject.h>
 
+#include <filesystem>
 #include <fstream>
 #include <initializer_list>
+
+#include <QtGlobal>
 
 #include <catch2-local-includes.h>
 
@@ -624,6 +627,19 @@ TEST_CASE("Run Tool on project including other lakosian project")
 
     REQUIRE(tool.runFull());
     session.withROLock([&] {
+        std::cout << "All Files" << std::endl;
+        for (auto& file : session.getAllFiles()) {
+            auto lock = file->readOnlyLock();
+            std::cout << file->qualifiedName() << std::endl;
+        }
+
+        std::cout << "\n All Components" << std::endl;
+        for (const auto& [_, comp] : session.components()) {
+            std::ignore = _;
+            auto lock = comp->readOnlyLock();
+            std::cout << comp->qualifiedName() << std::endl;
+        }
+
         REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_comp.cpp"));
         REQUIRE(session.getFile("groups/one/oneaaa/oneaaa_comp.h"));
         REQUIRE(session.getComponent("groups/one/oneaaa/oneaaa_comp"));
@@ -718,8 +734,9 @@ TEST_CASE("Run Tool store test-only dependencies")
 
 TEST_CASE("Test run tool with non-lakosian rules")
 {
-    auto const PREFIX = std::string{TEST_PRJ_PATH};
-    auto const prjPath = PREFIX + "/cpp_nonlakosian_test/";
+    auto const PREFIX = std::filesystem::path{TEST_PRJ_PATH};
+    auto const prjPath = std::filesystem::canonical((PREFIX / "cpp_nonlakosian_test")).generic_string() + "/";
+    std::cout << "Setting up the generic location:\n\t" << prjPath << std::endl;
 
     auto tmpdir = TmpDir{"cpp_nonlakosian_test_builddir"};
     auto res = tmpdir.createTextFile("compile_commands.json",
@@ -747,6 +764,9 @@ TEST_CASE("Test run tool with non-lakosian rules")
 
     REQUIRE(std::filesystem::exists(res));
 
+    std::cout << "Setting up project path " << prjPath << std::endl;
+    std::cout << "And..." << std::filesystem::path(prjPath).generic_string();
+
     auto tool = CppTool(
         /*sourcePath=*/prjPath,
         /* buildPath=*/{},
@@ -769,6 +789,13 @@ TEST_CASE("Test run tool with non-lakosian rules")
     };
 
     addLock(&memDb);
+
+    std::cout << "Found Files:" << std::endl;
+    for (auto& file : memDb.getAllFiles()) {
+        auto lock = file->readOnlyLock();
+        std::cout << "{\n\t" << file->qualifiedName() << "\n\t" << file->name() << "\n}" << std::endl;
+    }
+
     // Note: 6 files within the project, and 1 extra file hidden, added with `userProvidedExtraCompileCommandsArgs`
     REQUIRE(memDb.getAllFiles().size() == 7);
 
@@ -819,10 +846,12 @@ TEST_CASE("Test run tool with non-lakosian rules")
     }
 }
 
+#ifndef Q_OS_WINDOWS
 // cstddef and stddef.h files are a pain to get it right
 // because they depend on specific, compile-defined, paths
 // the code currently tries to find that to be able to feed
 // clang the correct information
+// No need to run this on windows, this test Unix specific code
 TEST_CASE("cstddef test")
 {
     StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/cstddef_test/");
@@ -838,3 +867,4 @@ TEST_CASE("cstddef test")
     });
     REQUIRE(file);
 }
+#endif

@@ -51,8 +51,7 @@ TEST_CASE("Plugin manager")
     REQUIRE(pm.getPluginData(CPP_TEST_PLUGIN_ID) == nullptr);
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
 
-    const QString basicPythonPluginPath =
-        QString::fromStdString(pluginsPath) + QDir::separator() + QStringLiteral("basicpythonplugin");
+    const QString basicPythonPluginPath = QString::fromStdString(pluginsPath) + QStringLiteral("/basicpythonplugin");
 
     // Make sure it doesn't crashes reloading the plugin.'
     pm.reloadPlugin(basicPythonPluginPath);
@@ -88,8 +87,7 @@ TEST_CASE("Unload plugin")
     pm.callHooksSetupPlugin();
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) != nullptr);
 
-    const QString basicPythonPluginPath =
-        QString::fromStdString(pluginsPath) + QDir::separator() + QStringLiteral("basicpythonplugin");
+    const QString basicPythonPluginPath = QString::fromStdString(pluginsPath) + QStringLiteral("/basicpythonplugin");
     pm.removePlugin(basicPythonPluginPath);
     REQUIRE(pm.getPluginData(PY_TEST_PLUGIN_ID) == nullptr);
 }

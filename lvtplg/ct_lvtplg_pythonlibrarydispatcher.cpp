@@ -38,7 +38,8 @@ PythonLibraryDispatcher::resolve(std::string const& functionName)
 std::string PythonLibraryDispatcher::fileName()
 {
     py::gil_scoped_acquire _;
-    return this->pyModule.attr("__file__").cast<std::string>();
+    std::filesystem::path pluginPath = this->pyModule.attr("__file__").cast<std::string>();
+    return pluginPath.generic_string();
 }
 
 bool PythonLibraryDispatcher::isValidPlugin(QDir const& pluginDir)

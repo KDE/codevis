@@ -1368,17 +1368,7 @@ void MainWindow::generateDatabaseReadyForUpdate()
 void MainWindow::prepareForCodeDatabaseUpdate()
 // Database should now be idle
 {
-    /*
-        // close the database so that we can replace the file
-        // TODO: we need a proper way to close the database
-        d_codeDatabase->setPath(":memory:");
-        if (!d_codeDatabase->open(Codethink::lvtcdb::BaseDb::OpenType::NewDatabase)) {
-            showErrorMessage(
-                tr("Error preparing in-memory database for the current project file. Check the 'Error List' for
-       details.")); return;
-        }
-    */
-
+    sharedNodeStorage.closeDatabase();
     // tell parseCodebaseDialog we are ready for it to do its thing
     d_parseCodebaseDialog_p->updateDatabase();
 }

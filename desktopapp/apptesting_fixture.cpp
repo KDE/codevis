@@ -214,7 +214,7 @@ void CodeVisApplicationTestFixture::ctrlZ()
 void CodeVisApplicationTestFixture::ctrlShiftZ()
 {
     auto *action = mainWindow.get()->actionCollection()->action("edit_redo");
-    QTest::keySequence(mainWindow.get(), action->shortcut());
+    action->trigger();
     QTest::qWait(100);
 }
 

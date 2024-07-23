@@ -213,14 +213,7 @@ void CodeVisApplicationTestFixture::ctrlZ()
 
 void CodeVisApplicationTestFixture::ctrlShiftZ()
 {
-    auto sequence =
-#if defined(Q_OS_WINDOWS)
-        static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::Key_Y))
-#else
-        static_cast<QKeySequence>(static_cast<int>(Qt::CTRL) | static_cast<int>(Qt::SHIFT)
-                                  | static_cast<int>(Qt::Key_Z))
-#endif
-        ;
+    auto sequence = QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z);
     QTest::keySequence(mainWindow.get(), sequence);
     QTest::qWait(100);
 }

@@ -160,10 +160,10 @@ void addCycle(const std::size_t first, const Cycle& history, std::vector<Cycle>&
 }
 
 void traverseDependencies(std::shared_ptr<Codethink::lvtplg::Entity>& e,
-                          Cycle const& maybeCycle,
+                          Cycle& maybeCycle,
                           std::vector<Cycle>& allCycles);
 
-void traverse(std::shared_ptr<Codethink::lvtplg::Entity>& node, Cycle maybeCycle, std::vector<Cycle>& allCycles)
+void traverse(std::shared_ptr<Codethink::lvtplg::Entity>& node, Cycle& maybeCycle, std::vector<Cycle>& allCycles)
 // Recursive depth first search, keeping track of where we have been.
 // If we encounter a node we have already seen in this path, that means
 // there's a cycle (back edge).
@@ -189,15 +189,17 @@ void traverse(std::shared_ptr<Codethink::lvtplg::Entity>& node, Cycle maybeCycle
         addCycle(i, maybeCycle, allCycles);
         // skip iterating over dependencies because we have visited this
         // node before
+        maybeCycle.pop_back();
         return;
     }
 
     // continue depth first search
     traverseDependencies(node, maybeCycle, allCycles);
+    maybeCycle.pop_back();
 }
 
 void traverseDependencies(std::shared_ptr<Codethink::lvtplg::Entity>& e,
-                          Cycle const& maybeCycle,
+                          Cycle& maybeCycle,
                           std::vector<Cycle>& allCycles)
 {
     for (auto& dependency : e->getDependencies()) {

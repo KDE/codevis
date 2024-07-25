@@ -20,6 +20,7 @@
 
 #include <QElapsedTimer>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -36,10 +37,18 @@ static auto const EDGE_SELECTED_COLOR = Codethink::lvtplg::Color{230, 40, 40};
 static auto const EDGE_UNSELECTED_COLOR = Codethink::lvtplg::Color{230, 230, 230};
 enum class SelectedState { Selected, NotSelected };
 
-struct CycleDetectionPluginData {
-    std::vector<Cycle> allCycles;
+// Specific to a single GraphicsView
+struct CycleDetectionData {
     Cycle selectedCycle;
     Cycle prevSelectedCycle;
+    std::vector<Cycle> allCycles;
+};
+
+struct CycleDetectionPluginData {
+    // The graph scene currently being used.
+    std::string currentGraphScene;
+    // Scene Name, Graph.
+    std::map<std::string, CycleDetectionData> cyclesByScene;
 };
 
 template<typename Handler_t>
@@ -198,24 +207,11 @@ void traverseDependencies(std::shared_ptr<Codethink::lvtplg::Entity>& e,
 
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler);
 
-void highlightCycles(PluginContextMenuActionHandler *handler)
+void updateTreeView(PluginTreeWidgetHandler tree, CycleDetectionPluginData *pluginData)
 {
-    auto *pluginData = getPluginData(handler);
-    auto& allCycles = pluginData->allCycles;
-    allCycles.clear();
-
-    QElapsedTimer timer;
-    timer.start();
-    std::cout << "Starting to look for cycles" << std::endl;
-    for (auto&& e : handler->getAllEntitiesInCurrentView()) {
-        auto maybeCycle = Cycle{};
-        traverse(e, maybeCycle, allCycles);
-    }
-    std::cout << "Looking for cycles took" << timer.elapsed() << std::endl;
-
-    auto tree = handler->getTree(DOCK_WIDGET_TREE_ID);
     tree.clear();
-    for (auto&& cycle : allCycles) {
+    auto& allCycles = pluginData->cyclesByScene[pluginData->currentGraphScene].allCycles;
+    for (auto& cycle : allCycles) {
         auto firstName = cycle[0]->getQualifiedName();
         auto lastName = cycle[cycle.size() - 1]->getQualifiedName();
         auto rootItem = tree.addRootItem("From " + firstName + " to " + lastName);
@@ -225,6 +221,35 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
             rootItem.addChild(entity->getQualifiedName());
         }
     }
+}
+
+void highlightCycles(PluginContextMenuActionHandler *handler)
+{
+    auto *pluginData = getPluginData(handler);
+    auto& cycleData = pluginData->cyclesByScene[pluginData->currentGraphScene];
+
+    QElapsedTimer timer;
+    timer.start();
+    std::cout << "Starting to look for cycles" << std::endl;
+
+    cycleData.allCycles.clear();
+    cycleData.prevSelectedCycle.clear();
+    cycleData.selectedCycle.clear();
+
+    for (auto&& e : handler->getAllEntitiesInCurrentView()) {
+        auto maybeCycle = Cycle{};
+        traverse(e, maybeCycle, cycleData.allCycles);
+    }
+
+    if (cycleData.allCycles.empty()) {
+        return;
+    }
+
+    std::cout << "Looking for cycles took" << timer.elapsed() << std::endl;
+
+    auto treeWidget = handler->getTree(DOCK_WIDGET_TREE_ID);
+    updateTreeView(treeWidget, pluginData);
+
     for (auto const& e0 : handler->getAllEntitiesInCurrentView()) {
         e0->setColor(NODE_UNSELECTED_COLOR);
         for (auto const& e1 : e0->getDependencies()) {
@@ -247,7 +272,7 @@ Cycle& extractCycleFrom(void *userData)
 void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
 {
     auto gv = handler->getGraphicsView();
-    auto paintCycle = [&gv](auto&& cycle, auto&& state) {
+    auto paintCycle = [&gv](const std::vector<Codethink::lvtplg::Entity *>& cycle, auto&& state) {
         auto prevQualifiedName = std::optional<std::string>();
         for (auto&& entity : cycle) {
             if (!entity) {
@@ -268,9 +293,32 @@ void onRootItemSelected(PluginTreeItemClickedActionHandler *handler)
     };
 
     auto *pluginData = getPluginData(handler);
+    auto& cycleData = pluginData->cyclesByScene[pluginData->currentGraphScene];
+
     auto selectedItem = handler->getItem();
     auto& selectedCycle = extractCycleFrom(selectedItem.getUserData(ITEM_USER_DATA_CYCLE_ID));
-    paintCycle(pluginData->prevSelectedCycle, SelectedState::NotSelected);
+    paintCycle(cycleData.prevSelectedCycle, SelectedState::NotSelected);
     paintCycle(selectedCycle, SelectedState::Selected);
-    pluginData->prevSelectedCycle = selectedCycle;
+    cycleData.prevSelectedCycle = selectedCycle;
+}
+
+void hookActiveSceneChanged(PluginActiveSceneChangedHandler *handler)
+{
+    auto *pluginData = getPluginData(handler);
+    auto treeWidget = handler->getTree(DOCK_WIDGET_TREE_ID);
+    pluginData->currentGraphScene = handler->getSceneName();
+
+#ifndef PLUGIN_TEST_CODE
+    updateTreeView(treeWidget, pluginData);
+#endif
+}
+
+void hookSceneDestroyed(PluginSceneDestroyedHandler *handler)
+{
+    auto *pluginData = getPluginData(handler);
+    auto treeWidget = handler->getTree(DOCK_WIDGET_TREE_ID);
+    std::string sceneName = handler->getSceneName();
+
+    treeWidget.clear();
+    pluginData->cyclesByScene.erase(sceneName);
 }

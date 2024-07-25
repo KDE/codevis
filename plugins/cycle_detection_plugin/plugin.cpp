@@ -237,8 +237,8 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
     cycleData.allCycles.clear();
     cycleData.prevSelectedCycle.clear();
     cycleData.selectedCycle.clear();
-
-    for (auto&& e : handler->getAllEntitiesInCurrentView()) {
+    auto allEntities = handler->getAllEntitiesInCurrentView();
+    for (auto&& e : allEntities) {
         auto maybeCycle = Cycle{};
         traverse(e, maybeCycle, cycleData.allCycles);
     }
@@ -252,7 +252,7 @@ void highlightCycles(PluginContextMenuActionHandler *handler)
     auto treeWidget = handler->getTree(DOCK_WIDGET_TREE_ID);
     updateTreeView(treeWidget, pluginData);
 
-    for (auto const& e0 : handler->getAllEntitiesInCurrentView()) {
+    for (auto const& e0 : allEntities) {
         e0->setColor(NODE_UNSELECTED_COLOR);
         for (auto const& e1 : e0->getDependencies()) {
             auto edge = handler->getEdgeByQualifiedName(e0->getQualifiedName(), e1->getQualifiedName());

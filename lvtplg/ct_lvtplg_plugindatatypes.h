@@ -50,8 +50,8 @@ struct Entity {
     std::function<EntityType()> getType;
     std::function<void(Color rgbColor)> setColor;
     std::function<void(std::string info)> addHoverInfo;
-    std::function<std::vector<std::shared_ptr<Entity>>()> getDependencies;
-    std::function<std::vector<std::shared_ptr<Entity>>()> getChildren;
+    std::function<std::vector<std::shared_ptr<Entity>>&()> getDependencies;
+    std::function<std::vector<std::shared_ptr<Entity>>&()> getChildren;
 
     /**
      * Unloads the entity from the current scene.

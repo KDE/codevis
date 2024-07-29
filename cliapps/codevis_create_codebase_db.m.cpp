@@ -19,6 +19,7 @@
 
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtclp_cpp_tool.h>
+#include <qelapsedtimer.h>
 #ifdef CT_ENABLE_FORTRAN_SCANNER
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
 #include <fortran/ct_lvtclp_fortran_tool.h>
@@ -46,6 +47,7 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QElapsedTimer>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
@@ -502,6 +504,8 @@ int main(int argc, char **argv)
     clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 
+    QElapsedTimer timer;
+    timer.start();
 #ifdef CT_ENABLE_FORTRAN_SCANNER
     auto flang_tool = fortran::Tool::fromCompileCommands(args.compilationDbPaths[0]);
     flang_tool->setSharedMemDb(sharedObjectStore);
@@ -526,6 +530,8 @@ int main(int argc, char **argv)
         return clang_result;
     }();
 #endif
+
+    std::cout << "Tool took " << timer.elapsed() << "ms" << std::endl;
 
     if (!success) {
         std::cerr << "Error generating database\n";

@@ -59,7 +59,7 @@ std::filesystem::path FileUtil::commonParent(const std::vector<std::filesystem::
 // All paths should be canonical
 {
     if (paths.empty()) {
-        return "";
+        return {};
     }
 
     auto startIt = paths.begin();

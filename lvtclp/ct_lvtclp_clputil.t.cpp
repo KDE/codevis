@@ -29,14 +29,18 @@ TEST_CASE("normalisePath tests")
 {
     // Common usage cases
     REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/abc/", "/home/abc/xxx/project") == "abc/");
-    REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/../project/abc/", "/home/abc/xxx/project") == "abc/");
-    REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/../abc/", "/home/abc/xxx") == "abc/");
+
+    // normalisePath *will not* call std::filesystem::weakly_canonical anymore, so the paths must be there already
+    // canonized.
+    REQUIRE_FALSE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/../project/abc/", "/home/abc/xxx/project")
+                  == "abc/");
+    REQUIRE_FALSE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/../abc/", "/home/abc/xxx") == "abc/");
 
     // Invalid prefix cases
     REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/abc/", "/different/path/")
             == std::filesystem::weakly_canonical("/home/abc/xxx/project/abc/"));
-    REQUIRE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/../project/abc/", "/different/path/")
-            == std::filesystem::weakly_canonical("/home/abc/xxx/project/abc/"));
+    REQUIRE_FALSE(lvtclp::ClpUtil::normalisePath("/home/abc/xxx/project/../project/abc/", "/different/path/")
+                  == std::filesystem::weakly_canonical("/home/abc/xxx/project/abc/"));
 
     // Edge cases
     // Trailling '/' on the prefix path was being evaluated as invalid prefix. This test has been added to avoid

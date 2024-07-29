@@ -292,7 +292,7 @@ std::string ClpUtil::getRealPath(const clang::SourceLocation& loc, const clang::
         return filePath;
     };
 
-    std::string res = pathFromLocation(mgr.getSpellingLoc(loc), mgr);
+    std::filesystem::path res = pathFromLocation(mgr.getSpellingLoc(loc), mgr);
     if (res.empty()) {
         res = pathFromLocation(mgr.getExpansionLoc(loc), mgr);
     }

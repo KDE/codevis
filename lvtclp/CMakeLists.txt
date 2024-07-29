@@ -65,6 +65,7 @@ AddTargetLibrary(
         ct_lvtclp_cpp_tool.cpp
         ct_lvtclp_toolexecutor.cpp
         ct_lvtclp_visitlog.cpp
+        ct_lvtclp_threadstringmap.cpp
     HEADERS
         ct_lvtclp_clputil.h
         ct_lvtclp_compilerutil.h
@@ -79,6 +80,7 @@ AddTargetLibrary(
         ct_lvtclp_staticfnhandler.h
         ct_lvtclp_toolexecutor.h
         ct_lvtclp_visitlog.h
+        ct_lvtclp_threadstringmap.h
     QT_HEADERS
         ct_lvtclp_cpp_tool.h
     LIBRARIES

@@ -423,6 +423,7 @@ struct CppTool::Private {
 
     bool enableLakosianRules;
     std::vector<std::string> userProvidedExtraCompileCommandsArgs;
+    ThreadStringMap pathToCanonical;
 
     [[nodiscard]] lvtmdb::ObjectStore& memDb()
     {
@@ -918,6 +919,7 @@ bool CppTool::runPhysical(bool skipScan)
                                                d->thirdPartyDirs,
                                                filenameCallback,
                                                d->ignoreList,
+                                               d->pathToCanonical,
                                                d->enableLakosianRules,
                                                d->headerLocationCallback);
 

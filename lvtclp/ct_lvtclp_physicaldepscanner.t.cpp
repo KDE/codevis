@@ -17,15 +17,15 @@
 // limitations under the License.
 */
 
+#include <ct_lvtclp_physicaldepscanner.h>
+#include <ct_lvtclp_testutil.h>
+#include <ct_lvtclp_threadstringmap.h>
+#include <ct_lvtclp_toolexecutor.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_methodobject.h>
 #include <ct_lvtmdb_namespaceobject.h>
 #include <ct_lvtmdb_objectstore.h>
 #include <ct_lvtmdb_typeobject.h>
-
-#include <ct_lvtclp_physicaldepscanner.h>
-#include <ct_lvtclp_testutil.h>
-#include <ct_lvtclp_toolexecutor.h>
 
 #include <memory>
 #include <unordered_set>
@@ -85,6 +85,7 @@ TEST_CASE("Optional include location callbacks")
     auto headerLocationCallback = [&](std::string const& sourceFile, std::string const& includedFile, unsigned lineNo) {
         foundIncludes.insert(FoundIncludeTestData{sourceFile, includedFile, lineNo});
     };
+    ThreadStringMap sm;
     auto err = executor.execute(std::make_unique<DepScanActionFactory>(
         memDb,
         PREFIX,
@@ -93,6 +94,7 @@ TEST_CASE("Optional include location callbacks")
         std::vector<std::pair<std::string, std::string>>{},
         [](auto&& _) {},
         std::vector<llvm::GlobPattern>{},
+        sm,
         /*enableLakosianRules=*/true,
         headerLocationCallback));
 

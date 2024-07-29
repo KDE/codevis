@@ -1040,7 +1040,7 @@ bool CppTool::runFull(bool skipPhysical)
     if (err) {
         d->memDb().setState(lvtmdb::ObjectStore::State::LogicalError);
 
-        llvm::handleErrors(std::move(err), [&](llvm::StringError const& err) -> llvm::Error {
+        std::ignore = llvm::handleErrors(std::move(err), [&](llvm::StringError const& err) -> llvm::Error {
             Q_EMIT messageFromThread(QString::fromStdString(err.getMessage()), 0);
             return llvm::Error::success();
         });

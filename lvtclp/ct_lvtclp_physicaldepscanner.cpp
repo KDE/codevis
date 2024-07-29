@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_headercallbacks.h"
 #include <ct_lvtclp_clputil.h>
 #include <ct_lvtclp_physicaldepscanner.h>
 

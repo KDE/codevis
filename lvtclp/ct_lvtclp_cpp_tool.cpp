@@ -481,8 +481,8 @@ struct CppTool::Private {
             std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
             bool enableLakosianRules,
             bool inPrintToConsole = true):
-        sourcePath(std::move(inSourcePath)),
-        buildPath(std::move(buildPath)),
+        sourcePath(std::filesystem::weakly_canonical(inSourcePath).generic_string()),
+        buildPath(std::filesystem::weakly_canonical(buildPath).generic_string()),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
         }),
@@ -509,8 +509,8 @@ struct CppTool::Private {
             std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
             bool enableLakosianRules,
             bool inPrintToConsole = true):
-        sourcePath(std::move(inSourcePath)),
-        buildPath(std::move(buildPath)),
+        sourcePath(std::filesystem::weakly_canonical(inSourcePath).generic_string()),
+        buildPath(std::filesystem::weakly_canonical(buildPath).generic_string()),
         compileCommand(std::in_place, compileCommand),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
@@ -538,8 +538,8 @@ struct CppTool::Private {
             std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
             bool enableLakosianRules,
             bool inPrintToConsole):
-        sourcePath(std::move(inSourcePath)),
-        buildPath(std::move(buildPath)),
+        sourcePath(std::filesystem::weakly_canonical(inSourcePath).generic_string()),
+        buildPath(std::filesystem::weakly_canonical(buildPath).generic_string()),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
         }),

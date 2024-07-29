@@ -36,7 +36,6 @@
 #include <clang/Tooling/CompilationDatabase.h>
 
 #include <filesystem>
-#include <initializer_list>
 #include <string>
 #include <vector>
 

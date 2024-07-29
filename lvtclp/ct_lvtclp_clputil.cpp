@@ -220,33 +220,6 @@ namespace Codethink::lvtclp {
 
 std::filesystem::path ClpUtil::normalisePath(std::filesystem::path path, std::filesystem::path prefix)
 {
-#ifndef Q_OS_WINDOWS
-    if (!path.empty()) {
-        path = std::filesystem::weakly_canonical(path);
-    }
-
-    if (!prefix.empty()) {
-        prefix = std::filesystem::weakly_canonical(prefix);
-    }
-#else
-    if (!path.empty()) {
-        path = std::filesystem::weakly_canonical(path).generic_string();
-    }
-
-    if (!prefix.empty()) {
-        prefix = std::filesystem::weakly_canonical(prefix).generic_string();
-    }
-#endif
-
-#ifdef NDEBUG
-    // the call to std::filesystem::weakly_canonical is expensive for the
-    // amount of times we call it, but we are always passing `d->prefix` to it
-    // so we can call that once, and cache the results.
-    // the assert here makes sure we did not forgot to do this somewhere,
-    // and it's only active on debug mode.
-    assert(prefix == std::filesystem::weakly_canonical(prefix));
-#endif
-
     if (FileUtil::pathStartsWith(prefix, path)) {
         path = FileUtil::nonPrefixPart(prefix, path);
     }
@@ -306,11 +279,12 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(const std::string& inFilename,
 
 std::string ClpUtil::getRealPath(const clang::SourceLocation& loc, const clang::SourceManager& mgr)
 {
-    auto pathFromLocation = [](const clang::SourceLocation& loc, const clang::SourceManager& mgr) -> std::string {
+    auto pathFromLocation = [](const clang::SourceLocation& loc,
+                               const clang::SourceManager& mgr) -> std::filesystem::path {
         const clang::FileID id = mgr.getFileID(loc);
         const clang::FileEntry *entry = mgr.getFileEntryForID(id);
 
-        std::string filePath;
+        std::filesystem::path filePath;
         if (entry) {
             filePath = entry->tryGetRealPathName().str();
         }
@@ -323,7 +297,7 @@ std::string ClpUtil::getRealPath(const clang::SourceLocation& loc, const clang::
         res = pathFromLocation(mgr.getExpansionLoc(loc), mgr);
     }
 
-    return res;
+    return std::filesystem::weakly_canonical(res).generic_string();
 }
 
 void ClpUtil::writeDependencyRelations(lvtmdb::PackageObject *source, lvtmdb::PackageObject *target)

@@ -74,6 +74,10 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
                                          const clang::Module *Imported,
                                          clang::SrcMgr::CharacteristicKind FileType)
 {
+    if (d_sourceFile_p == nullptr) {
+        return;
+    }
+
 #if CLANG_VERSION_MAJOR >= 16
     if (!File.has_value()) {
         return;
@@ -97,9 +101,7 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
                                )
                            .generic_string();
 
-    if (d_sourceFile_p == nullptr) {
-        return;
-    }
+    auto realPath = d_pathToCanonical.get_or_add(realPathStr);
 
     if (ClpUtil::isFileIgnored(std::filesystem::path{realPathStr}.filename().string(), d_ignoreGlobs)) {
         return;
@@ -107,15 +109,14 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
 
     lvtmdb::FileObject *filePtr = nullptr;
     if (d_enableLakosianRules) {
-        filePtr = ClpUtil::writeSourceFile(realPathStr,
+        filePtr = ClpUtil::writeSourceFile(realPath,
                                            true,
                                            d_memDb,
                                            d_prefix.generic_string(),
                                            d_nonLakosianDirs,
                                            d_thirdPartyDirs);
     } else {
-        filePtr =
-            nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPathStr, d_prefix, d_buildPath, RelativePath.str());
+        filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPath, d_prefix, d_buildPath, RelativePath.str());
     }
 
     if (!filePtr || !d_sourceFile_p || filePtr == d_sourceFile_p) {

@@ -143,22 +143,23 @@ struct ModelUtil {
     };
 
     // CLASS METHODS
-    static void checkSourceFiles(lvtmdb::ObjectStore& store,
-                                 const std::initializer_list<SourceFileModel>& files,
-                                 bool printToConsole = false);
+    [[nodiscard]] static bool checkSourceFiles(lvtmdb::ObjectStore& store,
+                                               const std::initializer_list<SourceFileModel>& files,
+                                               bool printToConsole = false);
     // Check that the source files described by models are all in the database
     // session with the described properties
 
-    static void checkComponents(lvtmdb::ObjectStore& store,
-                                const std::initializer_list<ComponentModel>& checkComponents);
+    [[nodiscard]] static bool checkComponents(lvtmdb::ObjectStore& store,
+                                              const std::initializer_list<ComponentModel>& checkComponents);
     // Check that the components described by models are all in the database
     // session with the described properties
 
-    static void checkPackages(lvtmdb::ObjectStore& store, const std::initializer_list<PackageModel>& pkgs);
+    [[nodiscard]] static bool checkPackages(lvtmdb::ObjectStore& store,
+                                            const std::initializer_list<PackageModel>& pkgs);
     // Check that the packages and package groups described by models are
     // all in the database session with the described properties
 
-    static void checkUDTs(lvtmdb::ObjectStore& store, const std::initializer_list<UDTModel>& udts);
+    [[nodiscard]] static bool checkUDTs(lvtmdb::ObjectStore& store, const std::initializer_list<UDTModel>& udts);
     // Check that the types described by models are all in the database
     // session with the described properties
 };

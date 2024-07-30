@@ -45,18 +45,13 @@
 namespace {
 
 template<class C>
-bool qnameVectorMatches(const std::vector<C *>& ptrs, const std::vector<std::string>& expectedUnsorted)
+bool qnameVectorMatches(const std::string& id,
+                        const std::vector<C *>& ptrs,
+                        const std::vector<std::string>& expectedUnsorted)
 {
     if (ptrs.size() != expectedUnsorted.size()) {
-        qDebug() << "qnameVectorMatches FAILED. Sizes didn't match: Expected size " << expectedUnsorted.size()
-                 << ", obtained " << ptrs.size();
-
-        qDebug() << "qname mismatch. Expect:\n";
-        for (const auto& src_include : std::as_const(expectedUnsorted)) {
-            qDebug() << "\t" << src_include.c_str();
-        }
-
-        assert(false);
+        qDebug() << id.c_str() << "Sizes didn't match: Expected size" << expectedUnsorted.size() << ", obtained"
+                 << ptrs.size();
         return false;
     }
 
@@ -75,13 +70,13 @@ bool qnameVectorMatches(const std::vector<C *>& ptrs, const std::vector<std::str
 
     bool res = std::equal(expected.begin(), expected.end(), qnames.begin());
     if (!res) {
-        qDebug() << "Vector matches? " << res;
+        qDebug() << id.c_str() << "Vector matches? " << res;
 
-        qDebug() << "qname mismatch. Expect:\n";
+        qDebug() << "Expect:";
         for (const auto& src_include : std::as_const(expected)) {
             qDebug() << "\t" << src_include.c_str();
         }
-        qDebug() << "Obtained:\n";
+        qDebug() << "Obtained:";
         for (const auto& src_include : std::as_const(qnames)) {
             qDebug() << "\t" << src_include.c_str();
         }
@@ -303,7 +298,7 @@ bool Test_Util::createFile(const std::filesystem::path& path, const std::string&
 {
     if (std::filesystem::exists(path)) {
         if (!std::filesystem::remove(path)) {
-            qDebug() << "Failed to remove path " << path.c_str();
+            qDebug() << "Failed to remove path" << path.c_str();
             return false;
         }
     }
@@ -315,7 +310,7 @@ bool Test_Util::createFile(const std::filesystem::path& path, const std::string&
 
     std::ofstream output(path);
     if (output.fail()) {
-        qDebug() << "Failed to open " << path.c_str();
+        qDebug() << "Failed to open" << path.c_str();
         return false;
     }
 
@@ -434,7 +429,7 @@ bool StaticCompilationDatabase::containsPackage(const std::string& str) const
     return it != files.end();
 }
 
-void ModelUtil::checkSourceFiles(lvtmdb::ObjectStore& store,
+bool ModelUtil::checkSourceFiles(lvtmdb::ObjectStore& store,
                                  const std::initializer_list<ModelUtil::SourceFileModel>& files,
                                  bool printToConsole)
 {
@@ -446,7 +441,7 @@ void ModelUtil::checkSourceFiles(lvtmdb::ObjectStore& store,
             qDebug() << "\t" << innerFile->qualifiedName().c_str();
         }
 
-        qDebug() << "And Expected files: \n";
+        qDebug() << "And Expected files:";
         for (auto const& expected : files) {
             INFO("Processing " << expected.path);
             qDebug() << "\t" << expected.path.c_str();
@@ -455,66 +450,163 @@ void ModelUtil::checkSourceFiles(lvtmdb::ObjectStore& store,
 
     for (auto const& expected : files) {
         lvtmdb::FileObject *file = store.getFile(expected.path);
-        REQUIRE(file != nullptr);
+        if (file == nullptr) {
+            qDebug() << "File pointer is null.";
+            return false;
+        }
+
+        bool res = true;
         file->withROLock([&] {
-            REQUIRE(file->isHeader() == expected.isHeader);
-            REQUIRE(ptrMatches(file->package(), expected.pkg));
-            REQUIRE(ptrMatches(file->component(), expected.component));
-            REQUIRE(qnameVectorMatches(file->namespaces(), expected.namespaces));
-            REQUIRE(qnameVectorMatches(file->types(), expected.classes));
+            if (file->isHeader() != expected.isHeader) {
+                qDebug() << "File header mismatch." << QString::fromStdString(file->qualifiedName());
+                res = false;
+                return;
+            }
+            if (!ptrMatches(file->package(), expected.pkg)) {
+                qDebug() << "Invalid file package." << QString::fromStdString(file->qualifiedName());
+                res = false;
+                return;
+            }
+            if (!ptrMatches(file->component(), expected.component)) {
+                qDebug() << "Invalid file Component." << QString::fromStdString(file->qualifiedName());
+                res = false;
+                return;
+            };
+            if (!qnameVectorMatches("Namespaces", file->namespaces(), expected.namespaces)) {
+                qDebug() << "Namespace Mismatch" << QString::fromStdString(file->qualifiedName());
+                res = false;
+                return;
+            }
+            if (!qnameVectorMatches("Files", file->types(), expected.classes)) {
+                qDebug() << "Files Mismatch" << QString::fromStdString(file->qualifiedName());
+                res = false;
+                return;
+            }
         });
+
+        if (!res) {
+            return res;
+        }
         // REQUIRE(qnameVectorMatchesRelations(file->includeSources(), expected.includes));
     }
+
+    return true;
 }
 
-void ModelUtil::checkComponents(lvtmdb::ObjectStore& store,
+bool ModelUtil::checkComponents(lvtmdb::ObjectStore& store,
                                 const std::initializer_list<ModelUtil::ComponentModel>& components)
 {
     auto storeLock = store.readOnlyLock();
     for (auto const& expected : components) {
         lvtmdb::ComponentObject *comp = store.getComponent(expected.qualifiedName);
-        REQUIRE(comp != nullptr);
+        if (comp == nullptr) {
+            qDebug() << "Component is null";
+            return false;
+        }
+
+        bool res = true;
         comp->withROLock([&] {
-            REQUIRE(comp->name() == expected.name);
-            REQUIRE(qnameVectorMatches(comp->files(), expected.files));
+            if (comp->name() != expected.name) {
+                // qDebug() << "Component name mismatch:" << QString::fromStdString(comp->name()) <<
+                // QString::fromStdString(expected.name());
+                res = false;
+                return;
+            }
+            if (!qnameVectorMatches("Files", comp->files(), expected.files)) {
+                qDebug() << "Files mismatch" << QString::fromStdString(comp->qualifiedName());
+                res = false;
+                return;
+            }
         });
+
+        if (!res) {
+            return res;
+        }
         // REQUIRE(qnameVectorMatchesRelations(comp->relationSources(), expected.deps));
     }
+    return true;
 }
 
-void ModelUtil::checkPackages(lvtmdb::ObjectStore& store, const std::initializer_list<ModelUtil::PackageModel>& pkgs)
+bool ModelUtil::checkPackages(lvtmdb::ObjectStore& store, const std::initializer_list<ModelUtil::PackageModel>& pkgs)
 {
     auto lock = store.readOnlyLock();
     for (auto const& expected : pkgs) {
         INFO("Checking expected package '" << expected.name << "'...");
         lvtmdb::PackageObject *pkg = store.getPackage(expected.name);
-        REQUIRE(pkg != nullptr);
+        if (pkg == nullptr) {
+            qDebug() << "Package is null";
+            return false;
+        }
+        bool res = true;
         pkg->withROLock([&] {
-            REQUIRE(ptrMatches(pkg->parent(), expected.parent));
-            REQUIRE(qnameVectorMatches(pkg->types(), expected.udts));
-            REQUIRE(qnameVectorMatches(pkg->components(), expected.components));
+            if (!ptrMatches(pkg->parent(), expected.parent)) {
+                qDebug() << "Package parent mismatch" << QString::fromStdString(pkg->qualifiedName());
+                res = false;
+                return;
+            }
+            if (!qnameVectorMatches("Types", pkg->types(), expected.udts)) {
+                qDebug() << "Types mismatch" << QString::fromStdString(pkg->qualifiedName());
+                res = false;
+                return;
+            }
+            if (!qnameVectorMatches("Components", pkg->components(), expected.components)) {
+                qDebug() << "Components mismatch" << QString::fromStdString(pkg->qualifiedName());
+                res = false;
+                return;
+            }
         });
+
+        if (!res) {
+            return res;
+        }
         // REQUIRE(qnameVectorMatchesRelations(pkg->dependencies(), expected.dependencies));
     }
+    return true;
 }
 
-void ModelUtil::checkUDTs(lvtmdb::ObjectStore& store, const std::initializer_list<ModelUtil::UDTModel>& udts)
+bool ModelUtil::checkUDTs(lvtmdb::ObjectStore& store, const std::initializer_list<ModelUtil::UDTModel>& udts)
 {
     auto lock = store.readOnlyLock();
 
     for (auto const& expected : udts) {
         lvtmdb::TypeObject *udt = store.getType(expected.qualifiedName);
-        REQUIRE(udt != nullptr);
+        if (udt != nullptr) {
+            qDebug() << "UDT is null";
+            return false;
+        }
+
+        bool res = true;
         udt->withROLock([&] {
-            REQUIRE(ptrMatches(udt->parentNamespace(), expected.nmspc));
-            REQUIRE(ptrMatches(udt->package(), expected.pkg));
+            if (!ptrMatches(udt->parentNamespace(), expected.nmspc)) {
+                qDebug() << "Namespace mismatch" << QString::fromStdString(udt->qualifiedName());
+                res = false;
+                return;
+            }
+            if (!ptrMatches(udt->package(), expected.pkg)) {
+                qDebug() << "Package mismatch" << QString::fromStdString(udt->qualifiedName());
+                res = false;
+                return;
+            }
             // REQUIRE(qnameVectorMatchesRelations(udt->usesInTheImplementation(), expected.usesInImpl));
             // REQUIRE(qnameVectorMatchesRelations(udt->usesInTheInterface(), expected.usesInInter));
             // REQUIRE(qnameVectorMatchesRevRelations(udt->parents(), expected.isA));
-            REQUIRE(qnameVectorMatches(udt->methods(), expected.methods));
-            REQUIRE(qnameVectorMatches(udt->fields(), expected.fields));
+            if (!qnameVectorMatches("Methods", udt->methods(), expected.methods)) {
+                qDebug() << "Methods mismatch" << QString::fromStdString(udt->qualifiedName());
+                res = false;
+                return;
+            }
+            if (!qnameVectorMatches("Fields", udt->fields(), expected.fields)) {
+                qDebug() << "Fields mismatch" << QString::fromStdString(udt->qualifiedName());
+                res = false;
+                return;
+            }
         });
+
+        if (!res) {
+            return res;
+        }
     }
+    return true;
 }
 
 } // namespace Codethink::lvtclp

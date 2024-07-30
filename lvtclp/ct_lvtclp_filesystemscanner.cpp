@@ -123,10 +123,6 @@ FilesystemScanner::IncrementalResult FilesystemScanner::scanCompilationDb()
 {
     for (const std::string& string : d->cdb.getAllFiles()) {
         std::filesystem::path path(string);
-
-#ifdef Q_OS_WINDOWS
-        path = path.generic_string();
-#endif
         scanPath(path);
         scanHeader(path);
     }
@@ -134,8 +130,9 @@ FilesystemScanner::IncrementalResult FilesystemScanner::scanCompilationDb()
     return addToDatabase();
 }
 
-void FilesystemScanner::scanHeader(const std::filesystem::path& path)
+void FilesystemScanner::scanHeader(const std::filesystem::path& ppath)
 {
+    auto path = std::filesystem::path(ppath.generic_string());
     // the compilation database only contains .cpp files
     // but we need to discover changes to headers as well so we can calculate,
     // the incrmental update to-do list before doing a real physical scan (which
@@ -273,8 +270,9 @@ void FilesystemScanner::processFileUsingLakosianRules(const std::filesystem::pat
     }
 }
 
-void FilesystemScanner::scanPath(const std::filesystem::path& path)
+void FilesystemScanner::scanPath(const std::filesystem::path& ppath)
 {
+    auto path = std::filesystem::path(ppath.generic_string());
     if (!std::filesystem::is_regular_file(path)) {
         return;
     }

@@ -101,7 +101,7 @@ int Dep::method()
 
 struct PhysicalFileUpdateManagerFixture {
     PhysicalFileUpdateManagerFixture():
-        topLevel(std::filesystem::temp_directory_path() / "ct_lvtclp_fileupdatemgr_physical_test")
+        topLevel((std::filesystem::temp_directory_path() / "ct_lvtclp_fileupdatemgr_physical_test").generic_string())
     {
         if (std::filesystem::exists(topLevel)) {
             REQUIRE(std::filesystem::remove_all(topLevel));
@@ -302,16 +302,17 @@ TEST_CASE_METHOD(PhysicalFileUpdateManagerFixture, "File update manager physical
 
     INFO("Using top level tmp path = '" << topLevel.string() << "'");
 
-    const CppToolConstants constants{.prefix = topLevel,
-                                     .buildPath = std::filesystem::current_path(),
-                                     .databasePath = ":memory:",
-                                     .nonLakosianDirs = {},
-                                     .thirdPartyDirs = {},
-                                     .ignoreGlobs = {},
-                                     .userProvidedExtraCompileCommandsArgs = {},
-                                     .numThreads = 1,
-                                     .enableLakosianRules = true,
-                                     .printToConsole = false};
+    const CppToolConstants constants{
+        .prefix = topLevel,
+        .buildPath = std::filesystem::weakly_canonical(std::filesystem::current_path()).generic_string(),
+        .databasePath = ":memory:",
+        .nonLakosianDirs = {},
+        .thirdPartyDirs = {},
+        .ignoreGlobs = {},
+        .userProvidedExtraCompileCommandsArgs = {},
+        .numThreads = 1,
+        .enableLakosianRules = true,
+        .printToConsole = false};
 
     CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());

@@ -858,8 +858,8 @@ TEST_CASE("Test run tool with non-lakosian rules")
     std::cout << "And..." << std::filesystem::path(prjPath).generic_string();
 
     const CppToolConstants constants{.prefix = prjPath,
-                                     .buildPath = std::filesystem::current_path(),
-                                     .databasePath = prjPath + "/database",
+                                     .buildPath = {},
+                                     .databasePath = prjPath + "database/",
                                      .nonLakosianDirs = {},
                                      .thirdPartyDirs = {},
                                      .ignoreGlobs = {},

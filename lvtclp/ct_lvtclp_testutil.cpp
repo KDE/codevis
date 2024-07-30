@@ -570,7 +570,7 @@ bool ModelUtil::checkUDTs(lvtmdb::ObjectStore& store, const std::initializer_lis
 
     for (auto const& expected : udts) {
         lvtmdb::TypeObject *udt = store.getType(expected.qualifiedName);
-        if (udt != nullptr) {
+        if (udt == nullptr) {
             qDebug() << "UDT is null";
             return false;
         }

@@ -637,6 +637,10 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
     if (inSource || inBuild) {
         // If it is a file in the source directory, it takes precedence for qualified name deduction
         auto prefixAsString = asLinuxPath(QString::fromStdString(sourceDirectory.string()));
+        if (prefixAsString.endsWith('/')) {
+            prefixAsString.removeLast();
+        }
+
         mainFolderName = prefixAsString.split(LINUX_SEP).last();
         if (mainFolderName.isEmpty()) {
             mainFolderName = "Unnamed Project";

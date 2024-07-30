@@ -420,7 +420,9 @@ static void runTool(CppTool& tool, const bool madeChanges, const unsigned numRun
 }
 
 struct CppToolTestFixture {
-    CppToolTestFixture(): topLevel(std::filesystem::temp_directory_path() / "ct_lvtclp_tool_test")
+    CppToolTestFixture():
+        topLevel(std::filesystem::weakly_canonical(std::filesystem::temp_directory_path() / "ct_lvtclp_tool_test")
+                     .generic_string())
     {
         createTestEnv(topLevel);
     }
@@ -444,16 +446,17 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
                                        {"-Igroups/one/onetop", "-Igroups/one/onedep"},
                                        topLevel);
 
-        const CppToolConstants constants{.prefix = topLevel,
-                                         .buildPath = std::filesystem::current_path(),
-                                         .databasePath = topLevel / "database",
-                                         .nonLakosianDirs = {},
-                                         .thirdPartyDirs = {},
-                                         .ignoreGlobs = {},
-                                         .userProvidedExtraCompileCommandsArgs = {},
-                                         .numThreads = 1,
-                                         .enableLakosianRules = true,
-                                         .printToConsole = false};
+        const CppToolConstants constants{
+            .prefix = topLevel,
+            .buildPath = std::filesystem::weakly_canonical(std::filesystem::current_path()).generic_string(),
+            .databasePath = (topLevel / "database").generic_string(),
+            .nonLakosianDirs = {},
+            .thirdPartyDirs = {},
+            .ignoreGlobs = {},
+            .userProvidedExtraCompileCommandsArgs = {},
+            .numThreads = 1,
+            .enableLakosianRules = true,
+            .printToConsole = false};
 
         CppTool tool(constants, cmds);
         ObjectStore& session = tool.getObjectStore();
@@ -523,16 +526,17 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
             {"-Igroups/one/onetop", "-Igroups/one/onedep"},
             topLevel.string());
 
-        const CppToolConstants constants{.prefix = topLevel,
-                                         .buildPath = std::filesystem::current_path(),
-                                         .databasePath = topLevel / "database",
-                                         .nonLakosianDirs = {},
-                                         .thirdPartyDirs = {},
-                                         .ignoreGlobs = {},
-                                         .userProvidedExtraCompileCommandsArgs = {},
-                                         .numThreads = 1,
-                                         .enableLakosianRules = true,
-                                         .printToConsole = false};
+        const CppToolConstants constants{
+            .prefix = topLevel,
+            .buildPath = std::filesystem::weakly_canonical(std::filesystem::current_path()).generic_string(),
+            .databasePath = (topLevel / "database").generic_string(),
+            .nonLakosianDirs = {},
+            .thirdPartyDirs = {},
+            .ignoreGlobs = {},
+            .userProvidedExtraCompileCommandsArgs = {},
+            .numThreads = 1,
+            .enableLakosianRules = true,
+            .printToConsole = false};
 
         CppTool toolPlus(constants, cmdsPlus);
 
@@ -581,11 +585,12 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
 
 TEST_CASE("Run Tool on example project")
 {
-    StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/hello_world/");
+    std::string projectPrefix = std::filesystem::weakly_canonical(PREFIX + "/hello_world/").generic_string();
+    StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, projectPrefix);
 
-    const CppToolConstants constants{.prefix = PREFIX + "/hello_world/",
+    const CppToolConstants constants{.prefix = projectPrefix,
                                      .buildPath = std::filesystem::current_path(),
-                                     .databasePath = PREFIX + "/hello_world/database",
+                                     .databasePath = (projectPrefix + "/database"),
                                      .nonLakosianDirs = {},
                                      .thirdPartyDirs = {},
                                      .ignoreGlobs = {},
@@ -609,7 +614,7 @@ TEST_CASE("Run Tool on example project")
 
 TEST_CASE("Run Tool on example project incrementally")
 {
-    auto sourcePath = PREFIX + "/package_circular_dependency/";
+    auto sourcePath = std::filesystem::weakly_canonical(PREFIX + "/package_circular_dependency/").generic_string();
 
     auto files = std::initializer_list<std::pair<std::string, std::string>>{
         {"groups/one/onepkg/ct_onepkg_circle.cpp", "ct_onepkg_circle.o"},
@@ -622,7 +627,7 @@ TEST_CASE("Run Tool on example project incrementally")
         sourcePath);
 
     const CppToolConstants constants{.prefix = sourcePath,
-                                     .buildPath = std::filesystem::current_path(),
+                                     .buildPath = std::filesystem::current_path().generic_string(),
                                      .databasePath = sourcePath + "database",
                                      .nonLakosianDirs = {},
                                      .thirdPartyDirs = {},
@@ -682,15 +687,18 @@ TEST_CASE("Run Tool on example project incrementally")
 
 TEST_CASE("Run Tool on project including other lakosian project")
 {
-    auto const prjAPath = PREFIX + "/project_with_includes_outside_src/prjA";
-    auto const prjBPath = PREFIX + "/project_with_includes_outside_src/prjB";
+    auto const prjAPath =
+        std::filesystem::weakly_canonical(PREFIX + "/project_with_includes_outside_src/prjA").generic_string();
+    auto const prjBPath =
+        std::filesystem::weakly_canonical(PREFIX + "/project_with_includes_outside_src/prjB").generic_string();
+
     StaticCompilationDatabase cmds({{"groups/one/oneaaa/oneaaa_comp.cpp", "oneaaa_comp.o"}},
                                    "placeholder",
                                    {"-I" + prjAPath + "/groups/one/oneaaa/", "-I" + prjBPath + "/groups/two/twoaaa/"},
                                    prjAPath);
 
     const CppToolConstants constants{.prefix = prjAPath,
-                                     .buildPath = std::filesystem::current_path(),
+                                     .buildPath = std::filesystem::current_path().generic_string(),
                                      .databasePath = prjAPath + "/database",
                                      .nonLakosianDirs = {},
                                      .thirdPartyDirs = {},
@@ -734,7 +742,7 @@ struct HashFunc {
 
 TEST_CASE("Run Tool store test-only dependencies")
 {
-    auto const prjAPath = PREFIX + "/test_only_dependencies/prjA";
+    auto const prjAPath = std::filesystem::weakly_canonical(PREFIX + "/test_only_dependencies/prjA").generic_string();
     StaticCompilationDatabase cmds(
         {
             {"groups/one/oneaaa/oneaaa_comp.cpp", "oneaaa_comp.o"},
@@ -747,7 +755,7 @@ TEST_CASE("Run Tool store test-only dependencies")
         prjAPath);
 
     const CppToolConstants constants{.prefix = prjAPath,
-                                     .buildPath = std::filesystem::current_path(),
+                                     .buildPath = std::filesystem::current_path().generic_string(),
                                      .databasePath = prjAPath + "/database",
                                      .nonLakosianDirs = {},
                                      .thirdPartyDirs = {},

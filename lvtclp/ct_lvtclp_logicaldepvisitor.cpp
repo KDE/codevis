@@ -39,6 +39,7 @@
 #include <ct_lvtclp_clputil.h>
 
 #include <QDebug>
+#include <QtGlobal>
 
 #include <clang/AST/ASTContext.h>
 #include <clang/Basic/Diagnostic.h>
@@ -134,6 +135,11 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
     d_messageCallback(std::move(messageCallback)),
     d_constants(constants)
 {
+#ifdef Q_OS_WINDOWS
+    std::string ourPath = std::filesystem::path(file.str()).generic_string();
+#else
+    std::string ourPath = file.str();
+#endif
     if (constants.enableLakosianRules) {
         sourceFilePtr = ClpUtil::writeSourceFile(file.str(),
                                                  false,

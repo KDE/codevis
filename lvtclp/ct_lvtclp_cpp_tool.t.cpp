@@ -126,310 +126,290 @@ static void createTestEnv(const std::filesystem::path& topLevel)
     createDep(topLevel);
 }
 
-static void checkDatabaseOriginal(ObjectStore& session)
-// check the database before any files are removed
-{
-    const std::initializer_list<ModelUtil::SourceFileModel> files = {{"groups/one/onedep/onedep_dep.cpp",
-                                                                      false,
-                                                                      "groups/one/onedep",
-                                                                      "groups/one/onedep/onedep_dep",
-                                                                      {"onedep"},
-                                                                      {},
-                                                                      {"groups/one/onedep/onedep_dep.h"}},
-                                                                     {"groups/one/onedep/onedep_dep.h",
-                                                                      true,
-                                                                      "groups/one/onedep",
-                                                                      "groups/one/onedep/onedep_dep",
-                                                                      {"onedep"},
-                                                                      {"onedep::Dep"},
-                                                                      {"groups/one/onetop/onetop_top.h"}},
-                                                                     {"groups/one/onetop/onetop_top.cpp",
-                                                                      false,
-                                                                      "groups/one/onetop",
-                                                                      "groups/one/onetop/onetop_top",
-                                                                      {"onetop"},
-                                                                      {},
-                                                                      {"groups/one/onetop/onetop_top.h"}},
-                                                                     {"groups/one/onetop/onetop_top.h",
-                                                                      true,
-                                                                      "groups/one/onetop",
-                                                                      "groups/one/onetop/onetop_top",
-                                                                      {"onetop"},
-                                                                      {"onetop::Base", "onetop::Top"},
-                                                                      {}}};
+namespace DatabaseOriginal {
+const std::initializer_list<ModelUtil::SourceFileModel> files = {{"groups/one/onedep/onedep_dep.cpp",
+                                                                  false,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_dep",
+                                                                  {"onedep"},
+                                                                  {},
+                                                                  {"groups/one/onedep/onedep_dep.h"}},
+                                                                 {"groups/one/onedep/onedep_dep.h",
+                                                                  true,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_dep",
+                                                                  {"onedep"},
+                                                                  {"onedep::Dep"},
+                                                                  {"groups/one/onetop/onetop_top.h"}},
+                                                                 {"groups/one/onetop/onetop_top.cpp",
+                                                                  false,
+                                                                  "groups/one/onetop",
+                                                                  "groups/one/onetop/onetop_top",
+                                                                  {"onetop"},
+                                                                  {},
+                                                                  {"groups/one/onetop/onetop_top.h"}},
+                                                                 {"groups/one/onetop/onetop_top.h",
+                                                                  true,
+                                                                  "groups/one/onetop",
+                                                                  "groups/one/onetop/onetop_top",
+                                                                  {"onetop"},
+                                                                  {"onetop::Base", "onetop::Top"},
+                                                                  {}}};
 
-    const std::initializer_list<ModelUtil::ComponentModel> comps = {
-        {"groups/one/onedep/onedep_dep",
-         "onedep_dep",
-         {"groups/one/onedep/onedep_dep.h", "groups/one/onedep/onedep_dep.cpp"},
-         {"groups/one/onetop/onetop_top"}},
-        {"groups/one/onetop/onetop_top",
-         "onetop_top",
-         {"groups/one/onetop/onetop_top.h", "groups/one/onetop/onetop_top.cpp"},
-         {}},
-    };
+const std::initializer_list<ModelUtil::ComponentModel> comps = {
+    {"groups/one/onedep/onedep_dep",
+     "onedep_dep",
+     {"groups/one/onedep/onedep_dep.h", "groups/one/onedep/onedep_dep.cpp"},
+     {"groups/one/onetop/onetop_top"}},
+    {"groups/one/onetop/onetop_top",
+     "onetop_top",
+     {"groups/one/onetop/onetop_top.h", "groups/one/onetop/onetop_top.cpp"},
+     {}},
+};
 
-    const std::initializer_list<ModelUtil::PackageModel> pkgs = {
-        {"groups/one/onedep", "groups/one", {"onedep::Dep"}, {"groups/one/onedep/onedep_dep"}, {"groups/one/onetop"}},
-        {"groups/one/onetop", "groups/one", {"onetop::Base", "onetop::Top"}, {"groups/one/onetop/onetop_top"}, {}}};
+const std::initializer_list<ModelUtil::PackageModel> pkgs = {
+    {"groups/one/onedep", "groups/one", {"onedep::Dep"}, {"groups/one/onedep/onedep_dep"}, {"groups/one/onetop"}},
+    {"groups/one/onetop", "groups/one", {"onetop::Base", "onetop::Top"}, {"groups/one/onetop/onetop_top"}, {}}};
 
-    const std::initializer_list<ModelUtil::UDTModel> udts = {
-        {
-            "onedep::Dep",
-            "onedep",
-            "groups/one/onedep",
-            {"onetop::Top"},
-            {},
-            {},
-            {"onedep::Dep::method"},
-            {"onedep::Dep::top"},
-        },
-        {
-            "onetop::Base",
-            "onetop",
-            "groups/one/onetop",
-            {},
-            {},
-            {},
-            {},
-            {},
-        },
-        {
-            "onetop::Top",
-            "onetop",
-            "groups/one/onetop",
-            {},
-            {},
-            {"onetop::Base"},
-            {"onetop::Top::method"},
-            {},
-        },
-    };
+const std::initializer_list<ModelUtil::UDTModel> udts = {
+    {
+        "onedep::Dep",
+        "onedep",
+        "groups/one/onedep",
+        {"onetop::Top"},
+        {},
+        {},
+        {"onedep::Dep::method"},
+        {"onedep::Dep::top"},
+    },
+    {
+        "onetop::Base",
+        "onetop",
+        "groups/one/onetop",
+        {},
+        {},
+        {},
+        {},
+        {},
+    },
+    {
+        "onetop::Top",
+        "onetop",
+        "groups/one/onetop",
+        {},
+        {},
+        {"onetop::Base"},
+        {"onetop::Top::method"},
+        {},
+    },
+};
+}; // namespace DatabaseOriginal
 
-    ModelUtil::checkSourceFiles(session, files);
-    ModelUtil::checkComponents(session, comps);
-    ModelUtil::checkPackages(session, pkgs);
-    ModelUtil::checkUDTs(session, udts);
-}
+namespace DatabaseModifiedFile {
+const std::initializer_list<ModelUtil::SourceFileModel> files = {{"groups/one/onedep/onedep_dep.cpp",
+                                                                  false,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_dep",
+                                                                  {"onedep"},
+                                                                  {},
+                                                                  {"groups/one/onedep/onedep_dep.h"}},
+                                                                 {"groups/one/onedep/onedep_dep.h",
+                                                                  true,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_dep",
+                                                                  {"onedep"},
+                                                                  {"onedep::Dep"},
+                                                                  {"groups/one/onetop/onetop_top.h"}},
+                                                                 {"groups/one/onetop/onetop_top.cpp",
+                                                                  false,
+                                                                  "groups/one/onetop",
+                                                                  "groups/one/onetop/onetop_top",
+                                                                  {"onetop"},
+                                                                  {},
+                                                                  {"groups/one/onetop/onetop_top.h"}},
+                                                                 // NewClass added:
+                                                                 {"groups/one/onetop/onetop_top.h",
+                                                                  true,
+                                                                  "groups/one/onetop",
+                                                                  "groups/one/onetop/onetop_top",
+                                                                  {"onetop"},
+                                                                  {"onetop::Base", "onetop::Top", "onetop::NewClass"},
+                                                                  {}}};
 
-static void checkDatabaseModifiedFile(ObjectStore& session, bool printToConsole = false)
-{
-    const std::initializer_list<ModelUtil::SourceFileModel> files = {
-        {"groups/one/onedep/onedep_dep.cpp",
-         false,
-         "groups/one/onedep",
-         "groups/one/onedep/onedep_dep",
-         {"onedep"},
-         {},
-         {"groups/one/onedep/onedep_dep.h"}},
-        {"groups/one/onedep/onedep_dep.h",
-         true,
-         "groups/one/onedep",
-         "groups/one/onedep/onedep_dep",
-         {"onedep"},
-         {"onedep::Dep"},
-         {"groups/one/onetop/onetop_top.h"}},
-        {"groups/one/onetop/onetop_top.cpp",
-         false,
-         "groups/one/onetop",
-         "groups/one/onetop/onetop_top",
-         {"onetop"},
-         {},
-         {"groups/one/onetop/onetop_top.h"}},
-        // NewClass added:
-        {"groups/one/onetop/onetop_top.h",
-         true,
-         "groups/one/onetop",
-         "groups/one/onetop/onetop_top",
-         {"onetop"},
-         {"onetop::Base", "onetop::Top", "onetop::NewClass"},
-         {}}};
+const std::initializer_list<ModelUtil::ComponentModel> comps = {
+    {"groups/one/onedep/onedep_dep",
+     "onedep_dep",
+     {"groups/one/onedep/onedep_dep.h", "groups/one/onedep/onedep_dep.cpp"},
+     {"groups/one/onetop/onetop_top"}},
+    {"groups/one/onetop/onetop_top",
+     "onetop_top",
+     {"groups/one/onetop/onetop_top.h", "groups/one/onetop/onetop_top.cpp"},
+     {}},
+};
 
-    const std::initializer_list<ModelUtil::ComponentModel> comps = {
-        {"groups/one/onedep/onedep_dep",
-         "onedep_dep",
-         {"groups/one/onedep/onedep_dep.h", "groups/one/onedep/onedep_dep.cpp"},
-         {"groups/one/onetop/onetop_top"}},
-        {"groups/one/onetop/onetop_top",
-         "onetop_top",
-         {"groups/one/onetop/onetop_top.h", "groups/one/onetop/onetop_top.cpp"},
-         {}},
-    };
+const std::initializer_list<ModelUtil::PackageModel> pkgs = {
+    {"groups/one/onedep", "groups/one", {"onedep::Dep"}, {"groups/one/onedep/onedep_dep"}, {"groups/one/onetop"}},
+    {"groups/one/onetop",
+     "groups/one",
+     {"onetop::Base", "onetop::Top", "onetop::NewClass"},
+     {"groups/one/onetop/onetop_top"},
+     {}}};
 
-    const std::initializer_list<ModelUtil::PackageModel> pkgs = {
-        {"groups/one/onedep", "groups/one", {"onedep::Dep"}, {"groups/one/onedep/onedep_dep"}, {"groups/one/onetop"}},
-        {"groups/one/onetop",
-         "groups/one",
-         {"onetop::Base", "onetop::Top", "onetop::NewClass"},
-         {"groups/one/onetop/onetop_top"},
-         {}}};
+const std::initializer_list<ModelUtil::UDTModel> udts = {
+    {
+        "onedep::Dep",
+        "onedep",
+        "groups/one/onedep",
+        {"onetop::Top"},
+        {},
+        {},
+        {"onedep::Dep::method"},
+        {"onedep::Dep::top"},
+    },
+    {
+        "onetop::Base",
+        "onetop",
+        "groups/one/onetop",
+        {},
+        {},
+        {},
+        {},
+        {},
+    },
+    {
+        "onetop::Top",
+        "onetop",
+        "groups/one/onetop",
+        {},
+        {},
+        {"onetop::Base"},
+        {"onetop::Top::method"},
+        {},
+    },
+    {
+        "onetop::NewClass",
+        "onetop",
+        "groups/one/onetop",
+        {},
+        {},
+        {},
+        {},
+        {},
+    },
+};
+}; // namespace DatabaseModifiedFile
 
-    const std::initializer_list<ModelUtil::UDTModel> udts = {
-        {
-            "onedep::Dep",
-            "onedep",
-            "groups/one/onedep",
-            {"onetop::Top"},
-            {},
-            {},
-            {"onedep::Dep::method"},
-            {"onedep::Dep::top"},
-        },
-        {
-            "onetop::Base",
-            "onetop",
-            "groups/one/onetop",
-            {},
-            {},
-            {},
-            {},
-            {},
-        },
-        {
-            "onetop::Top",
-            "onetop",
-            "groups/one/onetop",
-            {},
-            {},
-            {"onetop::Base"},
-            {"onetop::Top::method"},
-            {},
-        },
-        {
-            "onetop::NewClass",
-            "onetop",
-            "groups/one/onetop",
-            {},
-            {},
-            {},
-            {},
-            {},
-        },
-    };
-
-    ModelUtil::checkSourceFiles(session, files);
-    ModelUtil::checkComponents(session, comps);
-    ModelUtil::checkPackages(session, pkgs);
-    ModelUtil::checkUDTs(session, udts);
-}
-
-static void checkDatabaseNewFiles(ObjectStore& session)
+namespace DatabaseNewFile {
 // check the database after onedep_newfile has been added
-{
-    const std::initializer_list<ModelUtil::SourceFileModel> files = {{"groups/one/onedep/onedep_dep.cpp",
-                                                                      false,
-                                                                      "groups/one/onedep",
-                                                                      "groups/one/onedep/onedep_dep",
-                                                                      {"onedep"},
-                                                                      {},
-                                                                      {"groups/one/onedep/onedep_dep.h"}},
-                                                                     {"groups/one/onedep/onedep_dep.h",
-                                                                      true,
-                                                                      "groups/one/onedep",
-                                                                      "groups/one/onedep/onedep_dep",
-                                                                      {"onedep"},
-                                                                      {"onedep::Dep"},
-                                                                      {"groups/one/onetop/onetop_top.h"}},
-                                                                     {"groups/one/onedep/onedep_newfile.cpp",
-                                                                      false,
-                                                                      "groups/one/onedep",
-                                                                      "groups/one/onedep/onedep_newfile",
-                                                                      {},
-                                                                      {},
-                                                                      {"groups/one/onedep/onedep_newfile.h"}},
-                                                                     {"groups/one/onedep/onedep_newfile.h",
-                                                                      true,
-                                                                      "groups/one/onedep",
-                                                                      "groups/one/onedep/onedep_newfile",
-                                                                      {"onedep"},
-                                                                      {"onedep::NewFile"},
-                                                                      {}},
-                                                                     {"groups/one/onetop/onetop_top.cpp",
-                                                                      false,
-                                                                      "groups/one/onetop",
-                                                                      "groups/one/onetop/onetop_top",
-                                                                      {"onetop"},
-                                                                      {},
-                                                                      {"groups/one/onetop/onetop_top.h"}},
-                                                                     {"groups/one/onetop/onetop_top.h",
-                                                                      true,
-                                                                      "groups/one/onetop",
-                                                                      "groups/one/onetop/onetop_top",
-                                                                      {"onetop"},
-                                                                      {"onetop::Base", "onetop::Top"},
-                                                                      {}}};
+const std::initializer_list<ModelUtil::SourceFileModel> files = {{"groups/one/onedep/onedep_dep.cpp",
+                                                                  false,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_dep",
+                                                                  {"onedep"},
+                                                                  {},
+                                                                  {"groups/one/onedep/onedep_dep.h"}},
+                                                                 {"groups/one/onedep/onedep_dep.h",
+                                                                  true,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_dep",
+                                                                  {"onedep"},
+                                                                  {"onedep::Dep"},
+                                                                  {"groups/one/onetop/onetop_top.h"}},
+                                                                 {"groups/one/onedep/onedep_newfile.cpp",
+                                                                  false,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_newfile",
+                                                                  {},
+                                                                  {},
+                                                                  {"groups/one/onedep/onedep_newfile.h"}},
+                                                                 {"groups/one/onedep/onedep_newfile.h",
+                                                                  true,
+                                                                  "groups/one/onedep",
+                                                                  "groups/one/onedep/onedep_newfile",
+                                                                  {"onedep"},
+                                                                  {"onedep::NewFile"},
+                                                                  {}},
+                                                                 {"groups/one/onetop/onetop_top.cpp",
+                                                                  false,
+                                                                  "groups/one/onetop",
+                                                                  "groups/one/onetop/onetop_top",
+                                                                  {"onetop"},
+                                                                  {},
+                                                                  {"groups/one/onetop/onetop_top.h"}},
+                                                                 {"groups/one/onetop/onetop_top.h",
+                                                                  true,
+                                                                  "groups/one/onetop",
+                                                                  "groups/one/onetop/onetop_top",
+                                                                  {"onetop"},
+                                                                  {"onetop::Base", "onetop::Top"},
+                                                                  {}}};
 
-    const std::initializer_list<ModelUtil::ComponentModel> comps = {
-        {"groups/one/onedep/onedep_dep",
-         "onedep_dep",
-         {"groups/one/onedep/onedep_dep.h", "groups/one/onedep/onedep_dep.cpp"},
-         {"groups/one/onetop/onetop_top"}},
-        {"groups/one/onedep/onedep_newfile",
-         "onedep_newfile",
-         {"groups/one/onedep/onedep_newfile.h", "groups/one/onedep/onedep_newfile.cpp"},
-         {}},
-        {"groups/one/onetop/onetop_top",
-         "onetop_top",
-         {"groups/one/onetop/onetop_top.h", "groups/one/onetop/onetop_top.cpp"},
-         {}},
-    };
+const std::initializer_list<ModelUtil::ComponentModel> comps = {
+    {"groups/one/onedep/onedep_dep",
+     "onedep_dep",
+     {"groups/one/onedep/onedep_dep.h", "groups/one/onedep/onedep_dep.cpp"},
+     {"groups/one/onetop/onetop_top"}},
+    {"groups/one/onedep/onedep_newfile",
+     "onedep_newfile",
+     {"groups/one/onedep/onedep_newfile.h", "groups/one/onedep/onedep_newfile.cpp"},
+     {}},
+    {"groups/one/onetop/onetop_top",
+     "onetop_top",
+     {"groups/one/onetop/onetop_top.h", "groups/one/onetop/onetop_top.cpp"},
+     {}},
+};
 
-    const std::initializer_list<ModelUtil::PackageModel> pkgs = {
-        {"groups/one/onedep",
-         "groups/one",
-         {"onedep::Dep", "onedep::NewFile"},
-         {"groups/one/onedep/onedep_dep", "groups/one/onedep/onedep_newfile"},
-         {"groups/one/onetop"}},
-        {"groups/one/onetop", "groups/one", {"onetop::Base", "onetop::Top"}, {"groups/one/onetop/onetop_top"}, {}}};
+const std::initializer_list<ModelUtil::PackageModel> pkgs = {
+    {"groups/one/onedep",
+     "groups/one",
+     {"onedep::Dep", "onedep::NewFile"},
+     {"groups/one/onedep/onedep_dep", "groups/one/onedep/onedep_newfile"},
+     {"groups/one/onetop"}},
+    {"groups/one/onetop", "groups/one", {"onetop::Base", "onetop::Top"}, {"groups/one/onetop/onetop_top"}, {}}};
 
-    const std::initializer_list<ModelUtil::UDTModel> udts = {
-        {
-            "onedep::Dep",
-            "onedep",
-            "groups/one/onedep",
-            {"onetop::Top"},
-            {},
-            {},
-            {"onedep::Dep::method"},
-            {"onedep::Dep::top"},
-        },
-        {
-            "onedep::NewFile",
-            "onedep",
-            "groups/one/onedep",
-            {},
-            {},
-            {},
-            {},
-            {},
-        },
-        {
-            "onetop::Base",
-            "onetop",
-            "groups/one/onetop",
-            {},
-            {},
-            {},
-            {},
-            {},
-        },
-        {
-            "onetop::Top",
-            "onetop",
-            "groups/one/onetop",
-            {},
-            {},
-            {"onetop::Base"},
-            {"onetop::Top::method"},
-            {},
-        },
-    };
-
-    ModelUtil::checkSourceFiles(session, files);
-    ModelUtil::checkComponents(session, comps);
-    ModelUtil::checkPackages(session, pkgs);
-    ModelUtil::checkUDTs(session, udts);
-}
+const std::initializer_list<ModelUtil::UDTModel> udts = {
+    {
+        "onedep::Dep",
+        "onedep",
+        "groups/one/onedep",
+        {"onetop::Top"},
+        {},
+        {},
+        {"onedep::Dep::method"},
+        {"onedep::Dep::top"},
+    },
+    {
+        "onedep::NewFile",
+        "onedep",
+        "groups/one/onedep",
+        {},
+        {},
+        {},
+        {},
+        {},
+    },
+    {
+        "onetop::Base",
+        "onetop",
+        "groups/one/onetop",
+        {},
+        {},
+        {},
+        {},
+        {},
+    },
+    {
+        "onetop::Top",
+        "onetop",
+        "groups/one/onetop",
+        {},
+        {},
+        {"onetop::Base"},
+        {"onetop::Top::method"},
+        {},
+    },
+};
+}; // namespace DatabaseNewFile
 
 static void runTool(CppTool& tool, const bool madeChanges, const unsigned numRuns = 1, bool verbose = false)
 {
@@ -470,11 +450,19 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
 
         // initial parse
         runTool(tool, true);
-        checkDatabaseOriginal(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseOriginal::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseOriginal::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseOriginal::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseOriginal::udts));
 
         // re-run incrementally
         runTool(tool, false, NUM_RERUNS);
-        checkDatabaseOriginal(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseOriginal::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseOriginal::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseOriginal::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseOriginal::udts));
 
         // modify a file, adding a class
         std::filesystem::path fileToChange = topLevel / "groups/one/onetop/onetop_top.h";
@@ -485,18 +473,33 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
             of << "namespace onetop { class NewClass {}; }" << std::endl;
         }
         runTool(tool, true);
-        checkDatabaseModifiedFile(session);
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseModifiedFile::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseModifiedFile::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseModifiedFile::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseModifiedFile::udts));
 
         // re-run incrementally
         runTool(tool, false, NUM_RERUNS);
-        checkDatabaseModifiedFile(session);
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseModifiedFile::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseModifiedFile::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseModifiedFile::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseModifiedFile::udts));
 
         // change modified file back again, run again, and re-run
         createTestEnv(topLevel);
         runTool(tool, true);
-        checkDatabaseOriginal(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseOriginal::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseOriginal::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseOriginal::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseOriginal::udts));
+
         runTool(tool, false, NUM_RERUNS);
-        checkDatabaseOriginal(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseOriginal::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseOriginal::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseOriginal::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseOriginal::udts));
     }
 
     // add a new component (already in the above compilation database)
@@ -524,16 +527,34 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
     )");
         ObjectStore& session = toolPlus.getObjectStore();
         runTool(toolPlus, true);
-        checkDatabaseNewFiles(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseNewFile::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseNewFile::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseNewFile::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseNewFile::udts));
+
         runTool(toolPlus, false, NUM_RERUNS);
-        checkDatabaseNewFiles(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseNewFile::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseNewFile::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseNewFile::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseNewFile::udts));
 
         // delete the new component and re-run
         createTestEnv(topLevel);
         runTool(toolPlus, true);
-        checkDatabaseOriginal(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseOriginal::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseOriginal::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseOriginal::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseOriginal::udts));
+
         runTool(toolPlus, false, NUM_RERUNS);
-        checkDatabaseOriginal(session);
+
+        REQUIRE(ModelUtil::checkSourceFiles(session, DatabaseOriginal::files));
+        REQUIRE(ModelUtil::checkComponents(session, DatabaseOriginal::comps));
+        REQUIRE(ModelUtil::checkPackages(session, DatabaseOriginal::pkgs));
+        REQUIRE(ModelUtil::checkUDTs(session, DatabaseOriginal::udts));
     }
 }
 

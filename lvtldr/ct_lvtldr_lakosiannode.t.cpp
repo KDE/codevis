@@ -374,7 +374,10 @@ void checkUDTs(NodeStorage& store)
 }
 
 struct LakosianNodeTestFixture {
-    LakosianNodeTestFixture(): topLevel(std::filesystem::temp_directory_path() / "ct_lvtldr_lakosiannode_test")
+    LakosianNodeTestFixture():
+        topLevel(
+            std::filesystem::weakly_canonical(std::filesystem::temp_directory_path() / "ct_lvtldr_lakosiannode_test")
+                .generic_string())
     {
         createTestEnv(topLevel);
     }

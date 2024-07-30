@@ -34,7 +34,7 @@ TmpDir::~TmpDir()
 
 std::filesystem::path TmpDir::path() const
 {
-    return tmp_dir;
+    return tmp_dir.generic_string();
 }
 
 std::filesystem::path TmpDir::createDir(const std::string& dirname) const
@@ -42,6 +42,7 @@ std::filesystem::path TmpDir::createDir(const std::string& dirname) const
     auto p = path() / dirname;
     QDir dir;
     bool res = dir.mkpath(QString::fromStdString(p.string()));
+    std::ignore = res;
     assert(res);
     return p;
 }

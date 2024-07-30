@@ -141,7 +141,7 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
     std::string ourPath = file.str();
 #endif
     if (constants.enableLakosianRules) {
-        sourceFilePtr = ClpUtil::writeSourceFile(file.str(),
+        sourceFilePtr = ClpUtil::writeSourceFile(ourPath,
                                                  false,
                                                  d_memDb,
                                                  constants.prefix,
@@ -149,7 +149,7 @@ LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
                                                  constants.thirdPartyDirs);
     } else {
         sourceFilePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
-                                                              file.str(),
+                                                              ourPath,
                                                               constants.prefix.string(),
                                                               constants.buildPath.string(),
                                                               constants.prefix.string());

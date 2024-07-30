@@ -119,6 +119,9 @@ struct LVTCLP_EXPORT ClpUtil {
     static long getThreadId();
     // returns the id of this thread as a long.
 
+    static std::vector<llvm::GlobPattern> stringListToGlobPattern(const std::vector<std::string>& stringList);
+    static std::vector<std::filesystem::path> ensureCanonical(const std::vector<std::filesystem::path>& maybeCanonical);
+
     static bool isComponentOnPackageGroup(const std::filesystem::path& componentPath);
     static bool isComponentOnStandalonePackage(const std::filesystem::path& componentPath);
 

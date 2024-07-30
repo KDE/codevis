@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_logicaldepvisitor.h>
 
 #include <ct_lvtmdb_componentobject.h>
@@ -122,36 +123,30 @@ namespace Codethink::lvtclp {
 LogicalDepVisitor::LogicalDepVisitor(clang::ASTContext *Context,
                                      clang::StringRef file,
                                      lvtmdb::ObjectStore& memDb,
-                                     std::filesystem::path prefix,
-                                     std::filesystem::path buildFolder,
-                                     std::vector<std::filesystem::path> nonLakosians,
-                                     std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                                     const CppToolConstants& constants,
                                      std::shared_ptr<VisitLog> visitLog,
                                      std::shared_ptr<StaticFnHandler> staticFnHandler,
-                                     std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                                     bool catchCodeAnalysisOutput,
-                                     bool enableLakosianRules):
+                                     std::optional<std::function<void(const std::string&, long)>> messageCallback):
     Context(Context),
     d_memDb(memDb),
-    d_prefix(std::filesystem::weakly_canonical(prefix)),
-    d_buildFolder(buildFolder),
-    d_nonLakosianDirs(std::move(nonLakosians)),
-    d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_visitLog_p(std::move(visitLog)),
     d_staticFnHandler_p(std::move(staticFnHandler)),
     d_messageCallback(std::move(messageCallback)),
-    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-    d_enableLakosianRules(enableLakosianRules)
+    d_constants(constants)
 {
-    if (d_enableLakosianRules) {
-        sourceFilePtr =
-            ClpUtil::writeSourceFile(file.str(), false, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+    if (constants.enableLakosianRules) {
+        sourceFilePtr = ClpUtil::writeSourceFile(file.str(),
+                                                 false,
+                                                 d_memDb,
+                                                 constants.prefix,
+                                                 constants.nonLakosianDirs,
+                                                 constants.thirdPartyDirs);
     } else {
         sourceFilePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                               file.str(),
-                                                              d_prefix.string(),
-                                                              d_buildFolder.string(),
-                                                              d_prefix.string());
+                                                              constants.prefix.string(),
+                                                              constants.buildPath.string(),
+                                                              constants.prefix.string());
     }
 }
 
@@ -192,14 +187,19 @@ bool LogicalDepVisitor::VisitNamespaceDecl(clang::NamespaceDecl *namespaceDecl)
     std::string sourceFile = ClpUtil::getRealPath(namespaceDecl->getLocation(), srcMgr);
 
     lvtmdb::FileObject *filePtr = [&]() {
-        if (d_enableLakosianRules) {
-            return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        if (d_constants.enableLakosianRules) {
+            return ClpUtil::writeSourceFile(sourceFile,
+                                            true,
+                                            d_memDb,
+                                            d_constants.prefix,
+                                            d_constants.nonLakosianDirs,
+                                            d_constants.thirdPartyDirs);
         } else {
             return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                          sourceFile,
-                                                         d_prefix.string(),
-                                                         d_buildFolder.string(),
-                                                         d_prefix.string());
+                                                         d_constants.prefix.string(),
+                                                         d_constants.buildPath.string(),
+                                                         d_constants.prefix.string());
         }
     }();
 
@@ -583,7 +583,7 @@ void LogicalDepVisitor::processBaseClassTemplateArgs(const clang::Decl *decl,
                 continue;
             }
 
-            if (d_catchCodeAnalysisOutput) {
+            if (d_constants.printToConsole) {
                 debugRelationship(parent, mdbType, decl, false, "templated base");
             }
             ClpUtil::addUsesInInter(parent, mdbType);
@@ -739,19 +739,19 @@ lvtmdb::FunctionObject *LogicalDepVisitor::getOrAddFreeFunctionToDb(const clang:
         // Only persist the associated file if it is where the function is _defined_
         // (not if it is merely _declared_).
         lvtmdb::FileObject *filePtr = [&]() {
-            if (d_enableLakosianRules) {
+            if (d_constants.enableLakosianRules) {
                 return ClpUtil::writeSourceFile(sourceFile,
                                                 false,
                                                 d_memDb,
-                                                d_prefix,
-                                                d_nonLakosianDirs,
-                                                d_thirdPartyDirs);
+                                                d_constants.prefix,
+                                                d_constants.nonLakosianDirs,
+                                                d_constants.thirdPartyDirs);
             } else {
                 return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                              sourceFile,
-                                                             d_prefix.string(),
-                                                             d_buildFolder.string(),
-                                                             d_prefix.string());
+                                                             d_constants.prefix.string(),
+                                                             d_constants.buildPath.string(),
+                                                             d_constants.prefix.string());
             }
         }();
 
@@ -1475,7 +1475,7 @@ std::vector<lvtmdb::TypeObject *> LogicalDepVisitor::listChildStatementRelations
         }
 
         // Add "parent usesInTheImplementation tempType" if it isn't already recorded
-        if (d_catchCodeAnalysisOutput) {
+        if (d_constants.printToConsole) {
             debugRelationship(parent, tempType, decl, true, "temporary");
         }
         ret.push_back(tempType);
@@ -1483,7 +1483,7 @@ std::vector<lvtmdb::TypeObject *> LogicalDepVisitor::listChildStatementRelations
         // add any template arguments
         std::vector<lvtmdb::TypeObject *> args = getTemplateArguments(type, decl, "temporary template arg");
         for (lvtmdb::TypeObject *arg : args) {
-            if (d_catchCodeAnalysisOutput) {
+            if (d_constants.printToConsole) {
                 debugRelationship(parent, arg, decl, true, "temporary template arg");
             }
             ret.push_back(arg);
@@ -1512,7 +1512,7 @@ std::vector<lvtmdb::TypeObject *> LogicalDepVisitor::listChildStatementRelations
                 return;
             }
 
-            if (d_catchCodeAnalysisOutput) {
+            if (d_constants.printToConsole) {
                 debugRelationship(parent, target, decl, true, "static method call");
             }
             ret.push_back(target);
@@ -1536,7 +1536,7 @@ std::vector<lvtmdb::TypeObject *> LogicalDepVisitor::listChildStatementRelations
                 return;
             }
 
-            if (d_catchCodeAnalysisOutput) {
+            if (d_constants.printToConsole) {
                 debugRelationship(parent, target, decl, true, "static field reference");
             }
             ret.push_back(target);
@@ -1582,7 +1582,7 @@ std::vector<lvtmdb::TypeObject *> LogicalDepVisitor::listChildStatementRelations
                     continue;
                 }
 
-                if (d_catchCodeAnalysisOutput) {
+                if (d_constants.printToConsole) {
                     debugRelationship(parent, target, decl, true, "template func parameter");
                 }
                 ret.push_back(target);
@@ -1624,7 +1624,7 @@ std::vector<lvtmdb::TypeObject *> LogicalDepVisitor::listChildStatementRelations
             return;
         }
 
-        if (d_catchCodeAnalysisOutput) {
+        if (d_constants.printToConsole) {
             debugRelationship(parent, dest, decl, true, "CXXUnresolvedConstructExpr");
         }
         ret.push_back(dest);
@@ -1799,14 +1799,19 @@ void LogicalDepVisitor::addUDTSourceFile(lvtmdb::TypeObject *udt, const clang::D
     const std::string sourceFile = ClpUtil::getRealPath(decl->getLocation(), Context->getSourceManager());
 
     lvtmdb::FileObject *filePtr = [&]() {
-        if (d_enableLakosianRules) {
-            return ClpUtil::writeSourceFile(sourceFile, true, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        if (d_constants.enableLakosianRules) {
+            return ClpUtil::writeSourceFile(sourceFile,
+                                            true,
+                                            d_memDb,
+                                            d_constants.prefix,
+                                            d_constants.nonLakosianDirs,
+                                            d_constants.thirdPartyDirs);
         } else {
             return nonLakosian::ClpUtil::writeSourceFile(d_memDb,
                                                          sourceFile,
-                                                         d_prefix.string(),
-                                                         d_buildFolder.string(),
-                                                         d_prefix.string());
+                                                         d_constants.prefix.string(),
+                                                         d_constants.buildPath.string(),
+                                                         d_constants.prefix.string());
         }
     }();
     if (!filePtr) {
@@ -1955,12 +1960,12 @@ void LogicalDepVisitor::addRelation(lvtmdb::TypeObject *source,
                                     const char *desc)
 {
     if (access == clang::AS_public || access == clang::AS_protected) {
-        if (d_catchCodeAnalysisOutput) {
+        if (d_constants.printToConsole) {
             debugRelationship(source, target, decl, false, desc);
         }
         ClpUtil::addUsesInInter(source, target);
     } else if (access == clang::AS_private) {
-        if (d_catchCodeAnalysisOutput) {
+        if (d_constants.printToConsole) {
             debugRelationship(source, target, decl, true, desc);
         }
         ClpUtil::addUsesInImpl(source, target);
@@ -2004,7 +2009,7 @@ void LogicalDepVisitor::addRelation(lvtmdb::TypeObject *source,
     // handle if target has template arguments
     std::vector<lvtmdb::TypeObject *> args = getTemplateArguments(targetType, decl, desc);
     for (lvtmdb::TypeObject *arg : args) {
-        if (d_catchCodeAnalysisOutput) {
+        if (d_constants.printToConsole) {
             debugRelationship(source, arg, decl, usesInImpl, desc);
         }
         if (usesInImpl) {

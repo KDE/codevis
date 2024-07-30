@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_filesystemscanner.h>
 
 #include <ct_lvtmdb_componentobject.h>
@@ -75,17 +76,10 @@ namespace Codethink::lvtclp {
 struct FilesystemScanner::Private {
     lvtmdb::ObjectStore& memDb;
     // Memory database
-    std::filesystem::path prefix;
-    // common prefix of paths
-
-    std::filesystem::path buildPath;
-    // where our project is being build
-    // needed in case of sources generated as build artifacts
 
     const LvtCompilationDatabase& cdb;
     // compilation database used so that we don't add things deliberately
     // configured out of the build
-    std::vector<std::filesystem::path> nonLakosianDirs;
 
     std::vector<FoundThing> foundFiles;
 
@@ -103,52 +97,23 @@ struct FilesystemScanner::Private {
     // when adding packages
 
     std::function<void(const std::string&, long)> messageCallback;
-    bool catchCodeAnalysisOutput;
 
-    std::vector<llvm::GlobPattern> ignoreGlobs;
-
-    bool enableLakosianRules;
+    const CppToolConstants& constants;
 
     explicit Private(lvtmdb::ObjectStore& memDb,
-                     std::filesystem::path prefix,
-                     std::filesystem::path buildPath,
+                     const CppToolConstants& constants,
                      const LvtCompilationDatabase& cdb,
-                     std::function<void(const std::string, long)> messageCallback,
-                     std::vector<std::filesystem::path> nonLakosianDirs,
-                     bool catchCodeAnalysisOutput,
-                     std::vector<llvm::GlobPattern> ignoreGlobs,
-                     bool enableLakosianRules):
-        memDb(memDb),
-        prefix(std::move(prefix)),
-        buildPath(buildPath),
-        cdb(cdb),
-        nonLakosianDirs(std::move(nonLakosianDirs)),
-        messageCallback(std::move(messageCallback)),
-        catchCodeAnalysisOutput(catchCodeAnalysisOutput),
-        ignoreGlobs(std::move(ignoreGlobs)),
-        enableLakosianRules(enableLakosianRules)
+                     std::function<void(const std::string, long)> messageCallback):
+        memDb(memDb), cdb(cdb), messageCallback(std::move(messageCallback)), constants(constants)
     {
     }
 };
 
 FilesystemScanner::FilesystemScanner(lvtmdb::ObjectStore& memDb,
-                                     const std::filesystem::path& prefix,
-                                     const std::filesystem::path& buildPath,
+                                     const CppToolConstants& constants,
                                      const LvtCompilationDatabase& cdb,
-                                     std::function<void(const std::string&, long)> messageCallback,
-                                     bool catchCodeAnalysisOutput,
-                                     std::vector<std::filesystem::path> nonLakosianDirs,
-                                     std::vector<llvm::GlobPattern> ignoreGlobs,
-                                     bool enableLakosianRules):
-    d(std::make_unique<FilesystemScanner::Private>(memDb,
-                                                   prefix,
-                                                   buildPath,
-                                                   cdb,
-                                                   std::move(messageCallback),
-                                                   std::move(nonLakosianDirs),
-                                                   catchCodeAnalysisOutput,
-                                                   std::move(ignoreGlobs),
-                                                   enableLakosianRules))
+                                     std::function<void(const std::string&, long)> messageCallback):
+    d(std::make_unique<FilesystemScanner::Private>(memDb, constants, cdb, std::move(messageCallback)))
 {
 }
 
@@ -314,7 +279,7 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
         return;
     }
 
-    if (ClpUtil::isFileIgnored(path.filename().string(), d->ignoreGlobs)) {
+    if (ClpUtil::isFileIgnored(path.filename().string(), d->constants.ignoreGlobs)) {
         return;
     }
 
@@ -322,10 +287,14 @@ void FilesystemScanner::scanPath(const std::filesystem::path& path)
         return;
     }
 
-    if (d->enableLakosianRules) {
+    if (d->constants.enableLakosianRules) {
         processFileUsingLakosianRules(path);
     } else {
-        nonLakosian::ClpUtil::writeSourceFile(d->memDb, path.generic_string(), d->prefix, d->buildPath, d->prefix);
+        nonLakosian::ClpUtil::writeSourceFile(d->memDb,
+                                              path.generic_string(),
+                                              d->constants.prefix,
+                                              d->constants.buildPath,
+                                              d->constants.prefix);
     }
 }
 
@@ -344,20 +313,20 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
         return {};
     }
 
-    const std::filesystem::path normalisedPath = ClpUtil::normalisePath(path, d->prefix);
+    const std::filesystem::path normalisedPath = ClpUtil::normalisePath(path, d->constants.prefix);
     if (normalisedPath.empty()) {
         return {};
     }
 
     std::filesystem::path fullPath;
     if (normalisedPath.is_relative()) {
-        fullPath = d->prefix / normalisedPath;
+        fullPath = d->constants.prefix / normalisedPath;
     } else {
         fullPath = normalisedPath;
     }
 
     // check if this path is explicitly flagged as non-lakosian
-    for (const std::filesystem::path& nonLakosianDir : d->nonLakosianDirs) {
+    for (const std::filesystem::path& nonLakosianDir : d->constants.nonLakosianDirs) {
         if (FileUtil::pathStartsWith(nonLakosianDir, fullPath)) {
             const static std::string nonLakosianGroup(ClpUtil::NON_LAKOSIAN_GROUP_NAME);
             d->foundPkgGrps[nonLakosianGroup] = PackageHelper{"", nonLakosianGroup, std::string{}};
@@ -370,7 +339,7 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
     if (!isStandalone && parent.empty()) {
         if (!d->foundPkgNames.count(qualifiedName)) {
             auto filePath = QString::fromStdString(path.string());
-            auto projectSource = QString::fromStdString(d->prefix.string());
+            auto projectSource = QString::fromStdString(d->constants.prefix.string());
             if (filePath.startsWith(projectSource)) {
                 filePath.replace(projectSource, "${SOURCE_DIR}/");
             }
@@ -383,7 +352,7 @@ std::string FilesystemScanner::addLakosianSourcePackage(const std::filesystem::p
             d->foundPkgGrps.erase(qualifiedName);
         }
         auto filePath = QString::fromStdString(path.string());
-        auto projectSource = QString::fromStdString(d->prefix.string());
+        auto projectSource = QString::fromStdString(d->constants.prefix.string());
         if (filePath.startsWith(projectSource)) {
             filePath.replace(projectSource, "${SOURCE_DIR}/");
         }
@@ -474,9 +443,9 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
         lvtmdb::PackageObject *parent = d->memDb.getPackage(file.parent);
         assert(parent || file.parent.empty());
 
-        const std::filesystem::path path = ClpUtil::normalisePath(file.qualifiedName, d->prefix).string();
+        const std::filesystem::path path = ClpUtil::normalisePath(file.qualifiedName, d->constants.prefix).string();
 
-        std::filesystem::path fullPath = d->prefix / path;
+        std::filesystem::path fullPath = d->constants.prefix / path;
         auto hash = [&fullPath]() -> std::string {
             auto result = llvm::sys::fs::md5_contents(fullPath.string());
             if (result) {
@@ -526,7 +495,7 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
 
             filePtr->withRWLock([&] {
                 if (hash != filePtr->hash()) {
-                    if (d->catchCodeAnalysisOutput) {
+                    if (d->constants.printToConsole) {
                         qDebug() << "Found modified file " << path.string();
                     }
                     out.modifiedFiles.push_back(filePtr->qualifiedName());
@@ -549,7 +518,7 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
         }
         const auto it = existingPkgs.find(pkg);
         if (it == existingPkgs.end()) {
-            if (d->catchCodeAnalysisOutput) {
+            if (d->constants.printToConsole) {
                 qDebug() << "Package deleted: " << qualifiedName;
             }
             out.deletedPkgs.push_back(qualifiedName);
@@ -572,7 +541,7 @@ FilesystemScanner::IncrementalResult FilesystemScanner::addToDatabase()
         const auto it = existingFiles.find(file);
         if (it == existingFiles.end()) {
             file->withROLock([&] {
-                if (d->catchCodeAnalysisOutput) {
+                if (d->constants.printToConsole) {
                     qDebug() << "File deleted: " << file->qualifiedName();
                 }
                 out.deletedFiles.push_back(file->qualifiedName());

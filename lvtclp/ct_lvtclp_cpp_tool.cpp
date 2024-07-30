@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_cpp_tool.h>
 
 #include <ct_lvtclp_clputil.h>
@@ -375,17 +376,9 @@ class SubsetCompilationDatabase : public LvtCompilationDatabaseImpl {
 namespace Codethink::lvtclp {
 
 struct CppTool::Private {
-    std::filesystem::path sourcePath;
-    std::filesystem::path buildPath;
     std::optional<clang::tooling::CompileCommand> compileCommand;
-    std::function<void(const std::string&, long)> messageCallback;
     std::vector<std::filesystem::path> compileCommandsJsons;
-    std::filesystem::path databasePath;
-    unsigned numThreads = 1;
-    std::vector<llvm::GlobPattern> ignoreList;
-    std::vector<std::filesystem::path> nonLakosianDirs;
-    std::vector<std::pair<std::string, std::string>> thirdPartyDirs;
-    bool printToConsole = false;
+    std::function<void(const std::string&, long)> messageCallback;
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback = std::nullopt;
     std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt;
 
@@ -421,216 +414,70 @@ struct CppTool::Private {
     // Flag that indicates that database errors should be
     // reported to the UI.
 
-    bool enableLakosianRules;
-    std::vector<std::string> userProvidedExtraCompileCommandsArgs;
     ThreadStringMap pathToCanonical;
+
+    CppToolConstants constants;
 
     [[nodiscard]] lvtmdb::ObjectStore& memDb()
     {
         return sharedMemDb ? *sharedMemDb : localMemDb;
     }
 
-    void setNumThreads(unsigned numThreadsIn)
-    {
-        if (numThreadsIn < 1) {
-            numThreads = 1;
-        } else {
-            numThreads = numThreadsIn;
-        }
-    }
-
-    void setIgnoreList(const std::vector<std::string>& userIgnoreList)
-    {
-        ignoreList.clear();
-
-        // add non-duplicates
-        std::set<std::string> nonDuplicatedItems(std::begin(userIgnoreList), std::end(userIgnoreList));
-        for (const auto& ignoreFile : nonDuplicatedItems) {
-            llvm::Expected<llvm::GlobPattern> pat = llvm::GlobPattern::create(ignoreFile);
-            if (pat) {
-                ignoreList.push_back(pat.get());
-            }
-        }
-
-        if (compilationDb) {
-            compilationDb->setIgnoreGlobs(ignoreList);
-        }
-    }
-
-    void setNonLakosianDirs(const std::vector<std::filesystem::path>& nonLakosians)
-    {
-        nonLakosianDirs.reserve(nonLakosians.size());
-
-        std::transform(nonLakosians.begin(),
-                       nonLakosians.end(),
-                       std::back_inserter(nonLakosianDirs),
-                       [](const std::filesystem::path& dir) {
-                           return std::filesystem::weakly_canonical(dir);
-                       });
-    }
-
-    Private(CppTool *tool,
-            std::filesystem::path inSourcePath,
-            std::filesystem::path buildPath,
-            std::vector<std::filesystem::path> inCompileCommandsJsons,
-            std::filesystem::path inDatabasePath,
-            unsigned numThreadsIn,
-            const std::vector<std::string>& ignoreList,
-            const std::vector<std::filesystem::path>& nonLakosians,
-            std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
-            bool enableLakosianRules,
-            bool inPrintToConsole = true):
-        sourcePath(std::filesystem::weakly_canonical(inSourcePath).generic_string()),
-        buildPath(std::filesystem::weakly_canonical(buildPath).generic_string()),
+    Private(CppTool *tool, CppToolConstants constants, std::vector<std::filesystem::path> inCompileCommandsJsons):
+        compileCommandsJsons(inCompileCommandsJsons),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
         }),
-        compileCommandsJsons(std::move(inCompileCommandsJsons)),
-        databasePath(std::move(inDatabasePath)),
-        thirdPartyDirs(std::move(thirdPartyDirs)),
-        printToConsole(inPrintToConsole),
-        enableLakosianRules(enableLakosianRules),
-        userProvidedExtraCompileCommandsArgs(userProvidedExtraCompileCommandsArgs)
+        constants(constants)
     {
-        setNumThreads(numThreadsIn);
-        setIgnoreList(ignoreList);
-        setNonLakosianDirs(nonLakosians);
+        if (compilationDb) {
+            compilationDb->setIgnoreGlobs(constants.ignoreGlobs);
+        }
     }
 
-    Private(CppTool *tool,
-            std::filesystem::path inSourcePath,
-            std::filesystem::path buildPath,
-            clang::tooling::CompileCommand compileCommand,
-            std::filesystem::path inDatabasePath,
-            const std::vector<std::string>& ignoreList,
-            const std::vector<std::filesystem::path>& nonLakosians,
-            std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
-            bool enableLakosianRules,
-            bool inPrintToConsole = true):
-        sourcePath(std::filesystem::weakly_canonical(inSourcePath).generic_string()),
-        buildPath(std::filesystem::weakly_canonical(buildPath).generic_string()),
+    Private(CppTool *tool, CppToolConstants constants, clang::tooling::CompileCommand compileCommand):
         compileCommand(std::in_place, compileCommand),
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
         }),
-        databasePath(std::move(inDatabasePath)),
-        thirdPartyDirs(std::move(thirdPartyDirs)),
-        printToConsole(inPrintToConsole),
-        enableLakosianRules(enableLakosianRules),
-        userProvidedExtraCompileCommandsArgs(userProvidedExtraCompileCommandsArgs)
+        constants(constants)
     {
-        setNumThreads(1);
-        setIgnoreList(ignoreList);
-        setNonLakosianDirs(nonLakosians);
+        if (compilationDb) {
+            compilationDb->setIgnoreGlobs(constants.ignoreGlobs);
+        }
     }
 
     Private(CppTool *tool,
-            std::filesystem::path inSourcePath,
-            std::filesystem::path buildPath,
-            const std::vector<clang::tooling::CompileCommand>& compileCommands,
-            std::filesystem::path inDatabasePath,
-            unsigned numThreadsIn,
-            const std::vector<std::string>& ignoreList,
-            std::vector<std::filesystem::path> nonLakosianDirs,
-            std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
-            bool enableLakosianRules,
-            bool inPrintToConsole):
-        sourcePath(std::filesystem::weakly_canonical(inSourcePath).generic_string()),
-        buildPath(std::filesystem::weakly_canonical(buildPath).generic_string()),
+            CppToolConstants constants,
+            const std::vector<clang::tooling::CompileCommand>& compileCommands):
         messageCallback([tool](const std::string& msg, long tid) {
             tool->messageCallback(msg, tid);
         }),
-        databasePath(std::move(inDatabasePath)),
-        nonLakosianDirs(std::move(nonLakosianDirs)),
-        thirdPartyDirs(std::move(thirdPartyDirs)),
-        printToConsole(inPrintToConsole),
-        compilationDb(std::in_place, sourcePath, buildPath, compileCommands, messageCallback),
-        enableLakosianRules(enableLakosianRules),
-        userProvidedExtraCompileCommandsArgs(userProvidedExtraCompileCommandsArgs)
+        compilationDb(std::in_place, constants.prefix, constants.buildPath, compileCommands, messageCallback),
+        constants(constants)
     {
-        setNumThreads(numThreadsIn);
-        setIgnoreList(ignoreList);
+        if (compilationDb) {
+            compilationDb->setIgnoreGlobs(constants.ignoreGlobs);
+        }
     }
 };
 
-CppTool::CppTool(std::filesystem::path sourcePath,
-                 std::filesystem::path buildPath,
-                 const std::vector<std::filesystem::path>& compileCommandsJsons,
-                 const std::filesystem::path& databasePath,
-                 unsigned numThreads,
-                 const std::vector<std::string>& ignoreList,
-                 const std::vector<std::filesystem::path>& nonLakosianDirs,
-                 std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                 std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
-                 bool enableLakosianRules,
-                 bool printToConsole):
-    d(std::make_unique<CppTool::Private>(this,
-                                         std::move(sourcePath),
-                                         std::move(buildPath),
-                                         compileCommandsJsons,
-                                         databasePath,
-                                         numThreads,
-                                         ignoreList,
-                                         nonLakosianDirs,
-                                         std::move(thirdPartyDirs),
-                                         userProvidedExtraCompileCommandsArgs,
-                                         enableLakosianRules,
-                                         printToConsole))
+CppTool::CppTool(CppToolConstants constants, const std::vector<std::filesystem::path>& compileCommandsJsons):
+    d(std::make_unique<CppTool::Private>(this, constants, compileCommandsJsons))
 {
 }
 
-CppTool::CppTool(std::filesystem::path sourcePath,
-                 std::filesystem::path buildPath,
-                 const clang::tooling::CompileCommand& compileCommand,
-                 const std::filesystem::path& databasePath,
-                 const std::vector<std::string>& ignoreList,
-                 const std::vector<std::filesystem::path>& nonLakosianDirs,
-                 std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                 std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
-                 bool enableLakosianRules,
-                 bool printToConsole):
-    d(std::make_unique<CppTool::Private>(this,
-                                         std::move(sourcePath),
-                                         std::move(buildPath),
-                                         compileCommand,
-                                         databasePath,
-                                         ignoreList,
-                                         nonLakosianDirs,
-                                         std::move(thirdPartyDirs),
-                                         userProvidedExtraCompileCommandsArgs,
-                                         enableLakosianRules,
-                                         printToConsole))
+CppTool::CppTool(CppToolConstants constants, const clang::tooling::CompileCommand& compileCommand):
+    d(std::make_unique<CppTool::Private>(this, constants, compileCommand))
 {
 }
 
-CppTool::CppTool(std::filesystem::path sourcePath,
-                 std::filesystem::path buildPath,
-                 const clang::tooling::CompilationDatabase& db,
-                 const std::filesystem::path& databasePath,
-                 unsigned numThreads,
-                 const std::vector<std::string>& ignoreList,
-                 const std::vector<std::filesystem::path>& nonLakosianDirs,
-                 std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
-                 std::vector<std::string> const& userProvidedExtraCompileCommandsArgs,
-                 bool enableLakosianRules,
-                 bool printToConsole):
-    d(std::make_unique<CppTool::Private>(this,
-                                         std::move(sourcePath),
-                                         std::move(buildPath),
-                                         db.getAllCompileCommands(),
-                                         databasePath,
-                                         numThreads,
-                                         ignoreList,
-                                         nonLakosianDirs,
-                                         std::move(thirdPartyDirs),
-                                         userProvidedExtraCompileCommandsArgs,
-                                         enableLakosianRules,
-                                         printToConsole))
+CppTool::CppTool(CppToolConstants constants, const clang::tooling::CompilationDatabase& db):
+    d(std::make_unique<CppTool::Private>(this, constants, db.getAllCompileCommands()))
 {
-    d->compilationDb->setup(UseSystemHeaders::e_Query, d->userProvidedExtraCompileCommandsArgs, !printToConsole);
+    d->compilationDb->setup(UseSystemHeaders::e_Query,
+                            constants.userProvidedExtraCompileCommandsArgs,
+                            !constants.printToConsole);
 }
 
 CppTool::~CppTool() noexcept = default;
@@ -693,10 +540,13 @@ bool CppTool::processCompilationDatabase()
                 return false;
             }
         }
-        d->compilationDb.emplace(d->sourcePath, d->buildPath, compDb.getAllCompileCommands(), d->messageCallback);
+        d->compilationDb.emplace(d->constants.prefix,
+                                 d->constants.buildPath,
+                                 compDb.getAllCompileCommands(),
+                                 d->messageCallback);
     } else if (d->compileCommand.has_value()) {
-        d->compilationDb.emplace(d->sourcePath,
-                                 d->buildPath,
+        d->compilationDb.emplace(d->constants.prefix,
+                                 d->constants.buildPath,
                                  std::vector({d->compileCommand.value()}),
                                  d->messageCallback);
     } else {
@@ -704,8 +554,10 @@ bool CppTool::processCompilationDatabase()
         return false;
     }
 
-    d->compilationDb->setIgnoreGlobs(d->ignoreList);
-    d->compilationDb->setup(d->useSystemHeaders, d->userProvidedExtraCompileCommandsArgs, !d->printToConsole);
+    d->compilationDb->setIgnoreGlobs(d->constants.ignoreGlobs);
+    d->compilationDb->setup(d->useSystemHeaders,
+                            d->constants.userProvidedExtraCompileCommandsArgs,
+                            !d->constants.printToConsole);
     return true;
 }
 
@@ -732,7 +584,7 @@ void CppTool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, 
     QList<std::string> removedFiles;
     std::set<intptr_t> removedPtrs;
     auto deleteFile = [this, &removedFiles, &removedPtrs](const std::string& qualifiedName) {
-        if (d->printToConsole) {
+        if (d->constants.printToConsole) {
             qDebug() << "Going to remove file: " << qualifiedName.c_str();
         }
         d->memDb().withRWLock([&] {
@@ -757,7 +609,7 @@ void CppTool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, 
         d->memDb().removePackage(memPkg, removed);
     }
 
-    if (d->printToConsole) {
+    if (d->constants.printToConsole) {
         qDebug() << "All files that are removed from our call:";
         for (const std::string& file : qAsConst(removedFiles)) {
             qDebug() << "\t " << file.c_str();
@@ -784,7 +636,7 @@ void CppTool::setupIncrementalUpdate(FilesystemScanner::IncrementalResult& res, 
         newPaths = d->compilationDb->getAllFiles();
     }
 
-    if (d->printToConsole) {
+    if (d->constants.printToConsole) {
         qDebug() << "Files for the incremental db";
         for (const std::string& file : newPaths) {
             qDebug() << "\t " << file.c_str();
@@ -828,15 +680,7 @@ bool CppTool::findPhysicalEntities(bool doIncremental)
         doIncremental = false;
     }
 
-    FilesystemScanner scanner(d->memDb(),
-                              d->compilationDb->commonParent(),
-                              d->buildPath,
-                              *d->compilationDb,
-                              d->messageCallback,
-                              d->printToConsole,
-                              d->nonLakosianDirs,
-                              d->ignoreList,
-                              d->enableLakosianRules);
+    FilesystemScanner scanner(d->memDb(), d->constants, *d->compilationDb, d->messageCallback);
 
     {
         std::unique_lock<std::mutex> lock(d->executorMutex);
@@ -873,11 +717,6 @@ bool CppTool::findPhysicalEntities(bool doIncremental)
     return true;
 }
 
-void CppTool::setPrintToConsole(bool b)
-{
-    d->printToConsole = b;
-}
-
 bool CppTool::runPhysical(bool skipScan)
 {
     if (!ensureSetup()) {
@@ -898,14 +737,14 @@ bool CppTool::runPhysical(bool skipScan)
     assert(d->incrementalCdb);
 
     auto filenameCallback = [this](const std::string& path) {
-        if (d->printToConsole) {
+        if (d->constants.printToConsole) {
             qDebug() << "Processing file " << path;
         }
         Q_EMIT processingFileNotification(QString::fromStdString(path));
     };
 
     auto messageCallback = [this](const std::string& message, long threadId) {
-        if (d->printToConsole) {
+        if (d->constants.printToConsole) {
             qDebug() << message;
         }
         Q_EMIT messageFromThread(QString::fromStdString(message), threadId);
@@ -913,19 +752,14 @@ bool CppTool::runPhysical(bool skipScan)
 
     std::unique_ptr<clang::tooling::FrontendActionFactory> dependencyScanner =
         std::make_unique<DepScanActionFactory>(d->memDb(),
-                                               d->compilationDb->commonParent(),
-                                               d->buildPath,
-                                               d->nonLakosianDirs,
-                                               d->thirdPartyDirs,
+                                               d->constants,
                                                filenameCallback,
-                                               d->ignoreList,
                                                d->pathToCanonical,
-                                               d->enableLakosianRules,
                                                d->headerLocationCallback);
 
     Q_EMIT aboutToCallClangNotification(tr("Physical Parse"), d->incrementalCdb->numCompileCommands());
 
-    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, messageCallback, d->memDb());
+    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->constants.numThreads, messageCallback, d->memDb());
 
     llvm::Error err = d->toolExecutor->execute(std::move(dependencyScanner));
 
@@ -999,7 +833,7 @@ bool CppTool::runFull(bool skipPhysical)
     }
 
     auto filenameCallback = [this](const std::string& path) {
-        if (d->printToConsole) {
+        if (d->constants.printToConsole) {
             qDebug() << "Processing file " << path;
         }
         Q_EMIT processingFileNotification(QString::fromStdString(path));
@@ -1012,19 +846,14 @@ bool CppTool::runFull(bool skipPhysical)
 
     std::unique_ptr<clang::tooling::FrontendActionFactory> actionFactory =
         std::make_unique<LogicalDepActionFactory>(d->memDb(),
-                                                  d->compilationDb->commonParent(),
-                                                  d->buildPath,
-                                                  d->nonLakosianDirs,
-                                                  d->thirdPartyDirs,
+                                                  d->constants,
                                                   filenameCallback,
                                                   messageOpt,
-                                                  d->printToConsole,
-                                                  d->enableLakosianRules,
                                                   d->handleCppCommentsCallback);
 
     Q_EMIT aboutToCallClangNotification(tr("Logical Parse"), d->incrementalCdb->numCompileCommands());
 
-    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->numThreads, d->messageCallback, d->memDb());
+    d->toolExecutor = new ToolExecutor(*d->incrementalCdb, d->constants.numThreads, d->messageCallback, d->memDb());
 
     llvm::Error err = d->toolExecutor->execute(std::move(actionFactory));
 
@@ -1044,7 +873,7 @@ bool CppTool::runFull(bool skipPhysical)
             Q_EMIT messageFromThread(QString::fromStdString(err.getMessage()), 0);
             return llvm::Error::success();
         });
-        if (d->printToConsole) {
+        if (d->constants.printToConsole) {
             qDebug() << "We got a logical error, aborting";
         }
         return false;
@@ -1056,12 +885,12 @@ bool CppTool::runFull(bool skipPhysical)
     // else keep it the same because physical info is probably okay
 
     if (!cancelled) {
-        if (d->printToConsole) {
+        if (d->constants.printToConsole) {
             qDebug() << "Collating output database";
         }
     }
 
-    if (!LogicalPostProcessUtil::postprocess(d->memDb(), d->printToConsole)) {
+    if (!LogicalPostProcessUtil::postprocess(d->memDb(), d->constants.printToConsole)) {
         return false;
     }
 
@@ -1107,7 +936,7 @@ bool CppTool::finalizingThreads() const
 
 void CppTool::messageCallback(const std::string& message, long threadId)
 {
-    if (d->printToConsole) {
+    if (d->constants.printToConsole) {
         qDebug() << message;
     }
 

@@ -26,17 +26,17 @@
 //
 //@SEE_ALSO: clang::tooling::FrontendActionFactory
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <lvtclp_export.h>
 
 #include <clang/Tooling/Tooling.h>
+#include <ct_lvtclp_cpp_tool_constants.h>
 #include <ct_lvtclp_headercallbacks.h>
 #include <ct_lvtclp_threadstringmap.h>
 
-#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include <QString>
 
@@ -64,14 +64,9 @@ class LVTCLP_EXPORT DepScanActionFactory : public clang::tooling::FrontendAction
     // CREATORS
     DepScanActionFactory(
         lvtmdb::ObjectStore& memDb,
-        const std::filesystem::path& prefix,
-        const std::filesystem::path& buildFolder,
-        const std::vector<std::filesystem::path>& nonLakosians,
-        const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
+        const CppToolConstants& constants,
         std::function<void(const std::string&)> filenameCallback, // callback that sends the current filename to the UI
-        std::vector<llvm::GlobPattern> ignoreGlobs,
         ThreadStringMap& pathToCanonical,
-        bool enableLakosianRules,
         std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback = std::nullopt);
 
     ~DepScanActionFactory() noexcept override;

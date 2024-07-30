@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_clputil.h"
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtclp_cpp_tool.h>
 #include <qelapsedtimer.h>
@@ -463,29 +464,22 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    using namespace Codethink::lvtclp;
+    const CppToolConstants constants{.prefix = args.sourcePath,
+                                     .buildPath = args.buildPath,
+                                     .databasePath = args.dbPath,
+                                     .nonLakosianDirs = ClpUtil::ensureCanonical(args.nonLakosianDirs),
+                                     .thirdPartyDirs = args.packageMappings,
+                                     .ignoreGlobs = ClpUtil::stringListToGlobPattern(args.ignoreList),
+                                     .userProvidedExtraCompileCommandsArgs = args.userProvidedExtraCompileCommandsArgs,
+                                     .numThreads = args.numThreads,
+                                     .enableLakosianRules = !args.disableLakosianRules,
+                                     .printToConsole = args.verbose};
+
     auto sharedObjectStore = std::make_shared<Codethink::lvtmdb::ObjectStore>();
-    auto clang_tool = !args.compilationDbPaths.empty()
-        ? std::make_unique<CppTool>(args.sourcePath,
-                                    args.buildPath,
-                                    args.compilationDbPaths,
-                                    args.dbPath,
-                                    args.numThreads,
-                                    args.ignoreList,
-                                    args.nonLakosianDirs,
-                                    args.packageMappings,
-                                    args.userProvidedExtraCompileCommandsArgs,
-                                    !args.disableLakosianRules,
-                                    args.verbose)
-        : std::make_unique<CppTool>(args.sourcePath,
-                                    args.buildPath,
-                                    compileCommand.value(),
-                                    args.dbPath,
-                                    args.ignoreList,
-                                    args.nonLakosianDirs,
-                                    args.packageMappings,
-                                    args.userProvidedExtraCompileCommandsArgs,
-                                    !args.disableLakosianRules,
-                                    args.verbose);
+    auto clang_tool = !args.compilationDbPaths.empty() ? std::make_unique<CppTool>(constants, args.compilationDbPaths)
+                                                       : std::make_unique<CppTool>(constants, compileCommand.value());
+
     CommandLineProgressBar cmdLineProgressBar;
     if (!args.verbose) {
         QObject::connect(clang_tool.get(),

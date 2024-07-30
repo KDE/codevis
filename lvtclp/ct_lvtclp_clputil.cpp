@@ -516,6 +516,34 @@ ClpUtil::PySemanticPackingRule::PySemanticPackingRule(std::filesystem::path pyth
 {
 }
 
+std::vector<llvm::GlobPattern> ClpUtil::stringListToGlobPattern(const std::vector<std::string>& userIgnoreList)
+{
+    std::vector<llvm::GlobPattern> res;
+    std::set<std::string> nonDuplicatedItems(std::begin(userIgnoreList), std::end(userIgnoreList));
+    for (const auto& ignoreFile : nonDuplicatedItems) {
+        llvm::Expected<llvm::GlobPattern> pat = llvm::GlobPattern::create(ignoreFile);
+        if (pat) {
+            res.push_back(pat.get());
+        }
+    }
+    return res;
+}
+
+std::vector<std::filesystem::path> ClpUtil::ensureCanonical(const std::vector<std::filesystem::path>& maybeCanonical)
+{
+    std::vector<std::filesystem::path> canonicalPaths;
+    canonicalPaths.reserve(maybeCanonical.size());
+
+    std::transform(maybeCanonical.begin(),
+                   maybeCanonical.end(),
+                   std::back_inserter(canonicalPaths),
+                   [](const std::filesystem::path& dir) {
+                       return std::filesystem::weakly_canonical(dir);
+                   });
+
+    return canonicalPaths;
+}
+
 namespace detail {
 auto getPyFunFrom(std::filesystem::path const& pythonFile, std::string const& functionName)
 {

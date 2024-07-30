@@ -86,17 +86,19 @@ TEST_CASE("Optional include location callbacks")
         foundIncludes.insert(FoundIncludeTestData{sourceFile, includedFile, lineNo});
     };
     ThreadStringMap sm;
-    auto err = executor.execute(std::make_unique<DepScanActionFactory>(
-        memDb,
-        PREFIX,
-        std::filesystem::path{},
-        std::vector<std::filesystem::path>{},
-        std::vector<std::pair<std::string, std::string>>{},
-        [](auto&& _) {},
-        std::vector<llvm::GlobPattern>{},
-        sm,
-        /*enableLakosianRules=*/true,
-        headerLocationCallback));
+    const CppToolConstants constants{.prefix = PREFIX,
+                                     .buildPath = {},
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    auto err = executor.execute(
+        std::make_unique<DepScanActionFactory>(memDb, constants, [](auto&& _) {}, sm, headerLocationCallback));
 
     REQUIRE(!err);
     REQUIRE(foundIncludes.size() == 2);

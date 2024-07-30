@@ -25,6 +25,7 @@
 //@CLASSES:
 //  lvtclp::FilesystemScanner
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <lvtclp_export.h>
 
 #include <filesystem>
@@ -69,14 +70,9 @@ class LVTCLP_EXPORT FilesystemScanner {
   public:
     // CREATORS
     explicit FilesystemScanner(lvtmdb::ObjectStore& memDb,
-                               const std::filesystem::path& prefix,
-                               const std::filesystem::path& buildPath,
+                               const CppToolConstants& constants,
                                const LvtCompilationDatabase& cdb,
-                               std::function<void(const std::string&, long)> messageCallback,
-                               bool catchCodeAnalysisOutput,
-                               std::vector<std::filesystem::path> nonLakosianDirs,
-                               std::vector<llvm::GlobPattern> ignoreGlobs,
-                               bool enableLakosianRules);
+                               std::function<void(const std::string&, long)> messageCallback);
     // cdb and memDb must live at least as long as this FilesystemScanner
 
     ~FilesystemScanner() noexcept;

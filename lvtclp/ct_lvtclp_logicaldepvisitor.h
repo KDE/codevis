@@ -35,6 +35,7 @@
 // abstract syntax tree representation of a C++ source file. Our callbacks
 // add these nodes to the code database
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_clputil.h>
 #include <ct_lvtclp_staticfnhandler.h>
 #include <ct_lvtclp_visitlog.h>
@@ -100,21 +101,13 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
     lvtmdb::ObjectStore& d_memDb;
     // The active database session to add objects to
 
-    std::filesystem::path d_prefix;
-    std::filesystem::path d_buildFolder;
-
-    std::vector<std::filesystem::path> d_nonLakosianDirs;
-    std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
-
     std::shared_ptr<VisitLog> d_visitLog_p;
 
     std::shared_ptr<StaticFnHandler> d_staticFnHandler_p;
 
     std::optional<std::function<void(const std::string&, long)>> d_messageCallback;
 
-    bool d_catchCodeAnalysisOutput;
-
-    bool d_enableLakosianRules;
+    const CppToolConstants& d_constants;
 
     // MANIPULATORS
     static const clang::CXXRecordDecl *qualTypeToRecordDecl(clang::QualType qualType);
@@ -270,15 +263,10 @@ class LogicalDepVisitor : public clang::RecursiveASTVisitor<LogicalDepVisitor> {
     LogicalDepVisitor(clang::ASTContext *context,
                       clang::StringRef file,
                       lvtmdb::ObjectStore& memDb,
-                      std::filesystem::path prefix,
-                      std::filesystem::path buildFolder,
-                      std::vector<std::filesystem::path> nonLakosians,
-                      std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
+                      const CppToolConstants& constants,
                       std::shared_ptr<VisitLog> visitLog,
                       std::shared_ptr<StaticFnHandler> staticFnHandler,
-                      std::optional<std::function<void(const std::string&, long)>> d_messageCallback,
-                      bool catchCodeAnalysisOutput,
-                      bool enableLakosianRules);
+                      std::optional<std::function<void(const std::string&, long)>> d_messageCallback);
     // Instantiate a new LogicalDepVisitor for the given file as a
     // translation unit
 

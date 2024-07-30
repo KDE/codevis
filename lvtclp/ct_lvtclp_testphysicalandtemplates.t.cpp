@@ -290,7 +290,18 @@ TEST_CASE_METHOD(PhysicalAndTemplatesFixture, "Physical and Templates")
                                    {"-Igroups/bsl/bslma", "-Igroups/foo/foobar"},
                                    topLevel);
 
-    CppTool tool(topLevel, {}, cmds, ":memory:");
+    const CppToolConstants constants{.prefix = topLevel,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = ":memory:",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
     ObjectStore& session = tool.getObjectStore();
     testFilesExist(session);
@@ -442,7 +453,18 @@ TEST_CASE_METHOD(NonLakosianFixture, "Non-lakosian extra levels of hierarchy")
         {"-Ithirdparty"},
         d_topLevel);
 
-    CppTool tool(d_topLevel, {}, cmds, ":memory:");
+    const CppToolConstants constants{.prefix = d_topLevel,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = ":memory:",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
     ObjectStore& session = tool.getObjectStore();
 

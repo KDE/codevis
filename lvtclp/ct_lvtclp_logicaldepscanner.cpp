@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_logicaldepscanner.h>
 #include <ct_lvtclp_logicaldepvisitor.h>
 
@@ -56,38 +57,20 @@ class LogicalDepConsumer : public clang::ASTConsumer {
     std::string d_filename;
     clang::ASTContext *d_context;
 
-    bool d_enableLakosianRules;
-
   public:
     // CREATORS
     LogicalDepConsumer(clang::ASTContext *context,
                        clang::StringRef file,
                        lvtmdb::ObjectStore& memDb,
-                       const std::filesystem::path& prefix,
-                       const std::filesystem::path& buildFolder,
-                       const std::vector<std::filesystem::path>& nonLakosians,
-                       std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
+                       const CppToolConstants& constants,
                        const std::shared_ptr<VisitLog>& visitLog,
                        const std::shared_ptr<StaticFnHandler>& staticFnHandler,
                        std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                       bool catchCodeAnalysisOutput,
-                       bool enableLakosianRules,
                        std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
 
         // Instantiates a new LogicalDepConsumer for the given file as a
         // translation unit
-        d_visitor(context,
-                  file,
-                  memDb,
-                  prefix,
-                  buildFolder,
-                  nonLakosians,
-                  std::move(d_thirdPartyDirs),
-                  visitLog,
-                  staticFnHandler,
-                  std::move(messageCallback),
-                  catchCodeAnalysisOutput,
-                  enableLakosianRules),
+        d_visitor(context, file, memDb, constants, visitLog, staticFnHandler, std::move(messageCallback)),
         d_handleCppCommentsCallback(std::move(handleCppCommentsCallback)),
         d_filename(file.str()),
         d_context(context)
@@ -133,12 +116,6 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
     // DATA
     lvtmdb::ObjectStore& d_memDb;
 
-    std::filesystem::path d_prefix;
-    std::filesystem::path d_buildFolder;
-
-    std::vector<std::filesystem::path> d_nonLakosianDirs;
-    std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
-
     std::shared_ptr<VisitLog> d_visitLog_p;
     std::shared_ptr<StaticFnHandler> d_staticFnHandler_p;
 
@@ -148,36 +125,24 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
     std::optional<std::function<void(const std::string&, long)>> d_messageCallback;
     // sends a message to the UI.
 
-    bool d_catchCodeAnalysisOutput;
-
     std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
 
-    bool d_enableLakosianRules;
+    const CppToolConstants& d_constants;
 
   public:
     // CREATORS
     LogicalDepFrontendAction(lvtmdb::ObjectStore& memDb,
-                             std::filesystem::path prefix,
-                             std::filesystem::path buildFolder,
-                             std::vector<std::filesystem::path> nonLakosians,
-                             std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+                             const CppToolConstants& constants,
                              std::function<void(const std::string&)> filenameCallback,
                              std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                             bool catchCodeAnalysisOutput,
-                             bool enableLakosianRules,
                              std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt):
         d_memDb(memDb),
-        d_prefix(std::move(prefix)),
-        d_buildFolder(buildFolder),
-        d_nonLakosianDirs(std::move(nonLakosians)),
-        d_thirdPartyDirs(std::move(thirdPartyDirs)),
         d_visitLog_p(std::make_shared<VisitLog>()),
         d_staticFnHandler_p(std::make_shared<StaticFnHandler>(memDb)),
         d_filenameCallback(std::move(filenameCallback)),
         d_messageCallback(std::move(messageCallback)),
-        d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
         d_handleCppCommentsCallback(std::move(handleCppCommentsCallback)),
-        d_enableLakosianRules(enableLakosianRules)
+        d_constants(constants)
     {
     }
 
@@ -203,15 +168,10 @@ class LogicalDepFrontendAction : public clang::SyntaxOnlyAction {
         return std::make_unique<LogicalDepConsumer>(&compiler.getASTContext(),
                                                     file,
                                                     d_memDb,
-                                                    d_prefix,
-                                                    d_buildFolder,
-                                                    d_nonLakosianDirs,
-                                                    d_thirdPartyDirs,
+                                                    d_constants,
                                                     d_visitLog_p,
                                                     d_staticFnHandler_p,
                                                     d_messageCallback,
-                                                    d_catchCodeAnalysisOutput,
-                                                    d_enableLakosianRules,
                                                     d_handleCppCommentsCallback);
     }
 
@@ -236,39 +196,24 @@ namespace Codethink::lvtclp {
 
 LogicalDepActionFactory::LogicalDepActionFactory(
     lvtmdb::ObjectStore& memDb,
-    std::filesystem::path prefix,
-    std::filesystem::path buildFolder,
-    std::vector<std::filesystem::path> nonLakosians,
-    std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+    const CppToolConstants& constants,
     std::function<void(const std::string&)> filenameCallback,
     std::optional<std::function<void(const std::string&, long)>> messageCallback,
-    bool catchCodeAnalysisOutput,
-    bool enableLakosianRules,
     std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback):
     d_memDb(memDb),
-    d_prefix(std::move(prefix)),
-    d_buildFolder(buildFolder),
-    d_nonLakosianDirs(std::move(nonLakosians)),
-    d_thirdPartyDirs(std::move(thirdPartyDirs)),
     d_filenameCallback(std::move(filenameCallback)),
     d_messageCallback(std::move(messageCallback)),
-    d_catchCodeAnalysisOutput(catchCodeAnalysisOutput),
     d_handleCppCommentsCallback(std::move(handleCppCommentsCallback)),
-    d_enableLakosianRules(enableLakosianRules)
+    d_constants(constants)
 {
 }
 
 std::unique_ptr<clang::FrontendAction> LogicalDepActionFactory::create()
 {
     return std::make_unique<LogicalDepFrontendAction>(d_memDb,
-                                                      d_prefix,
-                                                      d_buildFolder,
-                                                      d_nonLakosianDirs,
-                                                      d_thirdPartyDirs,
+                                                      d_constants,
                                                       d_filenameCallback,
                                                       d_messageCallback,
-                                                      d_catchCodeAnalysisOutput,
-                                                      d_enableLakosianRules,
                                                       d_handleCppCommentsCallback);
 }
 

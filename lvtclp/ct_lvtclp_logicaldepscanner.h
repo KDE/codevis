@@ -27,16 +27,15 @@
 //
 //@SEE_ALSO: clang::tooling::FrontendActionFactory
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <lvtclp_export.h>
 
 #include <clang/Tooling/Tooling.h>
 
-#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include <QString>
 
@@ -60,35 +59,22 @@ class LVTCLP_EXPORT LogicalDepActionFactory : public clang::tooling::FrontendAct
     lvtmdb::ObjectStore& d_memDb;
     // Database session generator
 
-    std::filesystem::path d_prefix;
-    std::filesystem::path d_buildFolder;
-
-    std::vector<std::filesystem::path> d_nonLakosianDirs;
-    std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs;
-
     std::function<void(const std::string&)> d_filenameCallback;
     // Callback whenever we start to process a new file
 
     std::optional<std::function<void(const std::string&, long)>> d_messageCallback;
     // Callback to send errors to the UI.
 
-    bool d_catchCodeAnalysisOutput;
-
     std::optional<HandleCppCommentsCallback_f> d_handleCppCommentsCallback;
 
-    bool d_enableLakosianRules;
+    const CppToolConstants& d_constants;
 
   public:
     // CREATORS
     LogicalDepActionFactory(lvtmdb::ObjectStore& memDb,
-                            std::filesystem::path prefix,
-                            std::filesystem::path buildFolder,
-                            std::vector<std::filesystem::path> nonLakosians,
-                            std::vector<std::pair<std::string, std::string>> d_thirdPartyDirs,
+                            const CppToolConstants& constants,
                             std::function<void(const std::string&)> filenameCallback,
                             std::optional<std::function<void(const std::string&, long)>> messageCallback,
-                            bool catchCodeAnalysisOutput,
-                            bool enableLakosianRules,
                             std::optional<HandleCppCommentsCallback_f> handleCppCommentsCallback = std::nullopt);
 
     // MANIPULATORS

@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_testutil.h>
 
 #include <ct_lvtclp_logicaldepscanner.h>
@@ -112,9 +113,18 @@ bool Test_Util::runOnCode(lvtmdb::ObjectStore& mdb, const std::string& source, c
     auto callback = [](const std::string&) {};
     auto messageCallback = [](const std::string&, long) {};
 
-    auto prefix = std::filesystem::current_path();
-    LogicalDepActionFactory
-        actionFactory(mdb, prefix, {}, {}, {}, callback, messageCallback, false, /*enableLakosianRules=*/true);
+    const CppToolConstants constants{.prefix = std::filesystem::current_path(),
+                                     .buildPath = {},
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    LogicalDepActionFactory actionFactory(mdb, constants, callback, messageCallback);
 
     auto frontendAction = actionFactory.create();
 

@@ -301,7 +301,19 @@ TEST_CASE_METHOD(PhysicalFileUpdateManagerFixture, "File update manager physical
                                    topLevel);
 
     INFO("Using top level tmp path = '" << topLevel.string() << "'");
-    CppTool tool(topLevel, {}, cmds, ":memory:");
+
+    const CppToolConstants constants{.prefix = topLevel,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = ":memory:",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
 
     ObjectStore& session = tool.getObjectStore();

@@ -94,16 +94,23 @@ TEST_CASE("Optional comment callbacks")
         };
 
     auto executor = ToolExecutor{cdb, 1, [](auto&& _1, auto&& _2) {}, memDb};
+
+    const CppToolConstants constants{.prefix = PREFIX,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
     (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
         memDb,
-        PREFIX,
-        std::filesystem::path{},
-        std::vector<std::filesystem::path>{},
-        std::vector<std::pair<std::string, std::string>>{},
+        constants,
         [](const std::string&) {},
         std::nullopt,
-        false,
-        /*enableLakosianRules=*/true,
         saveCommentsCallback));
     REQUIRE(foundComments.size() == 4);
     REQUIRE(foundComments.find(FoundCommentTestData{"oneaaa_comp.h", "klass", 7, 7}) != foundComments.end());
@@ -131,16 +138,20 @@ TEST_CASE("Smoke test partial template specialization - Must not crash")
     auto memDb = lvtmdb::ObjectStore{};
 
     auto executor = ToolExecutor{cdb, 1, [](auto&& _1, auto&& _2) {}, memDb};
-    (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
-        memDb,
-        PREFIX,
-        std::filesystem::path{},
-        std::vector<std::filesystem::path>{},
-        std::vector<std::pair<std::string, std::string>>{},
-        [](const std::string&) {},
-        std::nullopt,
-        false,
-        /*enableLakosianRules=*/false));
+
+    const CppToolConstants constants{.prefix = PREFIX,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    (void) executor.execute(
+        std::make_unique<LogicalDepActionFactory>(memDb, constants, [](const std::string&) {}, std::nullopt));
 }
 
 TEST_CASE("Test global free functions with same name in different compilation units")
@@ -159,16 +170,20 @@ TEST_CASE("Test global free functions with same name in different compilation un
     auto memDb = lvtmdb::ObjectStore{};
 
     auto executor = ToolExecutor{cdb, 1, [](auto&& _1, auto&& _2) {}, memDb};
-    (void) executor.execute(std::make_unique<LogicalDepActionFactory>(
-        memDb,
-        PREFIX,
-        std::filesystem::path{},
-        std::vector<std::filesystem::path>{},
-        std::vector<std::pair<std::string, std::string>>{},
-        [](const std::string&) {},
-        std::nullopt,
-        false,
-        /*enableLakosianRules=*/true));
+
+    const CppToolConstants constants{.prefix = {},
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    (void) executor.execute(
+        std::make_unique<LogicalDepActionFactory>(memDb, constants, [](const std::string&) {}, std::nullopt));
 
     memDb.withROLock([&memDb]() {
         auto files = memDb.getAllFiles();

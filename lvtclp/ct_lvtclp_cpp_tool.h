@@ -43,6 +43,8 @@
 #include <QObject>
 #include <QString>
 
+#include <ct_lvtclp_cpp_tool_constants.h>
+
 namespace Codethink::lvtclp {
 
 // =======================
@@ -63,40 +65,9 @@ class LVTCLP_EXPORT CppTool : public QObject {
     enum class UseSystemHeaders { e_Yes, e_No, e_Query };
 
     // CREATORS
-    CppTool(std::filesystem::path sourcePath,
-            std::filesystem::path buildPath,
-            const std::vector<std::filesystem::path>& compileCommandsJsons,
-            const std::filesystem::path& databasePath,
-            unsigned numThreads = 1,
-            const std::vector<std::string>& ignoreList = {},
-            const std::vector<std::filesystem::path>& nonLakosianDirs = {},
-            std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
-            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs = {},
-            bool enableLakosianRules = true,
-            bool printToConsole = false);
-
-    CppTool(std::filesystem::path sourcePath,
-            std::filesystem::path buildPath,
-            const clang::tooling::CompileCommand& compileCommand,
-            const std::filesystem::path& databasePath,
-            const std::vector<std::string>& ignoreList = {},
-            const std::vector<std::filesystem::path>& nonLakosianDirs = {},
-            std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
-            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs = {},
-            bool enableLakosianRules = true,
-            bool printToConsole = false);
-
-    CppTool(std::filesystem::path sourcePath,
-            std::filesystem::path buildPath,
-            const clang::tooling::CompilationDatabase& db,
-            const std::filesystem::path& databasePath,
-            unsigned numThreads = 1,
-            const std::vector<std::string>& ignoreList = {},
-            const std::vector<std::filesystem::path>& nonLakosianDirs = {},
-            std::vector<std::pair<std::string, std::string>> thirdPartyDirs = {},
-            std::vector<std::string> const& userProvidedExtraCompileCommandsArgs = {},
-            bool enableLakosianRules = true,
-            bool printToConsole = false);
+    CppTool(CppToolConstants constants, const std::vector<std::filesystem::path>& compileCommandsJsons);
+    CppTool(CppToolConstants constants, const clang::tooling::CompileCommand& compileCommand);
+    CppTool(CppToolConstants constants, const clang::tooling::CompilationDatabase& db);
 
     ~CppTool() noexcept override;
 
@@ -133,8 +104,6 @@ class LVTCLP_EXPORT CppTool : public QObject {
 
     void setShowDatabaseErrors(bool value);
     // enables sending database error information to the consumer
-
-    void setPrintToConsole(bool b);
 
     void cancelRun();
     // Cancel mid-way through a runPhysical() or runFull(). If one of these

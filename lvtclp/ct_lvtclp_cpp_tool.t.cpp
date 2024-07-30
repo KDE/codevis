@@ -411,9 +411,8 @@ const std::initializer_list<ModelUtil::UDTModel> udts = {
 };
 }; // namespace DatabaseNewFile
 
-static void runTool(CppTool& tool, const bool madeChanges, const unsigned numRuns = 1, bool verbose = false)
+static void runTool(CppTool& tool, const bool madeChanges, const unsigned numRuns = 1)
 {
-    tool.setPrintToConsole(verbose);
     for (unsigned i = 0; i < numRuns; i++) {
         REQUIRE(tool.runFull());
         REQUIRE(tool.lastRunMadeChanges() == madeChanges);
@@ -445,7 +444,18 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
                                        {"-Igroups/one/onetop", "-Igroups/one/onedep"},
                                        topLevel);
 
-        CppTool tool(topLevel, {}, cmds, topLevel / "database");
+        const CppToolConstants constants{.prefix = topLevel,
+                                         .buildPath = std::filesystem::current_path(),
+                                         .databasePath = topLevel / "database",
+                                         .nonLakosianDirs = {},
+                                         .thirdPartyDirs = {},
+                                         .ignoreGlobs = {},
+                                         .userProvidedExtraCompileCommandsArgs = {},
+                                         .numThreads = 1,
+                                         .enableLakosianRules = true,
+                                         .printToConsole = false};
+
+        CppTool tool(constants, cmds);
         ObjectStore& session = tool.getObjectStore();
 
         // initial parse
@@ -513,7 +523,18 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
             {"-Igroups/one/onetop", "-Igroups/one/onedep"},
             topLevel.string());
 
-        CppTool toolPlus(topLevel, {}, cmdsPlus, topLevel / "database");
+        const CppToolConstants constants{.prefix = topLevel,
+                                         .buildPath = std::filesystem::current_path(),
+                                         .databasePath = topLevel / "database",
+                                         .nonLakosianDirs = {},
+                                         .thirdPartyDirs = {},
+                                         .ignoreGlobs = {},
+                                         .userProvidedExtraCompileCommandsArgs = {},
+                                         .numThreads = 1,
+                                         .enableLakosianRules = true,
+                                         .printToConsole = false};
+
+        CppTool toolPlus(constants, cmdsPlus);
 
         Test_Util::createFile(topLevel / "groups/one/onedep/onedep_newfile.h", R"(
     // onedep_newfile.h
@@ -561,7 +582,19 @@ TEST_CASE_METHOD(CppToolTestFixture, "Tool")
 TEST_CASE("Run Tool on example project")
 {
     StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/hello_world/");
-    CppTool tool(PREFIX + "/hello_world/", {}, cmds, PREFIX + "/hello_world/database", 1, {}, {}, {}, {}, true, true);
+
+    const CppToolConstants constants{.prefix = PREFIX + "/hello_world/",
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = PREFIX + "/hello_world/database",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
 
     ObjectStore& session = tool.getObjectStore();
 
@@ -587,7 +620,19 @@ TEST_CASE("Run Tool on example project incrementally")
         "placeholder",
         {"-I" + sourcePath + "/groups/one/onepkg/", "-I" + sourcePath + "/groups/two/twodmo/"},
         sourcePath);
-    CppTool tool(sourcePath, {}, cmds, sourcePath + "database");
+
+    const CppToolConstants constants{.prefix = sourcePath,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = sourcePath + "database",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runPhysical());
@@ -643,7 +688,19 @@ TEST_CASE("Run Tool on project including other lakosian project")
                                    "placeholder",
                                    {"-I" + prjAPath + "/groups/one/oneaaa/", "-I" + prjBPath + "/groups/two/twoaaa/"},
                                    prjAPath);
-    CppTool tool(prjAPath, {}, cmds, prjAPath + "/database");
+
+    const CppToolConstants constants{.prefix = prjAPath,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = prjAPath + "/database",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     ObjectStore& session = tool.getObjectStore();
 
     REQUIRE(tool.runFull());
@@ -688,7 +745,19 @@ TEST_CASE("Run Tool store test-only dependencies")
         "placeholder",
         {"-I" + prjAPath + "/groups/one/oneaaa/", "-fparse-all-comments"},
         prjAPath);
-    CppTool tool(prjAPath, {}, cmds, prjAPath + "/database");
+
+    const CppToolConstants constants{.prefix = prjAPath,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = prjAPath + "/database",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
 
     using Filename = std::string;
     using LineNo = unsigned;
@@ -788,21 +857,22 @@ TEST_CASE("Test run tool with non-lakosian rules")
     std::cout << "Setting up project path " << prjPath << std::endl;
     std::cout << "And..." << std::filesystem::path(prjPath).generic_string();
 
-    auto tool = CppTool(
-        /*sourcePath=*/prjPath,
-        /* buildPath=*/{},
-        /*compileCommandsJsons=*/
-        std::vector<std::filesystem::path>{tmpdir.path().string() + "/compile_commands.json"},
-        /*databasePath=*/prjPath + "/database",
-        /*numThreads=*/1,
-        /*ignoreList=*/{},
-        /*nonLakosianDirs=*/{},
-        /*thirdPartyDirs=*/{},
-        /*userProvidedExtraCompileCommandsArgs=*/{"-iquote" + prjPath + "hidden_folder/"},
-        /*enableLakosianRules=*/false,
-        /*printToConsole=*/false);
-    ObjectStore& memDb = tool.getObjectStore();
+    const CppToolConstants constants{.prefix = prjPath,
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = prjPath + "/database",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {"-iquote" + prjPath + "hidden_folder/"},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = false,
+                                     .printToConsole = false};
+
+    auto tool =
+        CppTool(constants, std::vector<std::filesystem::path>{tmpdir.path().string() + "/compile_commands.json"});
+
     tool.runPhysical();
+    ObjectStore& memDb = tool.getObjectStore();
 
     auto locks = std::vector<Lockable::ROLock>{};
     auto addLock = [&locks](auto *rawDbObj) {
@@ -876,7 +946,18 @@ TEST_CASE("Test run tool with non-lakosian rules")
 TEST_CASE("cstddef test")
 {
     StaticCompilationDatabase cmds({{"hello.m.cpp", "hello.m.o"}}, "placeholder", {}, PREFIX + "/cstddef_test/");
-    CppTool tool(PREFIX + "/cstddef_test/", {}, cmds, PREFIX + "/cstddef_test/database", 1, {}, {}, {}, {}, true, true);
+    const CppToolConstants constants{.prefix = PREFIX + "/cstddef_test/",
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = PREFIX + "/cstddef_test/database",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
 
     ObjectStore& session = tool.getObjectStore();
 

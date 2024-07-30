@@ -26,6 +26,7 @@
 //
 //@SEE_ALSO: clang::PPCallbacks
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_threadstringmap.h>
 #include <ct_lvtmdb_fileobject.h>
 #include <ct_lvtmdb_objectstore.h>
@@ -78,29 +79,18 @@ class HeaderCallbacks : public clang::PPCallbacks {
     lvtmdb::ObjectStore& d_memDb;
     // The active in-memory database session
 
-    const std::filesystem::path& d_prefix;
-    const std::filesystem::path& d_buildPath;
-    const std::vector<std::filesystem::path>& d_nonLakosianDirs;
-    const std::vector<std::pair<std::string, std::string>>& d_thirdPartyDirs;
-    const std::vector<llvm::GlobPattern>& d_ignoreGlobs;
-
     ThreadStringMap& d_pathToCanonical;
 
     std::optional<HeaderLocationCallback_f> d_headerLocationCallback;
 
-    bool d_enableLakosianRules;
+    const CppToolConstants& d_constants;
 
   public:
     // CREATORS
     HeaderCallbacks(clang::SourceManager *sm,
                     lvtmdb::ObjectStore& memDb,
-                    const std::filesystem::path& prefix,
-                    const std::filesystem::path& buildPath,
-                    const std::vector<std::filesystem::path>& nonLakosians,
-                    const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
-                    const std::vector<llvm::GlobPattern>& ignoreGlobs,
+                    const CppToolConstants& constants,
                     ThreadStringMap& pathToCanonical,
-                    bool enableLakosianRules,
                     std::optional<HeaderLocationCallback_f> headerLocationCallback = std::nullopt);
 
     // MANIPULATORS

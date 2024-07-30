@@ -398,7 +398,19 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "Lakosian nodes test")
 
     auto tmpDir = TmpDir{"lakosian_nodes_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    CppTool tool(topLevel, {}, cmds, dbPath);
+
+    const CppToolConstants constants{.prefix = topLevel,
+                                     .buildPath = dbPath,
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -424,7 +436,19 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "find entities")
 
     auto tmpDir = TmpDir{"find_entities_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    CppTool tool(topLevel, {}, cmds, dbPath);
+
+    const CppToolConstants constants{.prefix = topLevel,
+                                     .buildPath = dbPath,
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -466,7 +490,19 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "retrieve child structures")
                                    topLevel);
     auto tmpDir = TmpDir{"find_entities_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    CppTool tool(topLevel, {}, cmds, dbPath);
+
+    const CppToolConstants constants{.prefix = topLevel,
+                                     .buildPath = dbPath,
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -502,7 +538,19 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "parent hierarchy")
 
     auto tmpDir = TmpDir{"parent_hierarchy_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    CppTool tool(topLevel, {}, cmds, dbPath);
+
+    const CppToolConstants constants{.prefix = topLevel,
+                                     .buildPath = dbPath,
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;
@@ -551,7 +599,19 @@ TEST_CASE_METHOD(LakosianNodeTestFixture, "changing node storage")
 
     auto tmpDir = TmpDir{"changing_node_storage_test"};
     auto dbPath = tmpDir.path() / "codedb.db";
-    CppTool tool(topLevel, {}, cmds, dbPath);
+
+    const CppToolConstants constants{.prefix = topLevel,
+                                     .buildPath = dbPath,
+                                     .databasePath = {},
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
     REQUIRE(tool.runFull());
 
     lvtmdb::SociWriter writer;

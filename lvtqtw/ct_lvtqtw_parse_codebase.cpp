@@ -16,8 +16,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 */
+#include "ct_lvtclp_clputil.h"
 #include <ct_lvtqtw_parse_codebase.h>
 
+#include <ct_lvtclp_clputil.h>
 #include <ct_lvtclp_cpp_tool.h>
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_soci_helper.h>
@@ -797,17 +799,21 @@ void ParseCodebaseDialog::initTools(const std::string& compileCommandsJson,
     const bool catchCodeAnalysisOutput = Preferences::enableCodeParseDebugOutput();
     if (!d->tool_p) {
         auto disableLakosianRules = (ui->disableLakosianRules->checkState() == Qt::Checked);
-        d->tool_p = std::make_unique<lvtclp::CppTool>(sourcePath(),
-                                                      buildPath(),
-                                                      std::vector<std::filesystem::path>{compileCommandsJson},
-                                                      codebasePath().toStdString(),
-                                                      ui->threadCount->value(),
-                                                      ignoreList,
-                                                      nonLakosianDirs,
-                                                      d->thirdPartyPathMapping,
-                                                      d->userProvidedExtraCompileCommandsArgs,
-                                                      /*enableLakosianRules=*/not disableLakosianRules,
-                                                      catchCodeAnalysisOutput);
+
+        const CppToolConstants constants{
+            .prefix = sourcePath(),
+            .buildPath = buildPath(),
+            .databasePath = codebasePath().toStdString(),
+            .nonLakosianDirs = Codethink::lvtclp::ClpUtil::ensureCanonical(nonLakosianDirs),
+            .thirdPartyDirs = d->thirdPartyPathMapping,
+            .ignoreGlobs = Codethink::lvtclp::ClpUtil::stringListToGlobPattern(ignoreList),
+            .userProvidedExtraCompileCommandsArgs = d->userProvidedExtraCompileCommandsArgs,
+            .numThreads = static_cast<uint>(ui->threadCount->value()),
+            .enableLakosianRules = !disableLakosianRules,
+            .printToConsole = catchCodeAnalysisOutput};
+
+        d->tool_p =
+            std::make_unique<lvtclp::CppTool>(constants, std::vector<std::filesystem::path>{compileCommandsJson});
     }
     d->tool_p->setSharedMemDb(d->sharedMemDb);
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());

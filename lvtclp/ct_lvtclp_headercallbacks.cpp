@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include <ct_lvtclp_headercallbacks.h>
 
 #include <ct_lvtclp_clputil.h>
@@ -36,24 +37,14 @@ namespace Codethink::lvtclp {
 
 HeaderCallbacks::HeaderCallbacks(clang::SourceManager *sm,
                                  lvtmdb::ObjectStore& memDb,
-                                 const std::filesystem::path& prefix,
-                                 const std::filesystem::path& buildPath,
-                                 const std::vector<std::filesystem::path>& nonLakosians,
-                                 const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
-                                 const std::vector<llvm::GlobPattern>& ignoreGlobs,
+                                 const CppToolConstants& constants,
                                  ThreadStringMap& pathToCanonical,
-                                 bool enableLakosianRules,
                                  std::optional<HeaderLocationCallback_f> headerLocationCallback):
     sourceManager(*sm),
     d_memDb(memDb),
-    d_prefix(prefix),
-    d_buildPath(buildPath),
-    d_nonLakosianDirs(nonLakosians),
-    d_thirdPartyDirs(thirdPartyDirs),
-    d_ignoreGlobs(ignoreGlobs),
     d_pathToCanonical(pathToCanonical),
     d_headerLocationCallback(std::move(headerLocationCallback)),
-    d_enableLakosianRules(enableLakosianRules)
+    d_constants(constants)
 {
 }
 
@@ -103,20 +94,24 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
 
     auto realPath = d_pathToCanonical.get_or_add(realPathStr);
 
-    if (ClpUtil::isFileIgnored(std::filesystem::path{realPathStr}.filename().string(), d_ignoreGlobs)) {
+    if (ClpUtil::isFileIgnored(std::filesystem::path{realPathStr}.filename().string(), d_constants.ignoreGlobs)) {
         return;
     }
 
     lvtmdb::FileObject *filePtr = nullptr;
-    if (d_enableLakosianRules) {
+    if (d_constants.enableLakosianRules) {
         filePtr = ClpUtil::writeSourceFile(realPath,
                                            true,
                                            d_memDb,
-                                           d_prefix.generic_string(),
-                                           d_nonLakosianDirs,
-                                           d_thirdPartyDirs);
+                                           d_constants.prefix,
+                                           d_constants.nonLakosianDirs,
+                                           d_constants.thirdPartyDirs);
     } else {
-        filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPath, d_prefix, d_buildPath, RelativePath.str());
+        filePtr = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                        realPath,
+                                                        d_constants.prefix,
+                                                        d_constants.buildPath,
+                                                        RelativePath.str());
     }
 
     if (!filePtr || !d_sourceFile_p || filePtr == d_sourceFile_p) {
@@ -133,7 +128,7 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
         (*d_headerLocationCallback)(sourceFile, includedFile, lineNo);
     }
 
-    if (!d_enableLakosianRules) {
+    if (!d_constants.enableLakosianRules) {
         nonLakosian::ClpUtil::addSourceFileRelationWithParentPropagation(d_sourceFile_p, filePtr);
         return;
     }
@@ -196,7 +191,7 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
 {
     const std::string realPath = ClpUtil::getRealPath(sourceLocation, sourceManager);
 
-    if (ClpUtil::isFileIgnored(std::filesystem::path{realPath}.filename().string(), d_ignoreGlobs)) {
+    if (ClpUtil::isFileIgnored(std::filesystem::path{realPath}.filename().string(), d_constants.ignoreGlobs)) {
         d_sourceFile_p = nullptr;
         return;
     }
@@ -206,13 +201,21 @@ void HeaderCallbacks::FileChanged(clang::SourceLocation sourceLocation,
         return;
     }
 
-    if (d_enableLakosianRules) {
+    if (d_constants.enableLakosianRules) {
         const FileType type = ClpUtil::categorisePath(realPath);
         bool isHeader = (type == FileType::e_Header);
-        d_sourceFile_p =
-            ClpUtil::writeSourceFile(realPath, isHeader, d_memDb, d_prefix, d_nonLakosianDirs, d_thirdPartyDirs);
+        d_sourceFile_p = ClpUtil::writeSourceFile(realPath,
+                                                  isHeader,
+                                                  d_memDb,
+                                                  d_constants.prefix,
+                                                  d_constants.nonLakosianDirs,
+                                                  d_constants.thirdPartyDirs);
     } else {
-        d_sourceFile_p = nonLakosian::ClpUtil::writeSourceFile(d_memDb, realPath, d_prefix, d_buildPath, d_prefix);
+        d_sourceFile_p = nonLakosian::ClpUtil::writeSourceFile(d_memDb,
+                                                               realPath,
+                                                               d_constants.prefix,
+                                                               d_constants.buildPath,
+                                                               d_constants.prefix);
     }
 }
 

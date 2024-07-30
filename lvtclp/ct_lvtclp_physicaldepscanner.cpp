@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include "ct_lvtclp_cpp_tool_constants.h"
 #include "ct_lvtclp_headercallbacks.h"
 #include <ct_lvtclp_clputil.h>
 #include <ct_lvtclp_physicaldepscanner.h>
@@ -36,38 +37,22 @@ class FrontendAction : public clang::PreprocessOnlyAction {
 
   private:
     lvtmdb::ObjectStore& d_memDb;
-    std::filesystem::path d_prefix;
-    std::filesystem::path d_buildFolder;
-    const std::vector<std::filesystem::path>& d_nonLakosianDirs;
-    const std::vector<std::pair<std::string, std::string>>& d_thirdPartyDirs;
-    const std::vector<llvm::GlobPattern>& d_ignoreGlobs;
-
+    const CppToolConstants& d_constants;
     std::function<void(const std::string&)> d_filenameCallback;
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> d_headerLocationCallback;
     ThreadStringMap& d_pathToCanonical;
-    bool d_enableLakosianRules;
 
   public:
     FrontendAction(lvtmdb::ObjectStore& memDb,
-                   std::filesystem::path prefix,
-                   std::filesystem::path buildFolder,
-                   const std::vector<std::filesystem::path>& nonLakosians,
-                   const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
+                   const CppToolConstants& constants,
                    std::function<void(const std::string&)> filenameCallback,
-                   const std::vector<llvm::GlobPattern>& ignoreGlobs,
                    std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback,
-                   ThreadStringMap& pathToCanonical,
-                   bool enableLakosianRules):
+                   ThreadStringMap& pathToCanonical):
         d_memDb(memDb),
-        d_prefix(std::move(prefix)),
-        d_buildFolder(buildFolder),
-        d_nonLakosianDirs(nonLakosians),
-        d_thirdPartyDirs(thirdPartyDirs),
-        d_ignoreGlobs(ignoreGlobs),
+        d_constants(constants),
         d_filenameCallback(std::move(filenameCallback)),
         d_headerLocationCallback(std::move(headerLocationCallback)),
-        d_pathToCanonical(pathToCanonical),
-        d_enableLakosianRules(enableLakosianRules)
+        d_pathToCanonical(pathToCanonical)
     {
     }
 
@@ -76,7 +61,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
     void ExecuteAction() override
     {
         auto realPathStr = getCurrentFile().str();
-        if (ClpUtil::isFileIgnored(realPathStr, d_ignoreGlobs)) {
+        if (ClpUtil::isFileIgnored(realPathStr, d_constants.ignoreGlobs)) {
             return;
         }
 
@@ -85,13 +70,8 @@ class FrontendAction : public clang::PreprocessOnlyAction {
 
         pp.addPPCallbacks(std::make_unique<lvtclp::HeaderCallbacks>(&compiler.getSourceManager(),
                                                                     d_memDb,
-                                                                    d_prefix,
-                                                                    d_buildFolder,
-                                                                    d_nonLakosianDirs,
-                                                                    d_thirdPartyDirs,
-                                                                    d_ignoreGlobs,
+                                                                    d_constants,
                                                                     d_pathToCanonical,
-                                                                    d_enableLakosianRules,
                                                                     d_headerLocationCallback));
 
         // try our best not to bail on compilation errors
@@ -114,7 +94,7 @@ class FrontendAction : public clang::PreprocessOnlyAction {
         d_filenameCallback(getCurrentFile().str());
 
         auto realPathStr = getCurrentFile().str();
-        if (ClpUtil::isFileIgnored(realPathStr, d_ignoreGlobs)) {
+        if (ClpUtil::isFileIgnored(realPathStr, d_constants.ignoreGlobs)) {
             return false;
         }
 
@@ -128,61 +108,33 @@ namespace Codethink::lvtclp {
 
 struct DepScanActionFactory::Private {
     lvtmdb::ObjectStore& memDb;
-    std::filesystem::path prefix;
-    std::filesystem::path buildFolder;
-    std::vector<std::filesystem::path> nonLakosianDirs;
-    std::vector<std::pair<std::string, std::string>> thirdPartyDirs;
     std::function<void(const std::string&)> filenameCallback;
-    std::vector<llvm::GlobPattern> ignoreGlobs;
     ThreadStringMap& pathToCanonical;
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback;
-    bool enableLakosianRules;
+    const CppToolConstants constants;
 
     Private(lvtmdb::ObjectStore& memDb,
-            std::filesystem::path prefix,
-            std::filesystem::path buildFolder,
-            std::vector<std::filesystem::path> nonLakosians,
-            std::vector<std::pair<std::string, std::string>> thirdPartyDirs,
+            const CppToolConstants& constants,
             std::function<void(const std::string&)> filenameCallback,
-            std::vector<llvm::GlobPattern> ignoreGlobs,
             ThreadStringMap& pathToCanonical,
-            std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback,
-            bool enableLakosianRules):
+            std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
         memDb(memDb),
-        prefix(std::move(prefix)),
-        buildFolder(buildFolder),
-        nonLakosianDirs(std::move(nonLakosians)),
-        thirdPartyDirs(std::move(thirdPartyDirs)),
         filenameCallback(std::move(filenameCallback)),
-        ignoreGlobs(std::move(ignoreGlobs)),
         pathToCanonical(pathToCanonical),
         headerLocationCallback(std::move(headerLocationCallback)),
-        enableLakosianRules(enableLakosianRules)
+        constants(constants)
     {
     }
 };
 
 DepScanActionFactory::DepScanActionFactory(
     lvtmdb::ObjectStore& memDb,
-    const std::filesystem::path& prefix,
-    const std::filesystem::path& buildFolder,
-    const std::vector<std::filesystem::path>& nonLakosians,
-    const std::vector<std::pair<std::string, std::string>>& thirdPartyDirs,
+    const CppToolConstants& constants,
     std::function<void(const std::string&)> filenameCallback,
-    std::vector<llvm::GlobPattern> ignoreGlobs,
     ThreadStringMap& pathToCanonical,
-    bool enableLakosianRules,
     std::optional<HeaderCallbacks::HeaderLocationCallback_f> headerLocationCallback):
-    d(std::make_unique<DepScanActionFactory::Private>(memDb,
-                                                      prefix,
-                                                      buildFolder,
-                                                      nonLakosians,
-                                                      thirdPartyDirs,
-                                                      std::move(filenameCallback),
-                                                      std::move(ignoreGlobs),
-                                                      pathToCanonical,
-                                                      std::move(headerLocationCallback),
-                                                      enableLakosianRules))
+    d(std::make_unique<DepScanActionFactory::Private>(
+        memDb, constants, std::move(filenameCallback), pathToCanonical, std::move(headerLocationCallback)))
 {
 }
 
@@ -191,15 +143,10 @@ DepScanActionFactory::~DepScanActionFactory() noexcept = default;
 std::unique_ptr<clang::FrontendAction> DepScanActionFactory::create()
 {
     return std::make_unique<FrontendAction>(d->memDb,
-                                            d->prefix,
-                                            d->buildFolder,
-                                            d->nonLakosianDirs,
-                                            d->thirdPartyDirs,
+                                            d->constants,
                                             d->filenameCallback,
-                                            d->ignoreGlobs,
                                             d->headerLocationCallback,
-                                            d->pathToCanonical,
-                                            d->enableLakosianRules);
+                                            d->pathToCanonical);
 }
 
 } // namespace Codethink::lvtclp

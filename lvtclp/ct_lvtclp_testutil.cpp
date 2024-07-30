@@ -113,16 +113,17 @@ bool Test_Util::runOnCode(lvtmdb::ObjectStore& mdb, const std::string& source, c
     auto callback = [](const std::string&) {};
     auto messageCallback = [](const std::string&, long) {};
 
-    const CppToolConstants constants{.prefix = std::filesystem::current_path(),
-                                     .buildPath = {},
-                                     .databasePath = {},
-                                     .nonLakosianDirs = {},
-                                     .thirdPartyDirs = {},
-                                     .ignoreGlobs = {},
-                                     .userProvidedExtraCompileCommandsArgs = {},
-                                     .numThreads = 1,
-                                     .enableLakosianRules = true,
-                                     .printToConsole = false};
+    const CppToolConstants constants{
+        .prefix = std::filesystem::weakly_canonical(std::filesystem::current_path()).generic_string(),
+        .buildPath = {},
+        .databasePath = {},
+        .nonLakosianDirs = {},
+        .thirdPartyDirs = {},
+        .ignoreGlobs = {},
+        .userProvidedExtraCompileCommandsArgs = {},
+        .numThreads = 1,
+        .enableLakosianRules = true,
+        .printToConsole = false};
 
     LogicalDepActionFactory actionFactory(mdb, constants, callback, messageCallback);
 

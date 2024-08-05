@@ -18,6 +18,7 @@
 */
 
 #include "ct_lvtclp_cpp_tool_constants.h"
+#include <clang/AST/DeclCXX.h>
 #include <ct_lvtclp_logicaldepvisitor.h>
 
 #include <ct_lvtmdb_componentobject.h>
@@ -1724,8 +1725,23 @@ lvtmdb::TypeObject *LogicalDepVisitor::addUDT(const clang::NamedDecl *nameDecl, 
     }
 
     lvtmdb::TypeObject *dbUDT = lookupUDT(nameDecl, nullptr);
+    bool isFullyDeclared = [nameDecl, kind]() -> bool {
+        if (kind == lvtshr::UDTKind::TypeAlias) {
+            return true;
+        }
+
+        const clang::CXXRecordDecl *record = clang::cast<clang::CXXRecordDecl>(nameDecl);
+        if (!record) {
+            return true;
+        }
+
+        return record->isThisDeclarationADefinition() || kind == lvtshr::UDTKind::TypeAlias;
+    }();
+
     if (dbUDT) {
-        addUDTSourceFile(dbUDT, nameDecl);
+        if (isFullyDeclared) {
+            addUDTSourceFile(dbUDT, nameDecl);
+        }
         return dbUDT;
     }
 
@@ -1794,7 +1810,9 @@ lvtmdb::TypeObject *LogicalDepVisitor::addUDT(const clang::NamedDecl *nameDecl, 
         });
     }
 
-    addUDTSourceFile(dbUDT, nameDecl);
+    if (isFullyDeclared) {
+        addUDTSourceFile(dbUDT, nameDecl);
+    }
 
     return dbUDT;
 }

@@ -945,6 +945,49 @@ TEST_CASE("Test run tool with non-lakosian rules")
     }
 }
 
+TEST_CASE("forward declaration test")
+{
+    StaticCompilationDatabase cmds({{"main.cpp", "main.o"},
+                                    {"ForwardDeclared.cpp", "ForwardDeclared.o"},
+                                    {"ClassDefinition.cpp", "ClassDefinition.o"}},
+                                   "placeholder",
+                                   {},
+                                   PREFIX + "/forward_declaration/");
+
+    const CppToolConstants constants{.prefix = PREFIX + "/forward_declaration/",
+                                     .buildPath = std::filesystem::current_path(),
+                                     .databasePath = PREFIX + "/forward_declaration/database",
+                                     .nonLakosianDirs = {},
+                                     .thirdPartyDirs = {},
+                                     .ignoreGlobs = {},
+                                     .userProvidedExtraCompileCommandsArgs = {},
+                                     .numThreads = 1,
+                                     .enableLakosianRules = true,
+                                     .printToConsole = false};
+
+    CppTool tool(constants, cmds);
+    ObjectStore& session = tool.getObjectStore();
+
+    REQUIRE(tool.runFull());
+
+    TypeObject *classDeclaration = nullptr;
+    session.withROLock([&] {
+        classDeclaration = session.getType("ClassDefinition");
+    });
+
+    REQUIRE(classDeclaration);
+
+    classDeclaration->withROLock([classDeclaration] {
+        auto files = classDeclaration->files();
+        REQUIRE(files.size() == 1);
+
+        auto file = files[0];
+        file->withROLock([file] {
+            REQUIRE(file->name() == "ClassDefinition.h");
+        });
+    });
+}
+
 #ifndef Q_OS_WINDOWS
 // cstddef and stddef.h files are a pain to get it right
 // because they depend on specific, compile-defined, paths

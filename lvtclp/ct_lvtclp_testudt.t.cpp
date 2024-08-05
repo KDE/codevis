@@ -99,8 +99,6 @@ TEST_CASE("User defined type")
         const auto classes = file->types();
         auto classes_it = std::find(classes.begin(), classes.end(), C);
         REQUIRE(classes_it != classes.end());
-        classes_it = std::find(classes.begin(), classes.end(), D);
-        REQUIRE(classes_it != classes.end());
     });
     C->withROLock([&] {
         auto files = C->files();
@@ -111,7 +109,7 @@ TEST_CASE("User defined type")
     D->withROLock([&] {
         auto files = D->files();
         auto files_it = std::find(files.begin(), files.end(), file);
-        REQUIRE(files_it != files.end());
+        REQUIRE(files_it == files.end());
     });
 }
 
@@ -517,18 +515,19 @@ ApplyChar<C> a;
 TEST_CASE("Type aliase namespace")
 {
     static const char *source = R"(
-namespace std {
-class Something;
+namespace some {
+    class Something;
 }
 
 namespace foo {
-using Something = std::Something;
+    using Something = some::Something;
 }
 
 class C {
   public:
     foo::Something& some;
 };
+
 )";
     ObjectStore session;
     REQUIRE(Test_Util::runOnCode(session, source, "testTypeAliasNamespace.cpp"));
@@ -561,7 +560,7 @@ class C {
         REQUIRE(udts_it != udts.end());
     });
 
-    REQUIRE(Test_Util::usesInTheImplementationExists("foo::Something", "std::Something", session));
+    REQUIRE(Test_Util::usesInTheImplementationExists("foo::Something", "some::Something", session));
     REQUIRE(Test_Util::usesInTheInterfaceExists("C", "foo::Something", session));
 }
 

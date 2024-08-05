@@ -1730,12 +1730,22 @@ lvtmdb::TypeObject *LogicalDepVisitor::addUDT(const clang::NamedDecl *nameDecl, 
             return true;
         }
 
-        const clang::CXXRecordDecl *record = clang::cast<clang::CXXRecordDecl>(nameDecl);
-        if (!record) {
-            return true;
+        if (kind == lvtshr::UDTKind::Class) {
+            const clang::CXXRecordDecl *record = clang::cast<clang::CXXRecordDecl>(nameDecl);
+            if (!record) {
+                return true;
+            }
+            return record->isThisDeclarationADefinition();
+        }
+        if (kind == lvtshr::UDTKind::Struct) {
+            const clang::RecordDecl *record = clang::cast<clang::RecordDecl>(nameDecl);
+            if (!record) {
+                return true;
+            }
+            return record->isThisDeclarationADefinition();
         }
 
-        return record->isThisDeclarationADefinition() || kind == lvtshr::UDTKind::TypeAlias;
+        return true;
     }();
 
     if (dbUDT) {

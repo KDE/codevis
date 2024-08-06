@@ -21,6 +21,8 @@
 
 #include <ct_lvtclp_clputil.h>
 #include <ct_lvtclp_cpp_tool.h>
+#include <ct_lvtclp_parse_error_handler.h>
+
 #include <ct_lvtmdb_functionobject.h>
 #include <ct_lvtmdb_soci_helper.h>
 #include <ct_lvtmdb_soci_reader.h>
@@ -53,6 +55,8 @@
 #include <QThread>
 #include <QVariant>
 
+#include <thirdparty/result/result.hpp>
+
 #include <KNotification>
 
 #include <clang/Tooling/JSONCompilationDatabase.h>
@@ -64,55 +68,6 @@ using namespace Codethink::lvtqtw;
 namespace {
 constexpr const char *COMPILE_COMMANDS = "compile_commands.json";
 constexpr const char *NON_LAKOSIAN_DIRS_SETTING = "non_lakosian_dirs";
-
-bool compressFiles(QFileInfo const& saveTo, QList<QFileInfo> const& files)
-{
-    if (!QDir{}.exists(saveTo.absolutePath()) && !QDir{}.mkdir(saveTo.absolutePath())) {
-        qDebug() << "[compressFiles] Could not prepare path to save.";
-        return false;
-    }
-
-    auto zipFile = KZip(saveTo.absoluteFilePath());
-    if (!zipFile.open(QIODevice::WriteOnly)) {
-        qDebug() << "[compressFiles] Could not open file to compress:" << saveTo;
-        qDebug() << zipFile.errorString();
-        return false;
-    }
-
-    for (auto const& fileToCompress : qAsConst(files)) {
-        auto r = zipFile.addLocalFile(fileToCompress.path(), "");
-        if (!r) {
-            qDebug() << "[compressFiles] Could not add files to project:" << fileToCompress;
-            qDebug() << zipFile.errorString();
-            return false;
-        }
-    }
-
-    return true;
-}
-
-QString createSysinfoFileAt(const QString& lPath, const QString& ignorePattern)
-{
-    QFile systemInformation(lPath + QDir::separator() + "system_information.txt");
-    if (!systemInformation.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qDebug() << "Error opening the sys info file.";
-        return {};
-    }
-
-    QString systemInfoData;
-
-    // this string should not be called with "tr", we do not want to
-    // translate this to other languages, I have no intention on reading
-    // a log file in russian.
-    systemInfoData += "CPU: " + QSysInfo::currentCpuArchitecture() + "\n"
-        + "Operating System: " + QSysInfo::productType() + "\n" + "Version " + QSysInfo::productVersion() + "\n"
-        + "Ignored File Information: " + ignorePattern + "\n" + "CodeVis version:" + QString(__DATE__);
-
-    systemInformation.write(systemInfoData.toLocal8Bit());
-    systemInformation.close();
-
-    return lPath + QDir::separator() + "system_information.txt";
-}
 
 bool is_wsl_string(const QString& text)
 {
@@ -251,6 +206,7 @@ struct ParseCodebaseDialog::Private {
 
     std::optional<std::reference_wrapper<Codethink::lvtplg::PluginManager>> pluginManager = std::nullopt;
     QElapsedTimer parseTimer;
+    lvtclp::ParseErrorHandler parseErrorHandler;
 };
 
 ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
@@ -287,7 +243,7 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
     ui->threadCount->setValue(Preferences::threadCount());
     ui->threadCount->setMaximum(QThread::idealThreadCount() + 1);
 
-    connect(ui->btnSaveOutput, &QPushButton::clicked, this, &ParseCodebaseDialog::saveOutput);
+    //    connect(ui->btnSaveOutput, &QPushButton::clicked, this, &ParseCodebaseDialog::saveOutput);
 
     connect(ui->searchCompileCommands, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForCompileCommands);
     connect(ui->nonLakosiansSearch, &QPushButton::clicked, this, &ParseCodebaseDialog::searchForNonLakosianDir);
@@ -351,6 +307,30 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
 
     connect(ui->sourceFolder, &QLineEdit::textChanged, this, [this] {
         validateUserInputFolders();
+    });
+
+    connect(ui->btnSaveOutput, &QPushButton::clicked, this, [this] {
+        if (!d->parseErrorHandler.hasErrors()) {
+            QMessageBox::warning(this, tr("Nothing to save"), tr("There are no errors to save"));
+            return;
+        }
+
+        const QString outputPath = QFileDialog::getSaveFileName();
+        if (outputPath.isEmpty()) {
+            return;
+        }
+
+        Codethink::lvtclp::ParseErrorHandler::SaveOutputInputArgs args{
+            .compileCommands = ui->compileCommandsFolder->text().toStdString(),
+            .outputPath = outputPath.toStdString(),
+            .ignorePattern = ui->ignorePattern->text()};
+
+        auto res = d->parseErrorHandler.saveOutput(args);
+        if (!res) {
+            ui->errorText->setText(tr("File saved but some errors occoured:\n%1").arg(res.error()));
+        } else {
+            ui->errorText->setText(tr("File %1 saved successfully").arg(outputPath));
+        }
     });
 
     ui->projectCompileCommandsError->setVisible(false);
@@ -611,57 +591,6 @@ void ParseCodebaseDialog::selectThirdPartyPkgMapping()
     }
 }
 
-void ParseCodebaseDialog::saveOutput()
-{
-    const QUrl directory = QFileDialog::getExistingDirectoryUrl(this);
-    if (!directory.isValid()) {
-        return;
-    }
-
-    const QString lPath = directory.toLocalFile();
-
-    const std::filesystem::path compile_commands_orig = ui->compileCommandsFolder->text().toStdString();
-    const std::filesystem::path compile_commands_dest = (lPath + QDir::separator() + COMPILE_COMMANDS).toStdString();
-    try {
-        std::filesystem::copy_file(compile_commands_orig, compile_commands_dest);
-    } catch (std::filesystem::filesystem_error& e) {
-        qDebug() << "Could not copy compile_commands.json to the save folder" << e.what();
-        return;
-    }
-
-    const QString sysInfoFile = createSysinfoFileAt(lPath, ui->ignorePattern->text());
-    const QString compileCommandsFile = lPath + QDir::separator() + COMPILE_COMMANDS;
-
-    QList<QFileInfo> textFiles;
-    textFiles.append(QFileInfo{compileCommandsFile});
-    textFiles.append(QFileInfo{sysInfoFile});
-    for (int i = 0; i < ui->tabWidget->count(); i++) {
-        auto *textEdit = qobject_cast<TextView *>(ui->tabWidget->widget(i));
-        QString saveFilePath = ui->tabWidget->tabText(i);
-        saveFilePath.replace(' ', '_');
-        saveFilePath.append(".txt");
-        saveFilePath = lPath + QDir::separator() + saveFilePath;
-        textEdit->saveFileTo(saveFilePath);
-        textFiles.append(QFileInfo{saveFilePath});
-    }
-
-    const QFileInfo outputFile =
-        QFileInfo{directory.toLocalFile() + QDir::separator() + "codevis_dump_"
-                  + QString::number(QDateTime::currentDateTime().toMSecsSinceEpoch()) + ".zip"};
-
-    if (compressFiles(outputFile, textFiles)) {
-        QMessageBox::information(this,
-                                 tr("Export Debug File"),
-                                 tr("File saved successfully at \n%1").arg(outputFile.fileName()));
-    } else {
-        QMessageBox::critical(this, tr("Export Debug File"), tr("Error exporting the build data."));
-    }
-
-    for (const auto& textFile : qAsConst(textFiles)) {
-        std::filesystem::remove(textFile.absoluteFilePath().toStdString());
-    }
-}
-
 void ParseCodebaseDialog::showEvent(QShowEvent *event)
 {
     if (d->dialogState != State::RunAllLogical) {
@@ -683,15 +612,6 @@ void ParseCodebaseDialog::reset()
     ui->progressBar->setValue(0);
     ui->progressBarText->setVisible(false);
 
-    if (ui->tabWidget->count() != 0) {
-        // we already have some debug output. Don't close it, allow saving it.
-        ui->btnSaveOutput->setEnabled(true);
-        ui->stackedWidget->setCurrentIndex(1);
-    } else {
-        // no debug output in memory. Don't show it.
-        ui->btnSaveOutput->setEnabled(false);
-        ui->stackedWidget->setCurrentIndex(0);
-    }
     validateUserInputFolders();
 }
 
@@ -703,13 +623,6 @@ void ParseCodebaseDialog::initParse()
     // re-enable cancel button if it was disabled (e.g. because it was used on
     // the last run)
     ui->btnCancelParse->setEnabled(true);
-
-    // We can't remove the tabs on ::reset, because the user might want to
-    // save the tab information on disk. We can't remove the tabs on ::close
-    // because the user can close and reopen the dialog multiple times while
-    // the parse is running, so the only time I can safely remove the tabs
-    // is when we start a new parse from scratch.
-    removeParseMessageTabs();
 
     if (ui->refreshDb->isChecked()) {
         if (QFileInfo::exists(codebasePath()) && d->dialogState == State::Idle) {
@@ -814,6 +727,8 @@ void ParseCodebaseDialog::initTools(const std::string& compileCommandsJson,
 
         d->tool_p =
             std::make_unique<lvtclp::CppTool>(constants, std::vector<std::filesystem::path>{compileCommandsJson});
+
+        d->parseErrorHandler.setTool(d->tool_p.get());
     }
     d->tool_p->setSharedMemDb(d->sharedMemDb);
     d->tool_p->setShowDatabaseErrors(ui->showDbErrors->isChecked());
@@ -835,12 +750,6 @@ void ParseCodebaseDialog::initTools(const std::string& compileCommandsJson,
             &lvtclp::CppTool::aboutToCallClangNotification,
             this,
             &ParseCodebaseDialog::aboutToCallClangNotification,
-            Qt::QueuedConnection);
-
-    connect(d->tool_p.get(),
-            &lvtclp::CppTool::messageFromThread,
-            this,
-            &ParseCodebaseDialog::receivedMessage,
             Qt::QueuedConnection);
 }
 
@@ -937,7 +846,6 @@ void ParseCodebaseDialog::updateDatabase()
             ui->errorText->show();
             d->dialogState = State::Idle;
             Q_EMIT parseFinished(State::Idle);
-            // TODO: prompt user for somewhere else to write the database
             return;
         }
     }
@@ -1124,44 +1032,7 @@ void ParseCodebaseDialog::aboutToCallClangNotification(const QString& progressBa
 {
     Q_UNUSED(progressBarText)
     d->progress = 0;
-
     ui->progressBar->setMaximum(size);
-}
-
-void ParseCodebaseDialog::receivedMessage(const QString& message, long threadId)
-{
-    // index 0 - help message, 1 - tab widget.
-    if (ui->stackedWidget->currentIndex() == 0) {
-        ui->stackedWidget->setCurrentIndex(1);
-    }
-
-    auto it = d->threadIdToWidget.find(threadId);
-    if (it == std::end(d->threadIdToWidget)) {
-        const int nr = ui->tabWidget->count() + 1;
-        auto *textView = new TextView(nr);
-        d->threadIdToWidget[threadId] = textView;
-
-        textView->setAcceptRichText(false);
-        textView->setReadOnly(true);
-        textView->appendText(message);
-
-        const QString tabText = [this, nr] {
-            switch (d->dialogState) {
-            case State::RunPhysicalOnly:
-                [[fallthrough]];
-            case State::RunAllPhysical:
-                return tr("Physical Analysis %1").arg(nr);
-            case State::RunAllLogical:
-                return tr("Logical Analysis %1").arg(nr);
-            default:
-                return tr("Unknown State %1").arg(nr);
-            }
-        }();
-
-        ui->tabWidget->addTab(textView, tabText);
-    }
-    TextView *textView = d->threadIdToWidget[threadId];
-    textView->appendText(message);
 }
 
 std::filesystem::path ParseCodebaseDialog::compileCommandsPath() const
@@ -1177,18 +1048,6 @@ std::filesystem::path ParseCodebaseDialog::sourcePath() const
 std::filesystem::path ParseCodebaseDialog::buildPath() const
 {
     return ui->buildFolder->text().toStdString();
-}
-
-void ParseCodebaseDialog::removeParseMessageTabs()
-{
-    for (int i = 0; i < ui->tabWidget->count(); i++) {
-        ui->tabWidget->removeTab(0);
-    }
-    ui->stackedWidget->setCurrentIndex(0);
-    for (auto [_, view] : d->threadIdToWidget) {
-        delete view;
-    }
-    d->threadIdToWidget.clear();
 }
 
 std::vector<std::string> ParseCodebaseDialog::ignoredItemsAsStdVec()

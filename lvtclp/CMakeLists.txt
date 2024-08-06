@@ -66,6 +66,7 @@ AddTargetLibrary(
         ct_lvtclp_toolexecutor.cpp
         ct_lvtclp_visitlog.cpp
         ct_lvtclp_threadstringmap.cpp
+        ct_lvtclp_parse_error_handler.cpp
     HEADERS
         ct_lvtclp_clputil.h
         ct_lvtclp_compilerutil.h
@@ -83,6 +84,7 @@ AddTargetLibrary(
         ct_lvtclp_threadstringmap.h
     QT_HEADERS
         ct_lvtclp_cpp_tool.h
+        ct_lvtclp_parse_error_handler.h
     LIBRARIES
         Codethink::lvtmdb
         Codethink::lvtprj
@@ -184,6 +186,11 @@ if (COMPILE_TESTS)
         NAME test_ct_lvtclp_fileupdatemgr_physical
         SOURCES
             ct_lvtclp_fileupdatemgr_physical.t.cpp
+    )
+    add_lvtclp_test(
+        NAME test_ct_lvtclp_parse_error_handler
+        SOURCES
+            ct_lvtclp_parse_error_handler.t.cpp
     )
 
     add_lvtclp_test(

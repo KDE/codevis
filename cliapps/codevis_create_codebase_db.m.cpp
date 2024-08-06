@@ -20,6 +20,8 @@
 #include "ct_lvtclp_clputil.h"
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtclp_cpp_tool.h>
+#include <ct_lvtclp_parse_error_handler.h>
+
 #include <qelapsedtimer.h>
 #ifdef CT_ENABLE_FORTRAN_SCANNER
 #include <fortran/ct_lvtclp_fortran_c_interop.h>
@@ -78,6 +80,7 @@ struct CommandLineArgs {
     std::filesystem::path sourcePath;
     std::filesystem::path buildPath;
     std::filesystem::path dbPath;
+    std::filesystem::path saveParseErrorsPath;
     std::vector<std::filesystem::path> compilationDbPaths;
     QJsonDocument compilationCommand;
     unsigned numThreads = 1;
@@ -160,6 +163,14 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
         "USE_SYSTEM_HEADERS",
         "query");
 
+    const QCommandLineOption saveParseErrorsPath(
+        {QStringLiteral("save-parse-errors-file")},
+        "Asks clang to look for system headers. Must be checked beforehand with the --query-system-headers call. "
+        "defaults to `Query`, meaning that we don't know if we have the system headers and we will look for them in "
+        "the system. Possible values are yes/no/query",
+        "USE_SYSTEM_HEADERS",
+        "query");
+
     parser.addOptions({outputFile,
                        compileCommandsJson,
                        compileCommand,
@@ -176,7 +187,8 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
                        verbose,
                        disableLakosianRules,
                        queryHeaders,
-                       useSystemHeaders});
+                       useSystemHeaders,
+                       saveParseErrorsPath});
 
     if (!parser.parse(QCoreApplication::arguments())) {
         errorMessage = qPrintable(parser.errorText());
@@ -464,6 +476,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    Codethink::lvtclp::ParseErrorHandler parseErrorHandler;
     using namespace Codethink::lvtclp;
     const CppToolConstants constants{.prefix = args.sourcePath,
                                      .buildPath = args.buildPath,
@@ -498,6 +511,10 @@ int main(int argc, char **argv)
     clang_tool->setSharedMemDb(sharedObjectStore);
     clang_tool->setUseSystemHeaders(args.useSystemHeaders);
 
+    if (!args.saveParseErrorsPath.empty()) {
+        parseErrorHandler.setTool(clang_tool.get());
+    }
+
     QElapsedTimer timer;
     timer.start();
 #ifdef CT_ENABLE_FORTRAN_SCANNER
@@ -526,6 +543,22 @@ int main(int argc, char **argv)
 #endif
 
     std::cout << "Tool took " << timer.elapsed() << "ms" << std::endl;
+
+    if (!args.saveParseErrorsPath.empty() && !success) {
+        auto parseErrorArgs =
+            Codethink::lvtclp::ParseErrorHandler::SaveOutputInputArgs{.compileCommands = args.compilationDbPaths[0],
+                                                                      .outputPath = args.saveParseErrorsPath,
+                                                                      .ignorePattern = QString()};
+        auto ret = parseErrorHandler.saveOutput(parseErrorArgs);
+        qDebug() << "There were errors analyzing the source files, but maybe there's enough data to help:";
+        qDebug() << "The program will continue, know that the generated database might be invalid.";
+
+        if (!ret) {
+            qDebug() << "The error records could not be fully recorded - but might still contain data.";
+            qDebug() << ret.error();
+        }
+        qDebug() << "File saved in" << args.saveParseErrorsPath.generic_string();
+    }
 
     if (!success) {
         std::cerr << "Error generating database\n";

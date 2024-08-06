@@ -117,11 +117,6 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
 
     Q_SLOT void processingFileNotification(const QString& path);
     Q_SLOT void aboutToCallClangNotification(const QString& progressBarText, int size);
-    Q_SLOT void receivedMessage(const QString& message, long threadId);
-    Q_SLOT void saveOutput();
-    // creates a zip file containing all the information from the system
-    // plus all the texts from the thread-tabs.
-
     Q_SLOT void searchForBuildFolder();
     // called when one clicks on the `search` button for the build folder.
 
@@ -140,8 +135,6 @@ class LVTQTW_EXPORT ParseCodebaseDialog : public QDialog {
 
     static void setNonLakosianDirSettings(const QString& buildDir, const QString& nonLakosianDirs);
     // Sore this information in QSettings
-
-    void removeParseMessageTabs();
 
     void reset();
 

@@ -165,11 +165,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
 
     const QCommandLineOption saveParseErrorsPath(
         {QStringLiteral("save-parse-errors-file")},
-        "Asks clang to look for system headers. Must be checked beforehand with the --query-system-headers call. "
-        "defaults to `Query`, meaning that we don't know if we have the system headers and we will look for them in "
-        "the system. Possible values are yes/no/query",
-        "USE_SYSTEM_HEADERS",
-        "query");
+        "If the parser fails, save the errors on this zip file. If not set the errors are discarded.");
 
     parser.addOptions({outputFile,
                        compileCommandsJson,

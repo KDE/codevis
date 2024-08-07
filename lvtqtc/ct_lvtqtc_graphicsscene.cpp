@@ -985,9 +985,10 @@ void GraphicsScene::connectEntitySignals(LakosEntity *entity)
 
     const std::string qualifiedName = entity->qualifiedName();
 
-    connect(entity, &LogicalEntity::navigateRequested, this, [qualifiedName] {
-        // TODO: Navigate.
-        (void) qualifiedName;
+    connect(entity, &LogicalEntity::navigateRequested, this, [this, qualifiedName] {
+        QSet<QString> load;
+        load.insert(QString::fromStdString(qualifiedName));
+        Q_EMIT requestNewTab(load);
     });
 
     connect(entity, &LakosEntity::undoCommandCreated, this, [this](QUndoCommand *command) {

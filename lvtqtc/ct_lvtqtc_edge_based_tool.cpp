@@ -107,8 +107,6 @@ void EdgeBasedTool::deactivate()
 std::vector<std::pair<LakosEntity *, LakosEntity *>> EdgeBasedTool::calculateHierarchy(LakosEntity *source,
                                                                                        LakosEntity *target)
 {
-    qCDebug(LogTool) << "Calculating hierarchy for" << QString::fromStdString(source->name()) << "and"
-                     << QString::fromStdString(target->name());
     std::vector<std::pair<LakosEntity *, LakosEntity *>> ret;
     while (source->parentItem() && target->parentItem()) {
         source = qgraphicsitem_cast<LakosEntity *>(source->parentItem());

@@ -107,10 +107,6 @@ class LVTQTC_EXPORT GraphicsView : public QGraphicsView
 
     Q_SLOT void undoCommandReceived(QUndoCommand *command);
 
-    Q_SIGNAL void packageNavigateRequested(const QString& qualifiedName);
-    Q_SIGNAL void componentNavigateRequested(const QString& qualifiedName);
-    Q_SIGNAL void classNavigateRequested(const QString& qualifiedName);
-
     Q_SIGNAL void graphLoadStarted();
     Q_SIGNAL void graphLoadFinished();
 

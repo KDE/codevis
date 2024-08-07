@@ -1830,10 +1830,11 @@ void LakosEntity::recalculateRectangle()
 
     constexpr int TEXT_ADJUST = 20;
     if (!d->flags.isExpanded) {
-        const QRectF textRect = d->text->boundingRect().adjusted(-TEXT_ADJUST, // x1
-                                                                 -TEXT_ADJUST, // y1
-                                                                 TEXT_ADJUST, // x2
-                                                                 TEXT_ADJUST); // y2
+        layoutIgnoredItems();
+        const QRectF textRect = childrenBoundingRect().adjusted(-TEXT_ADJUST, // x1
+                                                                -TEXT_ADJUST, // y1
+                                                                TEXT_ADJUST, // x2
+                                                                TEXT_ADJUST); // y2
         setRectangle(textRect);
         layoutIgnoredItems();
         return;

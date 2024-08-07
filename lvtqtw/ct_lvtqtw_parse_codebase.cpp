@@ -327,7 +327,7 @@ ParseCodebaseDialog::ParseCodebaseDialog(QWidget *parent):
 
         auto res = d->parseErrorHandler.saveOutput(args);
         if (!res) {
-            ui->errorText->setText(tr("File saved but some errors occoured:\n%1").arg(res.error()));
+            ui->errorText->setText(tr("File saved but some errors occurred:\n%1").arg(res.error()));
         } else {
             ui->errorText->setText(tr("File %1 saved successfully").arg(outputPath));
         }

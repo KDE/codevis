@@ -65,8 +65,12 @@
 #include <optional>
 #include <preferences.h>
 
+#include <ct_lvtshr_debug_categories.h>
+
 // too many false positives for loops over QList<T>: qAsConst<QList<T>> has
 // been explicitly deleted clazy:excludeall=range-loop,range-loop-detach
+
+CODEVIS_LOGGING_CATEGORIES(DebugLakosEntity, "org.kde.codevis.lakosentity");
 
 namespace {
 static QPointF s_lastClick; // NOLINT
@@ -480,7 +484,7 @@ void LakosEntity::collapse(QtcUtil::CreateUndoAction createUndoAction,
     // run the layout logic and needs to know the form factor.
     d->flags.isExpanded = false;
     if (!layoutUpdatesEnabled()) {
-        qDebug() << "Layout updates disabled!";
+        qCDebug(DebugLakosEntity) << "Layout updates disabled!";
         return;
     }
 
@@ -1224,8 +1228,6 @@ void LakosEntity::mousePressEvent(QGraphicsSceneMouseEvent *ev)
 {
     s_lastClick = ev->scenePos();
 
-    qDebug() << "LakosEntity MousePressEvent" << QString::fromStdString(name());
-
     if (ev->button() == Qt::LeftButton && ev->modifiers() == Qt::KeyboardModifier::NoModifier) {
         startDrag(mapToScene(ev->pos()));
         return;
@@ -1251,7 +1253,7 @@ void LakosEntity::mouseMoveEvent(QGraphicsSceneMouseEvent *ev)
 void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)
 {
     if (Preferences::enableDebugOutput()) {
-        qDebug() << "LakosEntity MouseReleaseEvent" << QString::fromStdString(name());
+        qCDebug(DebugLakosEntity) << "LakosEntity MouseReleaseEvent" << QString::fromStdString(name());
     }
 
     endDrag(mapToScene(ev->pos()));
@@ -1647,6 +1649,7 @@ void LakosEntity::calculateEdgeVisibility()
 void LakosEntity::reactChildRemoved(QGraphicsItem *child)
 {
     if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(child)) {
+        qCDebug(DebugLakosEntity) << qualifiedName() << "Children Removed" << lEntity->qualifiedName();
         // This is not slow as there is no memory deallocations / reallocations
         // for the remove. the vector will be completely deallocated only
         // on destruction of this object.
@@ -1664,6 +1667,8 @@ void LakosEntity::reactChildRemoved(QGraphicsItem *child)
 void LakosEntity::reactChildAdded(QGraphicsItem *child)
 {
     if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(child)) {
+        qCDebug(DebugLakosEntity) << qualifiedName() << "added a new child" << lEntity->qualifiedName();
+
         d->lakosChildren.append(lEntity);
         if (d->lakosChildren.size() == 1 && !d->flags.isExpanded) {
             // Automatically expand a package that just received it's first item

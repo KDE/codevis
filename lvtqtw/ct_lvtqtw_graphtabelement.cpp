@@ -364,17 +364,22 @@ void GraphTabElement::setPluginManager(Codethink::lvtplg::PluginManager& pm)
     d->graphicsView->setPluginManager(pm);
 }
 
-void GraphTabElement::saveBookmark(const QString& title, lvtprj::ProjectFile::BookmarkType type)
+QJsonDocument GraphTabElement::toJsonDocument(const QString& tabTitle) const
 {
     auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(graphicsView()->scene());
     auto jsonObj = scene->toJson();
 
     QJsonObject mainObj{{"scene", jsonObj},
-                        {"tabname", title},
-                        {"id", title},
+                        {"tabname", tabTitle},
+                        {"id", tabTitle},
                         {"zoom_level", graphicsView()->zoomFactor()}};
 
-    const cpp::result<void, lvtprj::ProjectFileError> ret = d->projectFile.saveBookmark(QJsonDocument(mainObj), type);
+    return QJsonDocument(mainObj);
+}
+
+void GraphTabElement::saveBookmark(const QString& title, lvtprj::ProjectFile::BookmarkType type)
+{
+    const cpp::result<void, lvtprj::ProjectFileError> ret = d->projectFile.saveBookmark(toJsonDocument(title), type);
 
     if (ret.has_error()) {
         Q_EMIT sendMessage(tr("Error saving bookmark."), KMessageWidget::MessageType::Error);
@@ -389,7 +394,6 @@ void GraphTabElement::loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType
     scene->fromJson(obj["scene"].toObject());
 
     graphicsView()->setZoomFactor(obj["zoom_level"].toInt());
-
     if (historyType == lvtshr::HistoryType::History) {
         d->historyModel.append(doc["id"].toString());
     }

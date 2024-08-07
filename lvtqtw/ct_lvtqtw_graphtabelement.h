@@ -76,6 +76,10 @@ class LVTQTW_EXPORT GraphTabElement : public QWidget {
 
     void setPluginManager(Codethink::lvtplg::PluginManager& pm);
 
+    /* saves a snapshot of this tab and the elements in json */
+    QJsonDocument toJsonDocument(const QString& tabTitle) const;
+
+    /* Bookmark management */
     void saveBookmark(const QString& title, lvtprj::ProjectFile::BookmarkType type);
     void loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType historyType);
 

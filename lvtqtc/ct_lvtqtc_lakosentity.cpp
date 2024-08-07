@@ -1597,13 +1597,6 @@ void LakosEntity::calculateEdgeVisibility(const std::shared_ptr<EdgeCollection>&
         return;
     }
 
-    auto *pFrom = qgraphicsitem_cast<LakosEntity *>(from->parentItem());
-    auto *pTo = qgraphicsitem_cast<LakosEntity *>(to->parentItem());
-    if (pFrom && pTo && pFrom == pTo) {
-        ec->setVisible(true);
-        return;
-    }
-
     // Rule 3, we (unfortunately) really need to check if a child
     // has a visible edge to a node, before drawing this edge.
     // it would be really good to not have a specific rule for this, but,
@@ -1615,15 +1608,23 @@ void LakosEntity::calculateEdgeVisibility(const std::shared_ptr<EdgeCollection>&
     }
 
     // Rule 4 - If there's a connection between 2 entities, but no connections between the children, we must show the
-    // parent edge.
-    if (!childrenConnected(ec->from(), ec->to())) {
+    // parent edge, if both parents are expanded.
+    if (ec->from()->isExpanded() && ec->to()->isExpanded() && childrenConnected(ec->from(), ec->to())) {
+        ec->setVisible(false);
+        return;
+    }
+
+    auto *pFrom = qgraphicsitem_cast<LakosEntity *>(from->parentItem());
+    auto *pTo = qgraphicsitem_cast<LakosEntity *>(to->parentItem());
+    if (pFrom && pTo && pFrom == pTo) {
         ec->setVisible(true);
         return;
     }
 
     // Rule 5 - If there's a connection between 2 entities, and also between the children, we must only show the parent
-    // edge if they are both expanded.
-    ec->setVisible(!ec->from()->isExpanded() || !ec->to()->isExpanded());
+    // edge if one is collapsed.
+    const bool someCollapsed = !ec->from()->isExpanded() || !ec->to()->isExpanded();
+    ec->setVisible(someCollapsed);
 }
 
 void LakosEntity::calculateEdgeVisibility()

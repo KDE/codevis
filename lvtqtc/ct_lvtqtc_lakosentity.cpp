@@ -1822,6 +1822,20 @@ std::string LakosEntity::legendText() const
     return information;
 }
 
+qreal largestWidth(const QList<QGraphicsItem *> childItems)
+{
+    qreal largest = 0;
+    for (QGraphicsItem *item : childItems) {
+        if (!item->isVisible()) {
+            continue;
+        }
+        if (largest < item->boundingRect().width()) {
+            largest = item->boundingRect().width();
+        }
+    }
+    return largest;
+};
+
 void LakosEntity::recalculateRectangle()
 {
     if (!layoutUpdatesEnabled()) {
@@ -1830,11 +1844,11 @@ void LakosEntity::recalculateRectangle()
 
     constexpr int TEXT_ADJUST = 20;
     if (!d->flags.isExpanded) {
-        layoutIgnoredItems();
-        const QRectF textRect = childrenBoundingRect().adjusted(-TEXT_ADJUST, // x1
-                                                                -TEXT_ADJUST, // y1
-                                                                TEXT_ADJUST, // x2
-                                                                TEXT_ADJUST); // y2
+        qreal largest = largestWidth(childItems());
+        const QRectF textRect = d->text->boundingRect().adjusted(-(largest / 2), // x1
+                                                                 -TEXT_ADJUST, // y1
+                                                                 (largest / 2), // x2
+                                                                 TEXT_ADJUST); // y2
         setRectangle(textRect);
         layoutIgnoredItems();
         return;

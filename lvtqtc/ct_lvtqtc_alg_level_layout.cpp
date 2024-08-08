@@ -211,7 +211,7 @@ void centralizeLayout(std::unordered_map<LakosEntity *, int> const& entityToLeve
         auto lineRepr = (int) LTS::getPosOnReferenceDirection(e);
 
         lineToLineTotalWidth[lineRepr] = lineToLineTotalWidth[lineRepr] == 0.0
-            ? LTS::rectSize(e)
+            ? LTS::rectOrthoSize(e)
             : lineToLineTotalWidth[lineRepr] + LTS::rectOrthoSize(e) + config.spaceBetweenEntities;
 
         maxSize = std::max(lineToLineTotalWidth[lineRepr], maxSize);

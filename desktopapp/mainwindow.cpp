@@ -851,12 +851,7 @@ void MainWindow::loadTabsFromProject()
                 tabWidget->openNewGraphTab();
             }
             auto *currentTabElement = qobject_cast<Codethink::lvtqtw::GraphTabElement *>(tabWidget->widget(idx));
-            auto *scene = qobject_cast<Codethink::lvtqtc::GraphicsScene *>(currentTabElement->graphicsView()->scene());
-
-            QJsonObject obj = tab.object();
-
-            tabWidget->setTabText(idx, obj["tabname"].toString());
-            scene->fromJson(tab["scene"].toObject());
+            currentTabElement->loadBookmark(tab, Codethink::lvtshr::HistoryType::NoHistory);
             idx += 1;
         }
     };

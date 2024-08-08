@@ -1831,30 +1831,8 @@ void GraphicsScene::fromJson(const QJsonObject& doc)
     toggleTransitiveRelationVisibility(show_transitive);
     Q_EMIT graphLoadFinished();
 
+    setSceneRect(itemsBoundingRect().marginsAdded(QMarginsF(10, 10, 10, 10)));
     views().at(0)->viewport()->setVisible(true);
-
-    // Do not remove this, this is a hack to fix the edges pointing to nowhere.
-    // Or Better, Remove this when this hack is not needed anymore.
-    // it does not really matter that the strings are slightly incorrect,
-    // but they allow us to not show garbage to the user, and that matters more.
-    // The error appears to be that the initial setup contains bogus information
-    // about the viewport because we might position things outside of the view
-    // area.
-    // the Event Loop is not helping because it calculates things while the view
-    // is not visible yet, so I need to halt this method using something that
-    // awaits for user interaction. when the user *sees* this, it means that the
-    // view is ok, and I can continue with the collapse / expand.
-    // the relayout() call below is currently needed but might be easier to remove
-    // than the start of this hack.
-    // not really proud of this code, but, hey, it works.
-    QTimer::singleShot(std::chrono::seconds{1}, [this] {
-        collapseToplevelEntities();
-        expandToplevelEntities();
-
-        QTimer::singleShot(std::chrono::seconds{1}, [this] {
-            reLayout();
-        });
-    });
 }
 
 void GraphicsScene::setPluginManager(Codethink::lvtplg::PluginManager& pm)

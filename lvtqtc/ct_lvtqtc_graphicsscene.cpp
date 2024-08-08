@@ -1894,19 +1894,18 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QString& doc)
     // Empty message force-closes the previous message.
     Q_EMIT errorMessage(QString());
 
-    QString missingElements;
     const auto mainObject = jsonDoc.object();
     const auto keys = mainObject.keys();
     if (!keys.contains("elements")) {
-        Q_EMIT errorMessage(tr("Mising key `elements` with the array of items to change.").arg(missingElements));
+        Q_EMIT errorMessage(tr("Mising key `elements` with the array of items to change."));
         return;
     }
 
     if (!jsonDoc["elements"].isArray()) {
-        Q_EMIT errorMessage(tr("'elements' object must be a JSON Array.").arg(missingElements));
+        Q_EMIT errorMessage(tr("'elements' object must be a JSON Array."));
         return;
     }
-
+    QString missingElements;
     QJsonArray elements = jsonDoc["elements"].toArray();
     for (const auto& elem : elements) {
         QJsonObject currObj = elem.toObject();

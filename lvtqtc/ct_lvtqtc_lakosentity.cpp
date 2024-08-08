@@ -54,13 +54,13 @@
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QLineF>
 #include <QMenu>
 #include <QPen>
 #include <QPointF>
 #include <QPropertyAnimation>
 #include <QTextBrowser>
 #include <QVector2D>
-
 #include <cmath>
 #include <optional>
 #include <preferences.h>
@@ -74,6 +74,8 @@ CODEVIS_LOGGING_CATEGORIES(DebugLakosEntity, "org.kde.codevis.lakosentity");
 
 namespace {
 static QPointF s_lastClick; // NOLINT
+static bool s_maybeTriggerSelect = false;
+
 // used to track the last click on the screen.
 
 constexpr int TITLE_LAYER = 1;
@@ -1236,7 +1238,8 @@ void LakosEntity::mousePressEvent(QGraphicsSceneMouseEvent *ev)
     if (ev->button() == Qt::LeftButton
         && (ev->modifiers() & Preferences::multiSelectModifier()
             || Preferences::multiSelectModifier() == Qt::KeyboardModifier::NoModifier)) {
-        Q_EMIT requestMultiSelectActivation(mapToScene(ev->pos()).toPoint());
+        s_maybeTriggerSelect = true;
+        Q_EMIT toggleSelection();
         return;
     }
 
@@ -1248,10 +1251,16 @@ void LakosEntity::mouseMoveEvent(QGraphicsSceneMouseEvent *ev)
     if (s_isDraggingItem) {
         doDrag(mapToScene(ev->pos()));
     }
+
+    if (s_maybeTriggerSelect && QLineF(s_lastClick, ev->lastScenePos()).length() > 5) {
+        s_maybeTriggerSelect = false;
+        Q_EMIT requestMultiSelectActivation(mapToScene(ev->pos()).toPoint());
+    }
 }
 
 void LakosEntity::mouseReleaseEvent(QGraphicsSceneMouseEvent *ev)
 {
+    s_maybeTriggerSelect = false;
     if (Preferences::enableDebugOutput()) {
         qCDebug(DebugLakosEntity) << "LakosEntity MouseReleaseEvent" << QString::fromStdString(name());
     }

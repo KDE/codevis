@@ -213,7 +213,7 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // A Qualified name list is just dropped onto the scene. We need to build
     // the entities for it.
 
-    void loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos);
+    LakosEntity *loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos);
     // A Qualified name is just dropped onto the scene. We need to build
     // the entities for it.
 

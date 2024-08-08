@@ -1574,19 +1574,19 @@ void GraphicsScene::loadEntitiesByQualifiedNameList(const QStringList& qualified
     searchTransitiveRelations();
 }
 
-void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos)
+LakosEntity *GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos)
 {
     const std::string qualName = qualifiedName.toStdString();
     qDebug() << "Loading" << qualName;
-    if (entityByQualifiedName(qualName)) {
+    if (LakosEntity *e = entityByQualifiedName(qualName)) {
         Q_EMIT errorMessage(tr("The element is already loaded"));
-        return;
+        return e;
     }
 
     auto *lakosianNode = d->nodeStorage.findByQualifiedName(qualName);
     if (!lakosianNode) {
         Q_EMIT errorMessage(tr("Element %1 not found").arg(qualifiedName));
-        return;
+        return nullptr;
     }
 
     assert(lakosianNode);
@@ -1703,6 +1703,7 @@ void GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, cons
     }
 
     Q_EMIT graphLoadFinished();
+    return lastAddedEntity;
 }
 
 void GraphicsScene::addEdgeBetween(LakosEntity *fromEntity, LakosEntity *toEntity, lvtshr::LakosRelationType type)
@@ -1769,10 +1770,7 @@ void recursiveJsonToLakosEntity(GraphicsScene *scene, const QJsonValue& entity)
     const QJsonObject posObj = obj["pos"].toObject();
     const QPointF pos(posObj["x"].toDouble(), posObj["y"].toDouble());
 
-    scene->loadEntityByQualifiedName(qualName, pos);
-
-    // TODO: return the entity directly by the above method.
-    LakosEntity *thisObj = scene->entityByQualifiedName(qualName.toStdString());
+    LakosEntity *thisObj = scene->loadEntityByQualifiedName(qualName, pos);
     if (!thisObj) {
         return;
     }

@@ -33,7 +33,6 @@
 #include <mainwindow.h>
 
 #include <cstdlib>
-#include <filesystem>
 #include <iostream>
 
 #include <QDebug>

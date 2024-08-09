@@ -342,6 +342,7 @@ add_subdirectory(lvtshr)
 add_subdirectory(lvttst)
 add_subdirectory(project_helpers)
 add_subdirectory(cliapps)
+add_subdirectory(plugin_system)
 
 if (BUILD_DESKTOP_APP)
     kconfig_add_kcfg_files(CONFIGURATION_SRCS GENERATE_MOC preferences.kcfgc GENERATE_MOC)

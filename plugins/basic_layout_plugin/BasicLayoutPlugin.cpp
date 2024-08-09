@@ -35,7 +35,7 @@ void BasicLayoutPlugin::executeLayout(const QString& algorithmName,
 {
     std::ignore = algorithmName;
     for (auto node : g.topLevelNodes) {
-        node->pos = QPointF(0, 0);
+        node.pos = QPointF(0, 0);
     }
 }
 

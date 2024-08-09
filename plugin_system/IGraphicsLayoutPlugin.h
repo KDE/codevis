@@ -4,6 +4,7 @@
 #include <QRectF>
 #include <QtPlugin>
 
+#include <optional>
 #include <pluginsystemheaders_export.h>
 
 namespace Codevis::PluginSystem {
@@ -11,12 +12,12 @@ namespace Codevis::PluginSystem {
 /* Use this interface to implement a number of layout algorithms. */
 class PLUGINSYSTEMHEADERS_EXPORT IGraphicsLayoutPlugin {
   public:
-    // The graph represetiation used by this plugin.
+    // The graph representation used by this plugin.
     struct Node {
-        const Node *parent;
-        const QList<Node *> children;
-        const std::string qualifiedName;
-        const QRect rect;
+        std::string parentQualifiedName;
+        QList<Node> children;
+        std::string qualifiedName;
+        QRectF rect;
 
         // this point represents the center of the rect on the canvas.
         QPointF pos;
@@ -24,8 +25,9 @@ class PLUGINSYSTEMHEADERS_EXPORT IGraphicsLayoutPlugin {
 
     struct Graph {
         QRectF rect;
-        const QList<Node *> topLevelNodes;
-        const QHash<QString, QString> connection;
+        QList<Node> topLevelNodes;
+        QHash<QString, QString> connection;
+        std::optional<QString> topLevelQualifiedName;
     };
 
     // The names of the algorithms that this plugin implements
@@ -33,7 +35,6 @@ class PLUGINSYSTEMHEADERS_EXPORT IGraphicsLayoutPlugin {
 
     // Receives a Graph and modifies it's bits to the new layout.
     // Note that the only thing it can modify is the ->pos of the nodes.
-    // All pointers are guaranteed to exist, this function should not do any memory management.
     // This executes on a secondary thread.
     virtual void executeLayout(const QString& algorithmName, Graph& g) = 0;
 };

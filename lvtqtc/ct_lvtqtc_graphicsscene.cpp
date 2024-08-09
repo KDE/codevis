@@ -16,10 +16,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 */
-
-#include "ct_lvtshr_graphstorage.h"
-#include <any>
 #include <ct_lvtqtc_graphicsscene.h>
+
+#include <ICodevisPlugin.h>
+#include <IGraphicsLayoutPlugin.h>
+#include <PluginManagerV2.h>
+#include <ct_lvtshr_graphstorage.h>
+
+#include <any>
 
 #include <ct_lvtqtc_alg_level_layout.h>
 #include <ct_lvtqtc_alg_transitive_reduction.h>
@@ -1231,9 +1235,109 @@ void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)
     reLayout();
 }
 
+using Node = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node;
+using Graph = Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph;
+
+Node nodeFromEntity(LakosEntity *entity, const std::string& parentQualifiedName)
+{
+    QList<Node> nodes;
+
+    auto thisNode = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node{.parentQualifiedName = parentQualifiedName,
+                                                                       .children = {},
+                                                                       .qualifiedName = entity->qualifiedName(),
+                                                                       .rect = entity->boundingRect(),
+                                                                       .pos = QPointF()};
+
+    for (auto *childEntity : entity->lakosEntities()) {
+        if (!entity->isVisible()) {
+            continue;
+        }
+
+        auto childNode = nodeFromEntity(childEntity, thisNode.qualifiedName);
+        nodes.append(childNode);
+    }
+
+    thisNode.children = nodes;
+    return thisNode;
+}
+
+Graph generateGraph(QList<LakosEntity *> topLevel)
+{
+    QList<Node> nodes;
+    for (auto *entity : topLevel) {
+        auto node = nodeFromEntity(entity, std::string{});
+        nodes.append(node);
+    }
+
+    // calculate connections.
+    QHash<QString, QString> connections;
+
+    // Return the graph.
+    return Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph{.rect = QRectF(),
+                                                               .topLevelNodes = nodes,
+                                                               .connection = connections,
+                                                               .topLevelQualifiedName = std::nullopt};
+}
+
+Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph generateGraph(LakosEntity *parent, GraphicsScene *scene)
+{
+    if (parent) {
+        auto ret = generateGraph(parent->lakosEntities());
+        ret.topLevelQualifiedName = QString::fromStdString(parent->qualifiedName());
+        return ret;
+    }
+
+    QList<LakosEntity *> entities;
+    for (auto entity : scene->allEntities()) {
+        if (entity->parentItem()) {
+            continue;
+        }
+        if (!entity->isVisible()) {
+            continue;
+        }
+        entities.push_back(entity);
+    }
+
+    auto ret = generateGraph(entities);
+    return ret;
+}
+
+void applyLayout(GraphicsScene *scene, const Node& node)
+{
+    auto *entity = scene->entityByQualifiedName(node.qualifiedName);
+    entity->setRectangle(node.rect);
+    entity->setPos(node.pos);
+    for (auto child : node.children) {
+        applyLayout(scene, child);
+    }
+}
+
+void applyLayout(GraphicsScene *scene, Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph& graph)
+{
+    if (graph.topLevelQualifiedName) {
+        auto *entity = scene->entityByQualifiedName(graph.topLevelQualifiedName.value().toStdString());
+        entity->setRectangle(graph.rect);
+    }
+    for (const auto& node : graph.topLevelNodes) {
+        applyLayout(scene, node);
+    }
+}
+
 void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
 {
     using namespace Codethink::lvtplg;
+    auto *menuLayoutAlgorithms = menu.addMenu("Layout Algorithms");
+    auto& pm2 = Codevis::PluginSystem::PluginManagerV2::self();
+    for (auto *plugin : pm2.graphicsLayoutPlugins()) {
+        for (const auto& layoutAlgorithm : plugin->layoutAlgorithms()) {
+            auto *action = menuLayoutAlgorithms->addAction(layoutAlgorithm);
+            connect(action, &QAction::triggered, this, [this, plugin, layoutAlgorithm] {
+                auto graph = generateGraph(nullptr, this);
+                plugin->executeLayout(layoutAlgorithm, graph);
+                applyLayout(this, graph);
+            });
+        }
+    }
 
     if (d->pluginManager) {
         auto getAllEntitiesInCurrentView = [this]() {

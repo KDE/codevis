@@ -20,6 +20,12 @@
 #include <iostream>
 
 namespace Codevis::PluginSystem {
+PluginManagerV2& PluginManagerV2::self()
+{
+    static PluginManagerV2 us;
+    return us;
+}
+
 PluginManagerV2::PluginManagerV2()
 {
 }
@@ -67,7 +73,7 @@ const std::vector<ICodevisPlugin *>& PluginManagerV2::plugins() const
     return d_plugins;
 }
 
-const std::vector<ICodevisPlugin *>& PluginManagerV2::graphicsLayoutPlugins() const
+const std::vector<IGraphicsLayoutPlugin *>& PluginManagerV2::graphicsLayoutPlugins() const
 {
     return d_graphicsLayoutPlugins;
 }

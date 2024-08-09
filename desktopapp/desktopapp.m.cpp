@@ -43,6 +43,7 @@
 #include <ct_lvtplg_pluginmanager.h>
 #include <ct_lvtqtc_undo_manager.h>
 
+#include <PluginManagerV2.h>
 #include <preferences.h>
 
 int main(int argc, char *argv[])
@@ -157,14 +158,16 @@ int main(int argc, char *argv[])
     Codethink::lvtmdl::DebugModel debugModel;
     qInstallMessageHandler(Codethink::lvtmdl::DebugModel::debugMessageHandler);
 
-    auto pluginSearchPaths = Preferences::pluginSearchPaths();
-
     // Path of plugins installed by GetNewStuff.
+    // TODO Move those things to the 2nd gen pluginmanager.
+    auto pluginSearchPaths = Preferences::pluginSearchPaths();
     pluginSearchPaths.append(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/plugins");
-
     auto pluginManager = Codethink::lvtplg::PluginManager{};
     pluginManager.loadPlugins(pluginSearchPaths);
     pluginManager.callHooksSetupPlugin();
+
+    auto& pm = Codevis::PluginSystem::PluginManagerV2::self();
+    pm.loadAllPlugins();
 
     auto sharedNodeStorage = Codethink::lvtldr::NodeStorage{};
     auto undoManager = Codethink::lvtqtc::UndoManager{};

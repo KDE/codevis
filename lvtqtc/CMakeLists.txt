@@ -118,6 +118,9 @@ AddTargetLibrary(
         Codethink::lvtplg
         Codethink::lvtprj
         Codethink::MRichTextEdit
+        Codethink::PluginSystem
+        Codethink::PluginSystemHeaders
+
         KF${KF_MAJOR_VERSION}::WidgetsAddons
         Codethink::lakospreferences
         Qt${QT_MAJOR_VERSION}::Core

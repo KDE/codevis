@@ -20,6 +20,7 @@
 #ifndef INCLUDED_CT_LVTGRPS_LAKOSENTITY
 #define INCLUDED_CT_LVTGRPS_LAKOSENTITY
 
+#include "IGraphicsLayoutPlugin.h"
 #include <lvtqtc_export.h>
 
 #include <ct_lvtclr_colormanagement.h>
@@ -406,6 +407,9 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     Q_SIGNAL void createReportActionClicked(std::string const& title, std::string const& htmlContents);
 
     Q_SIGNAL void requestNewTab(const QSet<QString> qualifiedNames);
+    Q_SIGNAL void requestLayout(LakosEntity *thisEntity,
+                                Codevis::PluginSystem::IGraphicsLayoutPlugin *plugin,
+                                const QString& layoutName);
 
   protected:
     [[nodiscard]] bool layoutUpdatesEnabled() const;

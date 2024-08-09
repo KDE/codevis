@@ -20,6 +20,7 @@
 #ifndef INCLUDED_LVTQTC_GRAPHICSSCENE
 #define INCLUDED_LVTQTC_GRAPHICSSCENE
 
+#include "IGraphicsLayoutPlugin.h"
 #include <ct_lvtshr_uniqueid.h>
 #include <lvtqtc_export.h>
 
@@ -142,6 +143,9 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
     // ignores the layout saved on the cache, and relayouts the items on screen.
 
     void setEntityPos(const lvtshr::UniqueId& uid, QPointF pos) const;
+    void runLayoutAlgorithmFromPlugin(LakosEntity *rootNode,
+                                      Codevis::PluginSystem::IGraphicsLayoutPlugin *plugin,
+                                      const QString& algoName);
 
     void setBlockNodeResizeOnHover(bool block);
     // forbids / enables node resize on hover.

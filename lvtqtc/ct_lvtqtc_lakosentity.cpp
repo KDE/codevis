@@ -17,6 +17,8 @@
 // limitations under the License.
 */
 
+#include <IGraphicsLayoutPlugin.h>
+#include <PluginManagerV2.h>
 #include <ct_lvtqtc_lakosentity.h>
 
 #include <ct_lvtqtc_edgecollection.h>
@@ -840,9 +842,9 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(action);
     }
 
+#if 0
     if (isExpanded()) {
         auto *action = new QAction(tr("Layout"));
-
         auto *layoutMenu = new QMenu();
         action->setMenu(layoutMenu);
         auto *verticalLayout = new QAction(tr("Vertical"));
@@ -864,6 +866,24 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
 
         retValues.append(action);
     }
+#else
+    if (isExpanded()) {
+        auto *action = new QAction("Layout Algorithms");
+        auto *layoutMenu = new QMenu();
+        action->setMenu(layoutMenu);
+
+        auto& pm2 = Codevis::PluginSystem::PluginManagerV2::self();
+        for (auto *plugin : pm2.graphicsLayoutPlugins()) {
+            for (const auto& layoutAlgorithm : plugin->layoutAlgorithms()) {
+                auto *action = layoutMenu->addAction(layoutAlgorithm);
+                connect(action, &QAction::triggered, this, [this, plugin, layoutAlgorithm] {
+                    Q_EMIT requestLayout(this, plugin, layoutAlgorithm);
+                });
+            }
+        }
+        retValues.append(action);
+    }
+#endif
 
     auto *action = new QAction();
     action->setText(tr("Navigate to %1").arg(QString::fromStdString(d->qualifiedName)));

@@ -518,6 +518,7 @@ LakosEntity *addVertex(GraphicsScene *scene,
         entity->setPluginManager(*pm);
     }
 
+    QObject::connect(entity, &LakosEntity::requestLayout, scene, &GraphicsScene::runLayoutAlgorithmFromPlugin);
     QObject::connect(entity, &LakosEntity::toggleSelection, scene, [scene, d, entity] {
         if (std::find(d->selectedEntities.begin(), d->selectedEntities.end(), entity) == d->selectedEntities.end()) {
             d->selectedEntities.push_back(entity);
@@ -1235,6 +1236,7 @@ void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)
     reLayout();
 }
 
+//////////////////////////////////////// LAYOUT MANAGEMENT ////////////////////////////////////////////////////////
 using Node = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node;
 using Graph = Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph;
 
@@ -1273,13 +1275,13 @@ Graph generateGraph(QList<LakosEntity *> topLevel)
     QHash<QString, QString> connections;
 
     // Return the graph.
-    return Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph{.rect = QRectF(),
-                                                               .topLevelNodes = nodes,
-                                                               .connection = connections,
-                                                               .topLevelQualifiedName = std::nullopt};
+    return Graph{.rect = QRectF(),
+                 .topLevelNodes = nodes,
+                 .connection = connections,
+                 .topLevelQualifiedName = std::nullopt};
 }
 
-Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph generateGraph(LakosEntity *parent, GraphicsScene *scene)
+Graph generateGraph(LakosEntity *parent, GraphicsScene *scene)
 {
     if (parent) {
         auto ret = generateGraph(parent->lakosEntities());
@@ -1323,6 +1325,18 @@ void applyLayout(GraphicsScene *scene, Codevis::PluginSystem::IGraphicsLayoutPlu
     }
 }
 
+//////////////////////////////////////////////// END OF LAYOUT MANAGEMENT
+/////////////////////////////////////////////////////////
+
+void GraphicsScene::runLayoutAlgorithmFromPlugin(LakosEntity *entity,
+                                                 Codevis::PluginSystem::IGraphicsLayoutPlugin *plg,
+                                                 const QString& algoName)
+{
+    auto graph = generateGraph(entity, this);
+    plg->executeLayout(algoName, graph);
+    applyLayout(this, graph);
+}
+
 void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
 {
     using namespace Codethink::lvtplg;
@@ -1332,9 +1346,7 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         for (const auto& layoutAlgorithm : plugin->layoutAlgorithms()) {
             auto *action = menuLayoutAlgorithms->addAction(layoutAlgorithm);
             connect(action, &QAction::triggered, this, [this, plugin, layoutAlgorithm] {
-                auto graph = generateGraph(nullptr, this);
-                plugin->executeLayout(layoutAlgorithm, graph);
-                applyLayout(this, graph);
+                runLayoutAlgorithmFromPlugin(nullptr, plugin, layoutAlgorithm);
             });
         }
     }

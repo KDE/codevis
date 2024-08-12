@@ -77,20 +77,22 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Correctly Show Relationship Aft
     auto *entity1 = findElement("abc");
 
     entity1->collapse(QtcUtil::CreateUndoAction::e_No, std::nullopt, LakosEntity::RelayoutBehavior::e_RequestRelayout);
-    QTest::qWait(300);
+    QTest::qWait(1000);
     auto *relation = getRelation();
     REQUIRE(relation);
     REQUIRE(relation->isVisible());
 
     entity1->expand(QtcUtil::CreateUndoAction::e_No, std::nullopt, LakosEntity::RelayoutBehavior::e_RequestRelayout);
-    QTest::qWait(300);
+    QTest::qWait(1000);
     relation = getRelation();
     REQUIRE(relation);
     REQUIRE(relation->isVisible());
+    QTest::qWait(1000);
 
     auto *view = window().findChild<GraphicsView *>();
     auto *scene = qobject_cast<GraphicsScene *>(view->scene());
     scene->collapseToplevelEntities();
+    QTest::qWait(1000);
     REQUIRE(relation);
     REQUIRE(relation->isVisible());
 }

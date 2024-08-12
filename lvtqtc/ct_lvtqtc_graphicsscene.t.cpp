@@ -237,8 +237,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic children levels")
     auto b = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
     auto c = nodeStorage.addPackage("ccc", "ccc", nullptr, gv.scene()).value();
 
-    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, true);
 
     gs->calculateLevels();
 
@@ -279,11 +279,11 @@ TEST_CASE_METHOD(QTApplicationFixture, "Children levels multilevel ddd")
     auto d = nodeStorage.addPackage("ddd", "ddd", nullptr, gv.scene()).value();
     auto e = nodeStorage.addPackage("eee", "eee", nullptr, gv.scene()).value();
 
-    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, d, false);
-    std::ignore = nodeStorage.addPhysicalDependency(a, d, false);
-    std::ignore = nodeStorage.addPhysicalDependency(d, e, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, d, true);
+    std::ignore = nodeStorage.addPhysicalDependency(a, d, true);
+    std::ignore = nodeStorage.addPhysicalDependency(d, e, true);
 
     gs->calculateLevels();
 
@@ -316,8 +316,8 @@ TEST_CASE_METHOD(QTApplicationFixture, "Children simple cycle")
 
     auto *a = nodeStorage.addPackage("aaa", "aaa", nullptr, gv.scene()).value();
     auto *b = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
-    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, a, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, a, true);
 
     gs->calculateLevels();
     auto *aaa = gs->entityByQualifiedName("aaa");
@@ -357,12 +357,12 @@ TEST_CASE_METHOD(QTApplicationFixture, "Children level with cycle no clear start
     auto d = nodeStorage.addPackage("ddd", "ddd", nullptr, gv.scene()).value();
     auto e = nodeStorage.addPackage("eee", "eee", nullptr, gv.scene()).value();
 
-    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, d, false);
-    std::ignore = nodeStorage.addPhysicalDependency(a, d, false);
-    std::ignore = nodeStorage.addPhysicalDependency(d, e, false);
-    std::ignore = nodeStorage.addPhysicalDependency(d, a, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, d, true);
+    std::ignore = nodeStorage.addPhysicalDependency(a, d, true);
+    std::ignore = nodeStorage.addPhysicalDependency(d, e, true);
+    std::ignore = nodeStorage.addPhysicalDependency(d, a, true);
 
     gs->calculateLevels();
 
@@ -409,13 +409,13 @@ TEST_CASE_METHOD(QTApplicationFixture, "Children level with cycle clear level 0"
     auto d = nodeStorage.addPackage("ddd", "ddd", nullptr, gv.scene()).value();
     auto e = nodeStorage.addPackage("eee", "eee", nullptr, gv.scene()).value();
 
-    std::ignore = nodeStorage.addPhysicalDependency(x, a, false);
-    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
-    std::ignore = nodeStorage.addPhysicalDependency(b, d, false);
-    std::ignore = nodeStorage.addPhysicalDependency(a, d, false);
-    std::ignore = nodeStorage.addPhysicalDependency(d, e, false);
-    std::ignore = nodeStorage.addPhysicalDependency(d, a, false);
+    std::ignore = nodeStorage.addPhysicalDependency(x, a, true);
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, true);
+    std::ignore = nodeStorage.addPhysicalDependency(b, d, true);
+    std::ignore = nodeStorage.addPhysicalDependency(a, d, true);
+    std::ignore = nodeStorage.addPhysicalDependency(d, e, true);
+    std::ignore = nodeStorage.addPhysicalDependency(d, a, true);
 
     gs->calculateLevels();
 

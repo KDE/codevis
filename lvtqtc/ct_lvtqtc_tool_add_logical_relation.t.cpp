@@ -63,45 +63,28 @@ void runTestOnTool(QTApplicationFixture *self)
         qDebug() << QString::fromStdString(lastErrorMsg);
     });
 
-    QTest::qWait(500);
-
     // Using the tool an arbitrary place won't do anything (including no crashing)
     tool.activate();
     REQUIRE_FALSE(mousePressAt(tool, {-500, 100}));
-    QTest::qWait(500);
 
     mouseReleaseAt(tool, {-500, 100});
-    QTest::qWait(500);
 
     tool.deactivate();
-    QTest::qWait(500);
 
     gv.moveEntityTo(Polygon->uid(), {0, 0});
-    QTest::qWait(500);
     gv.moveEntityTo(Square->uid(), {-200, -200});
     gv.moveEntityTo(utl->uid(), {-300, -300});
     gv.moveEntityTo(Shape->uid(), {300, 300});
-    QTest::qWait(500);
 
     // Basic tool usage
     tool.activate();
-    QTest::qWait(500);
 
     REQUIRE_FALSE(Polygon->hasProvider(Shape));
-    QTest::qWait(500);
 
     mousePressAt(tool, gv.getEntityPosition(Polygon->uid()));
-    QTest::qWait(500);
-
     mouseReleaseAt(tool, gv.getEntityPosition(Polygon->uid()));
-    QTest::qWait(500);
-
     mousePressAt(tool, gv.getEntityPosition(Shape->uid()));
-    QTest::qWait(500);
-
     mouseReleaseAt(tool, gv.getEntityPosition(Shape->uid()));
-    QTest::qWait(500);
-
     if (!lastErrorMsg.empty()) {
         std::cout << lastErrorMsg << std::endl;
     }

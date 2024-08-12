@@ -29,7 +29,6 @@
 #include <ct_lvttst_tmpdir.h>
 
 #include <QTest>
-#include <memory>
 
 using namespace Codethink::lvtqtc;
 using namespace Codethink::lvtldr;
@@ -56,13 +55,16 @@ TEST_CASE_METHOD(QTApplicationFixture, "Add dependency")
     GraphicsViewWrapperForTesting gv{nodeStorage};
     //: TODO: Update this call:
     auto *scene = dynamic_cast<GraphicsScene *>(gv.scene());
-    scene->loadEntityByQualifiedName(QString::fromStdString(aab->qualifiedName()), QPoint(10, 10));
-    scene->loadEntityByQualifiedName(QString::fromStdString(aaa->qualifiedName()), QPoint(100, 100));
+    auto entity1 = scene->loadEntityByQualifiedName(QString::fromStdString(aab->qualifiedName()), QPoint(10, 10));
+    auto entity2 = scene->loadEntityByQualifiedName(QString::fromStdString(aaa->qualifiedName()), QPoint(100, 100));
+
+    gv.setGeometry(0, 0, 600, 600);
+    gv.show();
 
     scene->enableLayoutUpdates();
-    scene->reLayout();
 
-    gv.show();
+    entity1->setPos(10, 10);
+    entity2->setPos(200, 10);
 
     auto tool = ToolAddPhysicalDependency{&gv, nodeStorage};
     std::string lastMessage;

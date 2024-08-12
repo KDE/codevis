@@ -27,7 +27,7 @@
 #include <ct_lvttst_fixture_qt.h>
 #include <ct_lvttst_tmpdir.h>
 
-#include <memory>
+#include <QtTest>
 
 using namespace Codethink::lvtqtc;
 using namespace Codethink::lvtldr;
@@ -54,7 +54,6 @@ void runTestOnTool(QTApplicationFixture *self)
     auto *utl_stuff = nodeStorage.addComponent("stuff", "utl/stuff", utl).value();
     auto *Util = nodeStorage.addLogicalEntity("Util", "stuff::Util", utl_stuff, UDTKind::Class).value();
     gv.show();
-    qobject_cast<GraphicsScene *>(gv.scene())->runLayoutAlgorithm();
 
     auto tool = TOOL_TYPE{&gv, nodeStorage};
     tool.setProperty("debug", true);
@@ -64,23 +63,48 @@ void runTestOnTool(QTApplicationFixture *self)
         qDebug() << QString::fromStdString(lastErrorMsg);
     });
 
+    QTest::qWait(500);
+
     // Using the tool an arbitrary place won't do anything (including no crashing)
     tool.activate();
     REQUIRE_FALSE(mousePressAt(tool, {-500, 100}));
+    QTest::qWait(500);
+
     mouseReleaseAt(tool, {-500, 100});
+    QTest::qWait(500);
+
     tool.deactivate();
+    QTest::qWait(500);
 
     gv.moveEntityTo(Polygon->uid(), {0, 0});
-    gv.moveEntityTo(Shape->uid(), {100, 100});
+    QTest::qWait(500);
+
+    gv.moveEntityTo(Shape->uid(), {300, 300});
+    QTest::qWait(500);
 
     // Basic tool usage
     tool.activate();
+    QTest::qWait(500);
+
     REQUIRE_FALSE(Polygon->hasProvider(Shape));
+    QTest::qWait(500);
+
     mousePressAt(tool, gv.getEntityPosition(Polygon->uid()));
+    QTest::qWait(500);
+
     mouseReleaseAt(tool, gv.getEntityPosition(Polygon->uid()));
+    QTest::qWait(500);
 
     mousePressAt(tool, gv.getEntityPosition(Shape->uid()));
+    QTest::qWait(500);
+
     mouseReleaseAt(tool, gv.getEntityPosition(Shape->uid()));
+    QTest::qWait(500);
+
+    if (!lastErrorMsg.empty()) {
+        std::cout << lastErrorMsg << std::endl;
+    }
+
     REQUIRE(Polygon->hasProvider(Shape));
     REQUIRE(lastErrorMsg.empty());
 

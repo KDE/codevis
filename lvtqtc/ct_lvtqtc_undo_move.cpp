@@ -42,20 +42,6 @@ UndoMove::UndoMove(GraphicsScene *scene, const std::string& nodeId, const QPoint
 
 UndoMove::~UndoMove() = default;
 
-namespace {
-void updateScene(LakosEntity *entity)
-{
-    // redraw all edges on the current position.
-    entity->recursiveEdgeRelayout();
-
-    // triggers a recalculation of the parent's boundaries.
-    Q_EMIT entity->moving();
-
-    // Tells the system tha the graph updated.
-    Q_EMIT entity->graphUpdate();
-}
-} // namespace
-
 void UndoMove::undo()
 {
     if (d->scene == nullptr) {
@@ -65,7 +51,6 @@ void UndoMove::undo()
     auto *thisEntity = d->scene->entityByQualifiedName(d->nodeQualifiedName);
     if (thisEntity) {
         thisEntity->setPos(d->originPos);
-        updateScene(thisEntity);
     }
 }
 
@@ -78,6 +63,5 @@ void UndoMove::redo()
     auto *thisEntity = d->scene->entityByQualifiedName(d->nodeQualifiedName);
     if (thisEntity) {
         thisEntity->setPos(d->newPos);
-        updateScene(thisEntity);
     }
 }

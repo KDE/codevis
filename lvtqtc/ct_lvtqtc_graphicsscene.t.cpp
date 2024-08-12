@@ -193,3 +193,243 @@ TEST_CASE_METHOD(QTApplicationFixture, "Json Bulk Edit")
     gs->loadJsonWithDocumentChanges(correctJson);
     REQUIRE(pkg1->color() == QColor("#003300"));
 }
+
+TEST_CASE_METHOD(QTApplicationFixture, "Single level")
+{
+    auto tmpDir = TmpDir{"relayout_single_entity"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    auto gv = GraphicsViewWrapperForTesting{nodeStorage};
+    auto *gs = qobject_cast<GraphicsScene *>(gv.scene());
+    gv.setColorManagement(std::make_shared<ColorManagement>(false));
+    gv.show();
+
+    std::ignore = nodeStorage.addPackage("aaa", "aaa", nullptr, gv.scene()).value();
+    std::ignore = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
+    std::ignore = nodeStorage.addPackage("ccc", "ccc", nullptr, gv.scene()).value();
+
+    gs->calculateLevels();
+    auto *aaa = gs->entityByQualifiedName("aaa");
+    auto *bbb = gs->entityByQualifiedName("bbb");
+    auto *ccc = gs->entityByQualifiedName("ccc");
+    REQUIRE(aaa);
+    REQUIRE(bbb);
+    REQUIRE(ccc);
+
+    REQUIRE(aaa->lakosianLevel() == 1);
+    REQUIRE(bbb->lakosianLevel() == 1);
+    REQUIRE(ccc->lakosianLevel() == 1);
+}
+
+TEST_CASE_METHOD(QTApplicationFixture, "Basic children levels")
+{
+    auto tmpDir = TmpDir{"relayout_single_entity"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    auto gv = GraphicsViewWrapperForTesting{nodeStorage};
+    auto *gs = qobject_cast<GraphicsScene *>(gv.scene());
+    gv.setColorManagement(std::make_shared<ColorManagement>(false));
+    gv.show();
+
+    auto a = nodeStorage.addPackage("aaa", "aaa", nullptr, gv.scene()).value();
+    auto b = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
+    auto c = nodeStorage.addPackage("ccc", "ccc", nullptr, gv.scene()).value();
+
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
+
+    gs->calculateLevels();
+
+    auto *aaa = gs->entityByQualifiedName("aaa");
+    auto *bbb = gs->entityByQualifiedName("bbb");
+    auto *ccc = gs->entityByQualifiedName("ccc");
+
+    REQUIRE(aaa->lakosianLevel() == 2);
+    REQUIRE(bbb->lakosianLevel() == 1);
+    REQUIRE(ccc->lakosianLevel() == 0);
+}
+
+TEST_CASE_METHOD(QTApplicationFixture, "Children levels multilevel ddd")
+{
+    /**
+     * ccc  eee
+     * ^      ^
+     * |    ddd
+     * |    ^ ^
+     * |   /  |
+     * bbb   /
+     * ^    /
+     * aaa
+     */
+
+    auto tmpDir = TmpDir{"relayout_single_entity"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    auto gv = GraphicsViewWrapperForTesting{nodeStorage};
+    auto *gs = qobject_cast<GraphicsScene *>(gv.scene());
+    gv.setColorManagement(std::make_shared<ColorManagement>(false));
+    gv.show();
+
+    auto a = nodeStorage.addPackage("aaa", "aaa", nullptr, gv.scene()).value();
+    auto b = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
+    auto c = nodeStorage.addPackage("ccc", "ccc", nullptr, gv.scene()).value();
+    auto d = nodeStorage.addPackage("ddd", "ddd", nullptr, gv.scene()).value();
+    auto e = nodeStorage.addPackage("eee", "eee", nullptr, gv.scene()).value();
+
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, d, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, d, false);
+    std::ignore = nodeStorage.addPhysicalDependency(d, e, false);
+
+    gs->calculateLevels();
+
+    auto *aaa = gs->entityByQualifiedName("aaa");
+    auto *bbb = gs->entityByQualifiedName("bbb");
+    auto *ccc = gs->entityByQualifiedName("ccc");
+    auto *ddd = gs->entityByQualifiedName("ddd");
+    auto *eee = gs->entityByQualifiedName("eee");
+
+    REQUIRE(aaa->lakosianLevel() == 3);
+    REQUIRE(bbb->lakosianLevel() == 2);
+    REQUIRE(ccc->lakosianLevel() == 0);
+    REQUIRE(ddd->lakosianLevel() == 1);
+    REQUIRE(eee->lakosianLevel() == 0);
+}
+
+TEST_CASE_METHOD(QTApplicationFixture, "Children simple cycle")
+{
+    /**
+     * aaa <--> bbb
+     */
+    auto tmpDir = TmpDir{"relayout_single_entity"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    auto gv = GraphicsViewWrapperForTesting{nodeStorage};
+    auto *gs = qobject_cast<GraphicsScene *>(gv.scene());
+    gv.setColorManagement(std::make_shared<ColorManagement>(false));
+    gv.show();
+
+    auto *a = nodeStorage.addPackage("aaa", "aaa", nullptr, gv.scene()).value();
+    auto *b = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, a, false);
+
+    gs->calculateLevels();
+    auto *aaa = gs->entityByQualifiedName("aaa");
+    auto *bbb = gs->entityByQualifiedName("bbb");
+
+    REQUIRE(aaa);
+    REQUIRE(bbb);
+    REQUIRE(aaa->lakosianLevel() == 0);
+    REQUIRE(bbb->lakosianLevel() == 0);
+}
+
+TEST_CASE_METHOD(QTApplicationFixture, "Children level with cycle no clear startpoint")
+{
+    /**
+     * ccc   eee            // LVL 0
+     * ^      ^
+     * |    ddd ----        // LVL 1
+     * |    ^ ^     \
+     * |   /  |     |
+     * bbb   /     /        // LVL 2
+     * ^    /     /
+     * aaa    <--           // LVL 3
+     */
+
+    auto tmpDir = TmpDir{"relayout_single_entity"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    auto gv = GraphicsViewWrapperForTesting{nodeStorage};
+    auto *gs = qobject_cast<GraphicsScene *>(gv.scene());
+    gv.setColorManagement(std::make_shared<ColorManagement>(false));
+    gv.show();
+
+    auto a = nodeStorage.addPackage("aaa", "aaa", nullptr, gv.scene()).value();
+    auto b = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
+    auto c = nodeStorage.addPackage("ccc", "ccc", nullptr, gv.scene()).value();
+    auto d = nodeStorage.addPackage("ddd", "ddd", nullptr, gv.scene()).value();
+    auto e = nodeStorage.addPackage("eee", "eee", nullptr, gv.scene()).value();
+
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, d, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, d, false);
+    std::ignore = nodeStorage.addPhysicalDependency(d, e, false);
+    std::ignore = nodeStorage.addPhysicalDependency(d, a, false);
+
+    gs->calculateLevels();
+
+    auto *aaa = gs->entityByQualifiedName("aaa");
+    auto *bbb = gs->entityByQualifiedName("bbb");
+    auto *ccc = gs->entityByQualifiedName("ccc");
+    auto *ddd = gs->entityByQualifiedName("ddd");
+    auto *eee = gs->entityByQualifiedName("eee");
+
+    REQUIRE(aaa->lakosianLevel() == 3);
+    REQUIRE(bbb->lakosianLevel() == 2);
+    REQUIRE(ccc->lakosianLevel() == 0);
+    REQUIRE(ddd->lakosianLevel() == 1);
+    REQUIRE(eee->lakosianLevel() == 0);
+}
+
+TEST_CASE_METHOD(QTApplicationFixture, "Children level with cycle clear level 0")
+{
+    /**
+     * ccc  eee
+     * ^      ^
+     * |    ddd ----
+     * |    ^ ^     \
+     * |   /  |     |
+     * bbb   /     /
+     * ^    /     /
+     * aaa    <--
+     * ^
+     * xxx
+     */
+    auto tmpDir = TmpDir{"relayout_single_entity"};
+    auto dbPath = tmpDir.path() / "codedb.db";
+    auto nodeStorage = NodeStorageTestUtils::createEmptyNodeStorage(dbPath);
+
+    auto gv = GraphicsViewWrapperForTesting{nodeStorage};
+    auto *gs = qobject_cast<GraphicsScene *>(gv.scene());
+    gv.setColorManagement(std::make_shared<ColorManagement>(false));
+    gv.show();
+
+    auto x = nodeStorage.addPackage("xxx", "xxx", nullptr, gv.scene()).value();
+    auto a = nodeStorage.addPackage("aaa", "aaa", nullptr, gv.scene()).value();
+    auto b = nodeStorage.addPackage("bbb", "bbb", nullptr, gv.scene()).value();
+    auto c = nodeStorage.addPackage("ccc", "ccc", nullptr, gv.scene()).value();
+    auto d = nodeStorage.addPackage("ddd", "ddd", nullptr, gv.scene()).value();
+    auto e = nodeStorage.addPackage("eee", "eee", nullptr, gv.scene()).value();
+
+    std::ignore = nodeStorage.addPhysicalDependency(x, a, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, b, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, c, false);
+    std::ignore = nodeStorage.addPhysicalDependency(b, d, false);
+    std::ignore = nodeStorage.addPhysicalDependency(a, d, false);
+    std::ignore = nodeStorage.addPhysicalDependency(d, e, false);
+    std::ignore = nodeStorage.addPhysicalDependency(d, a, false);
+
+    gs->calculateLevels();
+
+    auto *xxx = gs->entityByQualifiedName("xxx");
+    auto *aaa = gs->entityByQualifiedName("aaa");
+    auto *bbb = gs->entityByQualifiedName("bbb");
+    auto *ccc = gs->entityByQualifiedName("ccc");
+    auto *ddd = gs->entityByQualifiedName("ddd");
+    auto *eee = gs->entityByQualifiedName("eee");
+
+    REQUIRE(xxx->lakosianLevel() == 4);
+    REQUIRE(aaa->lakosianLevel() == 3);
+    REQUIRE(bbb->lakosianLevel() == 2);
+    REQUIRE(ccc->lakosianLevel() == 0);
+    REQUIRE(ddd->lakosianLevel() == 1);
+    REQUIRE(eee->lakosianLevel() == 0);
+}

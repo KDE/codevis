@@ -41,7 +41,6 @@
 #include <oup/observable_unique_ptr.hpp>
 
 #include <memory>
-#include <tuple>
 
 class QKeyEvent;
 
@@ -139,13 +138,14 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
     Q_SIGNAL void selectedEntityChanged(Codethink::lvtqtc::LakosEntity *entity);
 
-    void runLayoutAlgorithm();
     // ignores the layout saved on the cache, and relayouts the items on screen.
 
     void setEntityPos(const lvtshr::UniqueId& uid, QPointF pos) const;
     void runLayoutAlgorithmFromPlugin(LakosEntity *rootNode,
                                       Codevis::PluginSystem::IGraphicsLayoutPlugin *plugin,
                                       const QString& algoName);
+
+    void calculateLevels();
 
     void setBlockNodeResizeOnHover(bool block);
     // forbids / enables node resize on hover.

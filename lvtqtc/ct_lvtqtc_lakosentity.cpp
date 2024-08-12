@@ -27,7 +27,6 @@
 #include <ct_lvtqtc_lakosentitypluginutils.h>
 #include <ct_lvtqtc_lakosrelation.h>
 
-#include <ct_lvtqtc_alg_level_layout.h>
 #include <ct_lvtqtc_undo_expand.h>
 #include <ct_lvtqtc_undo_move.h>
 #include <ct_lvtqtc_undo_notes.h>
@@ -66,6 +65,7 @@
 #include <cmath>
 #include <optional>
 #include <preferences.h>
+#include <qgraphicsitem.h>
 
 #include <ct_lvtshr_debug_categories.h>
 
@@ -155,7 +155,7 @@ struct LakosEntity::Private {
     long long shortId = 0;
     // Non-unique. Used for UniqueId.
 
-    QList<LakosEntity *> lakosChildren;
+    std::vector<LakosEntity *> lakosChildren;
     // All the elements that belongs to this LakosEntity
 
     QVector2D movementDelta;
@@ -228,6 +228,7 @@ LakosEntity::LakosEntity(const std::string& uniqueId, lvtldr::LakosianNode *node
     d->shortId = node->id();
     d->loaderInfo = loaderInfo;
 
+    setFlag(GraphicsItemFlag::ItemSendsGeometryChanges, true);
     setAcceptHoverEvents(true);
     setBrush(QBrush(Qt::white));
     setFlag(ItemIsSelectable);
@@ -842,31 +843,6 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         retValues.append(action);
     }
 
-#if 0
-    if (isExpanded()) {
-        auto *action = new QAction(tr("Layout"));
-        auto *layoutMenu = new QMenu();
-        action->setMenu(layoutMenu);
-        auto *verticalLayout = new QAction(tr("Vertical"));
-
-        connect(verticalLayout, &QAction::triggered, this, [this, scenePosition] {
-            auto direction = Preferences::invertVerticalLevelizationLayout() ? +1 : -1;
-            levelizationLayout(LevelizationLayoutType::Vertical, direction, scenePosition);
-            Q_EMIT graphUpdate();
-        });
-        layoutMenu->addAction(verticalLayout);
-
-        auto *horizontalLayout = new QAction(tr("Horizontal"));
-        connect(horizontalLayout, &QAction::triggered, this, [this, scenePosition] {
-            auto direction = Preferences::invertHorizontalLevelizationLayout() ? +1 : -1;
-            levelizationLayout(LevelizationLayoutType::Horizontal, direction, scenePosition);
-            Q_EMIT graphUpdate();
-        });
-        layoutMenu->addAction(horizontalLayout);
-
-        retValues.append(action);
-    }
-#else
     if (isExpanded()) {
         auto *action = new QAction("Layout Algorithms");
         auto *layoutMenu = new QMenu();
@@ -883,7 +859,6 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
         }
         retValues.append(action);
     }
-#endif
 
     auto *action = new QAction();
     action->setText(tr("Navigate to %1").arg(QString::fromStdString(d->qualifiedName)));
@@ -934,13 +909,6 @@ QList<QAction *> LakosEntity::actionsForMenu(QPointF scenePosition)
     }
 
     return retValues;
-}
-
-std::unordered_map<LakosEntity *, int> LakosEntity::childrenLevels() const
-{
-    auto children = lakosEntities();
-    auto childrenStdVec = std::vector<LakosEntity *>(children.begin(), children.end());
-    return computeLevelForEntities(childrenStdVec, this);
 }
 
 std::unique_ptr<QDialog> LakosEntity::createNotesDialog()
@@ -1196,8 +1164,6 @@ void LakosEntity::doDrag(QPointF movePosition)
             s_dragTextItem = new QGraphicsSimpleTextItem();
             scene()->addItem(s_dragTextItem);
             s_dragTextItem->setPos(mapToScene(movePosition));
-        } else {
-            Q_EMIT moving();
         }
         if (d->boundingRectDbg) {
             d->boundingRectDbg->setPos(nextPos);
@@ -1675,6 +1641,16 @@ void LakosEntity::calculateEdgeVisibility()
     }
 }
 
+void LakosEntity::setLakosianLevel(int level)
+{
+    d->levelNr->setText(QString::number(level));
+}
+
+int LakosEntity::lakosianLevel() const
+{
+    return d->levelNr->text().toInt();
+}
+
 void LakosEntity::reactChildRemoved(QGraphicsItem *child)
 {
     if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(child)) {
@@ -1682,10 +1658,11 @@ void LakosEntity::reactChildRemoved(QGraphicsItem *child)
         // This is not slow as there is no memory deallocations / reallocations
         // for the remove. the vector will be completely deallocated only
         // on destruction of this object.
-        d->lakosChildren.removeOne(lEntity);
+        auto it = std::find(std::begin(d->lakosChildren), std::end(d->lakosChildren), lEntity);
+        d->lakosChildren.erase(it);
         updateChildrenLoadedInfo();
 
-        if (!d->lakosChildren.isEmpty()) {
+        if (!d->lakosChildren.empty()) {
             recalculateRectangle();
         } else {
             collapse(QtcUtil::CreateUndoAction::e_No);
@@ -1696,9 +1673,7 @@ void LakosEntity::reactChildRemoved(QGraphicsItem *child)
 void LakosEntity::reactChildAdded(QGraphicsItem *child)
 {
     if (auto *lEntity = qgraphicsitem_cast<LakosEntity *>(child)) {
-        qCDebug(DebugLakosEntity) << qualifiedName() << "added a new child" << lEntity->qualifiedName();
-
-        d->lakosChildren.append(lEntity);
+        d->lakosChildren.push_back(lEntity);
         if (d->lakosChildren.size() == 1 && !d->flags.isExpanded) {
             // Automatically expand a package that just received it's first item
             expand(QtcUtil::CreateUndoAction::e_No);
@@ -1754,6 +1729,16 @@ QVariant LakosEntity::itemChange(QGraphicsItem::GraphicsItemChange change, const
     GraphicsRectItem::itemChange(change, value);
 
     switch (change) {
+    case QGraphicsItem::ItemPositionHasChanged:
+    case QGraphicsItem::ItemScenePositionHasChanged:
+    case QGraphicsItem::ItemPositionChange:
+        std::cout << "Item Position Changed" << change << std::endl;
+        // triggers a recalculation of the parent's boundaries.
+        Q_EMIT moving();
+
+        // Tells the system that the graph updated.
+        Q_EMIT graphUpdate();
+        break;
     case QGraphicsItem::ItemChildRemovedChange:
         reactChildRemoved(value.value<QGraphicsItem *>());
         break;
@@ -1916,7 +1901,7 @@ void LakosEntity::recalculateRectangle()
 }
 
 // ONE LINERS.
-QList<LakosEntity *> LakosEntity::lakosEntities() const
+std::vector<LakosEntity *> LakosEntity::lakosEntities() const
 {
     return d->lakosChildren;
 }
@@ -2049,36 +2034,6 @@ void LakosEntity::updateZLevel()
         d->zValueBeforeHoverEnter = newZValue;
     } else {
         setZValue(newZValue);
-    }
-}
-
-void LakosEntity::levelizationLayout(LevelizationLayoutType type, int direction, std::optional<QPointF> moveToPosition)
-{
-    auto entityToLevel = childrenLevels();
-    for (auto [entity, level] : entityToLevel) {
-        if (!entity->d->flags.forceHideLevelNr) {
-            entity->d->levelNr->setText(QString::number(level + 1));
-        }
-        entity->layoutIgnoredItems();
-    }
-
-    runLevelizationLayout(entityToLevel,
-                          {type,
-                           direction,
-                           Preferences::spaceBetweenLevels(),
-                           Preferences::spaceBetweenSublevels(),
-                           Preferences::spaceBetweenEntities(),
-                           Preferences::maxEntitiesPerLevel()});
-
-    recalculateRectangle();
-    if (moveToPosition) {
-        setPos(*moveToPosition);
-    }
-    recursiveEdgeRelayout();
-    auto *parent = qgraphicsitem_cast<LakosEntity *>(this->parentItem());
-    while (parent) {
-        parent->recalculateRectangle();
-        parent = qgraphicsitem_cast<LakosEntity *>(parent->parentItem());
     }
 }
 

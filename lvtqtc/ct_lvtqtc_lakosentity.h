@@ -75,8 +75,6 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
 
     enum class RelayoutBehavior : short { e_DoNotRelayout, e_RequestRelayout };
 
-    enum class LevelizationLayoutType : short { Horizontal, Vertical };
-
     enum { Type = QtcUtil::LAKOSENTITY_TYPE };
     // for qgraphicsitem_cast magic
 
@@ -175,7 +173,7 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     void setColorManagement(lvtclr::ColorManagement *colorManagement);
     // Sets color management of the entity
 
-    [[nodiscard]] QList<LakosEntity *> lakosEntities() const;
+    [[nodiscard]] std::vector<LakosEntity *> lakosEntities() const;
     // TODO: pick one, std::vector or QList, don't mix them.
 
     [[nodiscard]] std::vector<std::shared_ptr<EdgeCollection>>& edgesCollection() const;
@@ -269,6 +267,12 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
     // Do we have a visible relationship with the entity, from one of the
     // childrens?
 
+    int lakosianLevel() const;
+    // The Lakosian Level of this entity on the view.
+
+    void setLakosianLevel(int level);
+    // Sets the lakosian level.
+
     [[nodiscard]] std::string legendText() const;
     // Returns a string which summarises what this thing is
 
@@ -317,12 +321,6 @@ class LVTQTC_EXPORT LakosEntity : public GraphicsRectItem {
                   std::optional<QPointF> moveToPosition = std::nullopt,
                   RelayoutBehavior behavior = RelayoutBehavior::e_DoNotRelayout);
     // Shrinks this node.
-
-    [[nodiscard]] std::unordered_map<LakosEntity *, int> childrenLevels() const;
-
-    void levelizationLayout(LevelizationLayoutType type,
-                            int direction,
-                            std::optional<QPointF> moveToPosition = std::nullopt);
 
     QJsonObject toJson() const;
     void fromJson(const QJsonObject& thisObj);

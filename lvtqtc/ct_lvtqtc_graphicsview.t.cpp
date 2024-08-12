@@ -86,23 +86,9 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic vertex addition test")
     REQUIRE(some_class->pos() == QPointF{0, 0});
     REQUIRE(some_component->pos() == QPointF{0, 0});
     REQUIRE(some_package->pos() == QPointF{0, 0});
-    // REQUIRE(some_manual_cluster->pos() == QPointF{0, 0});
 
-    some_class->setPos(QPointF{1.2, 3.4});
-    some_component->setPos(QPointF{2.2, 5.4});
-    some_package->setPos(QPointF{3.2, 7.4});
-    auto class_pos_prev = some_class->pos();
-    auto component_pos_prev = some_component->pos();
-    auto package_pos_prev = some_package->pos();
-    scene->runLayoutAlgorithm();
-    view.show();
-    processEvents();
-
-    // ... but after running the layout, positions must change
-    REQUIRE(some_class->pos() != class_pos_prev);
-    REQUIRE(some_component->pos() != component_pos_prev);
-    REQUIRE(some_package->pos() != package_pos_prev);
-    // REQUIRE(some_manual_cluster->pos() != package_pos_prev);
+    // Removed Layout Tests because layouts got moved to
+    // the plugin system.
 }
 
 TEST_CASE_METHOD(QTApplicationFixture, "Vertex and edges test")

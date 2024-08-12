@@ -25,7 +25,6 @@
 
 #include <any>
 
-#include <ct_lvtqtc_alg_level_layout.h>
 #include <ct_lvtqtc_alg_transitive_reduction.h>
 
 #include <ct_lvtclr_colormanagement.h>
@@ -437,8 +436,18 @@ void GraphicsScene::expandToplevelEntities()
 
 void GraphicsScene::reLayout()
 {
-    runLayoutAlgorithm();
+    auto plugins = Codevis::PluginSystem::PluginManagerV2::self().graphicsLayoutPlugins();
+    if (plugins.empty()) {
+        return;
+    }
 
+    Codevis::PluginSystem::IGraphicsLayoutPlugin *layoutPlugin =
+        Codevis::PluginSystem::PluginManagerV2::self().graphicsLayoutPlugins()[0];
+
+    // TODO: Don't recalculate everything.
+    calculateLevels();
+
+    runLayoutAlgorithmFromPlugin(nullptr, layoutPlugin, "Top to Bottom");
     for (auto *entity : d->verticesVec) {
         if (entity->parentItem() == nullptr) {
             entity->calculateEdgeVisibility();
@@ -833,34 +842,115 @@ LakosRelation *GraphicsScene::addRelation(LakosRelation *relation, bool isVisibl
     return relation;
 }
 
-void GraphicsScene::runLayoutAlgorithm()
+///////////////////////////////////////// CALCULATE LEVELS /////////////////////////////////////////
+
+void computeLevelForEntities(std::vector<LakosEntity *> const& entities, LakosEntity *commonParentEntity)
 {
-    auto topLevelEntities = std::vector<LakosEntity *>();
-    for (auto *e : d->verticesVec) {
-        if (!e->parentItem()) {
-            topLevelEntities.push_back(e);
+    for (LakosEntity *entity : entities) {
+        computeLevelForEntities(entity->lakosEntities(), entity);
+    }
+
+    // Keep track of history for cycle detection
+    auto entitiesVisitHistory = std::unordered_map<LakosEntity *, std::unordered_set<LakosEntity *>>{};
+    std::vector<LakosEntity *> entitiesWithoutConnections;
+    for (auto *entity : entities) {
+        entitiesVisitHistory[entity].insert(entity);
+
+        if (entity->edgesCollection().empty() && entity->targetCollection().empty()) {
+            entitiesWithoutConnections.push_back(entity);
         }
     }
 
-    auto direction = Preferences::invertVerticalLevelizationLayout() ? +1 : -1;
-    std::function<void(LakosEntity *)> recursiveLevelLayout = [&](LakosEntity *e) -> void {
-        auto childs = e->lakosEntities();
-        for (auto *c : childs) {
-            recursiveLevelLayout(c);
+    auto copyAllDependentNodes =
+        [&commonParentEntity, &entitiesVisitHistory](LakosEntity *entity, std::set<LakosEntity *>& processEntities) {
+            for (auto const& edge : entity->targetCollection()) {
+                auto *const toNode = edge->from();
+                auto *const parentNode = toNode->internalNode()->parent();
+                if (commonParentEntity) {
+                    // Only consider packages/components and dependencies within the common parent entity
+                    if (!parentNode || parentNode->name() != commonParentEntity->name()) {
+                        continue;
+                    }
+                } else {
+                    // If no common parent is provided, only consider top level entities (Ignore those with parent node)
+                    if (parentNode) {
+                        continue;
+                    }
+                }
+
+                // Avoid creating cycles
+                auto const& history = entitiesVisitHistory[entity];
+                if (std::find(history.cbegin(), history.cend(), toNode) != history.cend()) {
+                    continue;
+                }
+                entitiesVisitHistory[toNode].insert(entitiesVisitHistory[entity].begin(),
+                                                    entitiesVisitHistory[entity].end());
+
+                processEntities.insert(toNode);
+            }
+        };
+
+    auto hasDependenciesWithinThisParent = [&commonParentEntity](LakosEntity *entity) {
+        auto const& deps = entity->edgesCollection();
+
+        if (commonParentEntity) {
+            // Only consider packages/components and dependencies within the common parent entity
+            auto parentEntityName = commonParentEntity->name();
+            return std::any_of(deps.cbegin(), deps.cend(), [&parentEntityName](auto& dep) {
+                auto const *depParent = dep->to()->internalNode()->parent();
+                return depParent && depParent->name() == parentEntityName;
+            });
         }
-        e->levelizationLayout(LakosEntity::LevelizationLayoutType::Vertical, direction);
+
+        // If no common parent is provided, only consider top level entities (With no parent)
+        return std::any_of(deps.cbegin(), deps.cend(), [](auto& dep) {
+            auto const *depParent = dep->to()->internalNode()->parent();
+            return !depParent;
+        });
     };
-    for (auto *e : topLevelEntities) {
-        recursiveLevelLayout(e);
+
+    auto entitiesOnNextLevel = std::set<LakosEntity *>{};
+
+    // Finds the "first level", where the entities don't have any dependency.
+    // Also prepares "processEntities" with the entities that will be on the next level.
+    auto currentLevel = 0;
+    for (auto *entity : entities) {
+        entity->setLakosianLevel(currentLevel);
+        if (!hasDependenciesWithinThisParent(entity)) {
+            copyAllDependentNodes(entity, entitiesOnNextLevel);
+        }
     }
-    auto entityToLevel = computeLevelForEntities(topLevelEntities);
-    runLevelizationLayout(entityToLevel,
-                          {LakosEntity::LevelizationLayoutType::Vertical,
-                           direction,
-                           Preferences::spaceBetweenLevels(),
-                           Preferences::spaceBetweenSublevels(),
-                           Preferences::spaceBetweenEntities(),
-                           Preferences::maxEntitiesPerLevel()});
+
+    // While there are entities in the current level, process the entities while finding the entities for the next
+    // level, until eventually we have processed all the levels.
+    auto entitiesOnCurrentLevel = entitiesOnNextLevel;
+    currentLevel += 1;
+    while (!entitiesOnCurrentLevel.empty()) {
+        entitiesOnNextLevel.clear();
+        for (auto const& entity : entitiesOnCurrentLevel) {
+            entity->setLakosianLevel(currentLevel);
+            copyAllDependentNodes(entity, entitiesOnNextLevel);
+        }
+
+        currentLevel += 1;
+        entitiesOnCurrentLevel = entitiesOnNextLevel;
+    }
+
+    // move elements that have no edge to a higher level.
+    for (auto *entity : entitiesWithoutConnections) {
+        entity->setLakosianLevel(currentLevel);
+    }
+}
+
+void GraphicsScene::calculateLevels()
+{
+    std::vector<LakosEntity *> topLevel;
+    for (auto *entity : d->verticesVec) {
+        if (!entity->parentItem()) {
+            topLevel.push_back(entity);
+        }
+    }
+    computeLevelForEntities(topLevel, nullptr);
 }
 
 bool GraphicsScene::blockNodeResizeOnHover() const
@@ -872,12 +962,6 @@ void GraphicsScene::setEntityPos(const lvtshr::UniqueId& uid, QPointF pos) const
 {
     auto *entity = findLakosEntityFromUid(uid);
     entity->setPos(pos);
-
-    // triggers a recalculation of the parent's boundaries.
-    Q_EMIT entity->moving();
-
-    // Tells the system that the graph updated.
-    Q_EMIT entity->graphUpdate();
 }
 
 void GraphicsScene::setBlockNodeResizeOnHover(bool block)
@@ -1240,11 +1324,13 @@ void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)
 using Node = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node;
 using Graph = Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph;
 
-Node nodeFromEntity(LakosEntity *entity, const std::string& parentQualifiedName)
+Node nodeFromEntity(LakosEntity *entity, intptr_t parentId, QMultiHash<intptr_t, intptr_t>& connections)
 {
-    QList<Node> nodes;
+    std::vector<Node> nodes;
 
-    auto thisNode = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node{.parentQualifiedName = parentQualifiedName,
+    auto thisNode = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node{.id = reinterpret_cast<intptr_t>(entity),
+                                                                       .parentId = parentId,
+                                                                       .lakosianLevel = entity->lakosianLevel(),
                                                                        .children = {},
                                                                        .qualifiedName = entity->qualifiedName(),
                                                                        .rect = entity->boundingRect(),
@@ -1255,29 +1341,32 @@ Node nodeFromEntity(LakosEntity *entity, const std::string& parentQualifiedName)
             continue;
         }
 
-        auto childNode = nodeFromEntity(childEntity, thisNode.qualifiedName);
-        nodes.append(childNode);
+        auto childNode = nodeFromEntity(childEntity, thisNode.id, connections);
+        nodes.push_back(childNode);
+    }
+
+    for (auto edge : entity->edgesCollection()) {
+        connections.insert(reinterpret_cast<intptr_t>(edge->from()), reinterpret_cast<intptr_t>(edge->to()));
     }
 
     thisNode.children = nodes;
     return thisNode;
 }
 
-Graph generateGraph(QList<LakosEntity *> topLevel)
+Graph generateGraph(std::vector<LakosEntity *> topLevel)
 {
-    QList<Node> nodes;
-    for (auto *entity : topLevel) {
-        auto node = nodeFromEntity(entity, std::string{});
-        nodes.append(node);
-    }
+    std::vector<Node> nodes;
+    QMultiHash<intptr_t, intptr_t> connections;
 
-    // calculate connections.
-    QHash<QString, QString> connections;
+    for (auto *entity : topLevel) {
+        auto node = nodeFromEntity(entity, 0, connections);
+        nodes.push_back(node);
+    }
 
     // Return the graph.
     return Graph{.rect = QRectF(),
                  .topLevelNodes = nodes,
-                 .connection = connections,
+                 .connections = connections,
                  .topLevelQualifiedName = std::nullopt};
 }
 
@@ -1289,7 +1378,7 @@ Graph generateGraph(LakosEntity *parent, GraphicsScene *scene)
         return ret;
     }
 
-    QList<LakosEntity *> entities;
+    std::vector<LakosEntity *> entities;
     for (auto entity : scene->allEntities()) {
         if (entity->parentItem()) {
             continue;
@@ -1332,6 +1421,8 @@ void GraphicsScene::runLayoutAlgorithmFromPlugin(LakosEntity *entity,
                                                  Codevis::PluginSystem::IGraphicsLayoutPlugin *plg,
                                                  const QString& algoName)
 {
+    // TODO: Don't recalculate levels'
+    calculateLevels();
     auto graph = generateGraph(entity, this);
     plg->executeLayout(algoName, graph);
     applyLayout(this, graph);

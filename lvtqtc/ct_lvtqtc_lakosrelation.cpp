@@ -236,8 +236,6 @@ std::pair<QPainterPath, QPainterPath> LakosRelation::calculateIntersection(QGrap
 
 void LakosRelation::setLine(const QLineF& line)
 {
-    prepareGeometryChange();
-
     d->line = line;
 
     if (!d->pointsFrom->isVisible() && !d->pointsTo->isVisible()) {

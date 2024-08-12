@@ -1730,13 +1730,7 @@ QVariant LakosEntity::itemChange(QGraphicsItem::GraphicsItemChange change, const
 
     switch (change) {
     case QGraphicsItem::ItemPositionHasChanged:
-    case QGraphicsItem::ItemScenePositionHasChanged:
-    case QGraphicsItem::ItemPositionChange:
-        std::cout << "Item Position Changed" << change << std::endl;
-        // triggers a recalculation of the parent's boundaries.
         Q_EMIT moving();
-
-        // Tells the system that the graph updated.
         Q_EMIT graphUpdate();
         break;
     case QGraphicsItem::ItemChildRemovedChange:

@@ -3,6 +3,17 @@
 #include <ICodevisPlugin.h>
 #include <IGraphicsLayoutPlugin.h>
 
+struct BasicLayoutPluginConfig {
+    enum class LevelizationLayoutType : short { Horizontal, Vertical };
+    LevelizationLayoutType type;
+    int direction;
+
+    double spaceBetweenLevels = 40.;
+    double spaceBetweenSublevels = 10.;
+    double spaceBetweenEntities = 10.;
+    int maxEntitiesPerLevel = 8;
+};
+
 class BasicLayoutPlugin : public Codevis::PluginSystem::ICodevisPlugin,
                           public Codevis::PluginSystem::IGraphicsLayoutPlugin {
   public:
@@ -16,4 +27,5 @@ class BasicLayoutPlugin : public Codevis::PluginSystem::ICodevisPlugin,
     // IGraphicsLayoutPlugin
     QList<QString> layoutAlgorithms() override;
     void executeLayout(const QString& algorithmName, Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph& g) override;
+    QWidget *configureWidget() override;
 };

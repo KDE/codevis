@@ -14,8 +14,10 @@ class PLUGINSYSTEMHEADERS_EXPORT IGraphicsLayoutPlugin {
   public:
     // The graph representation used by this plugin.
     struct Node {
-        std::string parentQualifiedName;
-        QList<Node> children;
+        intptr_t id; // Maps to the pointer of the actual object
+        intptr_t parentId; // Maps to the pointer of the Parent
+        int lakosianLevel;
+        std::vector<Node> children;
         std::string qualifiedName;
         QRectF rect;
 
@@ -25,8 +27,8 @@ class PLUGINSYSTEMHEADERS_EXPORT IGraphicsLayoutPlugin {
 
     struct Graph {
         QRectF rect;
-        QList<Node> topLevelNodes;
-        QHash<QString, QString> connection;
+        std::vector<Node> topLevelNodes;
+        QMultiHash<intptr_t, intptr_t> connections; // Table of connections between each node identified by id.
         std::optional<QString> topLevelQualifiedName;
     };
 
@@ -37,6 +39,8 @@ class PLUGINSYSTEMHEADERS_EXPORT IGraphicsLayoutPlugin {
     // Note that the only thing it can modify is the ->pos of the nodes.
     // This executes on a secondary thread.
     virtual void executeLayout(const QString& algorithmName, Graph& g) = 0;
+
+    virtual QWidget *configureWidget() = 0;
 };
 } // namespace Codevis::PluginSystem
 

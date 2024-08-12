@@ -78,7 +78,8 @@ void runTestOnTool(QTApplicationFixture *self)
 
     gv.moveEntityTo(Polygon->uid(), {0, 0});
     QTest::qWait(500);
-
+    gv.moveEntityTo(Square->uid(), {-200, -200});
+    gv.moveEntityTo(utl->uid(), {-300, -300});
     gv.moveEntityTo(Shape->uid(), {300, 300});
     QTest::qWait(500);
 

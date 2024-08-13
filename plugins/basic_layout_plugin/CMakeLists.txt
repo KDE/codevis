@@ -13,4 +13,8 @@ INSTALL_NAMESPACE
     "codevis_plugins_v2"
 )
 
-target_link_libraries(basiclayoutplugin Qt6::Core Codethink::PluginSystemHeaders)
+target_link_libraries(basiclayoutplugin
+    Qt6::Core
+    Codethink::PluginSystemHeaders
+    Codethink::lvtqtc
+)

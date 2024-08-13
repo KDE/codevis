@@ -1,8 +1,12 @@
 #include "BasicLayoutPlugin.h"
 #include "ICodevisPlugin.h"
+#include "IGraphicsLayoutPlugin.h"
+#include "ct_lvtqtc_graphicsscene.h"
+#include "ct_lvtqtc_lakosentity.h"
 
 #include <KPluginFactory>
 #include <qnamespace.h>
+#include <variant>
 
 BasicLayoutPlugin::BasicLayoutPlugin(QObject *parent, const QVariantList& args):
     Codevis::PluginSystem::ICodevisPlugin(parent, args)
@@ -30,9 +34,6 @@ QList<QString> BasicLayoutPlugin::layoutAlgorithms()
     return {tr("Top to Bottom"), tr("Bottom to Top"), tr("Left to Right"), tr("Right to Left")};
 }
 
-using Node = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node;
-using Graph = Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph;
-
 BasicLayoutPluginConfig config;
 
 QWidget *BasicLayoutPlugin::configureWidget()
@@ -40,14 +41,14 @@ QWidget *BasicLayoutPlugin::configureWidget()
     return nullptr;
 }
 
-void levelizationLayout(Node& n,
+void levelizationLayout(LakosEntity *n,
                         BasicLayoutPluginConfig::LevelizationLayoutType type,
                         int direction,
                         std::optional<QPointF> moveToPosition = std::nullopt);
 
-void recursiveLevelLayout(Node& n, int direction)
+void recursiveLevelLayout(LakosEntity *n, int direction)
 {
-    for (auto& node : n.children) {
+    for (auto& node : n->lakosEntities()) {
         recursiveLevelLayout(node, direction);
     }
 
@@ -63,52 +64,53 @@ struct LayoutTypeStrategy
 template<>
 struct LayoutTypeStrategy<BasicLayoutPluginConfig::LevelizationLayoutType::Vertical>
 {
-    static inline double getPosOnReferenceDirection(const Node& entity) { return entity.pos.y(); }
-    static inline double getPosOnOrthoDirection(const Node& entity) { return entity.pos.x(); }
-    static inline void setPosOnReferenceDirection(Node& entity, double pos) { entity.pos = QPointF(entity.pos.x(), pos); }
-    static inline void setPosOnOrthoDirection(Node& entity, double pos) { entity.pos = QPointF(pos, entity.pos.y()); }
-    static inline double rectSize(const Node& entity) { return entity.rect.height(); }
-    static inline double rectOrthoSize(const Node& entity) { return entity.rect.width(); }
+    static inline double getPosOnReferenceDirection(LakosEntity* entity) { return entity->pos().y(); }
+    static inline double getPosOnOrthoDirection(LakosEntity* entity) { return entity->pos().x(); }
+    static inline void setPosOnReferenceDirection(LakosEntity* entity, double pos) { entity->setPos(QPointF(entity->pos().x(), pos)); }
+    static inline void setPosOnOrthoDirection(LakosEntity* entity, double pos) { entity->setPos(QPointF(pos, entity->pos().y())); }
+    static inline double rectSize(LakosEntity* entity) { return entity->rect().height(); }
+    static inline double rectOrthoSize(LakosEntity* entity) { return entity->rect().width(); }
 };
 
 template<>
 struct LayoutTypeStrategy<BasicLayoutPluginConfig::LevelizationLayoutType::Horizontal>
 {
-    static inline double getPosOnReferenceDirection(const Node& entity) { return entity.pos.x(); }
-    static inline double getPosOnOrthoDirection(const Node& entity) { return entity.pos.y(); }
-    static inline void setPosOnReferenceDirection(Node& entity, double pos) { entity.pos = QPointF(pos, entity.pos.y()); }
-    static inline void setPosOnOrthoDirection(Node& entity, double pos) { entity.pos = QPointF(entity.pos.x(), pos); }
-    static inline double rectSize(const Node& entity) { return entity.rect.width(); }
-    static inline double rectOrthoSize(const Node& entity) { return entity.rect.height(); }
+    static inline double getPosOnReferenceDirection(LakosEntity* entity) { return entity->pos().x(); }
+    static inline double getPosOnOrthoDirection(LakosEntity* entity) { return entity->pos().y(); }
+    static inline void setPosOnReferenceDirection(LakosEntity* entity, double pos) { entity->setPos(QPointF(pos, entity->pos().y())); }
+    static inline void setPosOnOrthoDirection(LakosEntity* entity, double pos) { entity->setPos(QPointF(entity->pos().x(), pos)); }
+    static inline double rectSize(LakosEntity* entity) { return entity->rect().width(); }
+    static inline double rectOrthoSize(LakosEntity* entity) { return entity->rect().height(); }
 };
 
 template<BasicLayoutPluginConfig::LevelizationLayoutType LT>
-void limitNumberOfEntitiesPerLevel(std::vector<Node>& nodes,
+void limitNumberOfEntitiesPerLevel(const std::vector<LakosEntity*>& nodes,
                                    BasicLayoutPluginConfig const& config)
 {
     using LTS = LayoutTypeStrategy<LT>;
 
-    auto entitiesFromLevel = std::map<int, std::vector<Node*>>{};
+    auto entitiesFromLevel = std::map<int, std::vector<LakosEntity*>>{};
     for (auto& node : nodes) {
-        entitiesFromLevel[node.lakosianLevel].push_back(&node);
+        entitiesFromLevel[node->lakosianLevel()].push_back(node);
     }
 
     for (auto& [level, entities] : entitiesFromLevel) {
-        std::sort(entities.begin(), entities.end(), [](auto &e0, auto &e1) {
-            return LTS::getPosOnOrthoDirection(*e0) < LTS::getPosOnOrthoDirection(*e1);
+        std::sort(entities.begin(), entities.end(), [](LakosEntity* e0, LakosEntity* e1) {
+            return LTS::getPosOnOrthoDirection(e0) < LTS::getPosOnOrthoDirection(e1);
         });
     }
 
     auto globalOffset = 0.;
     for (auto& [level, entities] : entitiesFromLevel) {
-        for (auto& e : entities) {
-            auto currentPos = LTS::getPosOnReferenceDirection(*e);
-            LTS::setPosOnReferenceDirection(*e, currentPos + config.direction * globalOffset);
+        for (LakosEntity *e : entities) {
+            auto currentPos = LTS::getPosOnReferenceDirection(e);
+            LTS::setPosOnReferenceDirection(e, currentPos + config.direction * globalOffset);
         }
 
-        auto localOffset = 0.;
+        double localOffset = 0.0;
+        double maxSizeOnCurrentLevel = 0.0;
         auto localNumberOfEntities = 0;
-        auto maxSizeOnCurrentLevel = 0.;
+
         for (auto& e : entities) {
             if (localNumberOfEntities == config.maxEntitiesPerLevel) {
                 localOffset += maxSizeOnCurrentLevel + config.spaceBetweenSublevels;
@@ -116,9 +118,9 @@ void limitNumberOfEntitiesPerLevel(std::vector<Node>& nodes,
                 maxSizeOnCurrentLevel = 0.;
             }
 
-            auto currentReferencePos = LTS::getPosOnReferenceDirection(*e);
-            LTS::setPosOnReferenceDirection(*e, currentReferencePos + config.direction * localOffset);
-            maxSizeOnCurrentLevel = std::max(maxSizeOnCurrentLevel, LTS::rectSize(*e));
+            auto currentReferencePos = LTS::getPosOnReferenceDirection(e);
+            LTS::setPosOnReferenceDirection(e, currentReferencePos + config.direction * localOffset);
+            maxSizeOnCurrentLevel = std::max(maxSizeOnCurrentLevel, LTS::rectSize(e));
             localNumberOfEntities += 1;
         }
         globalOffset += localOffset;
@@ -126,7 +128,7 @@ void limitNumberOfEntitiesPerLevel(std::vector<Node>& nodes,
 }
 
 template<BasicLayoutPluginConfig::LevelizationLayoutType LT>
-void centralizeLayout(std::vector<Node>& nodes,
+void centralizeLayout(const std::vector<LakosEntity*>& nodes,
                       const BasicLayoutPluginConfig& config)
 {
     using LTS = LayoutTypeStrategy<LT>;
@@ -150,24 +152,25 @@ void centralizeLayout(std::vector<Node>& nodes,
     for (auto& e : nodes) {
         auto lineRepr = (int) LTS::getPosOnReferenceDirection(e);
         auto currentPos = lineCurrentPos[lineRepr];
-        LTS::setPosOnOrthoDirection(e, currentPos + (maxSize - lineToLineTotalWidth[lineRepr]) / 2.);
+        LTS::setPosOnOrthoDirection(e, currentPos + (maxSize - lineToLineTotalWidth[lineRepr]) / 2.0);
         lineCurrentPos[lineRepr] += LTS::rectOrthoSize(e) + config.spaceBetweenEntities;
     }
 }
 
 template<BasicLayoutPluginConfig::LevelizationLayoutType LT>
-void prepareEntityPositionForEachLevel(std::vector<Node>& nodes,
+void prepareEntityPositionForEachLevel(const std::vector<LakosEntity*>& nodes,
                                        BasicLayoutPluginConfig const& config)
 {
     using LTS = LayoutTypeStrategy<LT>;
 
     auto sizeForLvl = std::map<int, double>{};
     for (auto const& node : nodes) {
-        sizeForLvl[node.lakosianLevel] = std::max(sizeForLvl[node.lakosianLevel], LTS::rectSize(node));
+        node->setPos(0,0);
+        sizeForLvl[node->lakosianLevel()] = std::max(sizeForLvl[node->lakosianLevel()], LTS::rectSize(node));
     }
 
     auto posPerLevel = std::map<int, double>{};
-    for (auto const& [level, _] : sizeForLvl) {
+    for (auto const& [level, size] : sizeForLvl) {
         // clang-format off
         posPerLevel[level] = (
             level == 0 ? 0.0 : posPerLevel[level - 1] + config.direction * (sizeForLvl[level - 1] + config.spaceBetweenLevels)
@@ -177,12 +180,20 @@ void prepareEntityPositionForEachLevel(std::vector<Node>& nodes,
 
     for (auto node : nodes) {
         LTS::setPosOnOrthoDirection(node, 0.0);
-        LTS::setPosOnReferenceDirection(node, posPerLevel[node.lakosianLevel]);
+        LTS::setPosOnReferenceDirection(node, posPerLevel[node->lakosianLevel()]);
     }
 }
 
-void runLevelizationLayout(std::vector<Node>& nodes, BasicLayoutPluginConfig const& config)
+void runLevelizationLayout(const std::vector<LakosEntity *>& nodes, BasicLayoutPluginConfig const& config)
 {
+    if (nodes.empty()) {
+        return;
+    }
+
+    for (auto *node : nodes) {
+        runLevelizationLayout(node->lakosEntities(), config);
+    }
+
     if (config.type == BasicLayoutPluginConfig::LevelizationLayoutType::Vertical) {
         static auto const LT = BasicLayoutPluginConfig::LevelizationLayoutType::Vertical;
         prepareEntityPositionForEachLevel<LT>(nodes, config);
@@ -196,36 +207,43 @@ void runLevelizationLayout(std::vector<Node>& nodes, BasicLayoutPluginConfig con
     }
 }
 
-void levelizationLayout(Node& n,
-                        BasicLayoutPluginConfig::LevelizationLayoutType type,
-                        int direction,
-                        std::optional<QPointF> moveToPosition)
+void BasicLayoutPlugin::executeLayout(const QString& algorithmName, IGraphicsLayoutPlugin::ExecuteLayoutParams params)
 {
-    runLevelizationLayout(n.children,
-                          {type,
-                           direction,
-                           config.spaceBetweenLevels,
-                           config.spaceBetweenSublevels,
-                           config.spaceBetweenEntities,
-                           config.maxEntitiesPerLevel});
-}
-
-void BasicLayoutPlugin::executeLayout(const QString& algorithmName, Graph& g)
-{
-    std::ignore = algorithmName;
     auto direction = (algorithmName == tr("Top to Bottom") || algorithmName == tr("Left to Right")) ? +1 : -1;
+    auto type = (algorithmName == tr("Top to Bottom") || algorithmName == tr("Bottom to Top"))
+        ? BasicLayoutPluginConfig::LevelizationLayoutType::Vertical
+        : BasicLayoutPluginConfig::LevelizationLayoutType::Horizontal;
 
-    for (auto& node : g.topLevelNodes) {
-        recursiveLevelLayout(node, direction);
-    }
+    BasicLayoutPluginConfig config;
 
-    runLevelizationLayout(g.topLevelNodes,
-                          {BasicLayoutPluginConfig::LevelizationLayoutType::Vertical,
-                           direction,
-                           config.spaceBetweenLevels,
-                           config.spaceBetweenSublevels,
-                           config.spaceBetweenEntities,
-                           config.maxEntitiesPerLevel});
+    struct visitor {
+        BasicLayoutPluginConfig config;
+        visitor(int direction, BasicLayoutPluginConfig::LevelizationLayoutType type)
+        {
+            config.direction = direction, config.maxEntitiesPerLevel = 10;
+            config.spaceBetweenLevels = 20;
+            config.type = type;
+        }
+
+        void operator()(GraphicsScene *scene)
+        {
+            std::vector<LakosEntity *> topLevel;
+            for (LakosEntity *node : scene->allEntities()) {
+                if (!node->parentItem()) {
+                    topLevel.push_back(node);
+                }
+            }
+            runLevelizationLayout(topLevel, config);
+            scene->setSceneRect(scene->itemsBoundingRect());
+        }
+
+        void operator()(LakosEntity *parent)
+        {
+            runLevelizationLayout(parent->lakosEntities(), config);
+        }
+    };
+
+    std::visit(visitor{direction, type}, params);
 }
 
 K_PLUGIN_CLASS_WITH_JSON(BasicLayoutPlugin, "codevis_basiclayoutplugin.json")

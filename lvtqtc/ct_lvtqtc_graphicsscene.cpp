@@ -80,6 +80,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include <qgraphicsitem.h>
 #include <random>
 
 using namespace Codethink::lvtldr;
@@ -1320,112 +1321,18 @@ void GraphicsScene::finalizeEntityPartialLoad(LakosEntity *entity)
     reLayout();
 }
 
-//////////////////////////////////////// LAYOUT MANAGEMENT ////////////////////////////////////////////////////////
-using Node = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node;
-using Graph = Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph;
-
-Node nodeFromEntity(LakosEntity *entity, intptr_t parentId, QMultiHash<intptr_t, intptr_t>& connections)
-{
-    std::vector<Node> nodes;
-
-    auto thisNode = Codevis::PluginSystem::IGraphicsLayoutPlugin::Node{.id = reinterpret_cast<intptr_t>(entity),
-                                                                       .parentId = parentId,
-                                                                       .lakosianLevel = entity->lakosianLevel(),
-                                                                       .children = {},
-                                                                       .qualifiedName = entity->qualifiedName(),
-                                                                       .rect = entity->boundingRect(),
-                                                                       .pos = QPointF()};
-
-    for (auto *childEntity : entity->lakosEntities()) {
-        if (!entity->isVisible()) {
-            continue;
-        }
-
-        auto childNode = nodeFromEntity(childEntity, thisNode.id, connections);
-        nodes.push_back(childNode);
-    }
-
-    for (auto edge : entity->edgesCollection()) {
-        connections.insert(reinterpret_cast<intptr_t>(edge->from()), reinterpret_cast<intptr_t>(edge->to()));
-    }
-
-    thisNode.children = nodes;
-    return thisNode;
-}
-
-Graph generateGraph(std::vector<LakosEntity *> topLevel)
-{
-    std::vector<Node> nodes;
-    QMultiHash<intptr_t, intptr_t> connections;
-
-    for (auto *entity : topLevel) {
-        auto node = nodeFromEntity(entity, 0, connections);
-        nodes.push_back(node);
-    }
-
-    // Return the graph.
-    return Graph{.rect = QRectF(),
-                 .topLevelNodes = nodes,
-                 .connections = connections,
-                 .topLevelQualifiedName = std::nullopt};
-}
-
-Graph generateGraph(LakosEntity *parent, GraphicsScene *scene)
-{
-    if (parent) {
-        auto ret = generateGraph(parent->lakosEntities());
-        ret.topLevelQualifiedName = QString::fromStdString(parent->qualifiedName());
-        return ret;
-    }
-
-    std::vector<LakosEntity *> entities;
-    for (auto entity : scene->allEntities()) {
-        if (entity->parentItem()) {
-            continue;
-        }
-        if (!entity->isVisible()) {
-            continue;
-        }
-        entities.push_back(entity);
-    }
-
-    auto ret = generateGraph(entities);
-    return ret;
-}
-
-void applyLayout(GraphicsScene *scene, const Node& node)
-{
-    auto *entity = scene->entityByQualifiedName(node.qualifiedName);
-    entity->setRectangle(node.rect);
-    entity->setPos(node.pos);
-    for (auto child : node.children) {
-        applyLayout(scene, child);
-    }
-}
-
-void applyLayout(GraphicsScene *scene, Codevis::PluginSystem::IGraphicsLayoutPlugin::Graph& graph)
-{
-    if (graph.topLevelQualifiedName) {
-        auto *entity = scene->entityByQualifiedName(graph.topLevelQualifiedName.value().toStdString());
-        entity->setRectangle(graph.rect);
-    }
-    for (const auto& node : graph.topLevelNodes) {
-        applyLayout(scene, node);
-    }
-}
-
-//////////////////////////////////////////////// END OF LAYOUT MANAGEMENT
 /////////////////////////////////////////////////////////
 
 void GraphicsScene::runLayoutAlgorithmFromPlugin(LakosEntity *entity,
                                                  Codevis::PluginSystem::IGraphicsLayoutPlugin *plg,
                                                  const QString& algoName)
 {
-    // TODO: Don't recalculate levels'
     calculateLevels();
-    auto graph = generateGraph(entity, this);
-    plg->executeLayout(algoName, graph);
-    applyLayout(this, graph);
+    if (entity) {
+        plg->executeLayout(algoName, entity);
+    } else {
+        plg->executeLayout(algoName, this);
+    }
 }
 
 void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)

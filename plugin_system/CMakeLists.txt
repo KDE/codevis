@@ -6,9 +6,10 @@ AddTargetLibrary(
   SOURCES
     ICodevisPlugin.cpp
     IGraphicsLayoutPlugin.cpp
-  QT_HEADERS
-    ICodevisPlugin.h
+ HEADERS
     IGraphicsLayoutPlugin.h
+ QT_HEADERS
+    ICodevisPlugin.h
 
   LIBRARIES
     Qt${QT_MAJOR_VERSION}::Core

@@ -37,8 +37,6 @@
 
 #include <ui_ct_lvtqtw_parse_codebase.h>
 
-#include <KZip>
-
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFileDialog>

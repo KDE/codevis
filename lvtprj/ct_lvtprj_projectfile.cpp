@@ -108,12 +108,6 @@ bool extractDir(QFileInfo const& projectFile, QDir& openLocation)
         return false;
     }
 
-    bool upgrade_file_version = portProjectFileV_0_to_1(openLocation);
-    if (!upgrade_file_version) {
-        qDebug() << "Could not upgrade file version";
-        return false;
-    }
-
     return true;
 }
 
@@ -341,6 +335,11 @@ auto ProjectFile::open(const std::filesystem::path& path) -> cpp::result<void, P
 
     if (!extractDir(projectFile, openLocation)) {
         return cpp::fail(ProjectFileError{"Failed to extract project contents"});
+    }
+
+    bool upgrade_file_version = portProjectFileV_0_to_1(openLocation);
+    if (!upgrade_file_version) {
+        return cpp::fail(ProjectFileError{"Could not upgrade file version"});
     }
 
     d->location = filePath;

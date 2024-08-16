@@ -46,7 +46,3 @@ cpp::result<void, ZipError> Zip::uncompressToFolder(QDir& folder, const QFileInf
 
     return {};
 }
-
-bool compressDir(QFileInfo const& saveTo, QDir const& dirToCompress)
-{
-}

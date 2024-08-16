@@ -553,7 +553,7 @@ int main(int argc, char **argv)
             qDebug() << "The error records could not be fully recorded - but might still contain data.";
             qDebug() << ret.error();
         }
-        qDebug() << "File saved in" << args.saveParseErrorsPath.generic_string();
+        qDebug() << "File saved in" << QString::fromStdString(args.saveParseErrorsPath.generic_string());
     }
 
     if (!success) {

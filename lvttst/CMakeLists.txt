@@ -38,7 +38,7 @@ if (COMPILE_TESTS)
         ct_lvttst_tmpdir.cpp
         ct_lvttst_tmpdir.h
     )
-    target_link_libraries(lvttst_tmpdir Qt6::Core)
+    target_link_libraries(lvttst_tmpdir Qt${QT_MAJOR_VERSION}::Core)
 
     add_library(Codethink::lvttst_tmpdir ALIAS lvttst_tmpdir)
 

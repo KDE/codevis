@@ -638,7 +638,7 @@ lvtmdb::FileObject *ClpUtil::writeSourceFile(lvtmdb::ObjectStore& memDb,
         // If it is a file in the source directory, it takes precedence for qualified name deduction
         auto prefixAsString = asLinuxPath(QString::fromStdString(sourceDirectory.string()));
         if (prefixAsString.endsWith('/')) {
-            prefixAsString.removeLast();
+            prefixAsString.chop(1);
         }
 
         mainFolderName = prefixAsString.split(LINUX_SEP).last();

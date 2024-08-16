@@ -15,6 +15,7 @@ AddTargetLibrary(
     ct_lvtshr_stringhelpers.cpp
     ct_lvtshr_uniqueid.cpp
     ct_lvtshr_debug_categories.cpp
+    ct_lvtshr_zip.cpp
   HEADERS
     ct_lvtshr_debug_categories.h
     ct_lvtshr_functional.h
@@ -25,8 +26,10 @@ AddTargetLibrary(
     ct_lvtshr_loaderinfo.h
     ct_lvtshr_stringhelpers.h
     ct_lvtshr_uniqueid.h
+    ct_lvtshr_zip.h
   LIBRARIES
     Qt${QT_MAJOR_VERSION}::Core
+    KF${KF_MAJOR_VERSION}::Archive
 )
 
 if (COMPILE_TESTS)

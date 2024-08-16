@@ -20,8 +20,7 @@
 #include <ct_lvtmdb_soci_writer.h>
 #include <ct_lvtprj_projectfile.h>
 #include <ct_lvtshr_stringhelpers.h>
-
-#include <KZip>
+#include <ct_lvtshr_zip.h>
 
 // Std
 #include <algorithm>
@@ -49,30 +48,6 @@ constexpr std::string_view LEFT_PANEL_HISTORY = "left_panel";
 constexpr std::string_view RIGHT_PANEL_HISTORY = "right_panel";
 constexpr std::string_view BOOKMARKS_FOLDER = "bookmarks";
 
-bool compressDir(QFileInfo const& saveTo, QDir const& dirToCompress)
-{
-    if (!QDir{}.exists(saveTo.absolutePath()) && !QDir{}.mkdir(saveTo.absolutePath())) {
-        qDebug() << "[compressDir] Could not prepare path to save.";
-        return false;
-    }
-
-    auto zipFile = KZip(saveTo.absoluteFilePath());
-    if (!zipFile.open(QIODevice::WriteOnly)) {
-        qDebug() << "[compressDir] Could not open file to compress:" << saveTo;
-        qDebug() << zipFile.errorString();
-        return false;
-    }
-
-    auto r = zipFile.addLocalDirectory(dirToCompress.path(), "");
-    if (!r) {
-        qDebug() << "[compressDir] Could not add files to project:" << dirToCompress;
-        qDebug() << zipFile.errorString();
-        return false;
-    }
-
-    return true;
-}
-
 bool portProjectFileV_0_to_1(QDir& openLocation)
 {
     // Port old projects to new.
@@ -87,24 +62,6 @@ bool portProjectFileV_0_to_1(QDir& openLocation)
                             openLocation.path() + QDir::separator() + (QString::fromStdString(std::string{DATABASE})));
     if (!renamed) {
         qDebug() << "Could not rename old database file.";
-        return false;
-    }
-
-    return true;
-}
-
-bool extractDir(QFileInfo const& projectFile, QDir& openLocation)
-{
-    auto zipFile = KZip(projectFile.absoluteFilePath());
-    if (!zipFile.open(QIODevice::ReadOnly)) {
-        qDebug() << "[compressDir] Could not open file to read contents:" << projectFile;
-        qDebug() << zipFile.errorString();
-        return false;
-    }
-    const KArchiveDirectory *dir = zipFile.directory();
-    bool copied = dir->copyTo(openLocation.path());
-    if (!copied) {
-        qDebug() << "Could not project file to directory";
         return false;
     }
 
@@ -333,8 +290,9 @@ auto ProjectFile::open(const std::filesystem::path& path) -> cpp::result<void, P
     const auto projectFile = QFileInfo{QString::fromStdString(filePath)};
     auto openLocation = QDir{QString::fromStdString(d->openLocation.string())};
 
-    if (!extractDir(projectFile, openLocation)) {
-        return cpp::fail(ProjectFileError{"Failed to extract project contents"});
+    auto ret = lvtshr::Zip::uncompressToFolder(openLocation, projectFile);
+    if (ret.has_error()) {
+        return cpp::fail(ret.error().what);
     }
 
     bool upgrade_file_version = portProjectFileV_0_to_1(openLocation);
@@ -378,11 +336,11 @@ auto ProjectFile::saveAs(const fs::path& path, BackupFileBehavior behavior) -> c
     }
 
     // save new file.
-    const auto saveWhat = QDir{QString::fromStdString(d->openLocation.string())};
+    auto saveWhat = QDir{QString::fromStdString(d->openLocation.string())};
     const auto saveTo = QFileInfo{QString::fromStdString(projectPath.string())};
-    if (!compressDir(saveTo, saveWhat)) {
-        qDebug() << "Failed to generate project file";
-        return cpp::fail(ProjectFileError{"Failed to generate project file"});
+    auto ret = lvtshr::Zip::compressFolder(saveWhat, saveTo);
+    if (ret.has_error()) {
+        return cpp::fail(ProjectFileError{ret.error().what});
     }
 
     // We correctly saved the file, we can delete the auto backup file.

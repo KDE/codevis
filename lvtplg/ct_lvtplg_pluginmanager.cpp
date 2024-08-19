@@ -343,14 +343,6 @@ void PluginManager::callHooksSceneDestroyed(getSceneName_f const& getSceneName, 
         libraries);
 }
 
-void PluginManager::callHooksSceneDestroyed(getSceneName_f const& getSceneName, getSceneDestroyedTree_f const& getTree)
-{
-    callAllHooks<hookSceneDestroyed_f>(
-        "hookSceneDestroyed",
-        PluginSceneDestroyedHandler{std::bind_front(&PluginManager::getPluginData, this), getSceneName, getTree},
-        libraries);
-}
-
 void PluginManager::callHooksGraphChanged(graphChanged_getSceneName_f const& getSceneName,
                                           graphChanged_getVisibleEntities_f const& getVisibleEntities,
                                           graphChanged_getEdgeByQualifiedName_f const& getEdgeByQualifiedName,

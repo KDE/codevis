@@ -27,7 +27,7 @@ std::shared_ptr<Codethink::lvtplg::Entity> createEntityFromFake(FakeNode& f)
         return nullptr;
     };
 
-    auto getDependencies = [&f]() -> std::vector<std::shared_ptr<Entity>> {
+    auto getDependencies = [&f]() -> std::vector<std::shared_ptr<Entity>>& {
         return f.connections;
     };
 

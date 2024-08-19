@@ -29,7 +29,6 @@ AddTargetLibrary(
     ct_lvtshr_zip.h
   LIBRARIES
     Qt${QT_MAJOR_VERSION}::Core
-    KF${KF_MAJOR_VERSION}::Archive
     libzip::zip
 )
 

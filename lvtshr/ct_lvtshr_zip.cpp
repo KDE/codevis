@@ -4,11 +4,62 @@
 #include <QDir>
 #include <QFileInfo>
 
-#include <KZip>
 #include <filesystem>
 #include <zip.h>
 
 using namespace Codethink::lvtshr;
+
+namespace {
+cpp::result<void, ZipError> walk_directory(QDir& startdir, QDir& inputdir, zip_t *zipper)
+{
+    const auto allFilesAndFolders =
+        inputdir.entryList(QDir::Filter::Files | QDir::Filter::Dirs | QDir::Filter::NoDotAndDotDot);
+    for (const QString& file : allFilesAndFolders) {
+        const QString fullName = inputdir.absolutePath() + "/" + file;
+        QFileInfo infoFullName(fullName);
+
+        int rightSize = fullName.length() - startdir.absolutePath().length();
+        QByteArray partialName = fullName.right(rightSize).toLocal8Bit();
+
+        qDebug() << "--------------------------";
+        qDebug() << "StartDir" << startdir;
+        qDebug() << "CurrentDir" << inputdir;
+        qDebug() << fullName;
+        qDebug() << fullName.right(rightSize);
+        qDebug() << inputdir.absolutePath().length();
+        qDebug() << startdir.absolutePath().length();
+        qDebug() << "Calculating partial name:" << partialName;
+
+        // Add Directories.
+        if (infoFullName.isDir()) {
+            if (zip_dir_add(zipper, partialName.constData(), ZIP_FL_ENC_UTF_8) < 0) {
+                return cpp::fail(std::string(zip_strerror(zipper)));
+            }
+
+            QDir nextDir(fullName);
+            auto res = walk_directory(startdir, nextDir, zipper);
+            if (!res) {
+                return res;
+                ;
+            }
+
+            continue;
+        }
+
+        QByteArray bFullName = fullName.toLocal8Bit();
+        zip_source_t *source = zip_source_file(zipper, bFullName.constData(), 0, 0);
+        if (source == nullptr) {
+            return cpp::fail(std::string{"Failed to add file to zip: " + std::string(zip_strerror(zipper))});
+        }
+
+        if (zip_file_add(zipper, partialName.constData(), source, ZIP_FL_ENC_UTF_8) < 0) {
+            zip_source_free(source);
+            return cpp::fail(std::string{"Failed to add file to zip: "} + std::string(zip_strerror(zipper)));
+        }
+    }
+    return {};
+}
+} // namespace
 
 cpp::result<void, ZipError> Zip::compressFolder(QDir& folder, const QFileInfo& zipFileName)
 {
@@ -16,18 +67,24 @@ cpp::result<void, ZipError> Zip::compressFolder(QDir& folder, const QFileInfo& z
         return cpp::fail("[compressDir] Could not prepare path to save.");
     }
 
-    auto zipFile = KZip(zipFileName.absoluteFilePath());
-    if (!zipFile.open(QIODevice::WriteOnly)) {
-        return cpp::fail("[compressDir] Could not open file to compress: "
-                         + zipFileName.absoluteFilePath().toStdString() + zipFile.errorString().toStdString());
+    QByteArray bZipFileName = zipFileName.absoluteFilePath().toLocal8Bit();
+
+    int errorp;
+    zip_t *zipper = zip_open(bZipFileName.constData(), ZIP_CREATE | ZIP_EXCL, &errorp);
+    if (zipper == nullptr) {
+        zip_error_t ziperror;
+        zip_error_init_with_code(&ziperror, errorp);
+        return cpp::fail(ZipError{std::string("Failed to open output file") + bZipFileName.constData() + ": "
+                                  + zip_error_strerror(&ziperror)});
     }
 
-    auto r = zipFile.addLocalDirectory(folder.path(), "");
-    if (!r) {
-        return cpp::fail("[compressDir] Could not add folder to project: " + folder.absolutePath().toStdString()
-                         + zipFile.errorString().toStdString());
+    auto res = walk_directory(folder, folder, zipper);
+    if (!res) {
+        zip_close(zipper);
+        return res;
     }
 
+    zip_close(zipper);
     return {};
 }
 

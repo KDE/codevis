@@ -148,7 +148,6 @@ if (BUILD_DESKTOP_APP)
     endif()
 
     find_package(KF${KF_MAJOR_VERSION} ${KF5_MIN_VERSION} REQUIRED COMPONENTS
-        Archive
         Config
         Crash
         CoreAddons
@@ -187,7 +186,6 @@ if (BUILD_DESKTOP_APP)
     endif()
 else()
     find_package(Qt${QT_MAJOR_VERSION} CONFIG REQUIRED COMPONENTS Core)
-    find_package(KF${KF_MAJOR_VERSION} ${KF5_MIN_VERSION} COMPONENTS Archive)
 endif()
 
 find_package(Catch2)

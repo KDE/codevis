@@ -13,6 +13,12 @@ INSTALL_NAMESPACE
     "codevis_plugins_v2"
 )
 
+target_include_directories(basiclayoutplugin PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+generate_export_header(basiclayoutplugin
+    BASE_NAME basiclayoutplugin
+)
+
 target_link_libraries(basiclayoutplugin
     Qt${QT_MAJOR_VERSION}::Core
     Codethink::PluginSystemHeaders

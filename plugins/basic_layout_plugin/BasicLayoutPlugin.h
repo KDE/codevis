@@ -5,10 +5,12 @@
 #include <ct_lvtqtc_graphicsscene.h>
 #include <ct_lvtqtc_lakosentity.h>
 
+#include <basiclayoutplugin_export.h>
+
 using namespace Codethink::lvtqtc;
 using namespace Codevis::PluginSystem;
 
-struct BasicLayoutPluginConfig {
+struct BASICLAYOUTPLUGIN_EXPORT BasicLayoutPluginConfig {
     enum class LevelizationLayoutType : short { Horizontal, Vertical };
     LevelizationLayoutType type;
     int direction;
@@ -19,7 +21,7 @@ struct BasicLayoutPluginConfig {
     int maxEntitiesPerLevel = 8;
 };
 
-class BasicLayoutPlugin : public ICodevisPlugin, public IGraphicsLayoutPlugin {
+class BASICLAYOUTPLUGIN_EXPORT BasicLayoutPlugin : public ICodevisPlugin, public IGraphicsLayoutPlugin {
     Q_OBJECT
   public:
     BasicLayoutPlugin(QObject *parent);

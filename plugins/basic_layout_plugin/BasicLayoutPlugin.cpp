@@ -8,24 +8,8 @@
 #include <qnamespace.h>
 #include <variant>
 
-BasicLayoutPlugin::BasicLayoutPlugin(QObject *parent, const QVariantList& args):
-    Codevis::PluginSystem::ICodevisPlugin(parent, args)
+BasicLayoutPlugin::BasicLayoutPlugin(QObject *parent): Codevis::PluginSystem::ICodevisPlugin(parent)
 {
-}
-
-QString BasicLayoutPlugin::pluginName()
-{
-    return "Basic Layout";
-}
-
-QString BasicLayoutPlugin::pluginDescription()
-{
-    return "Applies a basic layout on a given graph";
-}
-
-QList<QString> BasicLayoutPlugin::pluginAuthors()
-{
-    return {"Tomaz Canabrava - tcanabrava@kde.org"};
 }
 
 // IGraphicsLayoutPlugin

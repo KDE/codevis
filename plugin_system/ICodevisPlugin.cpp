@@ -2,11 +2,11 @@
 
 namespace Codevis::PluginSystem {
 
-ICodevisPlugin::ICodevisPlugin(QObject *parent, const QVariantList& args)
+ICodevisPlugin::ICodevisPlugin(QObject *parent): QObject(parent)
 {
-    std::ignore = parent;
-    std::ignore = args;
 }
+
+ICodevisPlugin::~ICodevisPlugin() = default;
 
 } // namespace Codevis::PluginSystem
 #include "moc_ICodevisPlugin.cpp"

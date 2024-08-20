@@ -22,12 +22,7 @@ struct BasicLayoutPluginConfig {
 class BasicLayoutPlugin : public ICodevisPlugin, public IGraphicsLayoutPlugin {
     Q_OBJECT
   public:
-    BasicLayoutPlugin(QObject *parent, const QVariantList& args);
-
-    // ICodevisPlugin
-    QString pluginName() override;
-    QString pluginDescription() override;
-    QList<QString> pluginAuthors() override;
+    BasicLayoutPlugin(QObject *parent);
 
     // IGraphicsLayoutPlugin
     QList<QString> layoutAlgorithms() override;

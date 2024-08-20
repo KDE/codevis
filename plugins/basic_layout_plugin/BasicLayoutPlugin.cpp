@@ -233,3 +233,5 @@ void BasicLayoutPlugin::executeLayout(const QString& algorithmName, IGraphicsLay
 K_PLUGIN_CLASS_WITH_JSON(BasicLayoutPlugin, "codevis_basiclayoutplugin.json")
 
 #include "BasicLayoutPlugin.moc"
+
+#include "moc_BasicLayoutPlugin.cpp"

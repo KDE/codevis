@@ -7,7 +7,6 @@
 
 #include <PluginManagerV2.h>
 
-#include <KLocalizedString>
 #include <KPluginFactory>
 #include <KPluginMetaData>
 

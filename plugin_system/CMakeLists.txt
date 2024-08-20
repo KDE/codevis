@@ -26,5 +26,6 @@ AddTargetLibrary(
   LIBRARIES
     Qt${QT_MAJOR_VERSION}::Core
     KF${KF_MAJOR_VERSION}::CoreAddons
+    PluginSystemHeaders
 )
 

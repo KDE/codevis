@@ -2,7 +2,6 @@
 #    LIBRARY_NAME lvtxxx
 #    SOURCES source1.cpp source2.cpp source3.cpp
 #    HEADERS source1.h source2.h source3.h
-#    QT_HEADERS [list of headers that should be preprocessed with moc]
 #    LIBRARIES -lmath -lthread
 #    DESIGNER_FORMS widget.ui
 #)
@@ -10,7 +9,7 @@
 macro(AddTargetLibrary)
     set(booleanValueArgs "")
     set(oneValueArgs LIBRARY_NAME)
-    set(multiValueArgs SOURCES HEADERS QT_HEADERS LIBRARIES DESIGNER_FORMS)
+    set(multiValueArgs SOURCES HEADERS LIBRARIES DESIGNER_FORMS)
     cmake_parse_arguments(DTARGS "${booleanValueArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     include_directories(${PROJECT_SOURCE_DIR})
@@ -24,7 +23,7 @@ macro(AddTargetLibrary)
         )
     endif()
 
-    add_library(${DTARGS_LIBRARY_NAME} SHARED ${DTARGS_SOURCES} ${DTARGS_HEADERS} ${DTARGS_QT_HEADERS})
+    add_library(${DTARGS_LIBRARY_NAME} SHARED ${DTARGS_SOURCES} ${DTARGS_HEADERS})
     add_library(Codethink::${DTARGS_LIBRARY_NAME} ALIAS ${DTARGS_LIBRARY_NAME})
 
     target_link_libraries(

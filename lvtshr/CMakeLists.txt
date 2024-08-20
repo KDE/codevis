@@ -15,7 +15,7 @@ AddTargetLibrary(
     ct_lvtshr_stringhelpers.cpp
     ct_lvtshr_uniqueid.cpp
     ct_lvtshr_debug_categories.cpp
-
+  HEADERS
     ct_lvtshr_debug_categories.h
     ct_lvtshr_functional.h
     ct_lvtshr_fuzzyutil.h

@@ -4,7 +4,7 @@ AddTargetLibrary(
     SOURCES
         ct_lvtqtd_removedelegate.cpp
         ct_lvtqtd_packageviewdelegate.cpp
-    QT_HEADERS
+    HEADERS
         ct_lvtqtd_removedelegate.h
         ct_lvtqtd_packageviewdelegate.h
     LIBRARIES

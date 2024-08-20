@@ -8,7 +8,7 @@ AddTargetLibrary(
     lvtprj
   SOURCES
     ct_lvtprj_projectfile.cpp
-  QT_HEADERS
+  HEADERS
     ct_lvtprj_projectfile.h
 
   LIBRARIES

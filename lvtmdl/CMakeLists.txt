@@ -22,7 +22,7 @@ AddTargetLibrary(
     ct_lvtmdl_treefiltermodel.cpp
     ct_lvtmdl_usesintheimpltablemodel.cpp
     ct_lvtmdl_usesintheinterfacetablemodel.cpp
-  QT_HEADERS
+  HEADERS
     ct_lvtmdl_basetablemodel.h
     ct_lvtmdl_errorsmodel.h
     ct_lvtmdl_methodstablemodel.h

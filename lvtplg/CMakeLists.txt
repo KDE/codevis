@@ -8,7 +8,7 @@ AddTargetLibrary(
     ct_lvtplg_sharedlibrarydispatcher.cpp
     ct_lvtplg_pythonmodule.cpp
     ct_lvtplg_pythonlibrarydispatcher.cpp
-  QT_HEADERS
+  HEADERS
     ct_lvtplg_abstractlibrarydispatcher.h
     ct_lvtplg_pluginmanager.h
     ct_lvtplg_sharedlibrarydispatcher.h

@@ -40,7 +40,7 @@ AddTargetLibrary(
         ct_lvtqtw_searchwidget.cpp
         ct_lvtqtw_sqleditor.cpp
         ct_lvtqtw_welcomescreen.cpp
-    QT_HEADERS
+    HEADERS
         ct_lvtqtw_backgroundeventfilter.h
         ct_lvtqtw_bulkedit.h
         ct_lvtqtw_configurationdialog.h

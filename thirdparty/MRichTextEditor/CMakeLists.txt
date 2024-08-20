@@ -5,7 +5,7 @@ AddTargetLibrary(
     SOURCES
         mrichtextedit.cpp
         mtextedit.cpp
-    QT_HEADERS
+    HEADERS
         mrichtextedit.h
         mtextedit.h
     DESIGNER_FORMS

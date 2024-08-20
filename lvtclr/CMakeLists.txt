@@ -3,7 +3,7 @@ AddTargetLibrary(
     lvtclr
   SOURCES
     ct_lvtclr_colormanagement.cpp
-  QT_HEADERS
+  HEADERS
     ct_lvtclr_colormanagement.h
   LIBRARIES
     Qt${QT_MAJOR_VERSION}::Core

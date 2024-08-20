@@ -31,7 +31,6 @@ AddTargetLibrary(
         ct_lvtldr_igraphloader.h
         ct_lvtldr_freefunctionnode.h
         ct_lvtldr_freefunctionnodefields.h
-    QT_HEADERS
         ct_lvtldr_nodestorage.h
         ct_lvtldr_lakosiannode.h
     LIBRARIES

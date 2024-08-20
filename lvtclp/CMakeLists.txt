@@ -82,7 +82,6 @@ AddTargetLibrary(
         ct_lvtclp_toolexecutor.h
         ct_lvtclp_visitlog.h
         ct_lvtclp_threadstringmap.h
-    QT_HEADERS
         ct_lvtclp_cpp_tool.h
         ct_lvtclp_parse_error_handler.h
     LIBRARIES

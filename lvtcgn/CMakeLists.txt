@@ -17,7 +17,7 @@ AddTargetLibrary(
         ct_lvtcgn_js_file_wrapper.cpp
         ct_lvtcgn_generatecode.cpp
         ${CODEGEN_RESOURCES_SRCS}
-    QT_HEADERS
+    HEADERS
         ct_lvtcgn_generatecode.h
         ct_lvtcgn_js_file_wrapper.h
     LIBRARIES
@@ -93,7 +93,7 @@ if (BUILD_DESKTOP_APP)
             lvtcgn_adapter
         SOURCES
             ct_lvtcgn_app_adapter.cpp
-        QT_HEADERS
+        HEADERS
             ct_lvtcgn_app_adapter.h
         LIBRARIES
             ${SYSTEM_EXTRA_LIBRARIES}

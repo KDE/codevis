@@ -181,3 +181,5 @@ void ErrorView::createColumnVisibilityMenu(const QPoint& pos)
 }
 
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_errorview.cpp"

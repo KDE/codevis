@@ -359,3 +359,5 @@ void PluginEditor::loadByPath(const QString& pluginPath)
 
     qDebug() << "Opened sucessfully";
 }
+
+#include "moc_ct_lvtqtw_plugineditor.cpp"

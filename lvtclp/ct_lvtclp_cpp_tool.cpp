@@ -944,3 +944,5 @@ void CppTool::messageCallback(const std::string& message, long threadId)
 }
 
 } // namespace Codethink::lvtclp
+
+#include "moc_ct_lvtclp_cpp_tool.cpp"

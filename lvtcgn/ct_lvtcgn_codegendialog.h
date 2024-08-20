@@ -34,6 +34,7 @@
 namespace Codethink::lvtcgn::gui {
 
 class LVTCGN_GUI_EXPORT CodeGenerationDialog : public QDialog {
+    Q_OBJECT
   public:
     struct LVTCGN_GUI_EXPORT Detail {
         virtual ~Detail() = default;

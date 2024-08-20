@@ -785,3 +785,5 @@ void GraphicsView::setPluginManager(Codethink::lvtplg::PluginManager& pm)
 }
 
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_graphicsview.cpp"

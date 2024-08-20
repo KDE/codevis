@@ -98,3 +98,5 @@ void UndoManager::createDock(QMainWindow *mainWindow)
     d->debugWidget = stackView;
     d->dock->setVisible(false);
 }
+
+#include "moc_ct_lvtqtc_undo_manager.cpp"

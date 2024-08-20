@@ -85,3 +85,5 @@ SqlEditor::SqlEditor(lvtldr::NodeStorage& sharedStorage, QWidget *parent): QWidg
     setLayout(mainLayout);
 }
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_sqleditor.cpp"

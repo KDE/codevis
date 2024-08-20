@@ -128,3 +128,5 @@ void SearchWidget::showEvent(QShowEvent *ev)
     Q_UNUSED(ev);
     ui->searchLine->setFocus();
 }
+
+#include "moc_ct_lvtqtw_searchwidget.cpp"

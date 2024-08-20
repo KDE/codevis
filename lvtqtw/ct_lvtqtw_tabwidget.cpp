@@ -292,3 +292,5 @@ void TabWidget::loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType histo
 }
 
 } // end namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_tabwidget.cpp"

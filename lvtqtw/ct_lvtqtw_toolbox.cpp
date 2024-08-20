@@ -511,3 +511,5 @@ QToolButton *ToolBox::getButtonNamed(const std::string& title) const
     }
     return *it;
 }
+
+#include "moc_ct_lvtqtw_toolbox.cpp"

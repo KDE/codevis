@@ -229,3 +229,5 @@ bool Codethink::lvtclr::ColorManagement::isUsingColorBlindFill() const
 }
 
 } // namespace Codethink::lvtclr
+
+#include "moc_ct_lvtclr_colormanagement.cpp"

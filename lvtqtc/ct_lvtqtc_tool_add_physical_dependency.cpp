@@ -142,3 +142,5 @@ bool ToolAddPhysicalDependency::run(LakosEntity *fromItem, LakosEntity *toItem)
 }
 
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_tool_add_physical_dependency.cpp"

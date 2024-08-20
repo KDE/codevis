@@ -141,3 +141,5 @@ QMimeData *BaseTreeModel::mimeData(const QModelIndexList& indexes) const
     return mimeData;
 }
 } // end namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_basetreemodel.cpp"

@@ -111,3 +111,5 @@ QString FileIO::render(const QString& templateFile, const QVariantMap& data)
 }
 
 } // namespace Codethink::lvtcgn
+
+#include "moc_ct_lvtcgn_js_file_wrapper.cpp"

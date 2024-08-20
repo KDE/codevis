@@ -113,3 +113,5 @@ void SimpleTextModel::loadData()
 }
 
 } // namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_simpletextmodel.cpp"

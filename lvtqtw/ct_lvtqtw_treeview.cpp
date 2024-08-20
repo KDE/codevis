@@ -130,3 +130,5 @@ void TreeView::keyPressEvent(QKeyEvent *e)
 }
 
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_treeview.cpp"

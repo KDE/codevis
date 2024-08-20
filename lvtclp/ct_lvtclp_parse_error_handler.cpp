@@ -186,3 +186,5 @@ void ParseErrorHandler::setTool(CppTool *tool)
 {
     connect(tool, &lvtclp::CppTool::messageFromThread, this, &ParseErrorHandler::receivedMessage, Qt::QueuedConnection);
 }
+
+#include "moc_ct_lvtclp_parse_error_handler.cpp"

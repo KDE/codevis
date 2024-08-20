@@ -154,3 +154,5 @@ void CodeVisStatusBar::openParseCodebaseWindow() const
 }
 
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_statusbar.cpp"

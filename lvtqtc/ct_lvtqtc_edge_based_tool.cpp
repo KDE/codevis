@@ -132,3 +132,5 @@ std::vector<std::pair<LakosEntity *, LakosEntity *>> EdgeBasedTool::calculateHie
     return ret;
 }
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_edge_based_tool.cpp"

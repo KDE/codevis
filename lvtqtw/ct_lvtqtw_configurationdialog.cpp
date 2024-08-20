@@ -560,3 +560,5 @@ void ConfigurationDialog::getNewScriptFinished(const KNSCore::EntryInternal::Lis
     updatePluginInformation();
 }
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_configurationdialog.cpp"

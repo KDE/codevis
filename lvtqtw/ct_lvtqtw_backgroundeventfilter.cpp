@@ -100,3 +100,5 @@ bool BackgroundEventFilter::eventFilter(QObject *obj, QEvent *ev)
 }
 
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_backgroundeventfilter.cpp"

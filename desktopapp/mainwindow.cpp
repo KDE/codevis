@@ -1717,3 +1717,5 @@ void WrappedUiMainWindow::setupUi(QMainWindow *mw)
     mainSplitter->setObjectName(QString::fromUtf8("mainSplitter"));
     verticalLayout_10->addWidget(mainSplitter);
 }
+
+#include "moc_mainwindow.cpp"

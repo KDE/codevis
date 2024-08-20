@@ -17,7 +17,7 @@
 // limitations under the License.
 */
 
-#include <ct_lvtcgn_app_adapter.h>
+#include "ct_lvtcgn_app_adapter.h"
 #include <ct_lvtcgn_codegendialog.h>
 #include <ct_lvtcgn_generatecode.h>
 
@@ -194,3 +194,5 @@ void CodegenAppAdapter::run(QWidget *parent, Codethink::lvtldr::NodeStorage& sha
 }
 
 } // namespace Codethink::lvtcgn::app
+
+#include "moc_ct_lvtcgn_app_adapter.cpp"

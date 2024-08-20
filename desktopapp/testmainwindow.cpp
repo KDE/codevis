@@ -32,3 +32,5 @@ QString TestMainWindow::requestProjectName()
 }
 
 } // namespace CodevisApplicationTesting
+
+#include "moc_testmainwindow.cpp"

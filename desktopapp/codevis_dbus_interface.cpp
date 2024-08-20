@@ -92,3 +92,5 @@ void CodeVisDBusInterface::requestSelectRightSplitView()
 {
     mainWindow.selectRightSplitView();
 }
+
+#include "moc_codevis_dbus_interface.cpp"

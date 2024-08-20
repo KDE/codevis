@@ -487,3 +487,5 @@ void MRichTextEdit::insertImage() {
 }
 
 
+
+#include "moc_mrichtextedit.cpp"

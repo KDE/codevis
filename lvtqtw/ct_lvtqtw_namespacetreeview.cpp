@@ -98,3 +98,5 @@ QList<QAction *> NamespaceTreeView::createActionsForNoElement(const QModelIndex&
 }
 
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_namespacetreeview.cpp"

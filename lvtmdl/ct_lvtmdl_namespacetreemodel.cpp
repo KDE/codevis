@@ -139,3 +139,5 @@ bool NamespaceTreeModel::hasError() const
 }
 
 } // end namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_namespacetreemodel.cpp"

@@ -238,3 +238,5 @@ void ErrorModelFilter::setInvertMessageFilter(bool value)
     d->invertStringFilter = value;
     invalidateFilter();
 }
+
+#include "moc_ct_lvtmdl_errorsmodel.cpp"

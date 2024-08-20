@@ -223,3 +223,5 @@ LakosianNode *LakosianNode::topLevelParent()
 }
 
 } // namespace Codethink::lvtldr
+
+#include "moc_ct_lvtldr_lakosiannode.cpp"

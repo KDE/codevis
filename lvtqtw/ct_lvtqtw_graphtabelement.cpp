@@ -400,3 +400,5 @@ void GraphTabElement::loadBookmark(const QJsonDocument& doc, lvtshr::HistoryType
 }
 
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_graphtabelement.cpp"

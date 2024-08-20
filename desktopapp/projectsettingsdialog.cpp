@@ -52,3 +52,5 @@ void ProjectSettingsDialog::searchSourceCodePath()
     }
     ui->sourceCodePathValue->setText(dir);
 }
+
+#include "moc_projectsettingsdialog.cpp"

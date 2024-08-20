@@ -177,3 +177,5 @@ int InputDialog::exec()
     }
     return QDialog::exec();
 }
+
+#include "moc_ct_lvtqtc_inputdialog.cpp"

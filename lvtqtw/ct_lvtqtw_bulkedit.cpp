@@ -90,3 +90,5 @@ BulkEdit::BulkEdit(QWidget *parent): QDialog(parent)
 }
 
 } // namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_bulkedit.cpp"

@@ -201,3 +201,5 @@ void Minimap::mouseReleaseEvent(QMouseEvent *ev)
 
 // TODO: Show a rect on the current visible part of the graph.
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_minimap.cpp"

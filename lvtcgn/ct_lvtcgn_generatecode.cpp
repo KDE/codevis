@@ -128,3 +128,5 @@ CodeGeneration::generateCodeFromjS(const QString& scriptPath,
 }
 
 } // namespace Codethink::lvtcgn::mdl
+
+#include "moc_ct_lvtcgn_generatecode.cpp"

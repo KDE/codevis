@@ -278,3 +278,5 @@ bool AlgorithmTransitiveReduction::recursiveTransitiveSearch(LakosEntity *target
 
     return false;
 }
+
+#include "moc_ct_lvtqtc_alg_transitive_reduction.cpp"

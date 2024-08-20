@@ -1089,3 +1089,5 @@ void ParseCodebaseDialog::setPluginManager(Codethink::lvtplg::PluginManager& plu
 {
     d->pluginManager = pluginManager;
 }
+
+#include "moc_ct_lvtqtw_parse_codebase.cpp"

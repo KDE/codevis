@@ -38,6 +38,7 @@ namespace Codethink::lvtcgn::app {
 class NodeStorageDataProvider;
 
 class LVTCGN_ADAPTER_EXPORT WrappedLakosianNode : public Codethink::lvtcgn::mdl::IPhysicalEntityInfo {
+    Q_OBJECT
   public:
     WrappedLakosianNode(NodeStorageDataProvider& dataProvider, lvtldr::LakosianNode *node, bool isSelectedForCodegen);
     ~WrappedLakosianNode() override;

@@ -76,3 +76,5 @@ void TextView::saveFileTo(const QString& path)
     d->tmp.seek(0);
     d->tmp.copy(path);
 }
+
+#include "moc_ct_lvtqtw_textview.cpp"

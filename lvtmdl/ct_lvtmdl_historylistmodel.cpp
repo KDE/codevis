@@ -124,3 +124,5 @@ QString Codethink::lvtmdl::HistoryListModel::at(int idx) const
 }
 
 } // namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_historylistmodel.cpp"

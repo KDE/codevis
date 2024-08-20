@@ -20,7 +20,7 @@
 #include <catch2-local-includes.h>
 
 #include <QDir>
-#include <ct_lvtqtw_textview.cpp>
+#include <ct_lvtqtw_textview.h>
 #include <ct_lvttst_fixture_qt.h>
 #include <qevent.h>
 

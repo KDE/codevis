@@ -74,3 +74,5 @@ void FieldsTreeModel::refreshData(const LakosianNodes& selectedNodes)
 }
 
 } // end namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_fieldstreemodel.cpp"

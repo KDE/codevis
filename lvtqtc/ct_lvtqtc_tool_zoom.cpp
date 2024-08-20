@@ -51,3 +51,5 @@ void ToolZoom::rubberbandFinished(const QPoint& topLeft, const QPoint& bottomRig
 }
 
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_tool_zoom.cpp"

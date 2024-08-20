@@ -2202,3 +2202,5 @@ void LakosEntity::setSharedDependenciesPlugin(std::vector<std::shared_ptr<Codeth
 }
 
 } // end namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_lakosentity.cpp"

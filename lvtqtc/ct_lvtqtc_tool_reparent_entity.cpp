@@ -283,3 +283,5 @@ void ToolReparentEntity::updateTargetItemTo(LakosEntity *newItem)
 }
 
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_tool_reparent_entity.cpp"

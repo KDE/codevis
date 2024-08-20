@@ -875,3 +875,5 @@ std::invoke_result_t<decltype(&NodeStorage::getSession), NodeStorage> NodeStorag
 {
     return dynamic_cast<DatabaseHandlerType *>(d->dbHandler.get())->getSession();
 }
+
+#include "moc_ct_lvtldr_nodestorage.cpp"

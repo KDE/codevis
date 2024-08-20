@@ -658,3 +658,5 @@ void ProjectFile::removeBookmark(const QString& name)
     setDirty();
     return {};
 }
+
+#include "moc_ct_lvtprj_projectfile.cpp"

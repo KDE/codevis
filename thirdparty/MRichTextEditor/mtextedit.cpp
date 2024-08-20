@@ -75,3 +75,5 @@ void MTextEdit::dropImage(const QImage& image, const QString& format) {
     cursor.insertImage    ( imageFormat );
 }
 
+
+#include "moc_mtextedit.cpp"

@@ -40,3 +40,5 @@ InputDialog *BaseAddEntityTool::inputDialog()
 }
 
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_tool_add_entity.cpp"

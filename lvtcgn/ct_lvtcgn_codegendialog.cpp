@@ -389,3 +389,5 @@ void CodeGenerationDialog::openOutputDir() const
 }
 
 } // namespace Codethink::lvtcgn::gui
+
+#include "moc_ct_lvtcgn_codegendialog.cpp"

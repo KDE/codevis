@@ -434,3 +434,5 @@ void DebugModelFilter::setInvertMessageFilter(bool value)
 }
 
 } // namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_debugmodel.cpp"

@@ -34,3 +34,5 @@ WelcomeScreen::WelcomeScreen(QWidget *parent): QWidget(parent), ui(std::make_uni
 }
 
 WelcomeScreen::~WelcomeScreen() = default;
+
+#include "moc_ct_lvtqtw_welcomescreen.cpp"

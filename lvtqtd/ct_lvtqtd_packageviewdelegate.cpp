@@ -70,3 +70,5 @@ void PackageViewDelegate::initStyleOption(QStyleOptionViewItem *option, const QM
 }
 
 } // namespace Codethink::lvtqtd
+
+#include "moc_ct_lvtqtd_packageviewdelegate.cpp"

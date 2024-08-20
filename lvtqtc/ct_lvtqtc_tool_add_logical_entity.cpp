@@ -178,3 +178,5 @@ LogicalEntityNameRules::checkName(bool hasParent, const std::string& name, const
 }
 
 } // namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_tool_add_logical_entity.cpp"

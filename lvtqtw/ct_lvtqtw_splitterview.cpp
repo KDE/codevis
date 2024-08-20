@@ -151,3 +151,5 @@ lvtqtc::GraphicsView *SplitterView::graphicsView()
 }
 
 } // end namespace Codethink::lvtqtw
+
+#include "moc_ct_lvtqtw_splitterview.cpp"

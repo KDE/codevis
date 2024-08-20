@@ -129,3 +129,5 @@ QPainterPath GraphicsRectItem::shape() const
 }
 
 } // end namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_graphicsrectitem.cpp"

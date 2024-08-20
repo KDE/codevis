@@ -127,3 +127,5 @@ std::vector<std::string> PhysicalClientsTableModel::packageRows()
 }
 
 } // namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_physicaltablemodels.cpp"

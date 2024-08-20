@@ -128,3 +128,5 @@ void BaseTableModel::setHeader(const std::vector<QString>& header)
 }
 
 } // end namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_basetablemodel.cpp"

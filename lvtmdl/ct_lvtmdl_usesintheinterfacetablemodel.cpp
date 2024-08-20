@@ -62,3 +62,5 @@ void UsesInTheInterfaceTableModel::refreshData(const LakosianNodes& selectedNode
 }
 
 } // end namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_usesintheinterfacetablemodel.cpp"

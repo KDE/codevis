@@ -101,3 +101,5 @@ bool RemoveDelegate::editorEvent(QEvent *event,
     return QStyledItemDelegate::editorEvent(event, model, option, index);
 }
 } // namespace Codethink::lvtqtd
+
+#include "moc_ct_lvtqtd_removedelegate.cpp"

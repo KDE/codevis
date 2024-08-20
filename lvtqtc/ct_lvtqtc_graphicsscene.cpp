@@ -1945,3 +1945,5 @@ void GraphicsScene::loadJsonWithDocumentChanges(const QString& doc)
 }
 
 } // end namespace Codethink::lvtqtc
+
+#include "moc_ct_lvtqtc_graphicsscene.cpp"

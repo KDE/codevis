@@ -86,3 +86,5 @@ void SqlModel::setQuery(const QString& query)
     }
 }
 } // namespace Codethink::lvtmdl
+
+#include "moc_ct_lvtmdl_sqlmodel.cpp"

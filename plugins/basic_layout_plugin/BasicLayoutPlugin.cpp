@@ -25,19 +25,7 @@ QWidget *BasicLayoutPlugin::configureWidget()
     return nullptr;
 }
 
-void levelizationLayout(LakosEntity *n,
-                        BasicLayoutPluginConfig::LevelizationLayoutType type,
-                        int direction,
-                        std::optional<QPointF> moveToPosition = std::nullopt);
-
-void recursiveLevelLayout(LakosEntity *n, int direction)
-{
-    for (auto& node : n->lakosEntities()) {
-        recursiveLevelLayout(node, direction);
-    }
-
-    levelizationLayout(n, BasicLayoutPluginConfig::LevelizationLayoutType::Vertical, direction);
-};
+namespace {
 
 // clang-format off
 template<BasicLayoutPluginConfig::LevelizationLayoutType LTS>
@@ -190,6 +178,7 @@ void runLevelizationLayout(const std::vector<LakosEntity *>& nodes, BasicLayoutP
         centralizeLayout<LT>(nodes, config);
     }
 }
+} // namespace
 
 void BasicLayoutPlugin::executeLayout(const QString& algorithmName, IGraphicsLayoutPlugin::ExecuteLayoutParams params)
 {

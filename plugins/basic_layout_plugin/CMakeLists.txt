@@ -14,7 +14,7 @@ INSTALL_NAMESPACE
 )
 
 target_link_libraries(basiclayoutplugin
-    Qt6::Core
+    Qt${QT_MAJOR_VERSION}::Core
     Codethink::PluginSystemHeaders
     Codethink::lvtqtc
 )

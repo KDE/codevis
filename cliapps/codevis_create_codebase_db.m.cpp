@@ -121,6 +121,10 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
         "COMPILE_COMMANDS_OBJ",
         "");
 
+    // Need to add this for API purposes, but it's not used.
+    // the default is silent anyway.
+    const QCommandLineOption silent("silent", "Silences output. the default.", "");
+
     const QCommandLineOption helpOption = parser.addHelpOption();
     const QCommandLineOption sourcePath("source-path", "Path for source code", "SOURCE_PATH", "");
     const QCommandLineOption buildPath("source-path", "Path for the build", "SOURCE_PATH", "");
@@ -170,6 +174,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
     parser.addOptions({outputFile,
                        compileCommandsJson,
                        compileCommand,
+                       silent,
                        sourcePath,
                        buildPath,
                        numThreads,

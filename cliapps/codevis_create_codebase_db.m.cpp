@@ -127,7 +127,7 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
 
     const QCommandLineOption helpOption = parser.addHelpOption();
     const QCommandLineOption sourcePath("source-path", "Path for source code", "SOURCE_PATH", "");
-    const QCommandLineOption buildPath("source-path", "Path for the build", "SOURCE_PATH", "");
+    const QCommandLineOption buildPath("build-path", "Path for the build", "SOURCE_PATH", "");
     const QCommandLineOption numThreads("j", "Number of threads to use", "NUM_THREADS", "1");
     const QCommandLineOption ignoreList(
         "ignore",

@@ -561,11 +561,6 @@ int main(int argc, char **argv)
         qDebug() << "File saved in" << QString::fromStdString(args.saveParseErrorsPath.generic_string());
     }
 
-    if (!success) {
-        std::cerr << "Error generating database\n";
-        return EXIT_FAILURE;
-    }
-
     // Currently the call to `tool->runPhysical` and `tool->runFull` are
     // already saving data to a DB, and because of that acessing the DataWiter
     // as we are doing right now is way more slow than it should.

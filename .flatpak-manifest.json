@@ -20,6 +20,37 @@
     ],
     "modules": [
         {
+            "name": "libzip",
+            "buildsystem": "cmake-ninja",
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://libzip.org/download/libzip-1.10.1.tar.xz",
+                    "sha256": "dc3c8d5b4c8bbd09626864f6bcf93de701540f761d76b85d7c7d710f4bd90318",
+                    "x-checker-data": {
+                        "type": "anitya",
+                        "project-id": 10649,
+                        "stable-only": true,
+                        "url-template": "https://libzip.org/download/libzip-$version.tar.xz"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "ktexttemplate",
+            "buildsystem": "cmake-ninja",
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://invent.kde.org/frameworks/ktexttemplate.git",
+                    "branch": "master"
+                }
+            ],
+            "config-opts": [
+                "-DBUILD_TESTING=OFF"
+            ]
+        },
+        {
             "name": "codevis",
             "buildsystem": "cmake-ninja",
             "config-opts": [

@@ -19,3 +19,4 @@ diagram-server.kdev4
 cmake-build-*/
 **/__pycache__
 packaging/*/codevis-build-*
+.flatpak-builder

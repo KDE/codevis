@@ -16,7 +16,7 @@ namespace Codevis::PluginSystem {
 // Plugin Interfaces.
 class ICodevisPlugin;
 class IGraphicsLayoutPlugin;
-
+class IGraphicsSceneMenuPlugin;
 struct PluginManagerPrivate;
 
 class PLUGINSYSTEM_EXPORT PluginManagerV2 : public QObject {
@@ -28,12 +28,14 @@ class PLUGINSYSTEM_EXPORT PluginManagerV2 : public QObject {
 
     const std::vector<ICodevisPlugin *>& plugins() const;
     const std::vector<IGraphicsLayoutPlugin *>& graphicsLayoutPlugins() const;
+    const std::vector<IGraphicsSceneMenuPlugin *>& graphicsSceneMenuPlugins() const;
 
   private:
     PluginManagerV2();
 
     std::vector<ICodevisPlugin *> d_plugins;
     std::vector<IGraphicsLayoutPlugin *> d_graphicsLayoutPlugins;
+    std::vector<IGraphicsSceneMenuPlugin *> d_graphicsSceneMenuPlugins;
 };
 
 } // namespace Codevis::PluginSystem

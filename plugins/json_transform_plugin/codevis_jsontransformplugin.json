@@ -1,0 +1,14 @@
+ {
+  "KPlugin": {
+     "Name": "Json Transform Plugin",
+     "Description": "Transform the visual dataset based on a json schema",
+     "Icon": "none",
+     "Authors": [ { "Name": "Tomaz Canabrava", "Email": "tcanabrava@kde.org" } ],
+     "Category": "Codevis Plugins",
+     "EnabledByDefault": true,
+     "License": "Apache-2.0",
+     "Id": "json_transform_plugin",
+     "Version": "1.0",
+     "Website": "https://invent.kde.org/sdk/codevis"
+  }
+}

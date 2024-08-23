@@ -12,6 +12,7 @@
 
 #include <ICodevisPlugin.h>
 #include <IGraphicsLayoutPlugin.h>
+#include <IGraphicsSceneMenuPlugin.h>
 
 #include <QDebug>
 #include <QLoggingCategory>
@@ -63,6 +64,11 @@ void PluginManagerV2::loadAllPlugins()
         if (auto *layoutPlugin = dynamic_cast<IGraphicsLayoutPlugin *>(result.plugin)) {
             d_graphicsLayoutPlugins.push_back(layoutPlugin);
         }
+
+        if (auto *menuPlugin = dynamic_cast<IGraphicsSceneMenuPlugin *>(result.plugin)) {
+            d_graphicsSceneMenuPlugins.push_back(menuPlugin);
+        }
+
         d_plugins.push_back(result.plugin);
     }
 }
@@ -75,6 +81,11 @@ const std::vector<ICodevisPlugin *>& PluginManagerV2::plugins() const
 const std::vector<IGraphicsLayoutPlugin *>& PluginManagerV2::graphicsLayoutPlugins() const
 {
     return d_graphicsLayoutPlugins;
+}
+
+const std::vector<IGraphicsSceneMenuPlugin *>& PluginManagerV2::graphicsSceneMenuPlugins() const
+{
+    return d_graphicsSceneMenuPlugins;
 }
 
 } // namespace Codevis::PluginSystem

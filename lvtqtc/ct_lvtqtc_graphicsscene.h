@@ -20,7 +20,7 @@
 #ifndef INCLUDED_LVTQTC_GRAPHICSSCENE
 #define INCLUDED_LVTQTC_GRAPHICSSCENE
 
-#include "IGraphicsLayoutPlugin.h"
+#include <IGraphicsLayoutPlugin.h>
 #include <ct_lvtshr_uniqueid.h>
 #include <lvtqtc_export.h>
 
@@ -250,7 +250,6 @@ class LVTQTC_EXPORT GraphicsScene : public QGraphicsScene,
 
   public Q_SLOTS:
     void handleViewportChanged();
-    void loadJsonWithDocumentChanges(const QString& doc);
 
   private:
     void unloadEntity(LakosEntity *entity);

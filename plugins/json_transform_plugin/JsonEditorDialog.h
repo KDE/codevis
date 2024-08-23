@@ -1,4 +1,4 @@
-// ct_lvtqtw_bulkedit.h                               -*-C++-*-
+#pragma once
 
 /*
  * // Copyright 2023 Codethink Ltd <codethink@codethink.co.uk>
@@ -17,23 +17,27 @@
  * // limitations under the License.
  */
 
-#ifndef CT_LVTQTW_BULKEDIT_H
-#define CT_LVTQTW_BULKEDIT_H
-
 #include <QDialog>
 
-namespace Codethink::lvtqtw {
+#include <ct_lvtqtc_graphicsscene.h>
+
+namespace KTextEditor {
+class View;
+}
+
+class KMessageWidget;
 
 class BulkEdit : public QDialog {
     Q_OBJECT
   public:
     BulkEdit(QWidget *parent);
-    Q_SIGNAL void sendBulkJson(const QString& j);
+    void setScene(Codethink::lvtqtc::GraphicsScene *scene);
+    void triggerJsonChange();
+    void loadFile(const QString& json);
+    void saveFile();
 
   private:
-    void loadFile(const QString& json);
+    Codethink::lvtqtc::GraphicsScene *_scene;
+    KTextEditor::View *_view;
+    KMessageWidget *_messageWidget;
 };
-
-} // namespace Codethink::lvtqtw
-
-#endif

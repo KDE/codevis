@@ -63,7 +63,6 @@
         <file alias="README">plugins/python_template_plugin/README.md</file>
     </qresource>
     <qresource prefix="/md">
-        <file alias="json_scene_elements">doc/json_scene_elements.md</file>
         <file alias="codebase_gen_doc">doc/dialog_codebase_generation.md</file>
         <file alias="about">doc/about.md</file>
         <file alias="libraries">doc/externallibraries.md</file>

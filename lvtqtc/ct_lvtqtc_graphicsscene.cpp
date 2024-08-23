@@ -20,6 +20,8 @@
 
 #include <ICodevisPlugin.h>
 #include <IGraphicsLayoutPlugin.h>
+#include <IGraphicsSceneMenuPlugin.h>
+
 #include <PluginManagerV2.h>
 #include <ct_lvtshr_graphstorage.h>
 
@@ -1349,6 +1351,23 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         }
     }
 
+    // New Menu Plugin
+    {
+        auto plugins = Codevis::PluginSystem::PluginManagerV2::self().graphicsSceneMenuPlugins();
+        for (auto *plugin : plugins) {
+            auto sceneMenus = plugin->menuActions(this);
+            for (QMenu *pluginMenu : sceneMenus) {
+                menu.addMenu(pluginMenu);
+            }
+
+            auto selectionMenu = plugin->menuActions(selectedEntities());
+            for (QMenu *pluginMenu : selectionMenu) {
+                menu.addMenu(pluginMenu);
+            }
+        }
+    }
+
+    // Old Menu Plugin
     if (d->pluginManager) {
         auto getAllEntitiesInCurrentView = [this]() {
             std::vector<std::shared_ptr<Entity>> entitiesInView{};
@@ -1983,72 +2002,6 @@ void GraphicsScene::removeEdge(LakosEntity& fromEntity, LakosEntity& toEntity)
 
     fromEntity.getTopLevelParent()->calculateEdgeVisibility();
     fromEntity.recursiveEdgeRelayout();
-}
-
-void GraphicsScene::loadJsonWithDocumentChanges(const QString& doc)
-{
-    QJsonParseError error;
-    auto jsonDoc = QJsonDocument::fromJson(doc.toLocal8Bit(), &error);
-    if (error.error != QJsonParseError::ParseError::NoError) {
-        Q_EMIT errorMessage(error.errorString());
-        return;
-    }
-
-    if (!jsonDoc.isObject()) {
-        return;
-    }
-
-    // Empty message force-closes the previous message.
-    Q_EMIT errorMessage(QString());
-
-    const auto mainObject = jsonDoc.object();
-    const auto keys = mainObject.keys();
-    if (!keys.contains("elements")) {
-        Q_EMIT errorMessage(tr("Mising key `elements` with the array of items to change."));
-        return;
-    }
-
-    if (!jsonDoc["elements"].isArray()) {
-        Q_EMIT errorMessage(tr("'elements' object must be a JSON Array."));
-        return;
-    }
-    QString missingElements;
-    QJsonArray elements = jsonDoc["elements"].toArray();
-    for (const auto& elem : elements) {
-        QJsonObject currObj = elem.toObject();
-
-        if (!currObj.keys().contains("name")) {
-            const QString jsonVal = QJsonDocument(currObj).toJson();
-            Q_EMIT errorMessage(tr("Missing required key: `name` on array object. \n %1").arg(jsonVal));
-            continue;
-        }
-
-        if (!currObj["name"].isString()) {
-            const QString jsonVal = QJsonDocument(currObj).toJson();
-            Q_EMIT errorMessage(tr("Name must be a string, \n %1").arg(jsonVal));
-            continue;
-        }
-
-        std::string currName = currObj["name"].toString().toStdString();
-        auto it = std::find_if(std::begin(d->verticesVec), std::end(d->verticesVec), [&currName](LakosEntity *v) {
-            return v->name() == currName;
-        });
-
-        if (it == std::end(d->verticesVec)) {
-            missingElements += QString::fromStdString(currName) + " ";
-            continue;
-        }
-
-        auto res = (*it)->setJsonSettings(currObj);
-        if (res.has_error()) {
-            Q_EMIT errorMessage(res.error().what);
-            continue;
-        }
-    }
-
-    if (!missingElements.isEmpty()) {
-        Q_EMIT errorMessage(tr(" Elements not found on the Scene\n: %1").arg(missingElements));
-    }
 }
 
 } // end namespace Codethink::lvtqtc

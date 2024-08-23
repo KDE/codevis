@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/json_transform_plugin">
+        <file alias="documentation">json_scene_elements.md</file>
+    </qresource>
+</RCC>

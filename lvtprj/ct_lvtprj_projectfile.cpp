@@ -255,7 +255,7 @@ auto ProjectFile::createEmpty() -> cpp::result<void, ProjectFileError>
 {
     cpp::result<fs::path, ProjectFileError> tmpFolder = createUniqueTempFolder();
     if (tmpFolder.has_error()) {
-        return cpp::fail(tmpFolder.error());
+        return cpp::fail(ProjectFileError{tmpFolder.error()});
     }
 
     d->openLocation = tmpFolder.value();
@@ -292,7 +292,7 @@ auto ProjectFile::open(const std::filesystem::path& path) -> cpp::result<void, P
 
     auto ret = lvtshr::Zip::uncompressToFolder(openLocation, projectFile);
     if (ret.has_error()) {
-        return cpp::fail(ret.error().what);
+        return cpp::fail(ProjectFileError{ret.error().what});
     }
 
     bool upgrade_file_version = portProjectFileV_0_to_1(openLocation);
@@ -332,7 +332,7 @@ auto ProjectFile::saveAs(const fs::path& path, BackupFileBehavior behavior) -> c
 
     auto dumped = dumpProjectMetadata();
     if (dumped.has_error()) {
-        return cpp::fail(dumped.error());
+        return cpp::fail(ProjectFileError{dumped.error()});
     }
 
     // save new file.

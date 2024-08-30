@@ -378,24 +378,25 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
         return cpp::fail(CompilationDatabaseError{CompilationDatabaseError::Kind::ErrorLoadingFromFile, errorMessage});
     }
 
-    if (jsonDb->getAllCompileCommands().size() == 0) {
-        return cpp::fail(CompilationDatabaseError{CompilationDatabaseError::Kind::CompileCommandsContainsNoCommands});
-    }
-
     if (jsonDb->getAllFiles().size() == 0) {
         return cpp::fail(CompilationDatabaseError{CompilationDatabaseError::Kind::CompileCommandsContainsNoFiles});
     }
 
+    std::vector<clang::tooling::CompileCommand> compileCommands = jsonDb->getAllCompileCommands();
+    if (compileCommands.size() == 0) {
+        return cpp::fail(CompilationDatabaseError{CompilationDatabaseError::Kind::CompileCommandsContainsNoCommands});
+    }
+
     const std::filesystem::path buildDir = path.parent_path();
-    addCompilationDatabase(*jsonDb, buildDir);
+    addCompilationDatabase(compileCommands, buildDir);
     std::cout << "Add Compilation Database finished" << timer.elapsed() << std::endl;
     return {};
 }
 
-void CombinedCompilationDatabase::addCompilationDatabase(const clang::tooling::CompilationDatabase& db,
+void CombinedCompilationDatabase::addCompilationDatabase(std::vector<clang::tooling::CompileCommand>& compileCommands,
                                                          const std::filesystem::path& buildDir)
 {
-    for (clang::tooling::CompileCommand cmd : db.getAllCompileCommands()) {
+    for (clang::tooling::CompileCommand cmd : compileCommands) {
         // resolve any relative paths
         std::filesystem::path filename(cmd.Filename);
         if (filename.is_relative()) {

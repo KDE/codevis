@@ -178,7 +178,8 @@ class LVTCLP_EXPORT CombinedCompilationDatabase : public clang::tooling::Compila
     cpp::result<bool, CompilationDatabaseError> addCompilationDatabase(const std::filesystem::path& path);
     // Read in a compile_commands.json file from path
 
-    void addCompilationDatabase(const clang::tooling::CompilationDatabase& db, const std::filesystem::path& buildDir);
+    void addCompilationDatabase(std::vector<clang::tooling::CompileCommand>& compileCommands,
+                                const std::filesystem::path& buildDir);
     // Add the contents of the compilation database given in as an argument
     // to this one, using the given build directory (the directory from which
     // relative paths in the database should be considered resolved)

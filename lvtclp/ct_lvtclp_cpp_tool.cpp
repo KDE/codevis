@@ -64,7 +64,7 @@ class LvtCompilationDatabaseImpl : public LvtCompilationDatabase {
   private:
     // DATA
     std::vector<std::string> d_files;
-    std::vector<std::filesystem::path> d_paths;
+    std::unordered_set<std::filesystem::path> d_paths;
     std::unordered_set<std::string> d_components;
     std::unordered_set<std::string> d_pkgs;
     std::optional<std::filesystem::path> d_prefix;
@@ -75,7 +75,7 @@ class LvtCompilationDatabaseImpl : public LvtCompilationDatabase {
         return d_files;
     }
 
-    const std::vector<std::filesystem::path>& paths() const
+    const std::unordered_set<std::filesystem::path>& paths() const
     {
         return d_paths;
     }
@@ -91,7 +91,7 @@ class LvtCompilationDatabaseImpl : public LvtCompilationDatabase {
     void shrinkToFit()
     {
         d_files.shrink_to_fit();
-        d_paths.shrink_to_fit();
+        // d_paths.shrink_to_fit();
         // d_components: no shrink_to_fit for std::unordered_set
         // d_pkgs: no shrink_to_fit for std::unordered_set
     }
@@ -101,14 +101,13 @@ class LvtCompilationDatabaseImpl : public LvtCompilationDatabase {
     {
         using Codethink::lvtclp::FileType;
 
-        const auto it = std::find(d_paths.begin(), d_paths.end(), path);
-        if (it != d_paths.end()) {
+        const auto [it, inserted] = d_paths.insert(path);
+        if (!inserted) {
             return;
         }
 
         // we store multiple copies of the path in different formats so we only
         // have to pay for the conversions once
-        d_paths.push_back(path);
         d_files.push_back(path.string());
 
         std::filesystem::path component(path);

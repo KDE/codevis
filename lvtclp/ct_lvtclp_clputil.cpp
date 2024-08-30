@@ -401,8 +401,8 @@ void CombinedCompilationDatabase::addCompilationDatabase(std::vector<clang::tool
         std::filesystem::path filename(cmd.Filename);
         if (filename.is_relative()) {
             filename = buildDir / filename;
+            cmd.Filename = filename.string();
         }
-        cmd.Filename = filename.string();
 
         auto ext = filename.extension().string();
         if (!allCppExtensions.contains(ext)) {

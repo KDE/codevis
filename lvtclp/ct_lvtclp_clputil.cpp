@@ -41,6 +41,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QtGlobal>
 
 #include <algorithm>
@@ -365,6 +366,9 @@ CombinedCompilationDatabase::~CombinedCompilationDatabase() noexcept = default;
 cpp::result<bool, CompilationDatabaseError>
 CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path& path)
 {
+    QElapsedTimer timer;
+    std::cout << "Add Compilation Database Started" << std::endl;
+    timer.start();
     std::string errorMessage;
     std::unique_ptr<clang::tooling::JSONCompilationDatabase> jsonDb =
         clang::tooling::JSONCompilationDatabase::loadFromFile(path.string(),
@@ -384,6 +388,7 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
 
     const std::filesystem::path buildDir = path.parent_path();
     addCompilationDatabase(*jsonDb, buildDir);
+    std::cout << "Add Compilation Database finished" << timer.elapsed() << std::endl;
     return {};
 }
 

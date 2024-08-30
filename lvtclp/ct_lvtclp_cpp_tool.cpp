@@ -43,6 +43,7 @@
 #include <vector>
 
 #include <QDebug>
+#include <QElapsedTimer>
 
 Q_LOGGING_CATEGORY(LogTool, "log.cpp_tool")
 
@@ -196,6 +197,9 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
                const std::vector<std::string>& userProvidedExtraArgs,
                bool printToConsole)
     {
+        std::cout << "Partial Compilation Database Setup Started" << std::endl;
+        QElapsedTimer timer;
+        timer.start();
         using Codethink::lvtclp::CompilerUtil;
         std::vector<std::string> sysIncludes;
 
@@ -262,6 +266,7 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
 
         shrinkToFit();
         setPrefix(d_commonParent);
+        std::cout << "Partial Database Setup Finished" << timer.elapsed() << std::endl;
     }
 
     // ACCESSORS
@@ -512,6 +517,9 @@ bool CppTool::processCompilationDatabase()
     if (d->compilationDb) {
         return true;
     }
+    QElapsedTimer timer;
+    std::cout << "Starting Process Compilation Database" << std::endl;
+    timer.start();
 
     if (!d->compileCommandsJsons.empty()) {
         CombinedCompilationDatabase compDb;
@@ -558,6 +566,8 @@ bool CppTool::processCompilationDatabase()
     d->compilationDb->setup(d->useSystemHeaders,
                             d->constants.userProvidedExtraCompileCommandsArgs,
                             !d->constants.printToConsole);
+
+    std::cout << "Process compilation database finished" << timer.elapsed() << std::endl;
     return true;
 }
 
@@ -651,7 +661,9 @@ bool CppTool::findPhysicalEntities(bool doIncremental)
     if (!ensureSetup()) {
         return false;
     }
-
+    QElapsedTimer timer;
+    std::cout << "Find Physical Entities Started" << std::endl;
+    timer.start();
     bool dbErrorState = false;
 
     const lvtmdb::ObjectStore::State oldState = d->memDb().state();
@@ -714,6 +726,7 @@ bool CppTool::findPhysicalEntities(bool doIncremental)
         d->memDb().setState(lvtmdb::ObjectStore::State::NoneReady);
     }
 
+    std::cout << "Find Physical Entities Finished" << timer.elapsed() << std::endl;
     return true;
 }
 

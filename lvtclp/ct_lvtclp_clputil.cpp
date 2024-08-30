@@ -396,7 +396,7 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
 void CombinedCompilationDatabase::addCompilationDatabase(std::vector<clang::tooling::CompileCommand>& compileCommands,
                                                          const std::filesystem::path& buildDir)
 {
-    for (clang::tooling::CompileCommand cmd : compileCommands) {
+    for (clang::tooling::CompileCommand& cmd : compileCommands) {
         // resolve any relative paths
         std::filesystem::path filename(cmd.Filename);
         if (filename.is_relative()) {

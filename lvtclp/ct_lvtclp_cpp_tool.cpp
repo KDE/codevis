@@ -169,6 +169,7 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
     std::vector<std::string> d_ignoreGlobs;
     std::function<void(const std::string&, long)> d_messageCallback;
     std::vector<clang::tooling::CompileCommand> d_compileCommands;
+    std::unordered_map<std::string, int> d_filenameToCompileCommandIdx;
     std::filesystem::path d_commonParent;
     std::filesystem::path d_buildPath;
     std::vector<llvm::GlobPattern> d_ignorePatterns;
@@ -233,6 +234,7 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
 
             std::end(d_compileCommands));
 
+        int idx = 0;
         for (auto& cmd : d_compileCommands) {
             std::filesystem::path path = std::filesystem::weakly_canonical(cmd.Filename);
             addPath(path);
@@ -261,6 +263,9 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
 
             // add extra (user provided) includes
             std::copy(userProvidedExtraArgs.begin(), userProvidedExtraArgs.end(), std::back_inserter(cmd.CommandLine));
+
+            d_filenameToCompileCommandIdx[cmd.Filename] = idx;
+            idx += 1;
         }
 
         shrinkToFit();
@@ -276,12 +281,12 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
 
     std::vector<clang::tooling::CompileCommand> getCompileCommands(llvm::StringRef FilePath) const override
     {
-        for (auto const& cmd : d_compileCommands) {
-            if (cmd.Filename == FilePath) {
-                return {cmd};
-            }
+        try {
+            int idx = d_filenameToCompileCommandIdx.at(FilePath.str());
+            return {d_compileCommands[idx]};
+        } catch (...) {
+            return {};
         }
-        return {};
     }
 
     std::vector<std::string> getAllFiles() const override

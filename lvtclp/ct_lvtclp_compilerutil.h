@@ -53,7 +53,7 @@ class LVTCLP_EXPORT CompilerUtil {
     // Figure out if we need to use findSystemIncludes() to compile with
     // these flags
 
-    static std::vector<std::string> findSystemIncludes();
+    static std::vector<std::string> findSystemIncludes(const std::string& compileCommandCompiler);
     // Attempts to locate appropriate include directories to find standard
     // headers etc
 

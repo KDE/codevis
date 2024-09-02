@@ -210,7 +210,8 @@ class PartialCompilationDatabase : public LvtCompilationDatabaseImpl {
                     && CompilerUtil::weNeedSystemHeaders());
 
             if (searchForHeaders) {
-                sysIncludes = CompilerUtil::findSystemIncludes();
+                // Check if we will need to run this for every compile commands.
+                sysIncludes = CompilerUtil::findSystemIncludes(d_compileCommands[0].CommandLine[0]);
                 for (std::string& include : sysIncludes) {
                     std::string arg;
                     arg.append("-isystem").append(include);

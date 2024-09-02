@@ -255,10 +255,11 @@ lvtmdb::TypeObject *LogicalDepVisitor::lookupUDT(const clang::NamedDecl *decl, c
     });
 
     if (warnMsg && !mdbUDT) {
-        std::string message = "WARN: lookupUDT for " + qualifiedName + " failed for " + warnMsg + "\n"
-            + "      while processing decl at " + decl->getLocation().printToString(Context->getSourceManager()) + "\n";
-
         if (d_messageCallback) {
+            std::string message = "WARN: lookupUDT for " + qualifiedName + " failed for " + warnMsg + "\n"
+                + "      while processing decl at " + decl->getLocation().printToString(Context->getSourceManager())
+                + "\n";
+
             auto& fnc = *d_messageCallback;
             fnc(message, ClpUtil::getThreadId());
         }
@@ -510,10 +511,11 @@ lvtmdb::TypeObject *LogicalDepVisitor::lookupType(const clang::Decl *decl,
         ret = d_memDb.getType(typeString);
     });
     if (!ret) {
-        const std::string message = "WARN: lookupType for " + typeString + " failed for " + warnMsg + "\n"
-            + "      while processing decl at " + decl->getLocation().printToString(Context->getSourceManager()) + "\n";
-
         if (d_messageCallback) {
+            const std::string message = "WARN: lookupType for " + typeString + " failed for " + warnMsg + "\n"
+                + "      while processing decl at " + decl->getLocation().printToString(Context->getSourceManager())
+                + "\n";
+
             auto& fnc = *d_messageCallback;
             fnc(message, ClpUtil::getThreadId());
         }
@@ -637,11 +639,11 @@ bool LogicalDepVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl *recordDecl)
     } else if (recordDecl->isUnion()) {
         recordKind = lvtshr::UDTKind::Union;
     } else {
-        const std::string message = "WARN: clang::CXXRecordDecl which is not a class, struct or union on"
-            + recordDecl->getQualifiedNameAsString() + "\n" + "at"
-            + recordDecl->getLocation().printToString(Context->getSourceManager());
-
         if (d_messageCallback) {
+            const std::string message = "WARN: clang::CXXRecordDecl which is not a class, struct or union on"
+                + recordDecl->getQualifiedNameAsString() + "\n" + "at"
+                + recordDecl->getLocation().printToString(Context->getSourceManager());
+
             auto& fnc = *d_messageCallback;
             fnc(message, ClpUtil::getThreadId());
         }
@@ -2003,7 +2005,7 @@ void LogicalDepVisitor::addRelation(lvtmdb::TypeObject *source,
             debugRelationship(source, target, decl, true, desc);
         }
         ClpUtil::addUsesInImpl(source, target);
-    } else {
+    } else if (d_messageCallback) {
         std::string message = "WARN: unknown access specifier (clang::AccessSpecifier)" + std::to_string(access);
         if (desc) {
             message += " for " + std::string(desc);
@@ -2013,10 +2015,8 @@ void LogicalDepVisitor::addRelation(lvtmdb::TypeObject *source,
         }
         message += "\n";
 
-        if (d_messageCallback) {
-            auto& fnc = *d_messageCallback;
-            fnc(message, ClpUtil::getThreadId());
-        }
+        auto& fnc = *d_messageCallback;
+        fnc(message, ClpUtil::getThreadId());
     }
 }
 

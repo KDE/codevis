@@ -152,7 +152,7 @@ void FilesystemScanner::scanHeader(const std::filesystem::path& ppath)
     // but with a header extension. Most non-lakosian code will follow this
     // convention anyway, and using components is the bare minimum of lakosian
     // design.
-    static const std::vector<std::string> headerExtensions({".h", ".hh", ".h++", ".hpp"});
+    static const std::vector<std::string> headerExtensions({".h", ".hh", ".h++", ".hpp", ""});
 
     const std::filesystem::path parent = std::filesystem::weakly_canonical(path.parent_path());
     const std::filesystem::path stem = path.stem();

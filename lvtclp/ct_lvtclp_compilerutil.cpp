@@ -132,7 +132,8 @@ std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler
     // the calling program and the executed command, and shall return a pointer to a stream that can be used to either
     // read from or write to the pipe.
     // https://pubs.opengroup.org/onlinepubs/009696699/functions/popen.html
-    auto fp = popen("g++ -E -v -x c++ - </dev/null 2>&1", "r");
+    const auto compile_call = compiler + " -E -v -x c++ - </dev/null 2>&1";
+    auto fp = popen(compile_call.c_str(), "r");
     if (fp == nullptr) {
         return {};
     }

@@ -209,6 +209,9 @@ class LvtCompilationDatabase : public clang::tooling::CompilationDatabase {
     [[nodiscard]] virtual bool containsPackage(const std::string& pkg) const = 0;
     // Returns true if there is a package or package group with this
     // qualified name in the compilation database
+
+  private:
+    std::unordered_map<std::string, int> fileNameToCompileCommandsIdx;
 };
 
 namespace nonLakosian {

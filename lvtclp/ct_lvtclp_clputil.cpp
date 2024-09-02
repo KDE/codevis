@@ -353,6 +353,7 @@ FileType ClpUtil::categorisePath(const std::string& file)
 const char *const ClpUtil::NON_LAKOSIAN_GROUP_NAME = "non-lakosian group";
 
 struct CombinedCompilationDatabase::Private {
+    std::unordered_map<std::string_view, int> fileNameToCompileCommandsIdx;
     std::vector<clang::tooling::CompileCommand> compileCommands;
     std::vector<std::string> files;
 };
@@ -396,6 +397,7 @@ CombinedCompilationDatabase::addCompilationDatabase(const std::filesystem::path&
 void CombinedCompilationDatabase::addCompilationDatabase(std::vector<clang::tooling::CompileCommand>& compileCommands,
                                                          const std::filesystem::path& buildDir)
 {
+    int i = 0;
     for (clang::tooling::CompileCommand& cmd : compileCommands) {
         // resolve any relative paths
         std::filesystem::path filename(cmd.Filename);
@@ -411,18 +413,16 @@ void CombinedCompilationDatabase::addCompilationDatabase(std::vector<clang::tool
 
         d->files.push_back(cmd.Filename);
         d->compileCommands.push_back(std::move(cmd));
+        d->fileNameToCompileCommandsIdx[cmd.Filename] = i;
+        i += 1;
     }
 }
 
 std::vector<clang::tooling::CompileCommand>
 CombinedCompilationDatabase::getCompileCommands(llvm::StringRef FilePath) const
 {
-    for (auto const& cmd : d->compileCommands) {
-        if (cmd.Filename == FilePath) {
-            return {cmd};
-        }
-    }
-    return {};
+    const int idx = d->fileNameToCompileCommandsIdx[FilePath];
+    return {d->compileCommands.at(idx)};
 }
 
 std::vector<std::string> CombinedCompilationDatabase::getAllFiles() const

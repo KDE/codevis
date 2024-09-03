@@ -76,6 +76,7 @@ cpp::result<RawDbQueryResult, ErrorSqlQuery> NodeStorage::rawDbQuery(const std::
 
 void NodeStorage::preloadHighLevelComponents()
 {
+    /*
     std::function<void(LakosianNode *)> loadChildrenRecursively = [&](LakosianNode *node) -> void {
         if (node->type() == DiagramType::ComponentType) {
             // Do not load component children (Will be loaded on demand)
@@ -91,6 +92,8 @@ void NodeStorage::preloadHighLevelComponents()
     for (auto *pkg : getTopLevelPackages()) {
         loadChildrenRecursively(pkg);
     }
+    */
+    std::ignore = getTopLevelPackages();
 }
 
 // TODO: See #435 - This modifies the current database, instead of working on a copy of it.

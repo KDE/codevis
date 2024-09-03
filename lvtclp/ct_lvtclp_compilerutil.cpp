@@ -121,7 +121,8 @@ std::vector<std::string> CompilerUtil::findSystemIncludes(const std::string& com
 #ifndef Q_OS_WINDOWS
     return findLinuxIncludes(compileCommandCompiler);
 #else
-    std::ignore = compileCommandCompiler'' return {};
+    std::ignore = compileCommandCompiler;
+    return {};
 #endif
 }
 

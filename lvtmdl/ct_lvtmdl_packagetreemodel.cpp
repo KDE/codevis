@@ -95,8 +95,10 @@ void PackageTreeModel::reload()
     root->removeRows(0, root->rowCount());
 
     auto shouldLoadChildren = [](LakosianNode const& node) {
+        std::ignore = node;
+        return false;
         // Will leave children of components (logical entities) to be lazy loaded
-        return node.type() != lvtshr::DiagramType::ComponentType;
+        // return node.type() != lvtshr::DiagramType::ComponentType;
     };
 
     for (auto *topLvlEntity : d->nodeStorage.getTopLevelPackages()) {
@@ -139,9 +141,11 @@ void PackageTreeModel::fetchMore(const QModelIndex& parent)
     for (auto row = parentItem->rowCount() - 1; row >= 0; --row) {
         parentItem->removeRow(row);
     }
+
     ModelUtil::populateTreeItemChildren(*parentNode, *parentItem, [](LakosianNode const&) {
-        return true;
+        return false;
     });
+
     parentItem->setData(true, ModelRoles::e_ChildItemsLoaded);
 }
 

@@ -318,8 +318,8 @@ void PackageNode::loadChildren()
 
     d->childrenLoaded = true;
 
-    auto pkgChildrenIds = d_fields.childPackagesIds;
-    auto compChildrenIds = d_fields.childComponentsIds;
+    const auto& pkgChildrenIds = d_fields.childPackagesIds;
+    const auto& compChildrenIds = d_fields.childComponentsIds;
     d->children.clear();
     d->innerPackages.clear();
     d->children.reserve(pkgChildrenIds.size() + compChildrenIds.size());
@@ -346,19 +346,20 @@ void PackageNode::loadProviders()
 
     if (d_fields.parentId) {
         // package
-        for (auto&& id : d_fields.providerIds) {
-            LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
-            d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, node});
+
+        const std::vector<LakosianNode *> providers = d->store.findPackageByIds(d_fields.providerIds);
+        for (auto *provider : providers) {
+            d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, provider});
         }
     } else {
         // package group
-        for (auto&& id : d_fields.providerIds) {
-            LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
-            d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, node});
+        const std::vector<LakosianNode *> providers = d->store.findPackageByIds(d_fields.providerIds);
+        for (auto *provider : providers) {
+            d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, provider});
         }
 
-        for (auto&& childId : d_fields.childPackagesIds) {
-            auto *child = d->store.findById({DiagramType::PackageType, childId});
+        const std::vector<LakosianNode *> children = d->store.findPackageByIds(d_fields.childPackagesIds);
+        for (auto *child : children) {
             for (auto&& edge : child->providers()) {
                 auto *providerPkgGroup = edge.other()->parent();
                 if (!providerPkgGroup) {
@@ -378,24 +379,25 @@ void PackageNode::loadClients()
     if (d->clientsLoaded) {
         return;
     }
+
     d_fields = d_dbHandler->get().getPackageFieldsById(d_fields.id);
     d->clientsLoaded = true;
 
     if (d_fields.parentId) {
         // package
-        for (auto&& id : d_fields.clientIds) {
-            LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
-            d->clients.emplace_back(LakosianEdge{lvtshr::PackageDependency, node});
+        const std::vector<LakosianNode *> clients = d->store.findPackageByIds(d_fields.clientIds);
+        for (auto *client : clients) {
+            d->clients.emplace_back(LakosianEdge{lvtshr::PackageDependency, client});
         }
     } else {
         // package group
-        for (auto&& id : d_fields.clientIds) {
-            LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
-            d->clients.emplace_back(LakosianEdge{lvtshr::PackageDependency, node});
+        const std::vector<LakosianNode *> clients = d->store.findPackageByIds(d_fields.clientIds);
+        for (auto *client : clients) {
+            d->clients.emplace_back(LakosianEdge{lvtshr::PackageDependency, client});
         }
 
-        for (auto&& childId : d_fields.childPackagesIds) {
-            auto *child = d->store.findById({DiagramType::PackageType, childId});
+        const std::vector<LakosianNode *> children = d->store.findPackageByIds(d_fields.childPackagesIds);
+        for (auto *child : children) {
             for (auto&& edge : child->clients()) {
                 auto *clientPkgGroup = edge.other()->parent();
                 if (!clientPkgGroup) {

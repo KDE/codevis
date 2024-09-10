@@ -26,6 +26,9 @@
 #include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtmdl_modelhelpers.h>
 
+#include <QElapsedTimer>
+#include <iostream>
+
 namespace Codethink::lvtmdl {
 
 using namespace lvtshr;
@@ -91,6 +94,9 @@ QStandardItem *PackageTreeModel::itemForLakosianNode(LakosianNode *node)
 
 void PackageTreeModel::reload()
 {
+    std::cout << "Populating the package model" << std::endl;
+    QElapsedTimer timer;
+    timer.start();
     QStandardItem *root = invisibleRootItem();
     root->removeRows(0, root->rowCount());
 
@@ -118,10 +124,20 @@ void PackageTreeModel::reload()
             root->appendRow(item);
         }
     }
+    std::cout << "Reloading Package Model took" << timer.elapsed() << std::endl;
 }
 
 void PackageTreeModel::fetchMore(const QModelIndex& parent)
 {
+    if (!parent.isValid()) {
+        return;
+    }
+    std::cout << "Starting Fetch More" << std::endl;
+    QElapsedTimer timer;
+    QElapsedTimer partialTimer;
+    partialTimer.start();
+    timer.start();
+
     auto childItemsAlreadyLoaded = parent.data(ModelRoles::e_ChildItemsLoaded).toBool();
     if (childItemsAlreadyLoaded) {
         return;
@@ -142,11 +158,17 @@ void PackageTreeModel::fetchMore(const QModelIndex& parent)
         parentItem->removeRow(row);
     }
 
+    std::cout << "Parent Hierarchy cleaned up" << partialTimer.elapsed() << std::endl;
+
     ModelUtil::populateTreeItemChildren(*parentNode, *parentItem, [](LakosianNode const&) {
         return false;
     });
 
+    std::cout << "Children populated " << partialTimer.elapsed() << std::endl;
     parentItem->setData(true, ModelRoles::e_ChildItemsLoaded);
+    std::cout << "Children data set" << partialTimer.elapsed() << std::endl;
+
+    std::cout << "Fetch More took" << timer.elapsed() << std::endl;
 }
 
 } // end namespace Codethink::lvtmdl

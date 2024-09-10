@@ -20,6 +20,7 @@
 #ifndef DIAGRAM_SERVER_CT_LVTLDR_SOCIUTILS_H
 #define DIAGRAM_SERVER_CT_LVTLDR_SOCIUTILS_H
 
+#include "ct_lvtldr_packagenodefields.h"
 #include "soci/soci-backend.h"
 #include <ct_lvtldr_componentnodefields.h>
 #include <ct_lvtldr_databasehandler.h>
@@ -256,6 +257,11 @@ class SociDatabaseHandler : public DatabaseHandler {
     PackageNodeFields getPackageFieldsByQualifiedName(std::string const& qualifiedName) override
     {
         return getPackageFields("qualified_name", qualifiedName);
+    }
+
+    std::vector<PackageNodeFields> getPackageFieldsByIds(const std::vector<RecordNumberType>& ids) override
+    {
+        return getPackageFields("id", ids);
     }
 
     PackageNodeFields getPackageFieldsById(RecordNumberType id) override
@@ -639,6 +645,87 @@ class SociDatabaseHandler : public DatabaseHandler {
         }
 
         return dao;
+    }
+
+    template<typename T>
+    std::vector<PackageNodeFields> getPackageFields(std::string const& uniqueKeyColumnName,
+                                                    std::vector<T> const& keyValues)
+    {
+        std::vector<PackageNodeFields> daos;
+        PackageNodeFields dao;
+        soci::indicator parentIdIndicator = soci::indicator::i_null;
+        RecordNumberType maybeParentId = 0;
+        soci::indicator sourceRepositoryIdIndicator = soci::indicator::i_null;
+        RecordNumberType maybeSourceRepositoryId = 0;
+
+        T currentValue{};
+
+        soci::statement main_st =
+            (d_db.prepare << "select * from source_package where " + uniqueKeyColumnName + " = :k",
+             soci::into(dao.id),
+             soci::into(dao.version),
+             soci::into(maybeParentId, parentIdIndicator),
+             soci::into(maybeSourceRepositoryId, sourceRepositoryIdIndicator),
+             soci::into(dao.name),
+             soci::into(dao.qualifiedName),
+             soci::use(currentValue));
+
+        RecordNumberType children_id;
+        RecordNumberType component_id;
+        RecordNumberType target_id;
+        RecordNumberType source_id;
+
+        soci::statement st_children_ids = (d_db.prepare << "select id from source_package where parent_id = :k",
+                                           soci::into(children_id),
+                                           soci::use(dao.id));
+        soci::statement st_component_ids = (d_db.prepare << "select id from source_component where package_id = :k",
+                                            soci::into(component_id),
+                                            soci::use(dao.id));
+        soci::statement st_target_ids = (d_db.prepare << "select target_id from dependencies where source_id = :k",
+                                         soci::into(target_id),
+                                         soci::use(dao.id));
+        soci::statement st_source_ids = (d_db.prepare << "select source_id from dependencies where target_id = :k",
+                                         soci::into(source_id),
+                                         soci::use(dao.id));
+
+        for (const T& value : keyValues) {
+            currentValue = value;
+            main_st.execute(true);
+
+            if (parentIdIndicator == soci::indicator::i_ok) {
+                dao.parentId = maybeParentId;
+            } else {
+                dao.parentId = std::nullopt;
+            }
+
+            if (sourceRepositoryIdIndicator == soci::indicator::i_ok) {
+                dao.sourceRepositoryId = maybeSourceRepositoryId;
+            } else {
+                dao.sourceRepositoryId = std::nullopt;
+            }
+
+            st_children_ids.execute(true);
+            while (st_children_ids.fetch()) {
+                dao.childPackagesIds.emplace_back(children_id);
+            }
+            st_component_ids.execute(true);
+            while (st_component_ids.fetch()) {
+                dao.childComponentsIds.emplace_back(component_id);
+            }
+            st_target_ids.execute(true);
+            while (st_target_ids.fetch()) {
+                dao.providerIds.emplace_back(target_id);
+            }
+
+            st_source_ids.execute(true);
+            while (st_source_ids.fetch()) {
+                dao.clientIds.emplace_back(source_id);
+            }
+
+            daos.push_back(dao);
+        }
+
+        return daos;
     }
 
     template<typename T>

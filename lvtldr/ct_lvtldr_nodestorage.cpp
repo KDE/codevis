@@ -672,6 +672,29 @@ cpp::result<void, ErrorReparentEntity> NodeStorage::reparentEntity(LakosianNode 
     return {};
 }
 
+std::vector<LakosianNode *> NodeStorage::findPackageByIds(std::vector<RecordNumberType> ids)
+{
+    std::vector<LakosianNode *> ret;
+
+    // Search for the node on cache
+    auto new_end = std::remove_if(std::begin(ids), std::end(ids), [this, &ret](auto id) {
+        UniqueId ourId(DiagramType::PackageType, id);
+        auto ourIt = d->nodes.find(ourId);
+        if (ourIt == d->nodes.end()) {
+            return false;
+        }
+
+        ret.push_back(ourIt->second.get());
+        return true;
+    });
+
+    ids.erase(new_end, std::end(ids));
+    std::vector<LakosianNode *> rest = fetchPackageFromDbByIds(ids);
+
+    ret.insert(std::end(ret), std::begin(rest), std::end(rest));
+    return ret;
+}
+
 LakosianNode *NodeStorage::findById(const lvtshr::UniqueId& id)
 {
     // Search for the node on cache
@@ -864,6 +887,27 @@ LakosianNode *NodeStorage::fetchFromDBById(const Codethink::lvtshr::UniqueId& ui
         updateAndNotifyNodeRename<LDR_TYPE>(node);
     });
     return lakosianNode;
+}
+
+std::vector<LakosianNode *> NodeStorage::fetchPackageFromDbByIds(std::vector<RecordNumberType> uids)
+{
+    const auto daos = d->dbHandler->getPackageFieldsByIds(uids);
+    std::vector<LakosianNode *> ret;
+    if (daos.empty()) {
+        return {};
+    }
+
+    for (auto dao : daos) {
+        auto [it, _] = d->nodes.emplace(UniqueId{DiagramType::PackageType, dao.id},
+                                        std::make_unique<PackageNode>(*this, *d->dbHandler, dao));
+        auto *lakosianNode = it->second.get();
+        connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
+            updateAndNotifyNodeRename<lvtldr::PackageNode>(node);
+        });
+        ret.push_back(lakosianNode);
+    }
+
+    return ret;
 }
 
 template<typename LDR_TYPE>

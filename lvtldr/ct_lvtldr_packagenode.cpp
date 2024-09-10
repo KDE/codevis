@@ -21,6 +21,9 @@
 
 #include <ct_lvtldr_nodestorage.h>
 #include <ct_lvtshr_stringhelpers.h>
+
+#include <QElapsedTimer>
+#include <iostream>
 #include <regex>
 
 namespace {
@@ -59,9 +62,12 @@ lvtshr::DiagramType PackageNode::type() const
 
 bool PackageNode::isPackageGroup()
 {
-    // TODO: Properly handle caching system
-    d->childrenLoaded = false;
-    loadChildren();
+    // TODO: Make sure to invalidate this when a child is added
+    // to the database.
+    if (d->childrenLoaded == false) {
+        loadChildren();
+    }
+
     return !d->innerPackages.empty();
 }
 
@@ -305,7 +311,11 @@ void PackageNode::loadChildren()
     if (d->childrenLoaded) {
         return;
     }
+    QElapsedTimer timer;
+    timer.start();
+
     d_fields = d_dbHandler->get().getPackageFieldsById(d_fields.id);
+
     d->childrenLoaded = true;
 
     auto pkgChildrenIds = d_fields.childPackagesIds;
@@ -315,12 +325,9 @@ void PackageNode::loadChildren()
     d->children.reserve(pkgChildrenIds.size() + compChildrenIds.size());
     d->innerPackages.reserve(pkgChildrenIds.size());
 
-    for (auto& id : pkgChildrenIds) {
-        LakosianNode *node = d->store.findById({DiagramType::PackageType, id});
-        assert(node);
-        d->children.push_back(node);
-        d->innerPackages.push_back(node);
-    }
+    const std::vector<LakosianNode *> children = d->store.findPackageByIds(pkgChildrenIds);
+    d->children.insert(std::end(d->children), std::begin(children), std::end(children));
+    d->innerPackages.insert(std::end(d->innerPackages), std::begin(children), std::end(children));
 
     for (auto& id : compChildrenIds) {
         LakosianNode *node = d->store.findById({DiagramType::ComponentType, id});

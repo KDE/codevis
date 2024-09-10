@@ -70,6 +70,7 @@ class DatabaseHandler {
     virtual void removeComponentFieldsById(RecordNumberType id) = 0;
 
     virtual PackageNodeFields getPackageFieldsByQualifiedName(std::string const& qualifiedName) = 0;
+    virtual std::vector<PackageNodeFields> getPackageFieldsByIds(const std::vector<RecordNumberType>& ids) = 0;
     virtual PackageNodeFields getPackageFieldsById(RecordNumberType id) = 0;
     virtual void updateFields(PackageNodeFields const& dao) = 0;
     virtual void addFields(PackageNodeFields& dao) = 0;

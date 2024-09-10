@@ -1576,10 +1576,11 @@ void GraphicsScene::loadEntitiesByQualifiedNameList(const QStringList& qualified
 
 LakosEntity *GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos)
 {
+    QElapsedTimer timer;
+    timer.start();
     const std::string qualName = qualifiedName.toStdString();
     qDebug() << "Loading" << qualName;
     if (LakosEntity *e = entityByQualifiedName(qualName)) {
-        Q_EMIT errorMessage(tr("The element is already loaded"));
         return e;
     }
 
@@ -1703,6 +1704,7 @@ LakosEntity *GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedNa
     }
 
     Q_EMIT graphLoadFinished();
+    qDebug() << "Added Element On Screen took" << timer.elapsed();
     return lastAddedEntity;
 }
 

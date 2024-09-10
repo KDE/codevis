@@ -168,6 +168,8 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
 
     [[nodiscard]] cpp::result<void, ErrorReparentEntity> reparentEntity(LakosianNode *entity, LakosianNode *newParent);
 
+    std::vector<LakosianNode *> findPackageByIds(std::vector<PackageNodeFields::RecordNumberType> ids);
+
     LakosianNode *findById(const lvtshr::UniqueId& uid);
     LakosianNode *findByQualifiedName(const std::string& qualifiedName);
     LakosianNode *findByQualifiedName(lvtshr::DiagramType type, const std::string& qualifiedName);
@@ -197,6 +199,8 @@ class LVTLDR_EXPORT NodeStorage : public QObject {
 
     template<typename LDR_TYPE>
     LakosianNode *fetchFromDBById(const lvtshr::UniqueId& uid);
+
+    std::vector<LakosianNode *> fetchPackageFromDbByIds(std::vector<PackageNodeFields::RecordNumberType> uids);
 
     template<typename LDR_TYPE>
     void updateAndNotifyNodeRename(LakosianNode *node);

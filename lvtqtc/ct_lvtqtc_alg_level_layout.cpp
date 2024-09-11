@@ -147,6 +147,12 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
         }
 
         currentLevel += 1;
+        if (entitiesOnCurrentLevel == entitiesOnNextLevel) {
+            // should never happen, but it's happening.
+            // need to spend a bit of time to understand what's wrong.
+            std::cout << "Logic error, aborting the layout algorithm" << std::endl;
+            break;
+        }
         entitiesOnCurrentLevel = entitiesOnNextLevel;
     }
 

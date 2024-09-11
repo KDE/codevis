@@ -54,9 +54,63 @@ struct LayoutTypeStrategy<LakosEntity::LevelizationLayoutType::Horizontal>
 };
 // clang-format on
 
+void copyAllDependentNodes(std::optional<const LakosEntity *>& commonParentEntity,
+                           std::unordered_map<LakosEntity *, std::unordered_set<LakosEntity *>>& entitiesVisitHistory,
+                           LakosEntity *entity,
+                           std::set<LakosEntity *>& processEntities)
+{
+    for (auto const& edge : entity->targetCollection()) {
+        auto *const toNode = edge->from();
+        auto *const parentNode = toNode->internalNode()->parent();
+
+        if (commonParentEntity) {
+            // Only consider packages/components and dependencies within the common parent entity
+            auto parentEntityName = (*commonParentEntity)->name();
+            if (!parentNode || parentNode->name() != parentEntityName) {
+                continue;
+            }
+        } else {
+            // If no common parent is provided, only consider top level entities (Ignore those with parent node)
+            if (parentNode) {
+                continue;
+            }
+        }
+
+        // Avoid creating cycles
+        auto const& history = entitiesVisitHistory[entity];
+        if (std::find(history.cbegin(), history.cend(), toNode) != history.cend()) {
+            continue;
+        }
+        entitiesVisitHistory[toNode].insert(entitiesVisitHistory[entity].begin(), entitiesVisitHistory[entity].end());
+
+        processEntities.insert(toNode);
+    }
+};
+
+bool hasDependenciesWithinThisParent(std::optional<const LakosEntity *>& commonParentEntity, LakosEntity *entity)
+{
+    auto const& deps = entity->edgesCollection();
+
+    if (commonParentEntity) {
+        // Only consider packages/components and dependencies within the common parent entity
+        auto parentEntityName = (*commonParentEntity)->name();
+        return std::any_of(deps.cbegin(), deps.cend(), [&parentEntityName](auto& dep) {
+            auto const *depParent = dep->to()->internalNode()->parent();
+            return depParent && depParent->name() == parentEntityName;
+        });
+    }
+
+    // If no common parent is provided, only consider top level entities (With no parent)
+    return std::any_of(deps.cbegin(), deps.cend(), [](auto& dep) {
+        auto const *depParent = dep->to()->internalNode()->parent();
+        return !depParent;
+    });
+};
+
 std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<LakosEntity *> const& entities,
                                                                std::optional<const LakosEntity *> commonParentEntity)
 {
+    std::cout << "Computing the level for " << entities.size() << "entities" << std::endl;
     auto entityToLevel = std::unordered_map<LakosEntity *, int>{};
 
     // Keep track of history for cycle detection
@@ -69,56 +123,6 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
             entitiesWithoutConnections.push_back(entity);
         }
     }
-
-    auto copyAllDependentNodes =
-        [&commonParentEntity, &entitiesVisitHistory](LakosEntity *entity, std::set<LakosEntity *>& processEntities) {
-            for (auto const& edge : entity->targetCollection()) {
-                auto *const toNode = edge->from();
-                auto *const parentNode = toNode->internalNode()->parent();
-                if (commonParentEntity) {
-                    // Only consider packages/components and dependencies within the common parent entity
-                    auto parentEntityName = (*commonParentEntity)->name();
-                    if (!parentNode || parentNode->name() != parentEntityName) {
-                        continue;
-                    }
-                } else {
-                    // If no common parent is provided, only consider top level entities (Ignore those with parent node)
-                    if (parentNode) {
-                        continue;
-                    }
-                }
-
-                // Avoid creating cycles
-                auto const& history = entitiesVisitHistory[entity];
-                if (std::find(history.cbegin(), history.cend(), toNode) != history.cend()) {
-                    continue;
-                }
-                entitiesVisitHistory[toNode].insert(entitiesVisitHistory[entity].begin(),
-                                                    entitiesVisitHistory[entity].end());
-
-                processEntities.insert(toNode);
-            }
-        };
-
-    auto hasDependenciesWithinThisParent = [&commonParentEntity](LakosEntity *entity) {
-        auto const& deps = entity->edgesCollection();
-
-        if (commonParentEntity) {
-            // Only consider packages/components and dependencies within the common parent entity
-            auto parentEntityName = (*commonParentEntity)->name();
-            return std::any_of(deps.cbegin(), deps.cend(), [&parentEntityName](auto& dep) {
-                auto const *depParent = dep->to()->internalNode()->parent();
-                return depParent && depParent->name() == parentEntityName;
-            });
-        }
-
-        // If no common parent is provided, only consider top level entities (With no parent)
-        return std::any_of(deps.cbegin(), deps.cend(), [](auto& dep) {
-            auto const *depParent = dep->to()->internalNode()->parent();
-            return !depParent;
-        });
-    };
-
     auto entitiesOnNextLevel = std::set<LakosEntity *>{};
 
     // Finds the "first level", where the entities don't have any dependency.
@@ -126,8 +130,8 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
     auto currentLevel = 0;
     for (auto *entity : entities) {
         entityToLevel[entity] = currentLevel;
-        if (!hasDependenciesWithinThisParent(entity)) {
-            copyAllDependentNodes(entity, entitiesOnNextLevel);
+        if (!hasDependenciesWithinThisParent(commonParentEntity, entity)) {
+            copyAllDependentNodes(commonParentEntity, entitiesVisitHistory, entity, entitiesOnNextLevel);
         }
     }
 
@@ -139,7 +143,7 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
         entitiesOnNextLevel.clear();
         for (auto const& entity : entitiesOnCurrentLevel) {
             entityToLevel[entity] = currentLevel;
-            copyAllDependentNodes(entity, entitiesOnNextLevel);
+            copyAllDependentNodes(commonParentEntity, entitiesVisitHistory, entity, entitiesOnNextLevel);
         }
 
         currentLevel += 1;
@@ -151,6 +155,7 @@ std::unordered_map<LakosEntity *, int> computeLevelForEntities(std::vector<Lakos
         entityToLevel[entity] = currentLevel;
     }
 
+    std::cout << "Finished" << std::endl;
     return entityToLevel;
 }
 

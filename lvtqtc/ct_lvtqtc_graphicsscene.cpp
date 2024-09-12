@@ -1537,12 +1537,7 @@ LakosEntity *GraphicsScene::entityById(const std::string& uniqueId) const
 
 LakosEntity *GraphicsScene::entityByQualifiedName(const std::string& qualName) const
 {
-    const bool showDebug = Preferences::enableDebugOutput();
-
     if (d->verticesVec.empty()) {
-        if (showDebug) {
-            qDebug() << "There are no entities on the vector";
-        }
         return nullptr;
     }
 
@@ -1550,13 +1545,6 @@ LakosEntity *GraphicsScene::entityByQualifiedName(const std::string& qualName) c
         return entity->qualifiedName() == qualName;
     });
     if (findIt == std::cend(d->verticesVec)) {
-        if (showDebug) {
-            qDebug() << "Could not find " << QString::fromStdString(qualName);
-            qDebug() << "Available entities:";
-            for (auto *entity : d->verticesVec) {
-                qDebug() << "> " << QString::fromStdString(entity->qualifiedName());
-            }
-        }
         return nullptr;
     }
 
@@ -1564,6 +1552,8 @@ LakosEntity *GraphicsScene::entityByQualifiedName(const std::string& qualName) c
 }
 void GraphicsScene::loadEntitiesByQualifiedNameList(const QStringList& qualifiedNameList, const QPointF& pos)
 {
+    QElapsedTimer timer;
+    timer.start();
     if (qualifiedNameList.isEmpty()) {
         return;
     }
@@ -1572,6 +1562,7 @@ void GraphicsScene::loadEntitiesByQualifiedNameList(const QStringList& qualified
     }
     d->transitiveReductionAlg->reset();
     searchTransitiveRelations();
+    std::cout << "Loading entities took" << timer.elapsed() << std::endl;
 }
 
 LakosEntity *GraphicsScene::loadEntityByQualifiedName(const QString& qualifiedName, const QPointF& pos)

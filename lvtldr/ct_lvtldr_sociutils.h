@@ -659,33 +659,31 @@ class SociDatabaseHandler : public DatabaseHandler {
         RecordNumberType maybeSourceRepositoryId = 0;
 
         T currentValue{};
+        soci::statement main_st = (d_db.prepare << "select id, version, parent_id, source_repository_id, name, "
+                                                   "qualified_name from source_package where "
+                                           + uniqueKeyColumnName + " = :k",
+                                   soci::into(dao.id),
+                                   soci::into(dao.version),
+                                   soci::into(maybeParentId, parentIdIndicator),
+                                   soci::into(maybeSourceRepositoryId, sourceRepositoryIdIndicator),
+                                   soci::into(dao.name),
+                                   soci::into(dao.qualifiedName),
+                                   soci::use(currentValue));
 
-        soci::statement main_st =
-            (d_db.prepare << "select * from source_package where " + uniqueKeyColumnName + " = :k",
-             soci::into(dao.id),
-             soci::into(dao.version),
-             soci::into(maybeParentId, parentIdIndicator),
-             soci::into(maybeSourceRepositoryId, sourceRepositoryIdIndicator),
-             soci::into(dao.name),
-             soci::into(dao.qualifiedName),
-             soci::use(currentValue));
-
-        RecordNumberType children_id;
-        RecordNumberType component_id;
-        RecordNumberType target_id;
-        RecordNumberType source_id;
+        constexpr int result_ids_size = 512;
+        std::vector<RecordNumberType> result_ids(result_ids_size);
 
         soci::statement st_children_ids = (d_db.prepare << "select id from source_package where parent_id = :k",
-                                           soci::into(children_id),
+                                           soci::into(result_ids),
                                            soci::use(dao.id));
         soci::statement st_component_ids = (d_db.prepare << "select id from source_component where package_id = :k",
-                                            soci::into(component_id),
+                                            soci::into(result_ids),
                                             soci::use(dao.id));
         soci::statement st_target_ids = (d_db.prepare << "select target_id from dependencies where source_id = :k",
-                                         soci::into(target_id),
+                                         soci::into(result_ids),
                                          soci::use(dao.id));
         soci::statement st_source_ids = (d_db.prepare << "select source_id from dependencies where target_id = :k",
-                                         soci::into(source_id),
+                                         soci::into(result_ids),
                                          soci::use(dao.id));
 
         for (const T& value : keyValues) {
@@ -704,22 +702,36 @@ class SociDatabaseHandler : public DatabaseHandler {
                 dao.sourceRepositoryId = std::nullopt;
             }
 
+            result_ids.resize(result_ids_size);
             st_children_ids.execute(true);
             while (st_children_ids.fetch()) {
-                dao.childPackagesIds.emplace_back(children_id);
-            }
-            st_component_ids.execute(true);
-            while (st_component_ids.fetch()) {
-                dao.childComponentsIds.emplace_back(component_id);
-            }
-            st_target_ids.execute(true);
-            while (st_target_ids.fetch()) {
-                dao.providerIds.emplace_back(target_id);
+                dao.childPackagesIds.insert(std::end(dao.childPackagesIds),
+                                            std::begin(result_ids),
+                                            std::end(result_ids));
+                result_ids.resize(result_ids_size);
             }
 
+            result_ids.resize(result_ids_size);
+            st_component_ids.execute(true);
+            while (st_component_ids.fetch()) {
+                dao.childComponentsIds.insert(std::end(dao.childComponentsIds),
+                                              std::begin(result_ids),
+                                              std::end(result_ids));
+                result_ids.resize(result_ids_size);
+            }
+
+            result_ids.resize(result_ids_size);
+            st_target_ids.execute(true);
+            while (st_target_ids.fetch()) {
+                dao.providerIds.insert(std::end(dao.providerIds), std::begin(result_ids), std::end(result_ids));
+                result_ids.resize(result_ids_size);
+            }
+
+            result_ids.resize(result_ids_size);
             st_source_ids.execute(true);
             while (st_source_ids.fetch()) {
-                dao.clientIds.emplace_back(source_id);
+                dao.clientIds.insert(std::end(dao.clientIds), std::begin(result_ids), std::end(result_ids));
+                result_ids.resize(result_ids_size);
             }
 
             daos.push_back(dao);

@@ -675,6 +675,7 @@ cpp::result<void, ErrorReparentEntity> NodeStorage::reparentEntity(LakosianNode 
 std::vector<LakosianNode *> NodeStorage::findPackageByIds(std::vector<RecordNumberType> ids)
 {
     std::vector<LakosianNode *> ret;
+    ret.reserve(ids.size());
 
     // Search for the node on cache
     auto new_end = std::remove_if(std::begin(ids), std::end(ids), [this, &ret](auto id) {
@@ -690,6 +691,29 @@ std::vector<LakosianNode *> NodeStorage::findPackageByIds(std::vector<RecordNumb
 
     ids.erase(new_end, std::end(ids));
     std::vector<LakosianNode *> rest = fetchPackageFromDbByIds(ids);
+
+    ret.insert(std::end(ret), std::begin(rest), std::end(rest));
+    return ret;
+}
+std::vector<LakosianNode *> NodeStorage::findComponentsByIds(std::vector<PackageNodeFields::RecordNumberType> ids)
+{
+    std::vector<LakosianNode *> ret;
+    ret.reserve(ids.size());
+
+    // Search for the node on cache
+    auto new_end = std::remove_if(std::begin(ids), std::end(ids), [this, &ret](auto id) {
+        UniqueId ourId(DiagramType::ComponentType, id);
+        auto ourIt = d->nodes.find(ourId);
+        if (ourIt == d->nodes.end()) {
+            return false;
+        }
+
+        ret.push_back(ourIt->second.get());
+        return true;
+    });
+
+    ids.erase(new_end, std::end(ids));
+    std::vector<LakosianNode *> rest = fetchComponentsFromDbByIds(ids);
 
     ret.insert(std::end(ret), std::begin(rest), std::end(rest));
     return ret;
@@ -892,11 +916,12 @@ LakosianNode *NodeStorage::fetchFromDBById(const Codethink::lvtshr::UniqueId& ui
 std::vector<LakosianNode *> NodeStorage::fetchPackageFromDbByIds(std::vector<RecordNumberType> uids)
 {
     const auto daos = d->dbHandler->getPackageFieldsByIds(uids);
-    std::vector<LakosianNode *> ret;
-    ret.reserve(uids.size());
     if (daos.empty()) {
         return {};
     }
+
+    std::vector<LakosianNode *> ret;
+    ret.reserve(uids.size());
 
     for (auto dao : daos) {
         auto [it, _] = d->nodes.emplace(UniqueId{DiagramType::PackageType, dao.id},
@@ -904,6 +929,29 @@ std::vector<LakosianNode *> NodeStorage::fetchPackageFromDbByIds(std::vector<Rec
         auto *lakosianNode = it->second.get();
         connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
             updateAndNotifyNodeRename<lvtldr::PackageNode>(node);
+        });
+        ret.push_back(lakosianNode);
+    }
+
+    return ret;
+}
+
+std::vector<LakosianNode *> NodeStorage::fetchComponentsFromDbByIds(std::vector<RecordNumberType> uids)
+{
+    const auto daos = d->dbHandler->getComponentFieldsByIds(uids);
+    if (daos.empty()) {
+        return {};
+    }
+
+    std::vector<LakosianNode *> ret;
+    ret.reserve(uids.size());
+
+    for (auto dao : daos) {
+        auto [it, _] = d->nodes.emplace(UniqueId{DiagramType::ComponentType, dao.id},
+                                        std::make_unique<ComponentNode>(*this, *d->dbHandler, dao));
+        auto *lakosianNode = it->second.get();
+        connect(lakosianNode, &LakosianNode::onNameChanged, this, [this](LakosianNode *node) {
+            updateAndNotifyNodeRename<lvtldr::ComponentNode>(node);
         });
         ret.push_back(lakosianNode);
     }

@@ -66,6 +66,7 @@ class DatabaseHandler {
     virtual void addFields(ComponentNodeFields& dao) = 0;
     virtual ComponentNodeFields getComponentFieldsByQualifiedName(std::string const& qualifiedName) = 0;
     virtual ComponentNodeFields getComponentFieldsById(RecordNumberType id) = 0;
+    virtual std::vector<ComponentNodeFields> getComponentFieldsByIds(const std::vector<RecordNumberType>& ids) = 0;
     virtual void updateFields(ComponentNodeFields const& dao) = 0;
     virtual void removeComponentFieldsById(RecordNumberType id) = 0;
 

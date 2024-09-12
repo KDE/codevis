@@ -325,15 +325,12 @@ void PackageNode::loadChildren()
     d->children.reserve(pkgChildrenIds.size() + compChildrenIds.size());
     d->innerPackages.reserve(pkgChildrenIds.size());
 
-    const std::vector<LakosianNode *> children = d->store.findPackageByIds(pkgChildrenIds);
+    std::vector<LakosianNode *> children = d->store.findPackageByIds(pkgChildrenIds);
     d->children.insert(std::end(d->children), std::begin(children), std::end(children));
     d->innerPackages.insert(std::end(d->innerPackages), std::begin(children), std::end(children));
 
-    for (auto& id : compChildrenIds) {
-        LakosianNode *node = d->store.findById({DiagramType::ComponentType, id});
-        assert(node);
-        d->children.push_back(node);
-    }
+    children = d->store.findComponentsByIds(compChildrenIds);
+    d->children.insert(std::end(d->children), std::begin(children), std::end(children));
 }
 
 void PackageNode::loadProviders()

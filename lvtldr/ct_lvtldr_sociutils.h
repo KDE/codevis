@@ -215,6 +215,11 @@ class SociDatabaseHandler : public DatabaseHandler {
         return getComponentFields("qualified_name", qualifiedName);
     }
 
+    std::vector<ComponentNodeFields> getComponentFieldsByIds(const std::vector<RecordNumberType>& ids) override
+    {
+        return getComponentsFields("id", ids);
+    }
+
     ComponentNodeFields getComponentFieldsById(RecordNumberType id) override
     {
         return getComponentFields("id", id);
@@ -590,6 +595,110 @@ class SociDatabaseHandler : public DatabaseHandler {
         }
 
         return dao;
+    }
+
+    template<typename T>
+    std::vector<ComponentNodeFields> getComponentsFields(std::string const& uniqueKeyColumnName,
+                                                         const std::vector<T>& keyValue)
+    {
+        std::vector<ComponentNodeFields> daos;
+        ComponentNodeFields dao;
+        soci::indicator parentIdIndicator = soci::indicator::i_null;
+        RecordNumberType maybeParentId = 0;
+        RecordNumberType currentValue = 0;
+
+        soci::statement main_st =
+            (d_db.prepare << "select * from source_component where " + uniqueKeyColumnName + " = :k",
+             soci::into(dao.id),
+             soci::into(dao.version),
+             soci::into(dao.qualifiedName),
+             soci::into(dao.name),
+             soci::into(maybeParentId, parentIdIndicator),
+             soci::use(currentValue));
+
+        // All queries below will be dumped on the same vector.
+        constexpr int result_ids_size = 512;
+        std::vector<RecordNumberType> result_set(result_ids_size);
+        // Can't use result_set for functions since I need to iterate the result_set while
+        // fetching for source files while requestion the functions from it.
+        std::vector<RecordNumberType> function_result_set(result_ids_size);
+
+        soci::statement providers_st = (d_db.prepare << "select target_id from component_relation where source_id = :k",
+                                        soci::use(dao.id),
+                                        soci::into(result_set));
+        soci::statement clients_st = (d_db.prepare << "select source_id from component_relation where target_id = :k",
+                                      soci::use(dao.id),
+                                      soci::into(result_set));
+        soci::statement udt_st = (d_db.prepare << "select udt_id from udt_component where component_id = :k",
+                                  soci::use(dao.id),
+                                  soci::into(result_set));
+        soci::statement source_file_st = (d_db.prepare << "select id from source_file where component_id = :k",
+                                          soci::use(dao.id),
+                                          soci::into(result_set));
+
+        RecordNumberType source_file_id;
+        std::optional<soci::statement> function_st =
+            [this, &function_result_set, &source_file_id]() -> std::optional<soci::statement> {
+            try {
+                return (d_db.prepare << "select function_id from global_function_source_file where source_file_id = :k",
+                        soci::use(source_file_id),
+                        soci::into(function_result_set));
+            } catch (...) {
+                return std::nullopt;
+            }
+        }();
+
+        for (T val : keyValue) {
+            currentValue = val;
+            main_st.execute(true);
+            std::cout << "Read component named " << dao.name << " from key value " << val << std::endl;
+
+            if (parentIdIndicator == soci::indicator::i_ok) {
+                dao.packageId = maybeParentId;
+            } else {
+                dao.packageId = std::nullopt;
+            }
+
+            result_set.resize(result_ids_size);
+            providers_st.execute(true);
+            while (providers_st.fetch()) {
+                dao.providerIds.insert(std::end(dao.providerIds), std::begin(result_set), std::end(result_set));
+                result_set.resize(result_ids_size);
+            }
+
+            result_set.resize(result_ids_size);
+            clients_st.execute(true);
+            while (clients_st.fetch()) {
+                dao.clientIds.insert(std::end(dao.clientIds), std::begin(result_set), std::end(result_set));
+                result_set.resize(result_ids_size);
+            }
+
+            result_set.resize(result_ids_size);
+            udt_st.execute(true);
+            while (udt_st.fetch()) {
+                dao.childUdtIds.insert(std::end(dao.childUdtIds), std::begin(result_set), std::end(result_set));
+                result_set.resize(result_ids_size);
+            }
+
+            if (function_st) {
+                result_set.resize(result_ids_size);
+                source_file_st.execute(true);
+                while (source_file_st.fetch()) {
+                    for (RecordNumberType i : result_set) {
+                        source_file_id = i;
+                        function_result_set.resize(result_ids_size);
+                        function_st.value().execute(true);
+                        dao.childGlobalFunctionIds.insert(std::end(dao.childGlobalFunctionIds),
+                                                          std::begin(function_result_set),
+                                                          std::end(function_result_set));
+                    }
+                    result_set.resize(result_ids_size);
+                }
+            }
+
+            daos.push_back(dao);
+        }
+        return daos;
     }
 
     template<typename T>

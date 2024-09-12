@@ -602,6 +602,8 @@ class SociDatabaseHandler : public DatabaseHandler {
                                                          const std::vector<T>& keyValue)
     {
         std::vector<ComponentNodeFields> daos;
+        daos.reserve(keyValue.size());
+
         ComponentNodeFields dao;
         soci::indicator parentIdIndicator = soci::indicator::i_null;
         RecordNumberType maybeParentId = 0;
@@ -761,6 +763,8 @@ class SociDatabaseHandler : public DatabaseHandler {
                                                     std::vector<T> const& keyValues)
     {
         std::vector<PackageNodeFields> daos;
+        daos.reserve(keyValues.size());
+
         PackageNodeFields dao;
         soci::indicator parentIdIndicator = soci::indicator::i_null;
         RecordNumberType maybeParentId = 0;

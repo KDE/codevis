@@ -893,6 +893,7 @@ std::vector<LakosianNode *> NodeStorage::fetchPackageFromDbByIds(std::vector<Rec
 {
     const auto daos = d->dbHandler->getPackageFieldsByIds(uids);
     std::vector<LakosianNode *> ret;
+    ret.reserve(uids.size());
     if (daos.empty()) {
         return {};
     }

@@ -597,6 +597,19 @@ class SociDatabaseHandler : public DatabaseHandler {
         return dao;
     }
 
+    inline void run_soci_query(int result_vec_size,
+                               std::vector<RecordNumberType>& result_vec,
+                               std::vector<RecordNumberType> final_vec,
+                               soci::statement& prepared_st)
+    {
+        result_vec.resize(result_vec_size);
+        prepared_st.execute(true);
+        while (prepared_st.fetch()) {
+            final_vec.insert(std::end(final_vec), std::begin(result_vec), std::end(result_vec));
+            result_vec.resize(result_vec_size);
+        }
+    }
+
     template<typename T>
     std::vector<ComponentNodeFields> getComponentsFields(std::string const& uniqueKeyColumnName,
                                                          const std::vector<T>& keyValue)
@@ -653,7 +666,6 @@ class SociDatabaseHandler : public DatabaseHandler {
         for (T val : keyValue) {
             currentValue = val;
             main_st.execute(true);
-            std::cout << "Read component named " << dao.name << " from key value " << val << std::endl;
 
             if (parentIdIndicator == soci::indicator::i_ok) {
                 dao.packageId = maybeParentId;
@@ -661,26 +673,9 @@ class SociDatabaseHandler : public DatabaseHandler {
                 dao.packageId = std::nullopt;
             }
 
-            result_set.resize(result_ids_size);
-            providers_st.execute(true);
-            while (providers_st.fetch()) {
-                dao.providerIds.insert(std::end(dao.providerIds), std::begin(result_set), std::end(result_set));
-                result_set.resize(result_ids_size);
-            }
-
-            result_set.resize(result_ids_size);
-            clients_st.execute(true);
-            while (clients_st.fetch()) {
-                dao.clientIds.insert(std::end(dao.clientIds), std::begin(result_set), std::end(result_set));
-                result_set.resize(result_ids_size);
-            }
-
-            result_set.resize(result_ids_size);
-            udt_st.execute(true);
-            while (udt_st.fetch()) {
-                dao.childUdtIds.insert(std::end(dao.childUdtIds), std::begin(result_set), std::end(result_set));
-                result_set.resize(result_ids_size);
-            }
+            run_soci_query(result_ids_size, result_set, dao.providerIds, providers_st);
+            run_soci_query(result_ids_size, result_set, dao.clientIds, clients_st);
+            run_soci_query(result_ids_size, result_set, dao.childUdtIds, udt_st);
 
             if (function_st) {
                 result_set.resize(result_ids_size);
@@ -688,11 +683,10 @@ class SociDatabaseHandler : public DatabaseHandler {
                 while (source_file_st.fetch()) {
                     for (RecordNumberType i : result_set) {
                         source_file_id = i;
-                        function_result_set.resize(result_ids_size);
-                        function_st.value().execute(true);
-                        dao.childGlobalFunctionIds.insert(std::end(dao.childGlobalFunctionIds),
-                                                          std::begin(function_result_set),
-                                                          std::end(function_result_set));
+                        run_soci_query(result_ids_size,
+                                       function_result_set,
+                                       dao.childGlobalFunctionIds,
+                                       function_st.value());
                     }
                     result_set.resize(result_ids_size);
                 }

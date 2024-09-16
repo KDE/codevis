@@ -795,7 +795,7 @@ class SociDatabaseHandler : public DatabaseHandler {
 
     virtual std::vector<RecordNumberType> getPackageClientsById(RecordNumberType id) override
     {
-        std::string query = "select source_id from dependencies where target_id = :k" + std::to_string(id);
+        std::string query = "select source_id from dependencies where target_id = " + std::to_string(id);
         return getNumericVectorFromDb(query);
     }
 

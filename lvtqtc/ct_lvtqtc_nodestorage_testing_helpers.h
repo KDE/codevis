@@ -20,6 +20,7 @@
 #ifndef INCLUDED_CT_LVTQTC_NS_TESTING_HELPERS_H
 #define INCLUDED_CT_LVTQTC_NS_TESTING_HELPERS_H
 
+#include <ct_lvtldr_lakosiannode.h>
 #include <ct_lvtldr_nodestorage.h>
 #include <ct_lvtqtc_componententity.h>
 #include <ct_lvtqtc_packagedependency.h>
@@ -48,11 +49,14 @@ struct ScopedPackageEntity {
     ~ScopedPackageEntity()
     {
         auto *internalNode = d_value->internalNode();
+        std::cout << "Trying to remove " << internalNode << " with nane " << d_value->internalNode()->name()
+                  << std::endl;
         d_value.reset();
         auto result = d_ns.removePackage(internalNode);
         if (result.has_error()) {
             FAIL("Error removing package: code " + std::to_string(static_cast<int>(result.error().kind)));
         }
+        std::cout << "Package removed successfully" << std::endl;
     }
 
     inline Codethink::lvtqtc::PackageEntity& value()
@@ -114,6 +118,9 @@ struct ScopedPackageDependency {
 
     ~ScopedPackageDependency()
     {
+        std::cout << "Removing dependency from " << d_value->from()->internalNode()->name() << " to "
+                  << d_value->to()->internalNode()->name() << std::endl;
+
         d_ns.removePhysicalDependency(d_value->from()->internalNode(), d_value->to()->internalNode())
             .expect("Unexpected error removing physical dependency");
     }

@@ -41,7 +41,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edge From Classes")
     clickOn(Menubar::File::NewProject{});
 
     clickOn(Sidebar::ManipulationTool::NewPackage{"abc"});
-    clickOn(CurrentGraph{0, 0});
+    clickOn(CurrentGraph{-200, 0});
     QTest::qWait(100);
 
     auto point = findElementTopLeftPosition("abc");
@@ -62,7 +62,7 @@ TEST_CASE_METHOD(CodeVisApplicationTestFixture, "Auto Add Edge From Classes")
     QTest::qWait(100);
 
     clickOn(Sidebar::ManipulationTool::NewPackage{"def"});
-    clickOn(CurrentGraph{500, 400});
+    clickOn(CurrentGraph{600, 400});
     QTest::qWait(100);
 
     point = findElementTopLeftPosition("def");

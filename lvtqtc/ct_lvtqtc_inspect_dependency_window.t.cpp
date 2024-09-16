@@ -57,13 +57,34 @@ TEST_CASE_METHOD(QTApplicationFixture, "Basic workflow")
 
     auto projectFile = ProjectFileForTesting{};
 
-    auto parent = ScopedPackageEntity(ns, "pkggrp");
-    auto source = ScopedPackageEntity(ns, "pkgA", parent.value());
-    auto componentA = ScopedComponentEntity(ns, "componentA", source.value());
-    auto target = ScopedPackageEntity(ns, "pkgB", parent.value());
-    auto componentB = ScopedComponentEntity(ns, "componentB", target.value());
-    auto dep = ScopedPackageDependency(ns, source.value(), target.value());
-    auto compDep = ScopedPackageDependency(ns, componentA.value(), componentB.value());
+    {
+        auto parent = ScopedPackageEntity(ns, "pkggrp");
+        {
+            auto source = ScopedPackageEntity(ns, "pkgA", parent.value());
+            {
+                auto componentA = ScopedComponentEntity(ns, "componentA", source.value());
+                {
+                    auto target = ScopedPackageEntity(ns, "pkgB", parent.value());
+                    {
+                        auto componentB = ScopedComponentEntity(ns, "componentB", target.value());
+                        {
+                            auto dep = ScopedPackageDependency(ns, source.value(), target.value());
+                            {
+                                auto compDep = ScopedPackageDependency(ns, componentA.value(), componentB.value());
+                            }
+                            std::cout << "scoped dependency 2 removed" << std::endl;
+                        }
+                        std::cout << "scoped dependency 1 removed" << std::endl;
+                    }
+                    std::cout << "component B removed" << std::endl;
+                }
+                std::cout << "pkg B removed" << std::endl;
+            }
+            std::cout << "component A removed" << std::endl;
+        }
+        std::cout << "pkg A removed" << std::endl;
+    }
+    std::cout << "pkggrp removed." << std::endl;
 
     //    auto window = InspectDependencyWindowForTesting{projectFile, dep.value()};
     //    window.show();

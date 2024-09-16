@@ -74,6 +74,8 @@ class LVTLDR_EXPORT PackageNode : public LakosianNode {
     void invalidateChildren() override
     {
         LakosianNode::invalidateChildren();
+        d_fields.childrenIdsLoaded = false;
+        d_fields_loaded = false;
         d->innerPackages.clear();
     }
 

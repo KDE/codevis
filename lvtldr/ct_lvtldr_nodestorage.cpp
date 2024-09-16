@@ -154,26 +154,37 @@ cpp::result<void, ErrorRemoveEntity> NodeStorage::removePackage(LakosianNode *no
     using Kind = ErrorRemoveEntity::Kind;
 
     if (!node->providers().empty()) {
+        std::cout << "Providers not empty" << std::endl;
         return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithProviders});
     }
     if (!node->clients().empty()) {
+        std::cout << "Clients not empty" << std::endl;
         return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithClients});
     }
     if (!node->children().empty()) {
+        std::cout << "Children not empty" << std::endl;
         return cpp::fail(ErrorRemoveEntity{Kind::CannotRemoveWithChildren});
     }
 
     if (node->parent()) {
+        std::cout << "Invalidating Parent" << std::endl;
+
         dynamic_cast<PackageNode *>(node->parent())->removeChildPackage(dynamic_cast<PackageNode *>(node));
         node->parent()->invalidateChildren();
     }
 
+    std::cout << "Removing the package from the database" << std::endl;
     // we know that this package has nothing, so it's safe to delete.
     // we may need to provide a better algorithm in the future.
     d->dbHandler->removePackageFieldsById(node->id());
 
+    std::cout << "Emiting nodeRemoved" << std::endl;
     Q_EMIT nodeRemoved(node);
+
+    std::cout << "Erasing node from the memory storage" << std::endl;
     d->nodes.erase(node->uid());
+
+    std::cout << "Emitting store changed" << std::endl;
     Q_EMIT storageChanged();
     return {};
 }

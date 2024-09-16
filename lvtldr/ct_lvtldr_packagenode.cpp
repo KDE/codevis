@@ -409,8 +409,12 @@ void PackageNode::loadClients()
     if (d->clientsLoaded) {
         return;
     }
+
     loadFields();
+    loadChildrenIds();
+
     d_fields.clientIds = d_dbHandler->get().getPackageClientsById(d_fields.id);
+    std::cout << "Got " << d_fields.clientIds.size() << "cllients" << std::endl;
     d->clientsLoaded = true;
 
     if (d_fields.parentId) {

@@ -115,6 +115,11 @@ void TypeNode::loadParent()
     d->parent = d->store.findById({DiagramType::ComponentType, firstComponent});
 }
 
+void TypeNode::loadChildrenIds()
+{
+    // IMPLEMENT ME
+}
+
 void TypeNode::loadChildren()
 {
     if (d->childrenLoaded) {

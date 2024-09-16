@@ -45,6 +45,7 @@ class LVTLDR_EXPORT TypeNode : public LakosianNode {
 
     // MODIFIERS
     void loadParent() override;
+    void loadChildrenIds() override;
     void loadChildren() override;
     void loadProviders() override;
     void loadClients() override;

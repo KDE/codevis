@@ -38,6 +38,8 @@ struct PackageNodeFields {
     std::string name;
     std::string qualifiedName;
     std::string diskPath;
+
+    bool childrenIdsLoaded = false;
     std::vector<RecordNumberType> childPackagesIds;
     std::vector<RecordNumberType> childComponentsIds;
     std::vector<RecordNumberType> providerIds;

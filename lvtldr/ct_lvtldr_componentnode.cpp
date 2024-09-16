@@ -141,6 +141,11 @@ void ComponentNode::loadParent()
     d->parent = d->store.findById({DiagramType::PackageType, *d_fields.packageId});
 }
 
+void ComponentNode::loadChildrenIds()
+{
+    // TODO: Implement me.
+}
+
 void ComponentNode::loadChildren()
 {
     if (d->childrenLoaded) {

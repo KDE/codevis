@@ -84,6 +84,11 @@ void RepositoryNode::loadParent()
     d->parent = nullptr;
 }
 
+void RepositoryNode::loadChildrenIds()
+{
+    // TODO: IMPLEMENT ME
+}
+
 void RepositoryNode::loadChildren()
 {
     if (d->childrenLoaded) {

@@ -43,6 +43,7 @@ class LVTLDR_EXPORT PackageNode : public LakosianNode {
   protected:
     // MODIFIERS
     void loadParent() override;
+    void loadChildrenIds() override;
     void loadChildren() override;
     void loadProviders() override;
     void loadClients() override;

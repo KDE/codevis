@@ -110,7 +110,7 @@ class LVTLDR_EXPORT LakosianNode : public QObject {
     // MODIFIERS
     virtual void loadParent() = 0;
     // Load the parent (if any) of this node
-
+    virtual void loadChildrenIds() = 0;
     virtual void loadChildren() = 0;
     // Load the children (if any) of this node
 

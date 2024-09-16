@@ -306,17 +306,26 @@ void PackageNode::loadParent()
     }
 }
 
+void PackageNode::loadChildrenIds()
+{
+    if (d_fields.childrenIdsLoaded) {
+        return;
+    }
+
+    d_fields.childPackagesIds = d_dbHandler->get().getPackageChildById(d_fields.id);
+    d_fields.childComponentsIds = d_dbHandler->get().getPackageComponentsById(d_fields.id);
+    d_fields.childrenIdsLoaded = true;
+}
+
 void PackageNode::loadChildren()
 {
     if (d->childrenLoaded) {
         return;
     }
+    loadChildrenIds();
+
     QElapsedTimer timer;
     timer.start();
-
-    d_fields = d_dbHandler->get().getPackageFieldsById(d_fields.id);
-
-    d->childrenLoaded = true;
 
     const auto& pkgChildrenIds = d_fields.childPackagesIds;
     const auto& compChildrenIds = d_fields.childComponentsIds;
@@ -331,6 +340,8 @@ void PackageNode::loadChildren()
 
     children = d->store.findComponentsByIds(compChildrenIds);
     d->children.insert(std::end(d->children), std::begin(children), std::end(children));
+
+    d->childrenLoaded = true;
 }
 
 void PackageNode::loadProviders()

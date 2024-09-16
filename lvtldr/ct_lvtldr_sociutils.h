@@ -752,6 +752,44 @@ class SociDatabaseHandler : public DatabaseHandler {
         return dao;
     }
 
+    std::vector<RecordNumberType> getPackageChildById(RecordNumberType id) override
+    {
+        constexpr int result_ids_size = 512;
+        std::vector<RecordNumberType> result_ids(result_ids_size);
+        std::vector<RecordNumberType> res;
+
+        soci::statement st = (d_db.prepare << "select id from source_package where parent_id = :k",
+                              soci::into(result_ids),
+                              soci::use(id));
+
+        result_ids.resize(result_ids_size);
+        st.execute(true);
+        while (st.fetch()) {
+            res.insert(std::end(res), std::begin(result_ids), std::end(result_ids));
+            result_ids.resize(result_ids_size);
+        }
+        return res;
+    }
+
+    std::vector<RecordNumberType> getPackageComponentsById(RecordNumberType id) override
+    {
+        constexpr int result_ids_size = 512;
+        std::vector<RecordNumberType> result_ids(result_ids_size);
+        std::vector<RecordNumberType> res;
+
+        soci::statement st = (d_db.prepare << "select id from source_component where package_id = :k",
+                              soci::into(result_ids),
+                              soci::use(id));
+
+        result_ids.resize(result_ids_size);
+        st.execute(true);
+        while (st.fetch()) {
+            res.insert(std::end(res), std::begin(result_ids), std::end(result_ids));
+            result_ids.resize(result_ids_size);
+        }
+        return res;
+    }
+
     template<typename T>
     std::vector<PackageNodeFields> getPackageFields(std::string const& uniqueKeyColumnName,
                                                     std::vector<T> const& keyValues)

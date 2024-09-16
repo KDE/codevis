@@ -59,6 +59,10 @@ class LVTLDR_EXPORT FreeFunctionNode : public LakosianNode {
 
     // MODIFIERS
     void loadParent() override;
+    void loadChildrenIds() override
+    {
+        // NOOP.
+    }
 
     void loadChildren() override
     {

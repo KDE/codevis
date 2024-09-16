@@ -23,6 +23,8 @@
 #include <ct_lvtldr_packagenode.h>
 #include <ct_lvtmdl_modelhelpers.h>
 
+#include <iostream>
+
 namespace Codethink::lvtmdl {
 
 using namespace Codethink::lvtldr;
@@ -194,6 +196,7 @@ void ModelUtil::populateTreeItemChildren(lvtldr::LakosianNode& node,
                                          QStandardItem& item,
                                          std::optional<ShouldPopulateChildren_f> const& shouldPopulateChildren)
 {
+    std::cout << "Starting to populate the children's node" << std::endl;
     std::vector<LakosianNode *> children = node.children();
     if (children.empty()) {
         item.setData(false, ModelRoles::e_IsBranch);

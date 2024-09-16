@@ -309,19 +309,25 @@ void PackageNode::loadParent()
 void PackageNode::loadChildrenIds()
 {
     if (d_fields.childrenIdsLoaded) {
+        std::cout << "Children ID's Alreayd Loaded" << std::endl;
         return;
     }
 
+    std::cout << "Loading Children ID's" << std::endl;
     d_fields.childPackagesIds = d_dbHandler->get().getPackageChildById(d_fields.id);
     d_fields.childComponentsIds = d_dbHandler->get().getPackageComponentsById(d_fields.id);
+    std::cout << "We got " << d_fields.childPackagesIds.size() << " packages and " << d_fields.childComponentsIds.size()
+              << " components" << std::endl;
     d_fields.childrenIdsLoaded = true;
 }
 
 void PackageNode::loadChildren()
 {
     if (d->childrenLoaded) {
+        std::cout << "Children is already loaded" << std::endl;
         return;
     }
+    loadFields();
     loadChildrenIds();
 
     QElapsedTimer timer;
@@ -344,12 +350,27 @@ void PackageNode::loadChildren()
     d->childrenLoaded = true;
 }
 
+void PackageNode::loadFields()
+{
+    if (d_fields_loaded) {
+        std::cout << "Fields are already loadded" << std::endl;
+        return;
+    }
+
+    // TODO: Verify if this is indeed needed.
+    d_fields = d_dbHandler->get().getPackageFieldsById(d_fields.id);
+    d_fields_loaded = true;
+}
+
 void PackageNode::loadProviders()
 {
     if (d->providersLoaded) {
         return;
     }
-    d_fields = d_dbHandler->get().getPackageFieldsById(d_fields.id);
+    // Only load things once, no harm calling multiple times.
+    loadFields();
+
+    d_fields.providerIds = d_dbHandler->get().getPackageProvidersById(d_fields.id);
     d->providersLoaded = true;
 
     if (d_fields.parentId) {
@@ -366,6 +387,7 @@ void PackageNode::loadProviders()
             d->providers.emplace_back(LakosianEdge{lvtshr::PackageDependency, provider});
         }
 
+        loadChildrenIds();
         const std::vector<LakosianNode *> children = d->store.findPackageByIds(d_fields.childPackagesIds);
         for (auto *child : children) {
             for (auto&& edge : child->providers()) {
@@ -387,8 +409,8 @@ void PackageNode::loadClients()
     if (d->clientsLoaded) {
         return;
     }
-
-    d_fields = d_dbHandler->get().getPackageFieldsById(d_fields.id);
+    loadFields();
+    d_fields.clientIds = d_dbHandler->get().getPackageClientsById(d_fields.id);
     d->clientsLoaded = true;
 
     if (d_fields.parentId) {

@@ -37,11 +37,14 @@ class LVTLDR_EXPORT PackageNode : public LakosianNode {
     // DATA
     // TODO: Decide if optional should be removed after refactoring is done.
     std::optional<std::reference_wrapper<DatabaseHandler>> d_dbHandler = std::nullopt;
+    bool d_fields_loaded = false;
     PackageNodeFields d_fields;
     std::vector<std::string> d_qualifiedNameParts;
 
   protected:
     // MODIFIERS
+    // all of those methods needs to make sure we are only loading things once.
+    void loadFields();
     void loadParent() override;
     void loadChildrenIds() override;
     void loadChildren() override;

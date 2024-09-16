@@ -73,6 +73,8 @@ class DatabaseHandler {
     virtual PackageNodeFields getPackageFieldsByQualifiedName(std::string const& qualifiedName) = 0;
     virtual std::vector<PackageNodeFields> getPackageFieldsByIds(const std::vector<RecordNumberType>& ids) = 0;
     virtual std::vector<RecordNumberType> getPackageChildById(RecordNumberType ids) = 0;
+    virtual std::vector<RecordNumberType> getPackageProvidersById(RecordNumberType ids) = 0;
+    virtual std::vector<RecordNumberType> getPackageClientsById(RecordNumberType ids) = 0;
     virtual std::vector<RecordNumberType> getPackageComponentsById(RecordNumberType ids) = 0;
 
     virtual PackageNodeFields getPackageFieldsById(RecordNumberType id) = 0;

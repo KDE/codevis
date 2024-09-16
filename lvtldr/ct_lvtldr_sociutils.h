@@ -32,6 +32,7 @@
 
 #include <QObject>
 #include <QString>
+#include <iostream>
 
 namespace {
 template<typename T>
@@ -752,42 +753,50 @@ class SociDatabaseHandler : public DatabaseHandler {
         return dao;
     }
 
-    std::vector<RecordNumberType> getPackageChildById(RecordNumberType id) override
+    std::vector<RecordNumberType> getNumericVectorFromDb(const std::string& query)
     {
+        std::cout << "Starting the query " << query << std::endl;
         constexpr int result_ids_size = 512;
         std::vector<RecordNumberType> result_ids(result_ids_size);
         std::vector<RecordNumberType> res;
 
-        soci::statement st = (d_db.prepare << "select id from source_package where parent_id = :k",
-                              soci::into(result_ids),
-                              soci::use(id));
+        soci::statement st = (d_db.prepare << query, soci::into(result_ids));
 
         result_ids.resize(result_ids_size);
-        st.execute(true);
+        st.execute();
         while (st.fetch()) {
+            std::cout << "Fetching data: " << result_ids.size() << std::endl;
             res.insert(std::end(res), std::begin(result_ids), std::end(result_ids));
             result_ids.resize(result_ids_size);
         }
+        std::cout << "Query Finished" << std::endl;
         return res;
+    }
+
+    std::vector<RecordNumberType> getPackageChildById(RecordNumberType id) override
+    {
+        std::cout << "Running code to get the package childs for id " << id << std::endl;
+        std::string query = "select id from source_package where parent_id = " + std::to_string(id);
+        return getNumericVectorFromDb(query);
     }
 
     std::vector<RecordNumberType> getPackageComponentsById(RecordNumberType id) override
     {
-        constexpr int result_ids_size = 512;
-        std::vector<RecordNumberType> result_ids(result_ids_size);
-        std::vector<RecordNumberType> res;
+        std::cout << "Running code to get the package components for id " << id << std::endl;
+        std::string query = "select id from source_component where package_id = " + std::to_string(id);
+        return getNumericVectorFromDb(query);
+    }
 
-        soci::statement st = (d_db.prepare << "select id from source_component where package_id = :k",
-                              soci::into(result_ids),
-                              soci::use(id));
+    virtual std::vector<RecordNumberType> getPackageProvidersById(RecordNumberType id) override
+    {
+        std::string query = "select target_id from dependencies where source_id = " + std::to_string(id);
+        return getNumericVectorFromDb(query);
+    }
 
-        result_ids.resize(result_ids_size);
-        st.execute(true);
-        while (st.fetch()) {
-            res.insert(std::end(res), std::begin(result_ids), std::end(result_ids));
-            result_ids.resize(result_ids_size);
-        }
-        return res;
+    virtual std::vector<RecordNumberType> getPackageClientsById(RecordNumberType id) override
+    {
+        std::string query = "select source_id from dependencies where target_id = :k" + std::to_string(id);
+        return getNumericVectorFromDb(query);
     }
 
     template<typename T>
@@ -818,15 +827,6 @@ class SociDatabaseHandler : public DatabaseHandler {
         constexpr int result_ids_size = 512;
         std::vector<RecordNumberType> result_ids(result_ids_size);
 
-        soci::statement st_children_ids = (d_db.prepare << "select id from source_package where parent_id = :k",
-                                           soci::into(result_ids),
-                                           soci::use(dao.id));
-        soci::statement st_component_ids = (d_db.prepare << "select id from source_component where package_id = :k",
-                                            soci::into(result_ids),
-                                            soci::use(dao.id));
-        soci::statement st_target_ids = (d_db.prepare << "select target_id from dependencies where source_id = :k",
-                                         soci::into(result_ids),
-                                         soci::use(dao.id));
         soci::statement st_source_ids = (d_db.prepare << "select source_id from dependencies where target_id = :k",
                                          soci::into(result_ids),
                                          soci::use(dao.id));
@@ -846,39 +846,6 @@ class SociDatabaseHandler : public DatabaseHandler {
             } else {
                 dao.sourceRepositoryId = std::nullopt;
             }
-
-            result_ids.resize(result_ids_size);
-            st_children_ids.execute(true);
-            while (st_children_ids.fetch()) {
-                dao.childPackagesIds.insert(std::end(dao.childPackagesIds),
-                                            std::begin(result_ids),
-                                            std::end(result_ids));
-                result_ids.resize(result_ids_size);
-            }
-
-            result_ids.resize(result_ids_size);
-            st_component_ids.execute(true);
-            while (st_component_ids.fetch()) {
-                dao.childComponentsIds.insert(std::end(dao.childComponentsIds),
-                                              std::begin(result_ids),
-                                              std::end(result_ids));
-                result_ids.resize(result_ids_size);
-            }
-
-            result_ids.resize(result_ids_size);
-            st_target_ids.execute(true);
-            while (st_target_ids.fetch()) {
-                dao.providerIds.insert(std::end(dao.providerIds), std::begin(result_ids), std::end(result_ids));
-                result_ids.resize(result_ids_size);
-            }
-
-            result_ids.resize(result_ids_size);
-            st_source_ids.execute(true);
-            while (st_source_ids.fetch()) {
-                dao.clientIds.insert(std::end(dao.clientIds), std::begin(result_ids), std::end(result_ids));
-                result_ids.resize(result_ids_size);
-            }
-
             daos.push_back(dao);
         }
 
@@ -888,58 +855,9 @@ class SociDatabaseHandler : public DatabaseHandler {
     template<typename T>
     PackageNodeFields getPackageFields(std::string const& uniqueKeyColumnName, T const& keyValue)
     {
-        decltype(getPackageFields(uniqueKeyColumnName, keyValue)) dao;
-        soci::indicator parentIdIndicator = soci::indicator::i_null;
-        typename std::remove_reference<decltype(dao.parentId.value())>::type maybeParentId = 0;
-        soci::indicator sourceRepositoryIdIndicator = soci::indicator::i_null;
-        typename std::remove_reference<decltype(dao.sourceRepositoryId.value())>::type maybeSourceRepositoryId = 0;
-        d_db << "select * from source_package where " + uniqueKeyColumnName + " = :k", soci::into(dao.id),
-            soci::into(dao.version), soci::into(maybeParentId, parentIdIndicator),
-            soci::into(maybeSourceRepositoryId, sourceRepositoryIdIndicator), soci::into(dao.name),
-            soci::into(dao.qualifiedName), soci::use(keyValue);
-
-        if (parentIdIndicator == soci::indicator::i_ok) {
-            dao.parentId = maybeParentId;
-        } else {
-            dao.parentId = std::nullopt;
-        }
-
-        if (sourceRepositoryIdIndicator == soci::indicator::i_ok) {
-            dao.sourceRepositoryId = maybeSourceRepositoryId;
-        } else {
-            dao.sourceRepositoryId = std::nullopt;
-        }
-
-        {
-            soci::rowset<RecordNumberType> rs =
-                (d_db.prepare << "select id from source_package where parent_id = :k", soci::use(dao.id));
-            for (auto&& i : rs) {
-                dao.childPackagesIds.emplace_back(i);
-            }
-        }
-        {
-            soci::rowset<RecordNumberType> rs =
-                (d_db.prepare << "select id from source_component where package_id = :k", soci::use(dao.id));
-            for (auto&& i : rs) {
-                dao.childComponentsIds.emplace_back(i);
-            }
-        }
-        {
-            soci::rowset<RecordNumberType> rs =
-                (d_db.prepare << "select target_id from dependencies where source_id = :k", soci::use(dao.id));
-            for (auto&& i : rs) {
-                dao.providerIds.emplace_back(i);
-            }
-        }
-        {
-            soci::rowset<RecordNumberType> rs =
-                (d_db.prepare << "select source_id from dependencies where target_id = :k", soci::use(dao.id));
-            for (auto&& i : rs) {
-                dao.clientIds.emplace_back(i);
-            }
-        }
-
-        return dao;
+        std::vector<PackageNodeFields> ourFields = getPackageFields(uniqueKeyColumnName, std::vector{keyValue});
+        assert(ourFields.size() == 1);
+        return ourFields[0];
     }
 
     template<typename T>

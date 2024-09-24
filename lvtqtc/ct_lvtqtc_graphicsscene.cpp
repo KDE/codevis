@@ -936,6 +936,13 @@ void computeLevelForEntities(std::vector<LakosEntity *> const& entities, LakosEn
         }
 
         currentLevel += 1;
+        if (entitiesOnCurrentLevel == entitiesOnNextLevel) {
+            // should never happen, but it's happening.
+            // need to spend a bit of time to understand what's wrong.
+            std::cout << "Logic error, aborting the layout algorithm" << std::endl;
+            break;
+        }
+
         entitiesOnCurrentLevel = entitiesOnNextLevel;
     }
 

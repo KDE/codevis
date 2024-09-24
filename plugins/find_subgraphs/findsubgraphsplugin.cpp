@@ -127,9 +127,6 @@ std::vector<Graph> split(Graph const& g, std::vector<int> const& components)
 
 void FindSubgraphsPlugin::lookForSubgraphs(const std::vector<Codethink::lvtqtc::LakosEntity *>& entities)
 {
-    QElapsedTimer timer;
-    timer.start();
-
     auto graph = buildBoostGraph(entities);
     auto map = map_components(graph);
 

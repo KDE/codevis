@@ -5,6 +5,8 @@
  *    SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "IGraphicsSceneManagementPlugin.h"
+#include "IMainWindowPlugin.h"
 #include <PluginManagerV2.h>
 
 #include <KPluginFactory>
@@ -12,6 +14,7 @@
 
 #include <ICodevisPlugin.h>
 #include <IGraphicsLayoutPlugin.h>
+#include <IGraphicsSceneManagementPlugin.h>
 #include <IGraphicsSceneMenuPlugin.h>
 
 #include <QDebug>
@@ -51,7 +54,7 @@ void PluginManagerV2::loadAllPlugins()
                 return false;
             }
 #endif
-            std::cout << "Found Plugin" << data.name().toStdString() << std::endl;
+            std::cout << "Found Plugin " << data.name().toStdString() << std::endl;
             return true;
         });
 
@@ -67,6 +70,14 @@ void PluginManagerV2::loadAllPlugins()
 
         if (auto *menuPlugin = dynamic_cast<IGraphicsSceneMenuPlugin *>(result.plugin)) {
             d_graphicsSceneMenuPlugins.push_back(menuPlugin);
+        }
+
+        if (auto *plugin = dynamic_cast<IGraphicsSceneManagementPlugin *>(result.plugin)) {
+            d_graphicsSceneManagementPlugins.push_back(plugin);
+        }
+
+        if (auto *plugin = dynamic_cast<IMainWindowPlugin *>(result.plugin)) {
+            d_mainWindowPlugins.push_back(plugin);
         }
 
         d_plugins.push_back(result.plugin);
@@ -86,6 +97,16 @@ const std::vector<IGraphicsLayoutPlugin *>& PluginManagerV2::graphicsLayoutPlugi
 const std::vector<IGraphicsSceneMenuPlugin *>& PluginManagerV2::graphicsSceneMenuPlugins() const
 {
     return d_graphicsSceneMenuPlugins;
+}
+
+const std::vector<IGraphicsSceneManagementPlugin *>& PluginManagerV2::graphicsSceneManagementPlugins() const
+{
+    return d_graphicsSceneManagementPlugins;
+}
+
+const std::vector<IMainWindowPlugin *>& PluginManagerV2::mainWindowPlugins() const
+{
+    return d_mainWindowPlugins;
 }
 
 } // namespace Codevis::PluginSystem

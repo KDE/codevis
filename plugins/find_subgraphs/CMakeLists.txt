@@ -1,32 +1,31 @@
+#####
 
-set(PLUGIN_NAME find_subgraphs)
+# KCoreAddons reads BUILD_SHARED_LIBS  to find out what to do.
+# we need to set it to true here.
+# I don't know why I need this.'
 
-add_library(${PLUGIN_NAME}
-    SHARED
-    plugin.cpp
+set(BUILD_SHARED_LIBS ON)
+SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+kcoreaddons_add_plugin(
+    findsubgraphs
+SOURCES
+    findsubgraphsplugin.cpp
+    subgraphtreeview.cpp
+INSTALL_NAMESPACE
+    "codevis_plugins_v2"
 )
-include_directories(${Boost_INCLUDE_DIRS})
 
-target_compile_options(${PLUGIN_NAME} PRIVATE "-fvisibility=default")
-set_property(TARGET ${PLUGIN_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(${PLUGIN_NAME} Qt${QT_MAJOR_VERSION}::Core)
-target_link_libraries(${PLUGIN_NAME} Qt${QT_MAJOR_VERSION}::Core CodevisPluginHeaders)
+target_include_directories(findsubgraphs PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
-set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
-set_target_properties(${PLUGIN_NAME} PROPERTIES OUTPUT_NAME ${PLUGIN_NAME})
+generate_export_header(findsubgraphs
+    BASE_NAME findsubgraphs
+)
 
-codevis_install_plugin(${PLUGIN_NAME})
-
-if (COMPILE_TESTS)
-    add_executable(find_subgraph_test
-    add_subgraph_test.t.cpp
-    )
-
-    target_link_libraries(find_subgraph_test
-        Qt${QT_MAJOR_VERSION}::Test
-        Catch2::Catch2
-        CodevisPluginHeaders
-        Codethink::lvttst
-    )
-    add_test(NAME find_subgraph_test COMMAND find_subgraph_test)
-endif()
+target_link_libraries(findsubgraphs
+    Qt${QT_MAJOR_VERSION}::Core
+    Codethink::PluginSystemHeaders
+    Codethink::lvtqtc
+    Codethink::lakospreferences
+)

@@ -18,6 +18,8 @@
 */
 
 #include <IGraphicsLayoutPlugin.h>
+#include <IGraphicsSceneMenuPlugin.h>
+
 #include <PluginManagerV2.h>
 #include <ct_lvtqtc_lakosentity.h>
 
@@ -1014,11 +1016,6 @@ void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosit
         pm.callHooksSetupEntityReport(getEntity, addReport);
     }
 
-    QList<QAction *> actions = actionsForMenu(scenePosition);
-    if (actions.empty()) {
-        return;
-    }
-
     {
         auto *action = menu.addAction(QString::fromStdString(name()));
         action->setToolTip(tr("Copy element name"));
@@ -1029,6 +1026,13 @@ void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosit
     }
 
     menu.addSeparator();
+    auto& pm = Codevis::PluginSystem::PluginManagerV2::self();
+    for (auto *plugin : pm.graphicsSceneMenuPlugins()) {
+        auto menus = plugin->menuActions(this);
+        for (auto *submenu : menus) {
+            menu.addMenu(submenu);
+        }
+    }
 
     if (debugMenu) {
         auto *toggleBackgroundAction = debugMenu->addAction(tr("Toggle background"));
@@ -1097,6 +1101,7 @@ void LakosEntity::populateMenu(QMenu& menu, QMenu *debugMenu, QPointF scenePosit
         });
     }
 
+    QList<QAction *> actions = actionsForMenu(scenePosition);
     for (auto *action : actions) {
         menu.addAction(action);
     }

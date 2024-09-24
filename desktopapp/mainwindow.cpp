@@ -17,7 +17,9 @@
 // limitations under the License.
 */
 
-#include "ct_lvtqtw_sqleditor.h"
+#include <IMainWindowPlugin.h>
+#include <PluginManagerV2.h>
+#include <ct_lvtqtw_sqleditor.h>
 #include <filesystem>
 #include <mainwindow.h>
 
@@ -271,6 +273,11 @@ MainWindow::MainWindow(NodeStorage& sharedNodeStorage,
     KSharedConfigPtr configPtr = KSharedConfig::openConfig();
     m_recentFilesGroup = configPtr->group(Preferences::recentFiles());
     m_recentFilesAction->loadEntries(m_recentFilesGroup);
+
+    auto& pm = Codevis::PluginSystem::PluginManagerV2::self();
+    for (auto *plugin : pm.mainWindowPlugins()) {
+        plugin->mainWindowReady(this);
+    }
 }
 
 MainWindow::~MainWindow() noexcept = default;
@@ -1129,27 +1136,38 @@ void MainWindow::changeCurrentGraphWidget(int graphTabIdx)
         d_pluginManager_p->callHooksActiveSceneChanged(getSceneName, getTree);
     }
 
+    auto& pm = Codevis::PluginSystem::PluginManagerV2::self();
+    for (auto *plugin : pm.graphicsSceneManagementPlugins()) {
+        plugin->graphicsSceneChanged(graphicsScene);
+    }
+
     addGSConnection(&GraphicsScene::graphLoadFinished, &MainWindow::updatePluginData);
 }
 
 void MainWindow::handleGraphcsSceneDestroyed()
 {
-    if (!d_pluginManager_p) {
-        return;
+    GraphicsScene *graphicsScene = qobject_cast<GraphicsScene *>(sender());
+
+    // TODO: Deprecate the old plugin system.
+    if (d_pluginManager_p) {
+        GraphicsScene *graphicsScene = qobject_cast<GraphicsScene *>(sender());
+        auto getSceneName = [&graphicsScene]() {
+            return graphicsScene->objectName().toStdString();
+        };
+
+        auto getTree = [this, graphicsScene](std::string const& id) {
+            return Codethink::lvtqtc::PluginManagerQtUtils::createPluginTreeWidgetHandler(d_pluginManager_p,
+                                                                                          id,
+                                                                                          graphicsScene);
+        };
+
+        d_pluginManager_p->callHooksSceneDestroyed(getSceneName, getTree);
     }
 
-    GraphicsScene *graphicsScene = qobject_cast<GraphicsScene *>(sender());
-    auto getSceneName = [&graphicsScene]() {
-        return graphicsScene->objectName().toStdString();
-    };
-
-    auto getTree = [this, graphicsScene](std::string const& id) {
-        return Codethink::lvtqtc::PluginManagerQtUtils::createPluginTreeWidgetHandler(d_pluginManager_p,
-                                                                                      id,
-                                                                                      graphicsScene);
-    };
-
-    d_pluginManager_p->callHooksSceneDestroyed(getSceneName, getTree);
+    auto& pm = Codevis::PluginSystem::PluginManagerV2::self();
+    for (auto *plugin : pm.graphicsSceneManagementPlugins()) {
+        plugin->graphicsSceneDestroyed(graphicsScene);
+    }
 }
 
 void MainWindow::updatePluginData()

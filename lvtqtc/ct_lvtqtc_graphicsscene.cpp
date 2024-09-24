@@ -1364,11 +1364,13 @@ void GraphicsScene::populateMenu(QMenu& menu, QMenu *debugMenu)
         for (auto *plugin : plugins) {
             auto sceneMenus = plugin->menuActions(this);
             for (QMenu *pluginMenu : sceneMenus) {
+                std::cout << "Got Menu" << pluginMenu->objectName().toStdString() << std::endl;
                 menu.addMenu(pluginMenu);
             }
 
             auto selectionMenu = plugin->menuActions(selectedEntities());
             for (QMenu *pluginMenu : selectionMenu) {
+                std::cout << "Got Menu" << pluginMenu->objectName().toStdString() << std::endl;
                 menu.addMenu(pluginMenu);
             }
         }

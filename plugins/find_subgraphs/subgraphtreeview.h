@@ -15,6 +15,7 @@ class SubgraphListView : public QWidget {
     void setGraphs(const std::vector<Graph>& graphs);
     void itemClicked(QListWidgetItem *item);
     void paintGraph(int idx, QColor color);
+    void exportGraphs();
 
   private:
     int currSelectedIdx = -1;

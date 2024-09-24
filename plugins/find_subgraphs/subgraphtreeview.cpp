@@ -5,6 +5,8 @@
 #include <preferences.h>
 #include <subgraphtreeview.h>
 
+#include <QFileDialog>
+
 SubgraphListView::SubgraphListView(QWidget *parent)
 {
     auto *mainLayout = new QBoxLayout(QBoxLayout::TopToBottom);
@@ -14,8 +16,30 @@ SubgraphListView::SubgraphListView(QWidget *parent)
     mainLayout->addWidget(d_exportButton);
     setLayout(mainLayout);
     connect(d_view, &QListWidget::itemClicked, this, &SubgraphListView::itemClicked);
+    connect(d_exportButton, &QPushButton::clicked, this, &SubgraphListView::exportGraphs);
 }
 
+void SubgraphListView::exportGraphs()
+{
+    if (d_graphs.empty()) {
+        return;
+    }
+    const QString saveFileName = QFileDialog::getSaveFileName();
+    if (saveFileName.isEmpty()) {
+        return;
+    }
+    QFile saveFile(saveFileName);
+    saveFile.open(QIODevice::WriteOnly);
+
+    QTextStream stream(&saveFile);
+    for (auto& g : d_graphs) {
+        stream << "subgraph {\n";
+        for (const auto vd : boost::make_iterator_range(boost::vertices(g))) {
+            stream << "\t" << QString::fromStdString(g[vd].ptr->qualifiedName()) << "\n";
+        }
+        stream << "}\n";
+    }
+}
 void SubgraphListView::setGraphs(const std::vector<Graph>& graphs)
 {
     std::cout << "Received a graph with " << graphs.size() << "Elements" << std::endl;

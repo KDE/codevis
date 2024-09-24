@@ -42,8 +42,7 @@
 
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <qjsondocument.h>
-#include <qt/QtCore/qjsonobject.h>
+#include <QJsonObject>
 
 BulkEdit::BulkEdit(QWidget *parent): QDialog(parent)
 {

@@ -5,11 +5,12 @@ add_library(${PLUGIN_NAME}
     SHARED
     plugin.cpp
 )
+include_directories(${Boost_INCLUDE_DIRS})
 
 target_compile_options(${PLUGIN_NAME} PRIVATE "-fvisibility=default")
 set_property(TARGET ${PLUGIN_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLUGIN_NAME} Qt${QT_MAJOR_VERSION}::Core)
-target_link_libraries(${PLUGIN_NAME} Qt${QT_MAJOR_VERSION}::Core CodevisPluginHeaders Boost::graph)
+target_link_libraries(${PLUGIN_NAME} Qt${QT_MAJOR_VERSION}::Core CodevisPluginHeaders)
 
 set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
 set_target_properties(${PLUGIN_NAME} PROPERTIES OUTPUT_NAME ${PLUGIN_NAME})

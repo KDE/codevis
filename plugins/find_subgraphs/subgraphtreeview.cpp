@@ -19,6 +19,10 @@ SubgraphListView::SubgraphListView(QWidget *parent)
 void SubgraphListView::setGraphs(const std::vector<Graph>& graphs)
 {
     std::cout << "Received a graph with " << graphs.size() << "Elements" << std::endl;
+
+    QColor c = Preferences::self()->entityBackgroundColor();
+    paintGraph(currSelectedIdx, c);
+
     d_graphs = graphs;
     d_view->clear();
 
@@ -32,28 +36,24 @@ void SubgraphListView::setGraphs(const std::vector<Graph>& graphs)
     }
 }
 
+void SubgraphListView::paintGraph(int idx, QColor color)
+{
+    if (idx == -1) {
+        return;
+    }
+
+    Graph& graph = d_graphs[currSelectedIdx];
+    for (const auto vd : boost::make_iterator_range(boost::vertices(graph))) {
+        auto entity = graph[vd];
+        entity.ptr->setColor(color);
+    }
+}
+
 void SubgraphListView::itemClicked(QListWidgetItem *item)
 {
-    const int idx = item->data(Qt::UserRole + 1).toInt();
+    QColor c = Preferences::self()->entityBackgroundColor();
+    paintGraph(currSelectedIdx, c);
 
-    if (currSelectedIdx != -1) {
-        QColor c = Preferences::self()->entityBackgroundColor();
-        Graph& graph = d_graphs[currSelectedIdx];
-        for (const auto vd : boost::make_iterator_range(boost::vertices(graph))) {
-            auto entity = graph[vd];
-            entity.ptr->setColor(c);
-            // entity.ptr->setColor(state == SelectedState::Selected ? NODE_SELECTED_COLOR : NODE_UNSELECTED_COLOR);
-        }
-    }
-
-    currSelectedIdx = idx;
-
-    if (currSelectedIdx != -1) {
-        Graph& graph = d_graphs[currSelectedIdx];
-        for (const auto vd : boost::make_iterator_range(boost::vertices(graph))) {
-            auto entity = graph[vd];
-            entity.ptr->setColor(QColor(Qt::red));
-            // entity.ptr->setColor(state == SelectedState::Selected ? NODE_SELECTED_COLOR : NODE_UNSELECTED_COLOR);
-        }
-    }
+    currSelectedIdx = item->data(Qt::UserRole + 1).toInt();
+    paintGraph(currSelectedIdx, QColor(Qt::red));
 }

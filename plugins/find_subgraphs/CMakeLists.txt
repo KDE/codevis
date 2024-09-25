@@ -7,6 +7,7 @@
 set(BUILD_SHARED_LIBS ON)
 SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
 kcoreaddons_add_plugin(
     findsubgraphs

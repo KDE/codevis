@@ -22,6 +22,7 @@
 #include <ct_lvtclp_clputil.h>
 
 #include <clang/AST/DeclTemplate.h>
+#include <clang/Basic/Version.h>
 
 #include <cassert>
 #include <optional>
@@ -72,7 +73,11 @@ FnId funcDeclToId(const clang::FunctionDecl *decl)
 
             const clang::TemplateArgument& arg = (*list)[i];
             llvm::raw_string_ostream s(ret);
+#if CLANG_VERSION_MAJOR >= 19
+            arg.dump(s, decl->getASTContext());
+#else
             arg.dump(s);
+#endif
         }
         ret += "> ";
     }

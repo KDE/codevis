@@ -62,7 +62,12 @@ void HeaderCallbacks::InclusionDirective(clang::SourceLocation HashLoc,
 #endif
                                          clang::StringRef SearchPath,
                                          clang::StringRef RelativePath,
+#if CLANG_VERSION_MAJOR >= 19
+                                         const clang::Module *SuggestedModule,
+                                         bool ModuleImported,
+#else
                                          const clang::Module *Imported,
+#endif
                                          clang::SrcMgr::CharacteristicKind FileType)
 {
     if (d_sourceFile_p == nullptr) {

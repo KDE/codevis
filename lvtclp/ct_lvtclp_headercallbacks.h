@@ -108,7 +108,12 @@ class HeaderCallbacks : public clang::PPCallbacks {
 #endif
                             clang::StringRef SearchPath,
                             clang::StringRef RelativePath,
+#if CLANG_VERSION_MAJOR >= 19
+                            const clang::Module *SuggestedModule,
+                            bool ModuleImported,
+#else
                             const clang::Module *Imported,
+#endif
                             clang::SrcMgr::CharacteristicKind FileType) override;
     // Invoked when clang processes an #include directive
 

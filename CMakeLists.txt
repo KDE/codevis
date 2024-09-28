@@ -87,7 +87,7 @@ find_package(Doxygen)
 find_package(SQLite3 REQUIRED)
 find_package(Threads REQUIRED)
 
-foreach(LLVM_VER ${PREFERRED_LLVM_VERSION} 18.1.4 18.1.3 18.1.2 18.1.1 17 16 15 14)
+foreach(LLVM_VER ${PREFERRED_LLVM_VERSION} 19.1.0 18.1.4 18.1.3 18.1.2 18.1.1 17 16 15 14)
     find_package(LLVM ${LLVM_VER})
     if (LLVM_FOUND)
         break()

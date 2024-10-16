@@ -416,6 +416,7 @@ ToolBox::ToolBox(QWidget *parent): QWidget(parent), d(std::make_unique<ToolBox::
     d->scrollArea->setMinimumWidth(d->widget->minimumSizeHint().width());
 
     auto *topLayout = new QVBoxLayout();
+    topLayout->setContentsMargins({});
     topLayout->addWidget(d->scrollArea);
     setLayout(topLayout);
 

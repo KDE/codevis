@@ -394,7 +394,7 @@ void ParseCodebaseDialog::validateUserInputFolders()
     const auto emptyErrorMsg = tr("This field can't be empty");
     const auto wslErrorMsg = tr("The software does not support wsl, use the native linux build.");
     const auto errorCss = QString("border: 1px solid red");
-    const auto missingCompileCommands = tr("The specified folder does not contain compile_commands.json");
+    const auto missingCompileCommands = tr("The specified file is not a compile_commands.json file.");
     bool disableParse = false;
 
     const auto build_folder_validation = validateCompileCommandsFolder(ui->compileCommandsFolder->text());

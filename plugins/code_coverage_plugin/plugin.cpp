@@ -26,9 +26,10 @@
 #include <QJsonObject>
 
 #include <fstream>
-#include <string>
-#include <sstream>
 #include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 static auto const CTX_MENU_TITLE = std::string{"Load code coverage information"};
 static auto const PLUGIN_DATA_ID = std::string{"CodeCovPluginData"};

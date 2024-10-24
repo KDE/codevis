@@ -398,6 +398,7 @@ endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND ENABLE_CODE_COVERAGE)
     # Warning: Not setting up any TARGET below. Assume ctest will be run before running `make coverage` so that we dont
     # need to keep track of which tests are dependencies for the coverage (all of them are).
+
     setup_target_for_coverage_gcovr_html(
         NAME coverage
         BASE_DIRECTORY "${PROJECT_SOURCE_DIR}"

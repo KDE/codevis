@@ -78,6 +78,7 @@ void graphicsViewContextMenuAction(PluginContextMenuActionHandler *handler)
     auto file = QFile{};
     file.setFileName(QString::fromStdString(data->jsonFilePath));
     if (!file.exists()) {
+        std::cout << "File Not Found" << std::endl;
         return;
     }
 
@@ -103,6 +104,7 @@ void graphicsViewContextMenuAction(PluginContextMenuActionHandler *handler)
             }
             return {};
         }();
+
         if (!selectedEntity) {
             continue;
         }

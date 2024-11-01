@@ -23,6 +23,8 @@
 
 using namespace Codethink::lvtqtw;
 
+#include <QFile>
+
 WelcomeScreen::WelcomeScreen(QWidget *parent): QWidget(parent), ui(std::make_unique<Ui::WelcomeWidget>())
 {
     ui->setupUi(this);
@@ -30,7 +32,11 @@ WelcomeScreen::WelcomeScreen(QWidget *parent): QWidget(parent), ui(std::make_uni
     connect(ui->btnGenerateFromSource, &QPushButton::clicked, this, &WelcomeScreen::requestParseProject);
     connect(ui->btnExistingProject, &QPushButton::clicked, this, &WelcomeScreen::requestExistingProject);
 
-    ui->textBrowser->setSource(QUrl("qrc:/html/news.html"));
+    QFile f(":/html/news.html");
+    f.open(QIODevice::ReadOnly);
+    QString markdown = f.readAll();
+    qDebug() << markdown;
+    ui->textBrowser->setMarkdown(markdown);
 }
 
 WelcomeScreen::~WelcomeScreen() = default;

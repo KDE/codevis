@@ -1,20 +1,31 @@
-<html>
-    <body>
-        <!-- This should be a blog somewhere and fetch via RSS -->
-        <div>
-            <h1> CodeVis - Visualize and Create Software</h1>
-            <ul>
-                <li> Empty Project </li>
-                <ul>
-                    <li> Allows the development of software from scratch </li>
-                    <li> File -> Export source generates the source code from the diagrams </li>
-                </ul>
-                <li> Generate from Source Code</li>
-                <ul>
-                    <li> Parses CPP source code and generates architectural information </li>
-                    <li> Allows to change the architecture and export the changes </li>
-                </ul>
-            </ul>
-        </div>
-    </body>
-</html>
+# What Codevis Is
+
+## Codevis Understands your Data
+Codevis is a framework for code knowledge, offering a small suite of tools to
+gather information about source code and it's genertaed artefacts, presenting
+to the user in a way that he can analise and spot potential problems.
+
+## Codevis is a Workbench for Analysis
+Codevis is also a way to document your codebase in a visual way, which is
+suitable to trainings, by scanning the source code and presenting the results
+as a graph, the developer or the analyst can understand an architecture faster
+than if he had to open file to file and jump through hoops.
+
+## Codevis is an Audit Tool
+Codevis is also a security audit tool, because the data it holds about the
+software being analyzed can show potential security issues that are better
+represented as graphs, such as:
+    - If there is a CVE on the code, what parts of the code are affected by it?
+    - If this developer leaves the company, how much of the code will become
+unatended?
+
+## Codevis can be used in ways we have not tought of
+Codevis helps in the following areas:
+    - Code Knowledge
+    - Security Audits
+    - Architectural Analysis
+    - And maybe more
+
+Because `Codevis` at it's core is just a frontend to plugins, each plugin can
+analyze it's internal data in any way possible, creating oportunities for
+organizations to leverage it's data in any way the analyst seems fit.

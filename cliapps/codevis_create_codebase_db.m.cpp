@@ -548,6 +548,8 @@ int main(int argc, char **argv)
     thread->start();
     app.exec();
 
+    // the app finishes when the thread finishes. safe to delete here.
+    thread->deleteLater();
     if (!args.saveParseErrorsPath.empty()) {
         auto parseErrorArgs =
             Codethink::lvtclp::ParseErrorHandler::SaveOutputInputArgs{.compileCommands = args.compilationDbPaths[0],

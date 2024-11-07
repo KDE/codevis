@@ -763,7 +763,7 @@ bool CppTool::runPhysical(bool skipScan)
 
     auto messageCallback = [this](const std::string& message, long threadId) {
         if (d->constants.printToConsole) {
-            std::cout << "FROM THREAD" << this << message << std::endl;
+            qDebug() << message;
         }
         Q_EMIT messageFromThread(QString::fromStdString(message), threadId);
     };

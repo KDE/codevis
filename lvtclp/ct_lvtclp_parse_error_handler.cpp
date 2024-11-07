@@ -133,13 +133,11 @@ bool ParseErrorHandler::hasErrors() const
 
 void ParseErrorHandler::receivedMessage(const QString& message, int threadId)
 {
-    std::cout << "GOT FROM THREAD" << message.toStdString() << std::endl;
     d_fileNameToContents[QString::number(threadId)] += message;
 }
 
 void ParseErrorHandler::setTool(CppTool *tool)
 {
-    std::cout << "Connecting tool to handler" << tool << std::endl;
     connect(tool, &lvtclp::CppTool::messageFromThread, this, &ParseErrorHandler::receivedMessage, Qt::QueuedConnection);
 }
 

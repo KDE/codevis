@@ -55,6 +55,7 @@
 #include <QJsonObject>
 #include <QString>
 #include <QStringList>
+#include <QThread>
 
 #include <commandlineprogressbar.h>
 #include <ct_lvtmdb_objectstore.h>
@@ -167,9 +168,10 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
         "USE_SYSTEM_HEADERS",
         "query");
 
-    const QCommandLineOption saveParseErrorsPath(
-        {QStringLiteral("save-parse-errors-file")},
-        "If the parser fails, save the errors on this zip file. If not set the errors are discarded.");
+    const QCommandLineOption saveParseErrorsPath("save-parse-errors-file",
+                                                 "Save compilation errors to this zip file.",
+                                                 "ERRORS_FILE",
+                                                 "");
 
     parser.addOptions({outputFile,
                        compileCommandsJson,
@@ -319,6 +321,8 @@ CommandLineParseResult parseCommandLine(QCommandLineParser& parser, CommandLineA
     args.disableLakosianRules = parser.isSet(disableLakosianRules);
     args.sourcePath = parser.value(sourcePath).toStdString();
     args.buildPath = parser.value(buildPath).toStdString();
+    std::cout << "Value of the save error thing" << parser.value(saveParseErrorsPath).toStdString() << std::endl;
+    args.saveParseErrorsPath = parser.value(saveParseErrorsPath).toStdString();
     return CommandLineParseResult::Ok;
 }
 
@@ -516,36 +520,35 @@ int main(int argc, char **argv)
         parseErrorHandler.setTool(clang_tool.get());
     }
 
-    QElapsedTimer timer;
-    timer.start();
+    auto *thread = QThread::create([&] {
+        QElapsedTimer timer;
+        timer.start();
+
+        if (args.physicalOnly) {
+            clang_tool->runPhysical();
+        } else {
+            clang_tool->runFull();
+        }
+
 #ifdef CT_ENABLE_FORTRAN_SCANNER
-    auto flang_tool = fortran::Tool::fromCompileCommands(args.compilationDbPaths[0]);
-    flang_tool->setSharedMemDb(sharedObjectStore);
-    const bool success = [&]() {
+        auto flang_tool = fortran::Tool::fromCompileCommands(args.compilationDbPaths[0]);
+        flang_tool->setSharedMemDb(sharedObjectStore);
         if (args.physicalOnly) {
-            auto clang_result = clang_tool->runPhysical();
-            auto flang_result = flang_tool->runPhysical();
-            return clang_result && flang_result;
+            flang_tool->runPhysical();
+        } else {
+            flang_tool->runFull();
         }
-        auto clang_result = clang_tool->runFull();
-        auto flang_result = flang_tool->runFull();
-        return clang_result && flang_result;
-    }();
-    fortran::solveFortranToCInteropDeps(*sharedObjectStore);
-#else
-    const bool success = [&]() {
-        if (args.physicalOnly) {
-            auto clang_result = clang_tool->runPhysical();
-            return clang_result;
-        }
-        auto clang_result = clang_tool->runFull();
-        return clang_result;
-    }();
+        fortran::solveFortranToCInteropDeps(*sharedObjectStore);
 #endif
 
-    std::cout << "Tool took " << timer.elapsed() << "ms" << std::endl;
+        std::cout << "Tool took " << timer.elapsed() << "ms" << std::endl;
+        qApp->quit();
+    });
 
-    if (!args.saveParseErrorsPath.empty() && !success) {
+    thread->start();
+    app.exec();
+
+    if (!args.saveParseErrorsPath.empty()) {
         auto parseErrorArgs =
             Codethink::lvtclp::ParseErrorHandler::SaveOutputInputArgs{.compileCommands = args.compilationDbPaths[0],
                                                                       .outputPath = args.saveParseErrorsPath,

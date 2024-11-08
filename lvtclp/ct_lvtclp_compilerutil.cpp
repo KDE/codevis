@@ -17,7 +17,10 @@
 // limitations under the License.
 */
 
+#ifdef Q_OS_LINUX
 #include <bits/types/struct_timeval.h>
+#endif
+
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtshr_stringhelpers.h>
 

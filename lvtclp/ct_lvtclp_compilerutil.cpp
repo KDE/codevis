@@ -17,6 +17,7 @@
 // limitations under the License.
 */
 
+#include <bits/types/struct_timeval.h>
 #include <ct_lvtclp_compilerutil.h>
 #include <ct_lvtshr_stringhelpers.h>
 
@@ -136,22 +137,65 @@ std::optional<std::string> CompilerUtil::runCompiler(const std::string& compiler
 #ifdef Q_OS_WINDOWS
     return {};
 #else
-    // The popen() function shall execute the command specified by the string command. It shall create a pipe between
-    // the calling program and the executed command, and shall return a pointer to a stream that can be used to either
+    // The popen() function shall execute the command specified by the string
+    // command. It shall create a pipe between
+    // the calling program and the executed command, and shall return a pointer
+    // to a stream that can be used to either
     // read from or write to the pipe.
     // https://pubs.opengroup.org/onlinepubs/009696699/functions/popen.html
     const auto compile_call = compiler + " -E -v -x c++ - </dev/null 2>&1";
-    auto fp = popen(compile_call.c_str(), "r");
+    FILE *fp = popen(compile_call.c_str(), "r");
     if (fp == nullptr) {
         return {};
     }
+    auto constexpr READ_SIZE = 1024;
+    char buffer[READ_SIZE];
+    timeval timeout;
 
-    auto constexpr READ_SIZE = 4096;
-    char output[READ_SIZE];
     std::string result;
+
+    int fd = fileno(fp);
+    bool eof = false;
+    fd_set fdset;
+
+    while (!eof) {
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+        FD_ZERO(&fdset);
+        FD_SET(fd, &fdset);
+        int rc = select(fd + 1, &fdset, 0, 0, &timeout);
+        switch (rc) {
+        // Error
+        case -1: {
+            std::cout << "Error reading file descriptor.\n";
+            pclose(fp);
+            return {};
+        }
+        // Timeout reading the file, we waited for 10s.
+        // try again.
+        case 0: {
+            continue;
+        }
+        // Success
+        default: {
+            int read_bytes = read(fd, buffer, sizeof(buffer));
+            if (read_bytes > 0) {
+                result += buffer;
+            } else if (read_bytes < 0) {
+                std::cout << "Error while reading the file descriptor:errno = " << errno << "\n";
+                eof = true;
+            } else if (read_bytes == 0) {
+                eof = true;
+            }
+        }
+        }
+    }
+
+    /*
     while (fgets(output, READ_SIZE, fp) != nullptr) {
         result += output;
     }
+    */
 
     // The pclose() function shall close a stream that was opened by popen(), wait for the command to terminate, and
     // return the termination status of the process that was running the command language interpreter. However, if a

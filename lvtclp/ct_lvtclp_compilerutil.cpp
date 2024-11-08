@@ -75,6 +75,8 @@ std::optional<std::vector<std::string>> tryCompiler(const std::string& compiler)
     }
 
     return includes;
+#else
+    return {};
 #endif
 }
 

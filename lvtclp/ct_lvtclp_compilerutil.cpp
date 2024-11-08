@@ -44,6 +44,7 @@ std::string trimLeadingSpaces(const std::string& str)
 
 std::optional<std::vector<std::string>> tryCompiler(const std::string& compiler)
 {
+#ifdef Q_OS_LINUX
     std::cout << "Testing with compiler " << compiler << std::endl;
     std::optional<std::string> compilerOut = Codethink::lvtclp::CompilerUtil::runCompiler(compiler);
     if (!compilerOut) {
@@ -74,6 +75,7 @@ std::optional<std::vector<std::string>> tryCompiler(const std::string& compiler)
     }
 
     return includes;
+#endif
 }
 
 std::vector<std::string> findLinuxIncludes(const std::string& compileCommandCompiler)
